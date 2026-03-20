@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Vote the Next Movie Night</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<div class="overlay"></div>
+
+<div class="container">
+  <div class="card">
+
+    <!-- ICON -->
+    <img src="icon.png" class="logo" />
+
+    <h1>Pick the Next Movie Night</h1>
+
+    <p class="subtitle">
+      In collaboration with 
+      <a href="https://www.thenewparkway.com" target="_blank">
+        The New Parkway Theater
+      </a>
+    </p>
+
+    <p id="step-title"></p>
+
+    <div id="options"></div>
+
+    <button id="nextBtn" disabled>Next</button>
+
+    <div id="results" class="hidden"></div>
+
+    <!-- APP LINK -->
+    <div class="footer">
+      <p>Want to explore takes & discussions?</p>
+      <a href="https://yourapp.com" target="_blank" class="app-link">
+        Open the app →
+      </a>
+    </div>
+
+  </div>
+</div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>

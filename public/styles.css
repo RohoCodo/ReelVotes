@@ -1,0 +1,146 @@
+body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    color: white;
+    height: 100vh;
+    overflow: hidden;
+  }
+  
+  /* 🎬 Cinematic background */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: url("icon.png") center/cover no-repeat;
+    filter: blur(80px) brightness(0.4);
+    transform: scale(1.2);
+    z-index: -2;
+  }
+  
+  /* dark overlay */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(circle at center, rgba(0,0,0,0.4), #000);
+    z-index: -1;
+  }
+  
+  .container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    padding: 20px;
+  }
+  
+  .card {
+    width: 100%;
+    max-width: 420px;
+    background: rgba(20,20,20,0.85);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 25px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+    text-align: center;
+  }
+  
+  /* 🎬 Logo */
+  .logo {
+    width: 70px;
+    margin-bottom: 10px;
+  }
+  
+  /* Titles */
+  h1 {
+    font-size: 22px;
+    margin-bottom: 5px;
+  }
+  
+  .subtitle {
+    font-size: 13px;
+    color: #aaa;
+    margin-bottom: 20px;
+  }
+  
+  .subtitle a {
+    color: #ff4757;
+    text-decoration: none;
+  }
+  
+  #step-title {
+    color: #bbb;
+    margin-bottom: 15px;
+  }
+  
+  /* Options */
+  .option {
+    background: #222;
+    padding: 16px;
+    border-radius: 12px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 2px solid transparent;
+    text-align: left;
+  }
+  
+  .option:hover {
+    background: #2a2a2a;
+  }
+  
+  .option.selected {
+    border: 2px solid #ff4757;
+    background: #2b1b1d;
+  }
+  
+  /* Button */
+  button {
+    width: 100%;
+    padding: 14px;
+    margin-top: 15px;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    background: linear-gradient(135deg, #ff4757, #ff6b81);
+    color: white;
+  }
+  
+  button:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+  
+  /* Results */
+  #results {
+    margin-top: 20px;
+  }
+  
+  .bar {
+    height: 10px;
+    background: #333;
+    border-radius: 5px;
+    overflow: hidden;
+    margin-top: 10px;
+  }
+  
+  .fill {
+    height: 100%;
+    background: #ff4757;
+  }
+  
+  /* Footer */
+  .footer {
+    margin-top: 25px;
+    font-size: 13px;
+    color: #888;
+  }
+  
+  .app-link {
+    display: inline-block;
+    margin-top: 5px;
+    color: #ff4757;
+    text-decoration: none;
+    font-weight: 600;
+  }
