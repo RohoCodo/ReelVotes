@@ -4,6 +4,31 @@ service cloud.firestore {
 
     function signedIn() { return request.auth != null; }
 
+    // Events collection with subcollections for votes and movie summaries
+    match /events/{eventId} {
+      // Create event document if it doesn't exist
+      allow read: if true;
+      allow create: if true;
+      
+      // Individual votes collection
+      match /votes/{voteId} {
+        allow read: if true;
+        allow create: if true;
+      }
+      
+      // Movie summaries collection
+      match /movies/{movieId} {
+        allow read: if true;
+        allow write: if true;
+      }
+    }
+
+    // Legacy votes collection (for backward compatibility if needed)
+    match /votes/{docId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
     match /reactions/{docId} {
       allow read, write: if request.auth != null;
     }
