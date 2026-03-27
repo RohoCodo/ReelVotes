@@ -195,6 +195,41 @@ body {
     transition: background 0.2s ease;
   }
 
+  .allowed-movie-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+  }
+
+  .allowed-movie-main {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+  }
+
+  .allowed-movie-poster {
+    width: 42px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 8px;
+    background: #333;
+    flex-shrink: 0;
+  }
+
+  .allowed-movie-title {
+    font-weight: 600;
+    color: white;
+  }
+
+  .allowed-movie-votes {
+    font-size: 0.9em;
+    color: #999;
+    flex-shrink: 0;
+  }
+
   .search-result-item:hover {
     background: #2a2a2a;
   }
@@ -439,6 +474,17 @@ body {
   .confirmation {
     text-align: center;
   }
+
+  .confirmation-poster {
+    width: 120px;
+    height: 174px;
+    object-fit: cover;
+    border-radius: 12px;
+    background: #333;
+    display: block;
+    margin: 0 auto 18px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+  }
   
   .checkmark {
     font-size: 60px;
@@ -564,61 +610,6 @@ body {
 
   .email-help a:hover {
     text-decoration: underline;
-  }
-
-  /* Auth Divider */
-  .auth-divider {
-    display: flex;
-    align-items: center;
-    margin: 20px 0 16px;
-    gap: 12px;
-  }
-
-  .auth-divider span {
-    color: #666;
-    font-size: 13px;
-    font-weight: 500;
-  }
-
-  .auth-divider::before,
-  .auth-divider::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: #333;
-  }
-
-  /* Google Sign-In Button */
-  .google-sign-in-btn {
-    width: 100%;
-    padding: 12px;
-    background: white;
-    color: #1f2937;
-    border: none;
-    border-radius: 6px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-  }
-
-  .google-sign-in-btn:hover {
-    background: #f8f8f8;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-  }
-
-  .google-sign-in-btn:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
-  }
-
-  .google-sign-in-btn img {
-    width: 20px;
-    height: 20px;
   }
 
   .hidden {

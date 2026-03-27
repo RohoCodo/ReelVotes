@@ -1,7 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
 import { getFirestore, doc, getDoc, setDoc, updateDoc, increment, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-functions.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
 
 // Firebase Config
 const firebaseConfig = {
@@ -16,8 +15,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const functions = getFunctions(app);
-const auth = getAuth(app);
-const googleProvider = new GoogleAuthProvider();
 const validateEventbriteEmail = httpsCallable(functions, "validateEventbriteEmail");
 
 // TMDB API Config
@@ -45,6 +42,7 @@ let selectedMovie = null;
 let selectedMovieCard = null;
 let chosenMovies = [];
 let emailVerified = false;
+const movieMetadataCache = new Map();
 
 // Hardcoded total votes needed to reach goal
 const VOTES_NEEDED = 50;
@@ -111,45 +109,13 @@ async function fetchChosenMovies() {
   }
 }
 
-// Create or sign in user with email
-async function createOrSignInUser(email) {
-  try {
-    // Try to sign in first
-    try {
-      await signInWithEmailAndPassword(auth, email, "ReelVotes123!");
-      console.log("User signed in successfully");
-      return true;
-    } catch (signInError) {
-      // If sign in fails, try to create user
-      if (signInError.code === 'auth/user-not-found' || signInError.code === 'auth/invalid-credential') {
-        try {
-          await createUserWithEmailAndPassword(auth, email, "ReelVotes123!");
-          console.log("User created and signed in successfully");
-          return true;
-        } catch (createError) {
-          console.error("Error creating user:", createError);
-          return false;
-        }
-      }
-      throw signInError;
-    }
-  } catch (error) {
-    console.error("Error in createOrSignInUser:", error);
-    return false;
-  }
-}
-
 // Generate app link with authentication token
 async function generateAppLink() {
   try {
-    const idToken = await auth.currentUser?.getIdToken();
-    if (idToken) {
-      return `https://yourapp.com?token=${idToken}&email=${encodeURIComponent(auth.currentUser.email)}`;
-    }
-    return "https://yourapp.com";
+    return `${window.location.origin}${window.location.pathname}?event=${encodeURIComponent(EVENT_ID)}`;
   } catch (error) {
     console.error("Error generating app link:", error);
-    return "https://yourapp.com";
+    return `${window.location.origin}${window.location.pathname}`;
   }
 }
 
@@ -180,6 +146,33 @@ async function getMovieDetails(movieId) {
   }
 }
 
+function buildPosterUrl(posterPath, size = "w185") {
+  return posterPath ? `https://image.tmdb.org/t/p/${size}${posterPath}` : null;
+}
+
+async function getMovieMetadataByTitle(title) {
+  if (movieMetadataCache.has(title)) {
+    return movieMetadataCache.get(title);
+  }
+
+  try {
+    const results = await searchTMDB(title);
+    const normalizedTitle = title.trim().toLowerCase();
+    const match = results.find(movie => movie.title?.trim().toLowerCase() === normalizedTitle) || results[0];
+    const metadata = {
+      tmdbId: match?.id || null,
+      poster: buildPosterUrl(match?.poster_path)
+    };
+    movieMetadataCache.set(title, metadata);
+    return metadata;
+  } catch (error) {
+    console.error("Error fetching movie metadata:", error);
+    const metadata = { tmdbId: null, poster: null };
+    movieMetadataCache.set(title, metadata);
+    return metadata;
+  }
+}
+
 // Display allowed movies list
 async function displayAllowedMovies() {
   console.log("Displaying allowed movies. SearchResults element:", searchResults);
@@ -190,21 +183,31 @@ async function displayAllowedMovies() {
   }
   
   searchResults.innerHTML = "";
-  
-  for (const movieTitle of ALLOWED_MOVIES) {
+
+  const allowedMovieData = await Promise.all(
+    ALLOWED_MOVIES.map(async (movieTitle) => {
+      const metadata = await getMovieMetadataByTitle(movieTitle);
+      return { title: movieTitle, ...metadata };
+    })
+  );
+
+  for (const movie of allowedMovieData) {
     // Find if this movie already has votes
-    const existingMovie = chosenMovies.find(m => m.title === movieTitle || m.title.startsWith(movieTitle));
+    const existingMovie = chosenMovies.find(m => m.title === movie.title || m.title.startsWith(movie.title));
     const voteCount = existingMovie?.vote_count || 0;
     
     const item = document.createElement("div");
     item.className = "search-result-item allowed-movie-item";
     item.innerHTML = `
-      <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-        <span>${movieTitle}</span>
-        <span style="font-size: 0.9em; color: #999;">${voteCount} votes</span>
+      <div class="allowed-movie-content">
+        <div class="allowed-movie-main">
+          <img class="allowed-movie-poster" src="${movie.poster || ''}" alt="${movie.title} poster" ${movie.poster ? '' : 'style="display:none;"'} />
+          <span class="allowed-movie-title">${movie.title}</span>
+        </div>
+        <span class="allowed-movie-votes">${voteCount} votes</span>
       </div>
     `;
-    item.onclick = () => selectMovie({ title: movieTitle });
+    item.onclick = () => selectMovie({ title: movie.title, poster: movie.poster, tmdbId: movie.tmdbId });
     searchResults.appendChild(item);
   }
   
@@ -233,7 +236,7 @@ async function displaySearchResults(query) {
     filtered.slice(0, 5).forEach(movie => {
       const item = document.createElement("div");
       item.className = "search-result-item";
-      item.innerHTML = `${movie.title} (${movie.release_date?.split("-")[0] || "N/A"})`;
+      item.innerHTML = movie.title;
       item.onclick = () => selectMovie(movie);
       searchResults.appendChild(item);
     });
@@ -248,13 +251,17 @@ async function selectMovie(tmdbMovie) {
   
   // For allowed movies (passed as simple objects with just title)
   if (!tmdbMovie.id && tmdbMovie.title) {
+    const metadata = tmdbMovie.poster || tmdbMovie.tmdbId
+      ? { poster: tmdbMovie.poster || null, tmdbId: tmdbMovie.tmdbId || null }
+      : await getMovieMetadataByTitle(tmdbMovie.title);
+
     selectedMovie = {
       title: tmdbMovie.title,
       year: "N/A",
       director: "Unknown",
       actors: "Unknown",
-      poster: null,
-      tmdbId: null
+      poster: metadata.poster,
+      tmdbId: metadata.tmdbId
     };
     
     console.log("Selected movie:", selectedMovie);
@@ -345,7 +352,6 @@ async function displayChosenMovies() {
     item.innerHTML = `
       <div class="chosen-movie-title">
         <span>${movie.title}</span>
-        <span class="chosen-movie-year">${movie.year || "N/A"}</span>
       </div>
       <div class="chosen-movie-bar">
         <div class="chosen-movie-fill" style="width: ${Math.min(percentage, 100)}%"></div>
@@ -631,8 +637,9 @@ submitBtn.onclick = async () => {
   resultsDiv.innerHTML = `
     <div class="confirmation">
       <div class="checkmark">✓</div>
+      ${selectedMovie.poster ? `<img class="confirmation-poster" src="${selectedMovie.poster}" alt="${selectedMovie.title} poster" />` : ''}
       <h2>You voted for:</h2>
-      <p class="voted-movie"><b>${selectedMovie.title}</b>${selectedMovie.year ? ` (${selectedMovie.year})` : ''}</p>
+      <p class="voted-movie"><b>${selectedMovie.title}</b></p>
       <p class="vote-counted">The vote has been counted</p>
       
     </div>
@@ -672,27 +679,14 @@ async function showExistingVoteConfirmation(movie) {
   chosenSection.style.display = "none !important";
   submitBtn.classList.add("hidden");
   
-  // Fetch full movie details from TMDB if we have the ID
-  let movieDetails = null;
-  if (movie.tmdb_id) {
-    try {
-      movieDetails = await getMovieDetails(movie.tmdb_id);
-    } catch (error) {
-      console.log("Could not fetch full movie details:", error);
-    }
-  }
-  
-  // Extract year if available
-  let year = movie.year;
-  if (movieDetails && movieDetails.release_date) {
-    year = movieDetails.release_date.split("-")[0];
-  }
+  const movieMetadata = await getMovieMetadataByTitle(movie.title);
   
   // Display confirmation
   resultsDiv.classList.remove("hidden");
   resultsDiv.innerHTML = `
     <div class="confirmation">
       <div class="checkmark">✓</div>
+      ${movieMetadata.poster ? `<img class="confirmation-poster" src="${movieMetadata.poster}" alt="${movie.title} poster" />` : ''}
       <h2>You've Already Voted!</h2>
       <p class="voted-movie"><b>${movie.title}</b></p>
       <p class="vote-counted">Your vote has been counted</p>
@@ -759,40 +753,6 @@ function showVotingInterface() {
   displayAllowedMovies();
 }
 
-// Function to prompt for email
-async function signInWithGoogle() {
-  try {
-    const result = await signInWithPopup(auth, googleProvider);
-    const user = result.user;
-    const email = user.email;
-    
-    voterEmail = email;
-    emailVerified = true;
-    localStorage.setItem(`voterEmail_${EVENT_ID}`, voterEmail);
-    
-    // Check if email has already voted
-    const existingVote = await checkIfEmailVoted(email);
-    
-    // Remove email form if it exists
-    const emailForm = document.getElementById('emailStep');
-    if (emailForm) {
-      emailForm.remove();
-    }
-    
-    if (existingVote) {
-      // Show confirmation page for existing vote
-      await showExistingVoteConfirmation(existingVote);
-    } else {
-      // Fetch and show voting interface
-      await fetchChosenMovies();
-      showVotingInterface();
-    }
-  } catch (error) {
-    console.error('Google Sign-In error:', error);
-    alert('Google Sign-In failed. Please try again.');
-  }
-}
-
 async function promptForEmail() {
   if (voterEmail && emailVerified) {
     showVotingInterface();
@@ -824,15 +784,6 @@ async function promptForEmail() {
       <input type="email" id="emailInputField" placeholder="your@email.com" value="${emailValue}" autofocus />
       <button id="emailConfirmBtn" class="submit-btn">Continue to Vote</button>
       
-      <div class="auth-divider">
-        <span>or</span>
-      </div>
-      
-      <button id="googleSignInBtn" class="google-sign-in-btn" type="button">
-        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='20' height='20'%3E%3Cpath fill='%234285F4' d='M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z'/%3E%3Cpath fill='%3434A853' d='M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z'/%3E%3Cpath fill='%23FBBC05' d='M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z'/%3E%3Cpath fill='%23EA4335' d='M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z'/%3E%3C/svg%3E" alt="Google" />
-        Sign in with Google
-      </button>
-      
       <p class="email-help">
         Haven't bought a ticket yet? 
         <a href="https://www.eventbrite.com" target="_blank">Get your ticket here →</a>
@@ -850,24 +801,8 @@ async function promptForEmail() {
   
   const emailInputField = document.getElementById('emailInputField');
   const emailConfirmBtn = document.getElementById('emailConfirmBtn');
-  const googleSignInBtn = document.getElementById('googleSignInBtn');
   
   return new Promise((resolve) => {
-    // Google Sign-In button handler
-    if (googleSignInBtn) {
-      googleSignInBtn.onclick = async () => {
-        googleSignInBtn.disabled = true;
-        googleSignInBtn.innerText = 'Signing in...';
-        try {
-          await signInWithGoogle();
-          resolve();
-        } catch (error) {
-          googleSignInBtn.disabled = false;
-          googleSignInBtn.innerText = 'Sign in with Google';
-        }
-      };
-    }
-    
     emailConfirmBtn.onclick = async () => {
       const email = emailInputField.value.trim();
       
@@ -893,21 +828,13 @@ async function promptForEmail() {
           voterEmail = email;
           emailVerified = true;
           localStorage.setItem(`voterEmail_${EVENT_ID}`, voterEmail);
-          
-          // Create or sign in user
-          await createOrSignInUser(email);
-          
-          // Check if email has already voted
+
           const existingVote = await checkIfEmailVoted(email);
-          
-          // Remove email form
           emailForm.remove();
-          
+
           if (existingVote) {
-            // Show confirmation page for existing vote
             await showExistingVoteConfirmation(existingVote);
           } else {
-            // Fetch and show voting interface
             await fetchChosenMovies();
             showVotingInterface();
           }
@@ -921,21 +848,13 @@ async function promptForEmail() {
           voterEmail = email;
           emailVerified = true;
           localStorage.setItem(`voterEmail_${EVENT_ID}`, voterEmail);
-          
-          // Create or sign in user
-          await createOrSignInUser(email);
-          
-          // Check if email has already voted
+
           const existingVote = await checkIfEmailVoted(email);
-          
-          // Remove email form
           emailForm.remove();
-          
+
           if (existingVote) {
-            // Show confirmation page for existing vote
             await showExistingVoteConfirmation(existingVote);
           } else {
-            // Fetch and show voting interface
             await fetchChosenMovies();
             showVotingInterface();
           }
@@ -962,7 +881,7 @@ async function promptForEmail() {
 // Update app link with authentication
 async function updateAppLink() {
   const appLink = document.getElementById('appLink');
-  if (appLink && auth.currentUser) {
+  if (appLink) {
     const generatedLink = await generateAppLink();
     appLink.href = generatedLink;
   }
