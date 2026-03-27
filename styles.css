@@ -1,0 +1,617 @@
+body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    color: white;
+    min-height: 100vh;
+    overflow-y: auto;
+  }
+  
+  /* 🎬 Cinematic background */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 25%, #0f3460 50%, #e94560 100%);
+    background-attachment: fixed;
+    filter: brightness(0.7);
+    z-index: -2;
+  }
+  
+  /* Film strip effect */
+  body::after {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 40px;
+    background: repeating-linear-gradient(90deg, #000 0px, #000 20px, #1a1a2e 20px, #1a1a2e 40px);
+    z-index: -1;
+    opacity: 0.3;
+  }
+  
+  /* dark overlay */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(circle at center, rgba(0,0,0,0.2), rgba(0,0,0,0.4));
+    z-index: -1;
+  }
+  
+  .container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    padding: 20px;
+  }
+  
+  .card {
+    width: 100%;
+    max-width: 420px;
+    background: rgba(20,20,20,0.85);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 25px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+    text-align: center;
+    overflow: visible;
+  }
+
+  /* Utility class */
+  .hidden {
+    display: none !important;
+  }
+  
+  /* 🎬 Logo */
+  .logo {
+    width: 70px;
+    margin-bottom: 10px;
+  }
+  
+  /* Titles */
+  h1 {
+    font-size: 22px;
+    margin-bottom: 5px;
+  }
+  
+  .subtitle {
+    font-size: 13px;
+    color: #aaa;
+    margin-bottom: 20px;
+  }
+  
+  .subtitle a {
+    color: #ff4757;
+    text-decoration: none;
+  }
+  
+  #step-title {
+    color: #bbb;
+    margin-bottom: 15px;
+  }
+  
+  /* Search */
+  #search-section {
+    position: relative;
+    margin: 15px 0;
+    z-index: 10;
+  }
+
+  .search-container {
+    position: relative;
+    width: 100%;
+  }
+
+  .search-disclaimer {
+    font-size: 12px;
+    color: #999;
+    margin-top: 8px;
+    text-align: center;
+    font-style: italic;
+  }
+
+  .search-input {
+    width: 100%;
+    padding: 14px;
+    padding-right: 50px;
+    border: 2px solid #333;
+    border-radius: 12px;
+    background: #222;
+    color: white;
+    font-size: 16px;
+    transition: border-color 0.2s ease;
+    box-sizing: border-box;
+  }
+
+  .search-input:focus {
+    outline: none;
+    border-color: #ff4757;
+  }
+
+  .clear-search-btn {
+    position: absolute;
+    right: 12px;
+    top: 20%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #888;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s ease;
+    z-index: 10;
+  }
+
+  .clear-search-btn.shown {
+    display: flex;
+  }
+
+  .clear-search-btn:hover {
+    color: #ff4757;
+  }
+
+  .search-input:focus {
+    outline: none;
+    border-color: #ff4757;
+  }
+
+  .search-input::placeholder {
+    color: #666;
+  }
+
+  .search-results {
+    position: static;
+    background: #222;
+    border: 2px solid #333;
+    border-radius: 12px;
+    max-height: 300px;
+    overflow-y: auto;
+    margin-top: 10px;
+  }
+
+  .search-results.hidden {
+    display: none;
+  }
+
+  .search-disclaimer {
+    font-size: 12px;
+    color: #999;
+    margin-top: 8px;
+    text-align: center;
+    font-style: italic;
+  }
+
+  .search-result-item {
+    padding: 12px 14px;
+    cursor: pointer;
+    border-bottom: 1px solid #333;
+    transition: background 0.2s ease;
+  }
+
+  .allowed-movie-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+  }
+
+  .allowed-movie-main {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+  }
+
+  .allowed-movie-poster {
+    width: 42px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 8px;
+    background: #333;
+    flex-shrink: 0;
+  }
+
+  .allowed-movie-title {
+    font-weight: 600;
+    color: white;
+  }
+
+  .allowed-movie-votes {
+    font-size: 0.9em;
+    color: #999;
+    flex-shrink: 0;
+  }
+
+  .search-result-item:hover {
+    background: #2a2a2a;
+  }
+
+  .search-result-item:last-child {
+    border-bottom: none;
+  }
+
+  /* Movie Preview */
+  .movie-preview {
+    padding: 12px;
+    background: #222;
+    border-radius: 0 0 12px 12px;
+    border: 2px solid #ff4757;
+    border-top: none;
+    margin: -2px 0 15px 0;
+    overflow: visible;
+  }
+
+  .preview-content {
+    display: flex;
+    gap: 12px;
+  }
+
+  .movie-poster {
+    width: 80px;
+    height: 120px;
+    border-radius: 8px;
+    object-fit: cover;
+    background: #333;
+    display: block;
+    flex-shrink: 0;
+  }
+
+  .movie-info {
+    flex: 1;
+  }
+
+  .movie-info h2 {
+    margin: 0 0 4px 0;
+    font-size: 16px;
+  }
+
+  .info-subtitle {
+    margin: 2px 0;
+    font-size: 11px;
+    color: #aaa;
+  }
+
+  /* Chosen Movies */
+  .chosen-section {
+    margin-top: 20px;
+  }
+
+  .chosen-label {
+    font-size: 13px;
+    color: #888;
+    margin-bottom: 10px;
+  }
+
+  .chosen-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .chosen-movie {
+    padding: 12px;
+    background: #222;
+    border-radius: 8px;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.2s ease;
+  }
+
+  .chosen-movie:hover {
+    background: #2a2a2a;
+    border-color: #ff4757;
+  }
+
+  .chosen-movie.selected {
+    background: #2a2a2a;
+    border-color: #ffeb3b;
+    box-shadow: 0 0 15px rgba(255, 235, 59, 0.4);
+  }
+
+  .chosen-movie-title {
+    font-weight: 600;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .chosen-movie-year {
+    font-size: 12px;
+    color: #aaa;
+  }
+
+  .chosen-movie-bar {
+    height: 6px;
+    background: #333;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 4px;
+  }
+
+  .chosen-movie-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ff4757, #ff6b81);
+    transition: width 0.3s ease;
+  }
+
+  .chosen-movie-count {
+    font-size: 11px;
+    color: #888;
+    text-align: right;
+  }
+  
+  /* Options */
+  .option {
+    background: #222;
+    padding: 16px;
+    border-radius: 12px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 2px solid transparent;
+    text-align: left;
+  }
+  
+  .option-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 14px;
+  }
+
+  .vote-count {
+    font-size: 12px;
+    color: #ff4757;
+    font-weight: 600;
+  }
+
+  .vote-bar {
+    height: 6px;
+    background: #333;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 4px;
+  }
+
+  .vote-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ff4757, #ff6b81);
+    transition: width 0.3s ease;
+  }
+
+  .vote-percentage {
+    font-size: 11px;
+    color: #888;
+    text-align: right;
+  }
+
+  .option:hover {
+    background: #2a2a2a;
+  }
+
+  .option.selected {
+    border: 2px solid #ff4757;
+    background: #2b1b1d;
+  }
+
+  /* Button */
+  button {
+    width: 100%;
+    padding: 14px;
+    margin-top: 15px;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    background: linear-gradient(135deg, #ff4757, #ff6b81);
+    color: white;
+  }
+  
+  #button-container {
+    display: flex;
+    gap: 10px;
+  }
+
+  #button-container button {
+    flex: 1;
+    margin-top: 15px;
+  }
+
+  #submitBtn {
+    width: 100%;
+    padding: 14px;
+    margin-top: 15px;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    background: linear-gradient(135deg, #ff4757, #ff6b81);
+    color: white;
+  }
+
+  #submitBtn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  #submitBtn:not(:disabled):hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(255, 71, 87, 0.4);
+  }
+
+  #backBtn {
+    background: #333;
+    color: #aaa;
+  }
+
+  #backBtn:hover {
+    background: #444;
+    color: white;
+  }
+  
+  button:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+  
+  /* Results */
+  #results {
+    margin-top: 20px;
+  }
+  
+  .confirmation {
+    text-align: center;
+  }
+
+  .confirmation-poster {
+    width: 120px;
+    height: 174px;
+    object-fit: cover;
+    border-radius: 12px;
+    background: #333;
+    display: block;
+    margin: 0 auto 18px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+  }
+  
+  .checkmark {
+    font-size: 60px;
+    color: #4caf50;
+    margin-bottom: 15px;
+    font-weight: bold;
+  }
+  
+  .confirmation h2 {
+    margin: 10px 0;
+    font-size: 16px;
+    color: #bbb;
+  }
+  
+  .voted-movie {
+    font-size: 18px;
+    color: white;
+    margin: 15px 0;
+    font-weight: 600;
+  }
+  
+  .vote-counted {
+    color: #4caf50;
+    font-size: 14px;
+    margin: 10px 0;
+  }
+  
+  .track-results {
+    margin-top: 20px;
+    color: #aaa;
+    font-size: 13px;
+  }
+  
+  .app-link-confirmation {
+    color: #ff4757;
+    text-decoration: none;
+    font-weight: 600;
+    display: inline-block;
+    margin-top: 8px;
+  }
+  
+  .app-link-confirmation:hover {
+    text-decoration: underline;
+  }
+  
+  .app-link {
+    display: inline-block;
+    margin-top: 5px;
+    color: #ff4757;
+    text-decoration: none;
+    font-weight: 600;
+  }
+
+  /* Email Step */
+  .email-step {
+    margin: 30px 0;
+  }
+
+  .email-step label {
+    display: block;
+    text-align: left;
+    color: white;
+    margin-bottom: 12px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  .email-step input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ff6b6b;
+    border-radius: 6px;
+    background: rgba(0, 0, 0, 0.3);
+    color: white;
+    font-size: 14px;
+    margin-bottom: 16px;
+    box-sizing: border-box;
+  }
+
+  .email-step input::placeholder {
+    color: #999;
+  }
+
+  .email-step input:focus {
+    outline: none;
+    border-color: #ff8787;
+    background: rgba(0, 0, 0, 0.5);
+  }
+
+  .email-step .submit-btn {
+    width: 100%;
+    padding: 12px;
+    background: linear-gradient(135deg, #ff6b6b, #ff8787);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .email-step .submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 107, 107, 0.3);
+  }
+
+  .email-step .submit-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .email-help {
+    font-size: 12px;
+    color: #ccc;
+    margin-top: 16px;
+  }
+
+  .email-help a {
+    color: #ff6b6b;
+    text-decoration: none;
+  }
+
+  .email-help a:hover {
+    text-decoration: underline;
+  }
+
+  .hidden {
+    display: none !important;
+  }

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Vote the Next Movie Night</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" type="image/png" href="icon.png" />
+</head>
+<body>
+
+<div class="overlay"></div>
+
+<div class="container">
+  <div class="card">
+
+    <!-- ICON -->
+    <img src="icon.png" class="logo" />
+
+    <h1>Pick the Next Movie Night</h1>
+
+    <p class="subtitle">
+      Coming 4/27 to
+      <a href="https://www.thenewparkway.com" target="_blank">
+        The New Parkway Theater
+      </a>
+    </p>
+
+    <!-- Search Input -->
+    <div id="search-section">
+      <div class="search-container">
+        <input 
+          type="text" 
+          id="searchInput" 
+          placeholder="Search movies..." 
+          class="search-input"
+          autocomplete="off"
+        />
+        <button id="clearSearchBtn" class="clear-search-btn">✕</button>
+      </div>
+      <div id="searchResults" class="search-results hidden"></div>
+      <div id="moviePreview" class="movie-preview hidden">
+        <div class="preview-content">
+          <img id="moviePoster" class="movie-poster" />
+          <div class="movie-info">
+            <h2 id="movieTitle"></h2>
+            <p id="movieYear" class="info-subtitle"></p>
+            <p id="movieDirector" class="info-subtitle"></p>
+            <p id="movieActors" class="info-subtitle"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chosen Movies -->
+    <div id="chosenMovies" class="chosen-section">
+      <p class="chosen-label">Current votes:</p>
+      <div id="chosenList" class="chosen-list"></div>
+    </div>
+
+    <div id="button-container">
+      <button id="submitBtn" class="hidden" disabled>Submit Vote</button>
+    </div>
+
+    <div id="results" class="hidden"></div>
+
+    <!-- APP LINK -->
+    <div class="footer">
+      <p>Want to track the live results? Want to explore takes & discussions?<br>
+      <a id="appLink" href="https://yourapp.com" target="_blank" class="app-link">Open the app →</a></p>
+    </div>
+
+  </div>
+</div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
