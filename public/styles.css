@@ -56,6 +56,23 @@ body {
     box-shadow: 0 20px 60px rgba(0,0,0,0.8);
     text-align: center;
     overflow: visible;
+    position: relative;
+  }
+
+  .signout-btn {
+    position: absolute;
+    top: 18px;
+    right: 20px;
+    background: transparent;
+    border: none;
+    color: #999;
+    font-size: 12px;
+    cursor: pointer;
+  }
+
+  .signout-btn:hover {
+    color: #fff;
+    text-decoration: underline;
   }
 
   /* Utility class */
@@ -486,10 +503,17 @@ body {
     box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
   }
   
+  .voted-movie-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 12px 0 18px;
+  }
+  
   .checkmark {
-    font-size: 60px;
+    font-size: 28px;
     color: #4caf50;
-    margin-bottom: 15px;
     font-weight: bold;
   }
   

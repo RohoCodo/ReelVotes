@@ -1,6 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
 import { getFirestore, doc, getDoc, setDoc, updateDoc, increment, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-functions.js";
+import { getAuth, isSignInWithEmailLink, sendSignInLinkToEmail, signInWithEmailLink, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
 
 // Firebase Config
 const firebaseConfig = {
@@ -15,7 +16,10 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const functions = getFunctions(app);
-const validateEventbriteEmail = httpsCallable(functions, "validateEventbriteEmail");
+const auth = getAuth(app);
+// NOTE: Ticket purchase is no longer required to vote, so we
+// no longer call the validateEventbriteEmail Cloud Function.
+// const validateEventbriteEmail = httpsCallable(functions, "validateEventbriteEmail");
 
 // TMDB API Config
 const TMDB_API_KEY = "05e2d906f097b769ba4d7e8c7305accf"; // Get from https://www.themoviedb.org/settings/api
@@ -60,6 +64,10 @@ const EVENT_ID = urlParams.get("event") || "newparkway1";
 // Get or prompt for voter email - start as null to force verification flow
 let voterEmail = null;
 
+// Keys for storing pending and verified emails per event
+const PENDING_EMAIL_KEY = (eventId) => `pendingEmail_${eventId}`;
+const VERIFIED_EMAILS_KEY = (eventId) => `verifiedEmails_${eventId}`;
+
 const searchInput = document.getElementById("searchInput");
 const searchResults = document.getElementById("searchResults");
 const moviePreview = document.getElementById("moviePreview");
@@ -68,6 +76,51 @@ const chosenSection = document.getElementById("chosenMovies");
 const submitBtn = document.getElementById("submitBtn");
 const resultsDiv = document.getElementById("results");
 const clearSearchBtn = document.getElementById("clearSearchBtn");
+const signOutBtn = document.getElementById("signOutBtn");
+
+function normalizeEmail(email) {
+  return email.trim().toLowerCase();
+}
+
+function getRememberedVerifiedEmails() {
+  try {
+    const stored = window.localStorage.getItem(VERIFIED_EMAILS_KEY(EVENT_ID));
+    const emails = stored ? JSON.parse(stored) : [];
+    return Array.isArray(emails) ? emails : [];
+  } catch (error) {
+    console.error('Error reading remembered verified emails:', error);
+    return [];
+  }
+}
+
+function hasRememberedVerifiedEmail(email) {
+  return getRememberedVerifiedEmails().includes(normalizeEmail(email));
+}
+
+function rememberVerifiedEmail(email) {
+  const normalizedEmail = normalizeEmail(email);
+  const rememberedEmails = getRememberedVerifiedEmails();
+  if (!rememberedEmails.includes(normalizedEmail)) {
+    rememberedEmails.push(normalizedEmail);
+    window.localStorage.setItem(VERIFIED_EMAILS_KEY(EVENT_ID), JSON.stringify(rememberedEmails));
+  }
+}
+
+async function routeVerifiedEmail(email) {
+  const normalizedEmail = normalizeEmail(email);
+  voterEmail = normalizedEmail;
+  emailVerified = true;
+  localStorage.setItem(`voterEmail_${EVENT_ID}`, normalizedEmail);
+  rememberVerifiedEmail(normalizedEmail);
+
+  const existingVote = await checkIfEmailVoted(normalizedEmail);
+  if (existingVote) {
+    await showExistingVoteConfirmation(existingVote);
+  } else {
+    await fetchChosenMovies();
+    showVotingInterface();
+  }
+}
 
 // Fetch active movies from Firebase
 async function fetchChosenMovies() {
@@ -539,10 +592,13 @@ document.addEventListener("click", (e) => {
 async function recordVote() {
   try {
     if (!selectedMovie || !voterEmail) return;
-    // Check if email has already voted
+    // Check if email has already voted. In normal flow a user who has
+    // voted should not reach this point, but if they do (e.g. another
+    // tab submitted first), redirect them to the existing-vote
+    // confirmation instead of showing an alert.
     const alreadyVoted = await checkIfEmailVoted(voterEmail);
     if (alreadyVoted) {
-      alert("You've already voted! Each email can only vote once per event.");
+      await showExistingVoteConfirmation(alreadyVoted);
       return;
     }
     
@@ -636,10 +692,12 @@ submitBtn.onclick = async () => {
   resultsDiv.classList.remove("hidden");
   resultsDiv.innerHTML = `
     <div class="confirmation">
-      <div class="checkmark">✓</div>
       ${selectedMovie.poster ? `<img class="confirmation-poster" src="${selectedMovie.poster}" alt="${selectedMovie.title} poster" />` : ''}
       <h2>You voted for:</h2>
-      <p class="voted-movie"><b>${selectedMovie.title}</b></p>
+      <div class="voted-movie-row">
+        <div class="checkmark">✓</div>
+        <p class="voted-movie"><b>${selectedMovie.title}</b></p>
+      </div>
       <p class="vote-counted">The vote has been counted</p>
       
     </div>
@@ -686,10 +744,12 @@ async function showExistingVoteConfirmation(movie) {
   resultsDiv.classList.remove("hidden");
   resultsDiv.innerHTML = `
     <div class="confirmation">
-      <div class="checkmark">✓</div>
       ${movieMetadata.poster ? `<img class="confirmation-poster" src="${movieMetadata.poster}" alt="${movie.title} poster" />` : ''}
       <h2>You've Already Voted!</h2>
-      <p class="voted-movie"><b>${movie.title}</b></p>
+      <div class="voted-movie-row">
+        <div class="checkmark">✓</div>
+        <p class="voted-movie"><b>${movie.title}</b></p>
+      </div>
       <p class="vote-counted">Your vote has been counted</p>
     </div>
 
@@ -755,6 +815,48 @@ function showVotingInterface() {
   displayAllowedMovies();
 }
 
+// Complete Firebase Auth email-link sign-in if the current URL contains a magic link.
+async function handleEmailLinkSignIn() {
+  try {
+    if (!isSignInWithEmailLink(auth, window.location.href)) {
+      return false;
+    }
+
+    let email = window.localStorage.getItem(PENDING_EMAIL_KEY(EVENT_ID));
+    if (!email) {
+      email = window.prompt('Please confirm your email address to finish signing in for voting.');
+    }
+
+    if (!email) {
+      return false;
+    }
+
+    const normalizedEmail = normalizeEmail(email);
+    const result = await signInWithEmailLink(auth, normalizedEmail, window.location.href);
+    const user = result.user;
+
+    voterEmail = normalizeEmail(user.email || normalizedEmail);
+    emailVerified = true;
+    localStorage.setItem(`voterEmail_${EVENT_ID}`, voterEmail);
+    rememberVerifiedEmail(voterEmail);
+    window.localStorage.removeItem(PENDING_EMAIL_KEY(EVENT_ID));
+
+    // Clean up the URL so magic link parameters don't persist
+    if (window.history && window.history.replaceState) {
+      const cleanUrl = `${window.location.origin}${window.location.pathname}?event=${encodeURIComponent(EVENT_ID)}`;
+      window.history.replaceState({}, document.title, cleanUrl);
+    }
+
+    await routeVerifiedEmail(voterEmail);
+
+    return true;
+  } catch (error) {
+    console.error('Error completing email link sign-in:', error);
+    alert('There was a problem verifying your email link. Please request a new link and try again.');
+    return false;
+  }
+}
+
 async function promptForEmail() {
   if (voterEmail && emailVerified) {
     showVotingInterface();
@@ -782,13 +884,12 @@ async function promptForEmail() {
   emailForm.innerHTML = `
     <div class="email-step">
       <h2>Verify Your Email</h2>
-      <p>Use the email you used to purchase your Eventbrite ticket</p>
+      <p>Enter an email to cast your vote. One vote per email.</p>
       <input type="email" id="emailInputField" placeholder="your@email.com" value="${emailValue}" autofocus />
       <button id="emailConfirmBtn" class="submit-btn">Continue to Vote</button>
       
       <p class="email-help">
-        Haven't bought a ticket yet? 
-        <a href="https://www.eventbrite.com" target="_blank">Get your ticket here →</a>
+        We only use this to prevent duplicate votes.
       </p>
     </div>
   `;
@@ -806,7 +907,7 @@ async function promptForEmail() {
   
   return new Promise((resolve) => {
     emailConfirmBtn.onclick = async () => {
-      const email = emailInputField.value.trim();
+      const email = normalizeEmail(emailInputField.value);
       
       if (!email) {
         alert('Please enter an email address.');
@@ -820,54 +921,61 @@ async function promptForEmail() {
         return;
       }
       
-      // Validate against Eventbrite
+      // Send a Firebase Auth email-link to verify this address.
+      // This helps ensure one real person (email) gets one vote.
       try {
         emailConfirmBtn.disabled = true;
-        emailConfirmBtn.innerText = 'Validating...';
-        
-        // Check if this is an exception email
-        if (EXCEPTION_EMAILS.has(email)) {
-          voterEmail = email;
-          emailVerified = true;
-          localStorage.setItem(`voterEmail_${EVENT_ID}`, voterEmail);
+        emailConfirmBtn.innerText = 'Sending link...';
 
-          const existingVote = await checkIfEmailVoted(email);
+        const existingVote = await checkIfEmailVoted(email);
+        if (existingVote) {
           emailForm.remove();
-
-          if (existingVote) {
-            await showExistingVoteConfirmation(existingVote);
-          } else {
-            await fetchChosenMovies();
-            showVotingInterface();
-          }
+          await routeVerifiedEmail(email);
           resolve();
           return;
         }
-        
-        const result = await validateEventbriteEmail({ email: email });
-        
-        if (result.data.valid) {
-          voterEmail = email;
-          emailVerified = true;
-          localStorage.setItem(`voterEmail_${EVENT_ID}`, voterEmail);
 
-          const existingVote = await checkIfEmailVoted(email);
+        // If this browser has already verified this email before, let them back in
+        // without sending another link.
+        if (hasRememberedVerifiedEmail(email)) {
           emailForm.remove();
-
-          if (existingVote) {
-            await showExistingVoteConfirmation(existingVote);
-          } else {
-            await fetchChosenMovies();
-            showVotingInterface();
-          }
+          await routeVerifiedEmail(email);
           resolve();
-        } else {
-          alert(result.data.message || 'Email not found in attendee list.');
-          emailConfirmBtn.disabled = false;
-          emailConfirmBtn.innerText = 'Continue to Vote';
+          return;
         }
+
+        // Allow certain admin/exception emails to bypass link for testing
+        if (EXCEPTION_EMAILS.has(email)) {
+          emailForm.remove();
+          await routeVerifiedEmail(email);
+          resolve();
+          return;
+        }
+
+        const actionCodeSettings = {
+          url: `${window.location.origin}${window.location.pathname}?event=${encodeURIComponent(EVENT_ID)}`,
+          handleCodeInApp: true
+        };
+
+        // Save email locally so we can complete sign-in after the magic link
+        window.localStorage.setItem(PENDING_EMAIL_KEY(EVENT_ID), email);
+
+        await sendSignInLinkToEmail(auth, email, actionCodeSettings);
+
+        // Update the UI to explain what's happening and why
+        emailForm.innerHTML = `
+          <div class="email-step">
+            <h2>Check Your Email</h2>
+            <p>We\'ve sent a secure sign-in link to <strong>${email}</strong>.</p>
+            <p>We first verify your email to protect the integrity of the vote and help ensure one vote per person, so every voice has a fair chance.</p>
+            <p>Open your inbox on this device and tap the link to continue and cast your vote. If you don’t see it, check your spam folder too.</p>
+          </div>
+        `;
+
+        resolve();
       } catch (error) {
-        alert('Error validating email. Please try again.');
+        console.error('Error sending sign-in link:', error);
+        alert('Error sending verification link. Please try again.');
         emailConfirmBtn.disabled = false;
         emailConfirmBtn.innerText = 'Continue to Vote';
       }
@@ -889,13 +997,66 @@ async function updateAppLink() {
   }
 }
 
+function updateSignOutVisibility() {
+  if (!signOutBtn) return;
+  if (voterEmail && emailVerified) {
+    signOutBtn.classList.remove('hidden');
+  } else {
+    signOutBtn.classList.add('hidden');
+  }
+}
+
 // Initialize
 async function init() {
   hideVotingInterface();
-  await promptForEmail();
-  // Email verification already shows voting interface or confirmation
-  // No need to call fetchChosenMovies again
+  
+  // Wait for Firebase Auth to finish restoring any existing session
+  await new Promise((resolve) => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      unsubscribe();
+      if (user && user.email) {
+        voterEmail = normalizeEmail(user.email);
+        emailVerified = true;
+        localStorage.setItem(`voterEmail_${EVENT_ID}`, voterEmail);
+        rememberVerifiedEmail(voterEmail);
+      }
+      updateSignOutVisibility();
+      resolve();
+    });
+  });
+  
+  // First, see if the user is coming back from an email link.
+  const handledLink = await handleEmailLinkSignIn();
+
+  if (!handledLink) {
+    // If not, and we don't already have a verified email in this session,
+    // start the email-link flow.
+    if (!(voterEmail && emailVerified)) {
+      await promptForEmail();
+    } else {
+      // Already verified in this session; route based on whether they've voted.
+      await routeVerifiedEmail(voterEmail);
+    }
+  }
+
   await updateAppLink();
+  updateSignOutVisibility();
 }
 
 init();
+
+if (signOutBtn) {
+  signOutBtn.addEventListener('click', async () => {
+    try {
+      await signOut(auth);
+    } catch (err) {
+      console.error('Error signing out:', err);
+    }
+    voterEmail = null;
+    emailVerified = false;
+    localStorage.removeItem(`voterEmail_${EVENT_ID}`);
+    window.localStorage.removeItem(PENDING_EMAIL_KEY(EVENT_ID));
+    const cleanUrl = `${window.location.origin}${window.location.pathname}?event=${encodeURIComponent(EVENT_ID)}`;
+    window.location.href = cleanUrl;
+  });
+}
