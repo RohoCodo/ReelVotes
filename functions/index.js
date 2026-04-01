@@ -153,7 +153,7 @@ function sanitizeCaptchaToken(captchaToken) {
 }
 
 function movieDocId(movieTitle) {
-  return movieTitle.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_-]/g, "");
+  return movieTitle;
 }
 
 function getRequesterIp(request) {
