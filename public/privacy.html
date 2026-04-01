@@ -42,7 +42,7 @@
     <div class="card">
       <div class="policy-container">
         <h1>Privacy Policy</h1>
-        <p><strong>Last updated:</strong> March 27, 2026</p>
+        <p><strong>Last updated:</strong> March 31, 2026</p>
 
         <p>
           This Privacy Policy explains how ReelVotes ("we", "us", or "our") collects, uses, and protects
@@ -52,27 +52,26 @@
         <h2>1. Information We Collect</h2>
         <p>When you use ReelVotes, we may collect:</p>
         <ul>
-          <li><strong>Contact information:</strong> The email address you provide so we can associate a single vote with a single email.</li>
+          <li><strong>Voting session information:</strong> A random browser identifier stored on your device so we can limit repeat voting from the same browser for the same event.</li>
           <li><strong>Voting information:</strong> The movie you vote for and details about the event you are voting in.</li>
-          <li><strong>Usage data:</strong> Basic technical information such as your browser type, device type, and general
+          <li><strong>Usage data:</strong> Basic technical information such as your browser type, device type, general
               interaction data with the Service (e.g., pages viewed, click events). This may be collected via
-              Firebase or your browser.</li>
+              Firebase or your browser, along with limited network metadata used for abuse prevention.</li>
         </ul>
 
         <h2>2. How We Use Your Information</h2>
         <p>We use the information we collect to:</p>
         <ul>
-          <li>Associate your vote with an email so each email can vote only once per event.</li>
+          <li>Associate your vote with a browser identifier so the same browser cannot easily vote multiple times in the same event.</li>
           <li>Record and count votes to determine results for the event.</li>
           <li>Prevent duplicate or fraudulent voting.</li>
           <li>Improve and operate the Service, including debugging and analytics.</li>
-          <li>Communicate with you about technical issues related to your vote, if needed.</li>
         </ul>
 
         <h2>3. Legal Basis and Consent</h2>
         <p>
           Where required by law, we process your personal data based on your consent, which you provide when
-          you choose to use the Service and submit your email and vote. You can choose not to participate,
+          you choose to use the Service and submit a vote. You can choose not to participate,
           but in that case you may not be able to cast a vote.
         </p>
 
@@ -83,6 +82,7 @@
         </p>
         <ul>
           <li><strong>Firebase (Google Cloud):</strong> We use Firebase for hosting, databases, and cloud functions.</li>
+          <li><strong>Cloudflare Turnstile:</strong> We may use Turnstile to distinguish real visitors from automated abuse during vote submission.</li>
           <li><strong>TMDB (The Movie Database):</strong> We fetch movie metadata such as posters and titles; your
               personal data is not sent to TMDB, only movie queries.</li>
         </ul>
@@ -92,7 +92,7 @@
 
         <h2>5. Data Retention</h2>
         <p>
-          We retain voting records (email + chosen movie + event) for as long as reasonably necessary
+          We retain voting records (browser identifier hash + chosen movie + event) for as long as reasonably necessary
           to administer the event, verify results, and maintain basic records, unless a longer retention
           period is required or permitted by law. We may aggregate or anonymize data for analytical or
           historical purposes.

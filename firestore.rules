@@ -8,25 +8,31 @@ service cloud.firestore {
     match /events/{eventId} {
       // Create event document if it doesn't exist
       allow read: if true;
-      allow create: if true;
+      allow create, update, delete: if false;
       
       // Individual votes collection
       match /votes/{voteId} {
-        allow read: if true;
-        allow create: if true;
+        allow read, write: if false;
       }
       
       // Movie summaries collection
       match /movies/{movieId} {
         allow read: if true;
-        allow write: if true;
+        allow write: if false;
+      }
+
+      match /voter_keys/{voterKeyId} {
+        allow read, write: if false;
+      }
+
+      match /rate_limits/{rateLimitId} {
+        allow read, write: if false;
       }
     }
 
     // Legacy votes collection (for backward compatibility if needed)
     match /votes/{docId} {
-      allow read: if true;
-      allow write: if true;
+      allow read, write: if false;
     }
 
     match /reactions/{docId} {

@@ -1,7 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc, updateDoc, increment, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-functions.js";
-import { getAuth, isSignInWithEmailLink, sendSignInLinkToEmail, signInWithEmailLink, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
 
 // Firebase Config
 const firebaseConfig = {
@@ -16,10 +15,10 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const functions = getFunctions(app);
-const auth = getAuth(app);
-// NOTE: Ticket purchase is no longer required to vote, so we
-// no longer call the validateEventbriteEmail Cloud Function.
-// const validateEventbriteEmail = httpsCallable(functions, "validateEventbriteEmail");
+const submitVoteCallable = httpsCallable(functions, "submitVote");
+const getVoteStatusCallable = httpsCallable(functions, "getVoteStatus");
+const TURNSTILE_SITE_KEY = window.REELVOTES_CONFIG?.turnstileSiteKey || "";
+const CAPTCHA_ENABLED = Boolean(TURNSTILE_SITE_KEY);
 
 // TMDB API Config
 const TMDB_API_KEY = "05e2d906f097b769ba4d7e8c7305accf"; // Get from https://www.themoviedb.org/settings/api
@@ -45,28 +44,18 @@ const ALLOWED_MOVIES = [
 let selectedMovie = null;
 let selectedMovieCard = null;
 let chosenMovies = [];
-let emailVerified = false;
+let voterClientId = null;
 const movieMetadataCache = new Map();
 
 // Hardcoded total votes needed to reach goal
 const VOTES_NEEDED = 50;
 
-// Admin/exception emails that skip verification
-const EXCEPTION_EMAILS = new Set([
-  "rtrocks722@gmail.com",
-  "rt332@cornell.edu"
-]);
-
 // Get event ID from URL parameters
 const urlParams = new URLSearchParams(window.location.search);
 const EVENT_ID = urlParams.get("event") || "newparkway1";
 
-// Get or prompt for voter email - start as null to force verification flow
-let voterEmail = null;
-
-// Keys for storing pending and verified emails per event
-const PENDING_EMAIL_KEY = (eventId) => `pendingEmail_${eventId}`;
-const VERIFIED_EMAILS_KEY = (eventId) => `verifiedEmails_${eventId}`;
+const VOTER_CLIENT_ID_KEY = (eventId) => `voterClientId_${eventId}`;
+const CAST_VOTE_KEY = (eventId) => `castVote_${eventId}`;
 
 const searchInput = document.getElementById("searchInput");
 const searchResults = document.getElementById("searchResults");
@@ -76,50 +65,206 @@ const chosenSection = document.getElementById("chosenMovies");
 const submitBtn = document.getElementById("submitBtn");
 const resultsDiv = document.getElementById("results");
 const clearSearchBtn = document.getElementById("clearSearchBtn");
-const signOutBtn = document.getElementById("signOutBtn");
+const captchaContainer = document.getElementById("captchaContainer");
+const captchaNotice = document.getElementById("captchaNotice");
 
-function normalizeEmail(email) {
-  return email.trim().toLowerCase();
-}
+let captchaToken = null;
+let captchaWidgetId = null;
 
-function getRememberedVerifiedEmails() {
-  try {
-    const stored = window.localStorage.getItem(VERIFIED_EMAILS_KEY(EVENT_ID));
-    const emails = stored ? JSON.parse(stored) : [];
-    return Array.isArray(emails) ? emails : [];
-  } catch (error) {
-    console.error('Error reading remembered verified emails:', error);
-    return [];
+function getCaptchaErrorMessage(errorCode) {
+  if (errorCode === "invalid-sitekey") {
+    return "CAPTCHA configuration error: invalid site key.";
   }
-}
-
-function hasRememberedVerifiedEmail(email) {
-  return getRememberedVerifiedEmails().includes(normalizeEmail(email));
-}
-
-function rememberVerifiedEmail(email) {
-  const normalizedEmail = normalizeEmail(email);
-  const rememberedEmails = getRememberedVerifiedEmails();
-  if (!rememberedEmails.includes(normalizedEmail)) {
-    rememberedEmails.push(normalizedEmail);
-    window.localStorage.setItem(VERIFIED_EMAILS_KEY(EVENT_ID), JSON.stringify(rememberedEmails));
+  if (errorCode === "invalid-domain") {
+    return "CAPTCHA is blocked for this domain. Add this hostname in Turnstile settings.";
   }
+  if (errorCode === "network-error") {
+    return "CAPTCHA network error. Check ad blockers, VPN, or firewall and try again.";
+  }
+  return "CAPTCHA failed to load. Please refresh and try again.";
 }
 
-async function routeVerifiedEmail(email) {
-  const normalizedEmail = normalizeEmail(email);
-  voterEmail = normalizedEmail;
-  emailVerified = true;
-  localStorage.setItem(`voterEmail_${EVENT_ID}`, normalizedEmail);
-  rememberVerifiedEmail(normalizedEmail);
+function setCaptchaNotice(message) {
+  if (!captchaNotice) {
+    return;
+  }
 
-  const existingVote = await checkIfEmailVoted(normalizedEmail);
-  if (existingVote) {
-    await showExistingVoteConfirmation(existingVote);
+  captchaNotice.textContent = message;
+  captchaNotice.classList.toggle("hidden", !message);
+}
+
+function updateSubmitButtonState() {
+  const hasSelectedMovie = Boolean(selectedMovie);
+  submitBtn.disabled = !hasSelectedMovie || (CAPTCHA_ENABLED && !captchaToken);
+}
+
+async function waitForTurnstile() {
+  for (let attempt = 0; attempt < 40; attempt += 1) {
+    if (window.turnstile?.render) {
+      return;
+    }
+    await new Promise((resolve) => window.setTimeout(resolve, 250));
+  }
+
+  throw new Error("Turnstile did not finish loading.");
+}
+
+async function ensureCaptchaWidget() {
+  if (!CAPTCHA_ENABLED || !captchaContainer) {
+    return;
+  }
+
+  captchaContainer.classList.remove("hidden");
+  setCaptchaNotice(captchaToken ? "" : "Complete the CAPTCHA to enable vote submission.");
+
+  if (captchaWidgetId !== null) {
+    updateSubmitButtonState();
+    return;
+  }
+
+  await waitForTurnstile();
+
+  captchaWidgetId = window.turnstile.render(captchaContainer, {
+    sitekey: TURNSTILE_SITE_KEY,
+    theme: "dark",
+    callback: (token) => {
+      captchaToken = token;
+      setCaptchaNotice("");
+      updateSubmitButtonState();
+    },
+    "expired-callback": () => {
+      captchaToken = null;
+      setCaptchaNotice("CAPTCHA expired. Please complete it again.");
+      updateSubmitButtonState();
+    },
+    "error-callback": (errorCode) => {
+      captchaToken = null;
+      const message = getCaptchaErrorMessage(errorCode);
+      console.error("Turnstile error:", { errorCode, siteKey: TURNSTILE_SITE_KEY, hostname: window.location.hostname });
+      setCaptchaNotice(message);
+      updateSubmitButtonState();
+    }
+  });
+
+  updateSubmitButtonState();
+}
+
+function resetCaptcha({ keepVisible = false } = {}) {
+  captchaToken = null;
+
+  if (CAPTCHA_ENABLED && captchaWidgetId !== null && window.turnstile?.reset) {
+    window.turnstile.reset(captchaWidgetId);
+  }
+
+  if (captchaContainer) {
+    captchaContainer.classList.toggle("hidden", !keepVisible || !CAPTCHA_ENABLED);
+  }
+
+  setCaptchaNotice(keepVisible && CAPTCHA_ENABLED ? "Complete the CAPTCHA to enable vote submission." : "");
+  updateSubmitButtonState();
+}
+
+function updateVoteActionState() {
+  if (!selectedMovie) {
+    submitBtn.classList.add("hidden");
+    resetCaptcha();
+    return;
+  }
+
+  submitBtn.classList.remove("hidden");
+
+  if (CAPTCHA_ENABLED) {
+    ensureCaptchaWidget().catch((error) => {
+      console.error("Error loading CAPTCHA:", error);
+      setCaptchaNotice("CAPTCHA script failed to load. Check blockers/network and refresh.");
+    });
   } else {
-    await fetchChosenMovies();
-    showVotingInterface();
+    if (captchaContainer) {
+      captchaContainer.classList.add("hidden");
+    }
+    setCaptchaNotice("");
   }
+
+  updateSubmitButtonState();
+}
+
+function generateClientId() {
+  if (window.crypto?.randomUUID) {
+    return window.crypto.randomUUID();
+  }
+
+  const randomPart = Math.random().toString(36).slice(2);
+  return `rv_${Date.now().toString(36)}_${randomPart}`;
+}
+
+function getOrCreateClientId() {
+  try {
+    let clientId = window.localStorage.getItem(VOTER_CLIENT_ID_KEY(EVENT_ID));
+    if (!clientId) {
+      clientId = generateClientId();
+      window.localStorage.setItem(VOTER_CLIENT_ID_KEY(EVENT_ID), clientId);
+    }
+    return clientId;
+  } catch (error) {
+    console.error("Error getting voter client ID:", error);
+    return generateClientId();
+  }
+}
+
+function persistCastVote(movieTitle) {
+  window.localStorage.setItem(CAST_VOTE_KEY(EVENT_ID), JSON.stringify({
+    title: movieTitle,
+    storedAt: Date.now()
+  }));
+}
+
+function getPersistedCastVote() {
+  try {
+    const storedVote = window.localStorage.getItem(CAST_VOTE_KEY(EVENT_ID));
+    return storedVote ? JSON.parse(storedVote) : null;
+  } catch (error) {
+    console.error("Error reading stored vote:", error);
+    return null;
+  }
+}
+
+async function getExistingVote() {
+  const localVote = getPersistedCastVote();
+  if (localVote?.title) {
+    return {
+      title: localVote.title,
+      vote_count: 0,
+      year: null
+    };
+  }
+
+  const response = await getVoteStatusCallable({
+    eventId: EVENT_ID,
+    clientId: voterClientId
+  });
+
+  if (!response.data?.hasVoted || !response.data.movieTitle) {
+    return null;
+  }
+
+  persistCastVote(response.data.movieTitle);
+  return {
+    title: response.data.movieTitle,
+    vote_count: 0,
+    year: null
+  };
+}
+
+async function routeCurrentVoter() {
+  const existingVote = await getExistingVote();
+  if (existingVote) {
+    await fetchChosenMovies();
+    await showExistingVoteConfirmation(existingVote);
+    return;
+  }
+
+  await fetchChosenMovies();
+  showVotingInterface();
 }
 
 // Fetch active movies from Firebase
@@ -162,7 +307,7 @@ async function fetchChosenMovies() {
   }
 }
 
-// Generate app link with authentication token
+// Generate the public app link for the current event
 async function generateAppLink() {
   try {
     return `${window.location.origin}${window.location.pathname}?event=${encodeURIComponent(EVENT_ID)}`;
@@ -343,8 +488,7 @@ async function selectMovie(tmdbMovie) {
     }
     
     console.log("Showing submit button");
-    submitBtn.classList.remove("hidden");
-    submitBtn.disabled = false;
+    updateVoteActionState();
     
     return;
   }
@@ -377,8 +521,7 @@ async function selectMovie(tmdbMovie) {
   });
   
   console.log("Showing submit button");
-  submitBtn.classList.remove("hidden");
-  submitBtn.disabled = false;
+  updateVoteActionState();
 }
 
 // Display chosen movies with vote bars
@@ -473,48 +616,13 @@ async function displayChosenMovies() {
       moviePreview.classList.remove("hidden");
       searchResults.classList.add("hidden");
       searchInput.value = movie.title;
-      submitBtn.classList.remove("hidden");
-      submitBtn.disabled = false;
+      updateVoteActionState();
     };
     
     chosenList.appendChild(item);
   });
 
-  chosenSection.style.display = emailVerified ? "block" : "none";
-}
-
-// Check if an email has already voted for this event
-// Check if email has already voted (can be just true/false or return the movie if we need it)
-async function checkIfEmailVoted(email) {
-  try {
-    // Query individual votes for this email in this event
-    const votesRef = collection(db, "events", EVENT_ID, "votes");
-    const q = query(votesRef, where("voter_email", "==", email));
-    const querySnapshot = await getDocs(q);
-    
-    if (querySnapshot.size > 0) {
-      // Email has already voted - return the movie title
-      const voteDoc = querySnapshot.docs[0];
-      const movieTitle = voteDoc.data().movie_title;
-      
-      // Get vote count for this movie
-      const moviesRef = collection(db, "events", EVENT_ID, "movies");
-      const movieDocId = movieTitle.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_-]/g, '');
-      const movieRef = doc(moviesRef, movieDocId);
-      const movieDoc = await getDoc(movieRef);
-      
-      return {
-        title: movieTitle,
-        vote_count: movieDoc.exists() ? (movieDoc.data().vote_count || 0) : 0,
-        year: null
-      };
-    }
-    
-    return null;
-  } catch (error) {
-    console.error("Error checking if email voted:", error);
-    return null;
-  }
+  chosenSection.style.display = "block";
 }
 
 // Clear movie selection
@@ -523,9 +631,8 @@ function clearMovieSelection() {
   moviePreview.classList.add("hidden");
   searchInput.value = "";
   searchResults.classList.add("hidden");
-  submitBtn.classList.add("hidden");
-  submitBtn.disabled = true;
   clearSearchBtn.classList.remove("shown");
+  updateVoteActionState();
 }
 
 // Search handler
@@ -537,8 +644,7 @@ searchInput.addEventListener("input", (e) => {
     selectedMovie = null;
     selectedMovieCard = null;
     moviePreview.classList.add("hidden");
-    submitBtn.classList.add("hidden");
-    submitBtn.disabled = true;
+    updateVoteActionState();
     
     // Remove highlight from all chosen movies
     document.querySelectorAll('.chosen-movie').forEach(card => {
@@ -571,6 +677,7 @@ clearSearchBtn.addEventListener("click", () => {
   moviePreview.classList.add("hidden");
   selectedMovie = null;
   selectedMovieCard = null;
+  updateVoteActionState();
   displayChosenMovies();
 });
 
@@ -591,58 +698,35 @@ document.addEventListener("click", (e) => {
 // Record vote to Firebase (new structure with individual votes)
 async function recordVote() {
   try {
-    if (!selectedMovie || !voterEmail) return;
-    // Check if email has already voted. In normal flow a user who has
-    // voted should not reach this point, but if they do (e.g. another
-    // tab submitted first), redirect them to the existing-vote
-    // confirmation instead of showing an alert.
-    const alreadyVoted = await checkIfEmailVoted(voterEmail);
-    if (alreadyVoted) {
-      await showExistingVoteConfirmation(alreadyVoted);
-      return;
-    }
-    
-    // Store just the movie title
+    if (!selectedMovie || !voterClientId) return null;
     const movieTitle = selectedMovie.title;
-    
-    // Reference to event
-    const eventRef = doc(db, "events", EVENT_ID);
-    
-    // 1. Store individual vote
-    const votesRef = collection(db, "events", EVENT_ID, "votes");
-    await setDoc(doc(votesRef), {
-      voter_email: voterEmail,
-      movie_title: movieTitle,
-      created_at: new Date()
+
+    const response = await submitVoteCallable({
+      eventId: EVENT_ID,
+      movieTitle,
+      clientId: voterClientId,
+      captchaToken
     });
-    
-    // 2. Update or create movie summary
-    const moviesRef = collection(db, "events", EVENT_ID, "movies");
-    // Create safe document ID: lowercase, replace spaces with underscores, remove special chars
-    const movieDocId = movieTitle.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_-]/g, '');
-    const movieRef = doc(moviesRef, movieDocId);
-    const movieDoc = await getDoc(movieRef);
-    
-    if (movieDoc.exists()) {
-      // Movie summary already exists - increment vote count
-      await updateDoc(movieRef, {
-        vote_count: increment(1),
-        updated_at: new Date()
-      });
-    } else {
-      // First vote for this movie - create summary
-      await setDoc(movieRef, {
-        movie_title: movieTitle,
-        vote_count: 1,
-        event_id: EVENT_ID,
-        created_at: new Date(),
-        updated_at: new Date()
-      });
+
+    const result = response.data || {};
+    if (result.movieTitle) {
+      persistCastVote(result.movieTitle);
     }
-    
+
+    return result;
   } catch (error) {
     console.error("Error recording vote:", error);
-    alert("Error recording vote: " + error.message);
+    if (error.code === "functions/resource-exhausted") {
+      alert("You are moving too fast. Please wait a few seconds and try again.");
+    } else if (error.code === "functions/permission-denied" || error.code === "functions/invalid-argument") {
+      resetCaptcha({ keepVisible: true });
+      alert("Please complete the CAPTCHA challenge and try again.");
+    } else if (error.code === "functions/unavailable") {
+      resetCaptcha({ keepVisible: true });
+      alert("CAPTCHA verification is temporarily unavailable. Please try again.");
+    } else {
+      alert("Error recording vote: " + (error.message || "Please try again."));
+    }
     throw error;
   }
 }
@@ -650,9 +734,10 @@ async function recordVote() {
 // Submit vote
 submitBtn.onclick = async () => {
   if (!selectedMovie) return;
-  
-  if (!emailVerified) {
-    alert('Please verify your email first.');
+
+  if (CAPTCHA_ENABLED && !captchaToken) {
+    await ensureCaptchaWidget();
+    setCaptchaNotice("Complete the CAPTCHA to enable vote submission.");
     return;
   }
 
@@ -674,8 +759,20 @@ submitBtn.onclick = async () => {
 
   // Record vote and refresh data
   console.log("Recording vote...");
-  await recordVote();
+  const voteResult = await recordVote();
+  if (voteResult?.status === "already-voted") {
+    resetCaptcha();
+    await fetchChosenMovies();
+    await showExistingVoteConfirmation({
+      title: voteResult.movieTitle || selectedMovie.title,
+      vote_count: 0,
+      year: null
+    });
+    return;
+  }
+
   console.log("Vote recorded, fetching updated data...");
+  resetCaptcha();
   await fetchChosenMovies();
 
   const movieData = chosenMovies.find(m => m.title === selectedMovie.title);
@@ -788,6 +885,7 @@ function hideVotingInterface() {
   if (submitBtn) {
     submitBtn.classList.add("hidden");
   }
+  resetCaptcha();
   if (resultsDiv) {
     resultsDiv.classList.add("hidden");
   }
@@ -811,180 +909,10 @@ function showVotingInterface() {
   
   // Show the allowed movies list instead
   displayAllowedMovies();
+  updateVoteActionState();
 }
 
-// Complete Firebase Auth email-link sign-in if the current URL contains a magic link.
-async function handleEmailLinkSignIn() {
-  try {
-    if (!isSignInWithEmailLink(auth, window.location.href)) {
-      return false;
-    }
-
-    let email = window.localStorage.getItem(PENDING_EMAIL_KEY(EVENT_ID));
-    if (!email) {
-      email = window.prompt('Please confirm your email address to finish signing in for voting.');
-    }
-
-    if (!email) {
-      return false;
-    }
-
-    const normalizedEmail = normalizeEmail(email);
-    const result = await signInWithEmailLink(auth, normalizedEmail, window.location.href);
-    const user = result.user;
-
-    voterEmail = normalizeEmail(user.email || normalizedEmail);
-    emailVerified = true;
-    localStorage.setItem(`voterEmail_${EVENT_ID}`, voterEmail);
-    rememberVerifiedEmail(voterEmail);
-    window.localStorage.removeItem(PENDING_EMAIL_KEY(EVENT_ID));
-
-    // Clean up the URL so magic link parameters don't persist
-    if (window.history && window.history.replaceState) {
-      const cleanUrl = `${window.location.origin}${window.location.pathname}?event=${encodeURIComponent(EVENT_ID)}`;
-      window.history.replaceState({}, document.title, cleanUrl);
-    }
-
-    await routeVerifiedEmail(voterEmail);
-
-    return true;
-  } catch (error) {
-    console.error('Error completing email link sign-in:', error);
-    alert('There was a problem verifying your email link. Please request a new link and try again.');
-    return false;
-  }
-}
-
-async function promptForEmail() {
-  if (voterEmail && emailVerified) {
-    showVotingInterface();
-    return; // Already verified in this session
-  }
-  
-  // Hide voting interface, keep card visible
-  hideVotingInterface();
-  
-  // Create email form in the card
-  const card = document.querySelector('.card');
-  
-  if (!card) {
-    console.error('Card not found');
-    return;
-  }
-  
-  const emailForm = document.createElement('div');
-  emailForm.id = 'emailStep';
-  
-  // Check if we have a cached email to pre-fill
-  const cachedEmail = localStorage.getItem(`voterEmail_${EVENT_ID}`);
-  const emailValue = cachedEmail ? cachedEmail : '';
-  
-  emailForm.innerHTML = `
-    <div class="email-step">
-      <h2>Verify Your Email</h2>
-      <p>Enter an email to cast your vote. One vote per email.</p>
-      <input type="email" id="emailInputField" placeholder="your@email.com" value="${emailValue}" autofocus />
-      <button id="emailConfirmBtn" class="submit-btn">Continue to Vote</button>
-      
-      <p class="email-help">
-        We only use this to prevent duplicate votes.
-      </p>
-    </div>
-  `;
-  
-  // Insert at the beginning of the card content (after title/subtitle)
-  const searchSection = card.querySelector('#search-section');
-  if (searchSection) {
-    searchSection.parentNode.insertBefore(emailForm, searchSection);
-  } else {
-    card.appendChild(emailForm);
-  }
-  
-  const emailInputField = document.getElementById('emailInputField');
-  const emailConfirmBtn = document.getElementById('emailConfirmBtn');
-  
-  return new Promise((resolve) => {
-    emailConfirmBtn.onclick = async () => {
-      const email = normalizeEmail(emailInputField.value);
-      
-      if (!email) {
-        alert('Please enter an email address.');
-        return;
-      }
-      
-      // Basic email validation
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        alert('Please enter a valid email address.');
-        return;
-      }
-      
-      // Send a Firebase Auth email-link to verify this address.
-      // This helps ensure one real person (email) gets one vote.
-      try {
-        emailConfirmBtn.disabled = true;
-        emailConfirmBtn.innerText = 'Sending link...';
-
-        const existingVote = await checkIfEmailVoted(email);
-        if (existingVote) {
-          emailForm.remove();
-          await routeVerifiedEmail(email);
-          resolve();
-          return;
-        }
-
-        if (hasRememberedVerifiedEmail(email)) {
-          emailForm.remove();
-          await routeVerifiedEmail(email);
-          resolve();
-          return;
-        }
-
-        // Allow certain admin/exception emails to bypass link for testing
-        if (EXCEPTION_EMAILS.has(email)) {
-          emailForm.remove();
-          await routeVerifiedEmail(email);
-          resolve();
-          return;
-        }
-
-        const actionCodeSettings = {
-          url: `${window.location.origin}${window.location.pathname}?event=${encodeURIComponent(EVENT_ID)}`,
-          handleCodeInApp: true
-        };
-
-        // Save email locally so we can complete sign-in after the magic link
-        window.localStorage.setItem(PENDING_EMAIL_KEY(EVENT_ID), email);
-
-        await sendSignInLinkToEmail(auth, email, actionCodeSettings);
-
-        // Update the UI to explain what's happening and why
-        emailForm.innerHTML = `
-          <div class="email-step">
-            <h2>Check Your Email</h2>
-            <p>We\'ve sent a secure sign-in link to <strong>${email}</strong>.</p>
-            <p>We first verify your email to protect the integrity of the vote and help ensure one vote per person, so every voice has a fair chance.</p>
-            <p>Open your inbox on this device and tap the link to continue and cast your vote. If you don’t see it, check your spam folder too.</p>
-          </div>
-        `;
-
-        resolve();
-      } catch (error) {
-        console.error('Error sending sign-in link:', error);
-        alert('Error sending verification link. Please try again.');
-        emailConfirmBtn.disabled = false;
-        emailConfirmBtn.innerText = 'Continue to Vote';
-      }
-    };
-    
-    // Allow Enter key to submit
-    emailInputField.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') emailConfirmBtn.click();
-    });
-  });
-}
-
-// Update app link with authentication
+// Update the share link shown in the footer
 async function updateAppLink() {
   const appLink = document.getElementById('appLink');
   if (appLink) {
@@ -993,66 +921,13 @@ async function updateAppLink() {
   }
 }
 
-function updateSignOutVisibility() {
-  if (!signOutBtn) return;
-  if (voterEmail && emailVerified) {
-    signOutBtn.classList.remove('hidden');
-  } else {
-    signOutBtn.classList.add('hidden');
-  }
-}
-
 // Initialize
 async function init() {
   hideVotingInterface();
-  
-  // Wait for Firebase Auth to finish restoring any existing session
-  await new Promise((resolve) => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      unsubscribe();
-      if (user && user.email) {
-        voterEmail = normalizeEmail(user.email);
-        emailVerified = true;
-        localStorage.setItem(`voterEmail_${EVENT_ID}`, voterEmail);
-        rememberVerifiedEmail(voterEmail);
-      }
-      updateSignOutVisibility();
-      resolve();
-    });
-  });
-  
-  // First, see if the user is coming back from an email link.
-  const handledLink = await handleEmailLinkSignIn();
-
-  if (!handledLink) {
-    // If not, and we don't already have a verified email in this session,
-    // start the email-link flow.
-    if (!(voterEmail && emailVerified)) {
-      await promptForEmail();
-    } else {
-      // Already verified in this session; route based on whether they've voted.
-      await routeVerifiedEmail(voterEmail);
-    }
-  }
+  voterClientId = getOrCreateClientId();
+  await routeCurrentVoter();
 
   await updateAppLink();
-  updateSignOutVisibility();
 }
 
 init();
-
-if (signOutBtn) {
-  signOutBtn.addEventListener('click', async () => {
-    try {
-      await signOut(auth);
-    } catch (err) {
-      console.error('Error signing out:', err);
-    }
-    voterEmail = null;
-    emailVerified = false;
-    localStorage.removeItem(`voterEmail_${EVENT_ID}`);
-    window.localStorage.removeItem(PENDING_EMAIL_KEY(EVENT_ID));
-    const cleanUrl = `${window.location.origin}${window.location.pathname}?event=${encodeURIComponent(EVENT_ID)}`;
-    window.location.href = cleanUrl;
-  });
-}
