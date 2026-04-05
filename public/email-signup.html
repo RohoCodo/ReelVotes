@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Join the Email List - ReelVotes</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" type="image/png" href="icon.png" />
+</head>
+<body>
+
+<div class="overlay"></div>
+
+<div class="container">
+  <div class="card">
+
+    <img src="icon.png" class="logo" />
+
+    <h1>Get Ticket Alerts Early</h1>
+    <p class="subtitle">
+      Drop your email and we'll let you know as soon as
+      tickets for the next movie night go live.
+    </p>
+
+    <div class="email-step">
+      <form id="emailForm">
+        <label for="emailInput">Email address</label>
+        <input
+          id="emailInput"
+          type="email"
+          name="email"
+          placeholder="you@example.com"
+          autocomplete="email"
+          required
+        />
+        <button id="emailSubmitBtn" type="submit" class="submit-btn">Join the email list</button>
+      </form>
+      <p id="emailStatus" class="email-help"></p>
+    </div>
+
+    <p class="track-results">
+      <a href="index.html" class="app-link">Back to voting 
+    </p>
+
+  </div>
+</div>
+
+<script type="module" src="email-signup.js"></script>
+</body>
+</html>

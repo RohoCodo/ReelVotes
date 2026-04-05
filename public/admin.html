@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>ReelVotes – Admin Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" type="image/png" href="icon.png" />
+</head>
+<body>
+
+<div class="overlay"></div>
+
+<div class="container">
+  <div class="card">
+    <img src="icon.png" class="logo" />
+    <h1>Live Vote Dashboard</h1>
+    <p class="subtitle">For theater staff – updates in real time.</p>
+    <p id="eventLabel" class="subtitle"></p>
+    <p id="updatedAt" class="subtitle"></p>
+
+    <div id="adminMovies" class="chosen-section">
+      <p class="chosen-label">Current votes:</p>
+      <div id="adminList" class="chosen-list"></div>
+    </div>
+
+    <p class="track-results">
+      <a href="index.html" class="app-link">Back to voting →</a>
+    </p>
+  </div>
+</div>
+
+<script type="module" src="admin.js"></script>
+</body>
+</html>

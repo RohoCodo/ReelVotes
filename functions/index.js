@@ -144,6 +144,21 @@ function sanitizeClientId(clientId) {
   return normalizedClientId;
 }
 
+function sanitizeEmail(email) {
+  const normalizedEmail = String(email || "").trim().toLowerCase();
+  if (!normalizedEmail || normalizedEmail.length > 320) {
+    throw new HttpsError("invalid-argument", "A valid email is required.");
+  }
+
+  // Very light validation to avoid obviously bad values
+  const basicEmailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!basicEmailPattern.test(normalizedEmail)) {
+    throw new HttpsError("invalid-argument", "A valid email is required.");
+  }
+
+  return normalizedEmail;
+}
+
 function sanitizeCaptchaToken(captchaToken) {
   const normalizedCaptchaToken = String(captchaToken || "").trim();
   if (!normalizedCaptchaToken) {
@@ -292,6 +307,37 @@ exports.submitVote = onCall(async (request) => {
       voteCount: nextVoteCount,
     };
   });
+});
+
+exports.addEmailSignup = onCall(async (request) => {
+  const email = sanitizeEmail(request.data?.email);
+
+  let eventId = "unknown";
+  try {
+    eventId = sanitizeEventId(request.data?.eventId || "unknown");
+  } catch (error) {
+    // Fallback to a generic event id if the provided one is invalid
+    eventId = "unknown";
+  }
+
+  const emailHash = hashValue(email);
+  const ipHash = hashValue(`email:${getRequesterIp(request)}`);
+
+  const signupRef = db.collection("email_signups").doc(emailHash);
+
+  await signupRef.set({
+    email,
+    email_hash: emailHash,
+    event_id: eventId,
+    ip_hash: ipHash,
+    updated_at: admin.firestore.FieldValue.serverTimestamp(),
+  }, {merge: true});
+
+  logger.info("Email signup recorded", {eventId, emailHash});
+
+  return {
+    status: "ok",
+  };
 });
 
 // Create and deploy your first functions
