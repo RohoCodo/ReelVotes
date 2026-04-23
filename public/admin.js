@@ -25,17 +25,70 @@ const ADMIN_EMAILS = new Set([
   "nikki@thenewparkwaytheater.com"
 ]);
 
-// Get event ID from URL parameters (default to main event)
+// Alias map: date-based ID → Firestore event ID
+const EVENT_ID_ALIASES = { "2026-04-27": "newparkway1" };
+
+// Get event ID from URL parameters (default to first configured event)
 const urlParams = new URLSearchParams(window.location.search);
-const EVENT_ID = urlParams.get("event") || "newparkway1";
+const configuredEvents = (typeof window.REELVOTES_EVENTS !== 'undefined' ? window.REELVOTES_EVENTS : null) || [];
+const urlEventId = urlParams.get("event");
+let currentEventId = urlEventId
+  ? (EVENT_ID_ALIASES[urlEventId] || configuredEvents.find(e => e.id === urlEventId)?.firestoreEventId || urlEventId)
+  : (configuredEvents[0]?.firestoreEventId || "newparkway1");
 
 const eventLabel = document.getElementById("eventLabel");
 const updatedAtEl = document.getElementById("updatedAt");
 const adminList = document.getElementById("adminList");
+const ballotListEl = document.getElementById("ballotList");
+const eventSelector = document.getElementById("eventSelector");
 const backLink = document.querySelector("a[href='index.html']");
 
-if (eventLabel) {
-  eventLabel.textContent = `Event: ${EVENT_ID}`;
+// Populate event selector dropdown
+function populateSelector() {
+  if (!eventSelector) return;
+  eventSelector.innerHTML = "";
+  if (configuredEvents.length === 0) {
+    const opt = document.createElement("option");
+    opt.value = currentEventId;
+    opt.textContent = currentEventId;
+    eventSelector.appendChild(opt);
+    return;
+  }
+  configuredEvents.forEach(ev => {
+    const opt = document.createElement("option");
+    opt.value = ev.id;
+    opt.textContent = `${ev.screeningLabel || ev.id}${ev.voteStatus === 'ended' ? ' (ended)' : ev.voteStatus === 'live' ? ' (live)' : ''}`;
+    const resolvedId = EVENT_ID_ALIASES[ev.id] || ev.firestoreEventId || ev.id;
+    if (resolvedId === currentEventId || ev.id === (urlEventId || '')) opt.selected = true;
+    eventSelector.appendChild(opt);
+  });
+}
+populateSelector();
+
+// Update event label
+function updateEventLabel(firestoreId) {
+  if (eventLabel) eventLabel.textContent = `Firestore event: ${firestoreId}`;
+}
+updateEventLabel(currentEventId);
+
+// Render ballot (allowed movies list)
+function renderBallot(allowedMovies) {
+  const ballotSection = ballotListEl ? ballotListEl.closest('.ballot-section') || ballotListEl.parentElement : null;
+  if (!ballotListEl) return;
+  ballotListEl.innerHTML = "";
+  if (!allowedMovies || allowedMovies.length === 0) {
+    // Hide the ballot heading + list entirely
+    if (ballotSection) ballotSection.style.display = "none";
+    return;
+  }
+  if (ballotSection) ballotSection.style.display = "";
+  allowedMovies.forEach((title, i) => {
+    const item = document.createElement("div");
+    item.className = "chosen-movie";
+    item.style.cssText = "display:flex;align-items:center;gap:10px;pointer-events:none;cursor:default;";
+    item.innerHTML = `<span style="color:#aaa;font-size:13px;min-width:20px;">${i + 1}.</span><span>${title}</span>`;
+    ballotListEl.appendChild(item);
+  });
 }
 
 function normalizeEmail(email) {
@@ -79,10 +132,25 @@ function renderMovies(movies) {
   });
 }
 
-function startLiveListener() {
-  const moviesRef = collection(db, "events", EVENT_ID, "movies");
+let unsubscribeLive = null;
 
-  onSnapshot(moviesRef, (snapshot) => {
+function fetchBallotForEvent(firestoreId) {
+  // Look up the event in events-config.js by firestoreEventId
+  const ev = configuredEvents.find(e =>
+    (EVENT_ID_ALIASES[e.id] || e.firestoreEventId || e.id) === firestoreId
+  );
+  // Return the event's allowedMovies if defined; undefined/null means "not configured"
+  return ev && Array.isArray(ev.allowedMovies) ? ev.allowedMovies : null;
+}
+
+function startLiveListener(firestoreId) {
+  firestoreId = firestoreId || currentEventId;
+  if (unsubscribeLive) { unsubscribeLive(); unsubscribeLive = null; }
+  updateEventLabel(firestoreId);
+  renderBallot(fetchBallotForEvent(firestoreId));
+  const moviesRef = collection(db, "events", firestoreId, "movies");
+
+  unsubscribeLive = onSnapshot(moviesRef, (snapshot) => {
     const movies = [];
 
     snapshot.forEach((doc) => {
@@ -104,6 +172,18 @@ function startLiveListener() {
     if (updatedAtEl) {
       updatedAtEl.textContent = "Error loading votes (check console)";
     }
+  });
+}
+
+// Handle event selector changes
+if (eventSelector) {
+  eventSelector.addEventListener("change", () => {
+    const selectedId = eventSelector.value;
+    const resolved = EVENT_ID_ALIASES[selectedId]
+      || configuredEvents.find(e => e.id === selectedId)?.firestoreEventId
+      || selectedId;
+    currentEventId = resolved;
+    startLiveListener(resolved);
   });
 }
 
@@ -139,7 +219,7 @@ async function ensureAdminAccess() {
 
 ensureAdminAccess()
   .then(() => {
-    startLiveListener();
+    startLiveListener(currentEventId);
   })
   .catch((err) => {
     console.warn("Admin access blocked:", err.message);

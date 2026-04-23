@@ -35,16 +35,16 @@ const RATE_LIMIT_WINDOW_MS = 15000;
 const TURNSTILE_VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
 const TURNSTILE_SECRET_KEY = process.env.TURNSTILE_SECRET_KEY || "";
 const ALLOWED_MOVIES = new Set([
-  "Clueless",
-  "The Fifth Element",
-  "The Matrix",
-  "The Hangover",
-  "Bridesmaids",
-  "Superbad",
-  "8 Mile",
-  "Saw",
-  "Shrek",
-  "The Truman Show",
+  "Back to the Future",
+  "Jurassic Park",
+  "Blade Runner",
+  "In The Mood For Love",
+  "Mean Girls",
+  "Bring It On",
+  "The Notebook",
+  "Blade",
+  "Battle Royale",
+  "Mad Max: Fury Road",
 ]);
 
 // Cache for attendees

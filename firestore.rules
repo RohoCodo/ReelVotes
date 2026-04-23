@@ -18,7 +18,7 @@ service cloud.firestore {
       // Movie summaries collection
       match /movies/{movieId} {
         allow read: if true;
-        allow write: if false;
+        allow create, update, delete: if request.auth != null;
       }
 
       match /voter_keys/{voterKeyId} {

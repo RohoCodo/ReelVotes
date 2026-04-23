@@ -23,27 +23,31 @@ const CAPTCHA_ENABLED = Boolean(TURNSTILE_SITE_KEY);
 // TMDB API Config
 const TMDB_API_KEY = "05e2d906f097b769ba4d7e8c7305accf"; // Get from https://www.themoviedb.org/settings/api
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
+const TMDB_TITLE_OVERRIDES = {
+  "blade runner": { tmdbId: 78 }
+};
 
 // Restricted list - movies that cannot be voted for
 const RESTRICTED_MOVIES = new Set([]);
 
 // Allowed movies - only these can be voted for
 const ALLOWED_MOVIES = [
-  "Clueless",
-  "The Fifth Element",
-  "The Matrix",
-  "The Hangover",
-  "Bridesmaids",
-  "Superbad",
-  "8 Mile",
-  "Saw",
-  "Shrek",
-  "The Truman Show"
+  "Back to the Future",
+  "Jurassic Park",
+  "Blade Runner",
+  "In The Mood For Love",
+  "Mean Girls",
+  "Bring It On",
+  "The Notebook",
+  "Blade",
+  "Battle Royale",
+  "Mad Max: Fury Road"
 ];
 
 let selectedMovie = null;
 let selectedMovieCard = null;
 let chosenMovies = [];
+let hasActiveMovieList = false;
 let voterClientId = null;
 const movieMetadataCache = new Map();
 
@@ -52,7 +56,25 @@ const VOTES_NEEDED = 50;
 
 // Get event ID from URL parameters
 const urlParams = new URLSearchParams(window.location.search);
-const EVENT_ID = urlParams.get("event") || "newparkway1";
+const requestedEventId = urlParams.get("event");
+const EVENT_ID_ALIASES = {
+  "2026-04-27": "newparkway1"
+};
+const requestedEventDataId = EVENT_ID_ALIASES[requestedEventId] || requestedEventId;
+const configuredEvents = window.REELVOTES_EVENTS || [];
+const selectedEvent = window.REELVOTES_EVENT || configuredEvents.find(
+  (event) => event.id === requestedEventId || event.firestoreEventId === requestedEventId || event.firestoreEventId === requestedEventDataId
+) || null;
+const EVENT_ID = selectedEvent?.firestoreEventId || requestedEventDataId || "newparkway1";
+const EVENT_STATUS = selectedEvent?.voteStatus || null;
+
+console.log("[app] Bootstrap", {
+  href: window.location.href,
+  requestedEventId,
+  selectedEvent,
+  EVENT_ID,
+  EVENT_STATUS
+});
 
 const VOTER_CLIENT_ID_KEY = (eventId) => `voterClientId_${eventId}`;
 const CAST_VOTE_KEY = (eventId) => `castVote_${eventId}`;
@@ -62,6 +84,7 @@ const searchResults = document.getElementById("searchResults");
 const moviePreview = document.getElementById("moviePreview");
 const chosenList = document.getElementById("chosenList");
 const chosenSection = document.getElementById("chosenMovies");
+const chosenLabel = document.querySelector(".chosen-label");
 const submitBtn = document.getElementById("submitBtn");
 const resultsDiv = document.getElementById("results");
 const clearSearchBtn = document.getElementById("clearSearchBtn");
@@ -256,6 +279,18 @@ async function getExistingVote() {
 }
 
 async function routeCurrentVoter() {
+  console.log("[app] Routing current voter", {
+    EVENT_ID,
+    EVENT_STATUS
+  });
+
+  if (EVENT_STATUS === "ended") {
+    console.log("[app] Event ended, showing results view");
+    await fetchChosenMovies();
+    showEndedResultsInterface();
+    return;
+  }
+
   const existingVote = await getExistingVote();
   if (existingVote) {
     await fetchChosenMovies();
@@ -291,9 +326,16 @@ async function fetchChosenMovies() {
     chosenMovies = moviesArray;
     console.log("Total unique movies:", chosenMovies.length);
     console.log("Movies:", chosenMovies);
+    console.log("[app] Computed movie list state", {
+      EVENT_ID,
+      EVENT_STATUS,
+      chosenMoviesLength: chosenMovies.length
+    });
+
+    hasActiveMovieList = chosenMovies.length > 0 || EVENT_STATUS === "live";
 
     // Hide section if no movies
-    if (chosenMovies.length === 0) {
+    if (!hasActiveMovieList) {
       console.log("No votes found - hiding section");
       chosenSection.style.display = "none";
     } else {
@@ -354,8 +396,20 @@ async function getMovieMetadataByTitle(title) {
   }
 
   try {
-    const results = await searchTMDB(title);
     const normalizedTitle = title.trim().toLowerCase();
+    const override = TMDB_TITLE_OVERRIDES[normalizedTitle];
+
+    if (override?.tmdbId) {
+      const details = await getMovieDetails(override.tmdbId);
+      const metadata = {
+        tmdbId: override.tmdbId,
+        poster: buildPosterUrl(details?.poster_path)
+      };
+      movieMetadataCache.set(title, metadata);
+      return metadata;
+    }
+
+    const results = await searchTMDB(title);
     const match = results.find(movie => movie.title?.trim().toLowerCase() === normalizedTitle) || results[0];
     const metadata = {
       tmdbId: match?.id || null,
@@ -392,7 +446,6 @@ async function displayAllowedMovies() {
   for (const movie of allowedMovieData) {
     // Find if this movie already has votes
     const existingMovie = chosenMovies.find(m => m.title === movie.title || m.title.startsWith(movie.title));
-    const voteCount = existingMovie?.vote_count || 0;
     
     const item = document.createElement("div");
     item.className = "search-result-item allowed-movie-item";
@@ -402,7 +455,6 @@ async function displayAllowedMovies() {
           <img class="allowed-movie-poster" src="${movie.poster || ''}" alt="${movie.title} poster" ${movie.poster ? '' : 'style="display:none;"'} />
           <span class="allowed-movie-title">${movie.title}</span>
         </div>
-        <span class="allowed-movie-votes">${voteCount} votes</span>
       </div>
     `;
     item.onclick = () => selectMovie({ title: movie.title, poster: movie.poster, tmdbId: movie.tmdbId });
@@ -525,7 +577,7 @@ async function selectMovie(tmdbMovie) {
 }
 
 // Display chosen movies with vote bars
-async function displayChosenMovies() {
+async function displayChosenMovies(showVoteCounts = false) {
   chosenList.innerHTML = "";
 
   if (chosenMovies.length === 0) {
@@ -549,10 +601,12 @@ async function displayChosenMovies() {
       <div class="chosen-movie-title">
         <span>${movie.title}</span>
       </div>
+      ${showVoteCounts ? `
       <div class="chosen-movie-bar">
         <div class="chosen-movie-fill" style="width: ${Math.min(percentage, 100)}%"></div>
       </div>
-      <div class="chosen-movie-count">${voteCount} / ${VOTES_NEEDED} needed</div>
+      <div class="chosen-movie-count">${voteCount} / ${VOTES_NEEDED} votes</div>
+      ` : ''}
     `;
     
     // Make clickable to select movie
@@ -892,8 +946,30 @@ function hideVotingInterface() {
 }
 
 function showVotingInterface() {
+  console.log("[app] showVotingInterface", {
+    hasActiveMovieList,
+    EVENT_STATUS
+  });
+
   // Hide results if visible
   resultsDiv.classList.add("hidden");
+
+  if (!hasActiveMovieList) {
+    if (searchInput && searchInput.parentElement) {
+      searchInput.parentElement.style.display = 'none';
+    }
+    if (chosenSection) {
+      chosenSection.style.display = 'none';
+    }
+    resultsDiv.classList.remove("hidden");
+    resultsDiv.innerHTML = `
+      <div class="confirmation">
+        <h2>Voting has not started</h2>
+        <p class="track-results">This showtime does not have an active movie list yet. Please check back soon.</p>
+      </div>
+    `;
+    return;
+  }
   
   // Show search-section to display the movies list (but hide input)
   if (searchInput && searchInput.parentElement) {
@@ -910,6 +986,51 @@ function showVotingInterface() {
   // Show the allowed movies list instead
   displayAllowedMovies();
   updateVoteActionState();
+}
+
+function showEndedResultsInterface() {
+  console.log("[app] showEndedResultsInterface", {
+    hasActiveMovieList,
+    chosenMoviesLength: chosenMovies.length
+  });
+
+  resultsDiv.classList.add("hidden");
+  resultsDiv.innerHTML = "";
+
+  if (searchInput && searchInput.parentElement) {
+    searchInput.parentElement.style.display = 'none';
+  }
+  if (searchResults) {
+    searchResults.classList.add("hidden");
+  }
+  if (moviePreview) {
+    moviePreview.classList.add("hidden");
+  }
+  if (submitBtn) {
+    submitBtn.classList.add("hidden");
+  }
+  if (captchaContainer) {
+    captchaContainer.classList.add("hidden");
+  }
+  if (captchaNotice) {
+    captchaNotice.classList.add("hidden");
+  }
+
+  if (chosenLabel) {
+    chosenLabel.textContent = "Final results:";
+  }
+
+  if (chosenSection) {
+    chosenSection.style.display = hasActiveMovieList ? "block" : "none";
+  }
+
+  // Disable clicking on result items
+  const chosenList = document.getElementById("chosenList");
+  if (chosenList) {
+    chosenList.classList.add("no-click");
+  }
+
+  displayChosenMovies(true);
 }
 
 // Update the share link shown in the footer

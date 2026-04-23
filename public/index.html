@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="styles.css" />
   <link rel="icon" type="image/png" href="icon.png" />
+  <script src="events-config.js"></script>
 </head>
 <body>
 
@@ -18,14 +19,24 @@
 
     <h1>Pick the Next Movie Night</h1>
 
-    <p class="subtitle">
-      Coming 4/27 to
-      <a href="https://www.thenewparkway.com" target="_blank">
-        The New Parkway Theater
-      </a>
+    <p style="margin: 0 0 10px; text-align: left;">
+      <a href="select-event.html" class="app-link">← Back to showtimes</a>
     </p>
 
-    <p class="vote-mode-note">Public poll. One vote per person.</p>
+    <p class="subtitle" id="eventSubtitle"></p>
+
+    <p class="vote-mode-note">Public poll. One vote per person. You may vote for as many movies as you want on that single ballot.</p>
+
+    <section class="info-box mission-box" aria-label="How ReelVotes works">
+      <div class="mission-header">
+        <h2>How ReelVotes works</h2>
+        <a href="timetable.html" class="timetable-link">Timetable</a>
+      </div>
+      <p>
+        ReelVotes helps small theaters program movies you not only want to see, but that you will support by buying a ticket if your movie is chosen.
+        When you vote, you are saying you'll show up. That is how votes become real screenings and how independent theaters you love can keep taking risks on great films.
+      </p>
+    </section>
 
     <!-- Search Input -->
     <div id="search-section">
@@ -92,6 +103,100 @@
 </div>
 
 <script src="runtime-config.js"></script>
+<script>
+  function getSubtitlePrefix(event, eventId) {
+    const fallbackIso = String(eventId || "").match(/^(\d{4})-(\d{2})-(\d{2})$/)
+      ? `${eventId}T23:59:59`
+      : null;
+
+    const eventDateCandidate = event?.screeningDateTime || fallbackIso;
+    if (!eventDateCandidate) {
+      return "Coming";
+    }
+
+    const eventDate = new Date(eventDateCandidate);
+    if (Number.isNaN(eventDate.getTime())) {
+      return "Coming";
+    }
+
+    return eventDate < new Date() ? "Shown on" : "Coming";
+  }
+
+  function getDisplayLabel(event, eventId) {
+    if (event?.screeningLabel) {
+      return event.screeningLabel;
+    }
+
+    const dateMatch = String(eventId || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (dateMatch) {
+      const month = Number(dateMatch[2]);
+      const day = Number(dateMatch[3]);
+      return `${month}/${day}`;
+    }
+
+    return String(eventId || "TBD");
+  }
+
+  const events = window.REELVOTES_EVENTS || [];
+  const queryEventId = new URLSearchParams(window.location.search).get("event");
+  const storedEventId = window.sessionStorage.getItem("reelvotesSelectedEventId");
+  const eventId = queryEventId || storedEventId;
+  const EVENT_ID_ALIASES = {
+    "2026-04-27": "newparkway1"
+  };
+  const eventDataId = EVENT_ID_ALIASES[eventId] || eventId;
+  const resolvedEvent = events.find((item) => item.id === eventId || item.firestoreEventId === eventId);
+  const defaultEvent = events.find((item) => item.voteStatus === "live") || events[0] || null;
+  const event = resolvedEvent || (eventId ? {
+    id: eventId,
+    firestoreEventId: eventDataId,
+    screeningLabel: eventId,
+    voteStatus: "live"
+  } : defaultEvent);
+
+  console.log("[index] Resolving page event", {
+    href: window.location.href,
+    queryEventId,
+    storedEventId,
+    eventId,
+    events,
+    resolvedEvent: event
+  });
+
+  if (!event) {
+    console.error("[index] No events available in configuration; cannot render voting page");
+  } else {
+    if (!eventId) {
+      console.warn("[index] No event query param present; defaulting to first live event", event);
+      const normalizedUrl = new URL(window.location.href);
+      normalizedUrl.searchParams.set("event", event.id);
+      window.history.replaceState({}, "", normalizedUrl.toString());
+    }
+
+    if (!resolvedEvent) {
+      console.warn("[index] Event query present but config match missing; using fallback event", {
+        eventId,
+        event
+      });
+    }
+    window.REELVOTES_EVENT = event;
+    if (event?.id) {
+      window.sessionStorage.setItem("reelvotesSelectedEventId", event.id);
+    }
+    console.log("[index] Event resolved successfully", event);
+    const eventSubtitle = document.getElementById("eventSubtitle");
+    if (eventSubtitle) {
+      const subtitlePrefix = getSubtitlePrefix(event, eventId || event?.id);
+      const displayLabel = getDisplayLabel(event, eventId || event?.id);
+      eventSubtitle.innerHTML = `
+        ${subtitlePrefix} ${displayLabel} to
+        <a href="https://www.thenewparkway.com" target="_blank">
+          The New Parkway Theater
+        </a>
+      `;
+    }
+  }
+</script>
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" defer></script>
 <script type="module" src="app.js"></script>
 </body>

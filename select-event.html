@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Choose Showtime | ReelVotes</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" type="image/png" href="icon.png" />
+</head>
+<body>
+
+<div class="overlay"></div>
+
+<div class="container">
+  <div class="card">
+    <img src="icon.png" class="logo" />
+
+    <h1>Choose a Showtime</h1>
+
+    <p class="subtitle">
+      The New Parkway Theater
+      <a href="https://www.thenewparkway.com" target="_blank">(website)</a>
+    </p>
+
+    <div id="dateList" class="event-grid"></div>
+
+    <div style="margin-top:28px;text-align:center;">
+      <button id="adminManageBtn" style="background:none;border:1px solid #444;color:#888;font-size:13px;padding:7px 16px;border-radius:8px;cursor:pointer;">⚙ Admin: Manage Events</button>
+    </div>
+  </div>
+</div>
+
+<!-- Admin modal -->
+<div id="adminModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;overflow-y:auto;">
+  <div style="background:#1a1a1a;border-radius:12px;max-width:480px;margin:40px auto;padding:28px 24px;position:relative;">
+    <button id="adminModalClose" style="position:absolute;top:12px;right:14px;background:none;border:none;color:#aaa;font-size:22px;line-height:1;padding:0;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;">×</button>
+    <h2 style="margin:0 0 6px;font-size:18px;">Manage Event</h2>
+    <p style="color:#888;font-size:13px;margin:0 0 20px;">Select a showtime and set its ballot movies.</p>
+
+    <label style="font-size:13px;color:#aaa;display:block;margin-bottom:6px;">Showtime</label>
+    <select id="adminEventSelect" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #444;background:#111;color:#fff;font-size:14px;margin-bottom:16px;"></select>
+
+    <label style="font-size:13px;color:#aaa;display:block;margin-bottom:6px;">Movies (one per line)</label>
+    <textarea id="adminMoviesInput" rows="12" style="width:100%;padding:10px;border-radius:8px;border:1px solid #444;background:#111;color:#fff;font-size:14px;resize:vertical;box-sizing:border-box;font-family:inherit;"></textarea>
+    <p style="font-size:12px;color:#666;margin:6px 0 16px;">Each line becomes a movie doc. Existing docs are updated; missing ones are removed.</p>
+
+    <div id="adminSaveStatus" style="font-size:13px;color:#aaa;margin-bottom:12px;min-height:18px;"></div>
+
+    <div style="display:flex;gap:10px;">
+      <button id="adminSaveBtn" style="flex:1;padding:10px;background:#ff4757;border:none;border-radius:8px;color:#fff;font-size:15px;cursor:pointer;font-weight:600;">Save to Firestore</button>
+      <button id="adminCancelBtn" style="padding:10px 18px;background:#333;border:none;border-radius:8px;color:#fff;font-size:15px;cursor:pointer;">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script src="events-config.js"></script>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+  import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc, Timestamp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
+  import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDMa_twNQAZVrnLHUNNNsxk6aTa-9FrnSc",
+    authDomain: "reelconvo.firebaseapp.com",
+    projectId: "reelconvo",
+    storageBucket: "reelconvo.firebasestorage.app",
+    messagingSenderId: "913820455359",
+    appId: "1:913820455359:web:1c75954a231b921b55510a"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const auth = getAuth(app);
+
+  const events = window.REELVOTES_EVENTS || [];
+  const dateList = document.getElementById("dateList");
+
+  document.addEventListener("pointerdown", (event) => {
+    const target = event.target instanceof Element ? event.target : null;
+    console.log("[select-event] Document pointerdown", {
+      tag: target?.tagName,
+      className: target?.className,
+      text: target?.textContent?.trim()?.slice(0, 60)
+    });
+  }, true);
+
+  document.addEventListener("click", (event) => {
+    const target = event.target instanceof Element ? event.target : null;
+    console.log("[select-event] Document click", {
+      tag: target?.tagName,
+      className: target?.className,
+      text: target?.textContent?.trim()?.slice(0, 60)
+    });
+  }, true);
+
+  console.log("[select-event] Loaded showtime selector", {
+    href: window.location.href,
+    events
+  });
+
+  dateList.innerHTML = events.map((event) => `
+    <div class="event-card loading">
+      <strong>${event.screeningLabel}</strong><br />
+      <span>Checking voting status…</span>
+    </div>
+  `).join("");
+
+  const eventsWithStatus = await Promise.all(
+    events.map(async (event) => {
+      console.log("[select-event] Resolving event status", event);
+      if (event.voteStatus === "live") {
+        return { ...event, status: "live" };
+      }
+      if (event.voteStatus === "ended") {
+        return { ...event, status: "ended" };
+      }
+      if (event.voteStatus === "not-started") {
+        return { ...event, status: "not-started" };
+      }
+
+      const firestoreEventId = event.firestoreEventId || event.id;
+      try {
+        const moviesRef = collection(db, "events", firestoreEventId, "movies");
+        const snapshot = await getDocs(moviesRef);
+        console.log("[select-event] Firestore status loaded", {
+          eventId: event.id,
+          firestoreEventId,
+          empty: snapshot.empty,
+          size: snapshot.size
+        });
+        return { ...event, status: snapshot.empty ? "not-started" : "live" };
+      } catch (error) {
+        console.error("Could not load voting status for", event.id, error);
+        return { ...event, status: "not-started" };
+      }
+    })
+  );
+
+  console.log("[select-event] Final statuses", eventsWithStatus);
+
+  dateList.innerHTML = eventsWithStatus.map((event) => {
+    const nextHref = `/?event=${encodeURIComponent(event.id)}`;
+    if (event.status === "ended") {
+      return `
+        <a class="event-card event-card-ended" data-event-id="${event.id}" href="${nextHref}" onclick="sessionStorage.setItem('reelvotesSelectedEventId','${event.id}'); console.log('[select-event] Inline click nav', '${event.id}', '${nextHref}'); window.location.href='${nextHref}'; return false;">
+          <strong>${event.screeningLabel}</strong><br />
+          <span>Voting has ended · View results</span>
+        </a>
+      `;
+    }
+
+    if (event.status !== "live") {
+      return `
+        <div class="event-card disabled" aria-disabled="true">
+          <strong>${event.screeningLabel}</strong><br />
+          <span>Voting has not started</span>
+        </div>
+      `;
+    }
+
+    return `
+      <a class="event-card" data-event-id="${event.id}" href="${nextHref}" onclick="sessionStorage.setItem('reelvotesSelectedEventId','${event.id}'); console.log('[select-event] Inline click nav', '${event.id}', '${nextHref}'); window.location.href='${nextHref}'; return false;">
+        <strong>${event.screeningLabel}</strong><br />
+        <span>Voting now</span>
+      </a>
+    `;
+  }).join("");
+
+  const interactiveCards = dateList.querySelectorAll("[data-event-id]");
+  console.log("[select-event] Interactive cards rendered", interactiveCards.length);
+
+  dateList.addEventListener("click", (event) => {
+    const origin = event.target instanceof Element ? event.target : null;
+    const card = origin?.closest("[data-event-id]");
+    if (!card) {
+      return;
+    }
+
+    const eventId = card.dataset.eventId;
+    const nextUrl = new URL("/", window.location.origin);
+    nextUrl.searchParams.set("event", eventId);
+
+    console.log("[select-event] Showtime clicked (delegated)", {
+      eventId,
+      nextUrl: nextUrl.toString(),
+      card
+    });
+
+    window.sessionStorage.setItem("reelvotesSelectedEventId", eventId);
+    event.preventDefault();
+    window.location.href = nextUrl.toString();
+  });
+
+  // ── Admin modal ──────────────────────────────────────────────────────────
+  const ADMIN_EMAILS = new Set([
+    "rt332@cornell.edu",
+    "moses@thenewparkway.com",
+    "programming@thenewparkway.com",
+    "nikki@thenewparkwaytheater.com"
+  ]);
+  const ADMIN_STORAGE_KEY = "reelvotes_admin_email";
+  const EVENT_ID_ALIASES = { "2026-04-27": "newparkway1" };
+
+  const adminModal       = document.getElementById("adminModal");
+  const adminEventSelect = document.getElementById("adminEventSelect");
+  const adminMoviesInput = document.getElementById("adminMoviesInput");
+  const adminSaveStatus  = document.getElementById("adminSaveStatus");
+  const adminSaveBtn     = document.getElementById("adminSaveBtn");
+  const adminCancelBtn   = document.getElementById("adminCancelBtn");
+  const adminModalClose  = document.getElementById("adminModalClose");
+
+  function normalizeEmail(e) { return (e || "").trim().toLowerCase(); }
+
+  async function ensureAdminEmail() {
+    const stored = localStorage.getItem(ADMIN_STORAGE_KEY);
+    if (stored && ADMIN_EMAILS.has(normalizeEmail(stored))) return stored;
+    const input = window.prompt("Admin access only. Enter your theater email:");
+    const email = normalizeEmail(input);
+    if (!email || !ADMIN_EMAILS.has(email)) {
+      alert("Access denied.");
+      return null;
+    }
+    localStorage.setItem(ADMIN_STORAGE_KEY, email);
+    return email;
+  }
+
+  // Populate event dropdown
+  function populateAdminSelect() {
+    adminEventSelect.innerHTML = events.map(ev =>
+      `<option value="${ev.id}">${ev.screeningLabel || ev.id}</option>`
+    ).join("");
+  }
+
+  // Load existing movies for selected event into textarea
+  async function loadMoviesForEvent(eventId) {
+    const firestoreId = EVENT_ID_ALIASES[eventId]
+      || events.find(e => e.id === eventId)?.firestoreEventId
+      || eventId;
+    adminSaveStatus.textContent = "Loading…";
+    try {
+      const snap = await getDocs(collection(db, "events", firestoreId, "movies"));
+      const titles = [];
+      snap.forEach(d => titles.push(d.data().movie_title || d.id));
+      titles.sort();
+      adminMoviesInput.value = titles.join("\n");
+      adminSaveStatus.textContent = snap.empty ? "No movies yet — add some below." : `Loaded ${titles.length} movies.`;
+    } catch (e) {
+      adminSaveStatus.textContent = "Could not load existing movies.";
+      adminMoviesInput.value = "";
+    }
+  }
+
+  // Save movies to Firestore
+  async function saveMovies() {
+    const eventId = adminEventSelect.value;
+    const firestoreId = EVENT_ID_ALIASES[eventId]
+      || events.find(e => e.id === eventId)?.firestoreEventId
+      || eventId;
+
+    const titles = adminMoviesInput.value
+      .split("\n")
+      .map(t => t.trim())
+      .filter(Boolean);
+
+    if (titles.length === 0) {
+      adminSaveStatus.textContent = "⚠ No movies entered.";
+      return;
+    }
+
+    adminSaveBtn.disabled = true;
+    adminSaveStatus.textContent = "Saving…";
+
+    try {
+      // Ensure signed in so Firestore rules (signedIn()) are satisfied
+      if (!auth.currentUser) {
+        await signInAnonymously(auth);
+      }
+      // Get existing docs to detect removals
+      const snap = await getDocs(collection(db, "events", firestoreId, "movies"));
+      const existingIds = new Set();
+      snap.forEach(d => existingIds.add(d.id));
+
+      const newIds = new Set();
+      const now = Timestamp.now();
+
+      for (const title of titles) {
+        const docId = title.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+        newIds.add(docId);
+        const existingDoc = snap.docs.find(d => d.id === docId);
+        await setDoc(doc(db, "events", firestoreId, "movies", docId), {
+          event_id: firestoreId,
+          movie_title: title,
+          vote_count: existingDoc?.data().vote_count ?? 0,
+          created_at: existingDoc?.data().created_at ?? now,
+          updated_at: now
+        });
+      }
+
+      // Remove docs no longer in list
+      for (const oldId of existingIds) {
+        if (!newIds.has(oldId)) {
+          await deleteDoc(doc(db, "events", firestoreId, "movies", oldId));
+        }
+      }
+
+      adminSaveStatus.textContent = `✓ Saved ${titles.length} movies to "${firestoreId}".`;
+    } catch (err) {
+      console.error("Save failed:", err);
+      adminSaveStatus.textContent = `✗ Error: ${err.message}`;
+    }
+    adminSaveBtn.disabled = false;
+  }
+
+  // Wire up buttons
+  document.getElementById("adminManageBtn").addEventListener("click", async () => {
+    const email = await ensureAdminEmail();
+    if (!email) return;
+    populateAdminSelect();
+    adminModal.style.display = "block";
+    await loadMoviesForEvent(adminEventSelect.value);
+  });
+
+  adminEventSelect.addEventListener("change", () => loadMoviesForEvent(adminEventSelect.value));
+  adminSaveBtn.addEventListener("click", saveMovies);
+  adminCancelBtn.addEventListener("click", () => { adminModal.style.display = "none"; });
+  adminModalClose.addEventListener("click", () => { adminModal.style.display = "none"; });
+  adminModal.addEventListener("click", (e) => { if (e.target === adminModal) adminModal.style.display = "none"; });
+</script>
+</body>
+</html>

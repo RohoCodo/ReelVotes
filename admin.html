@@ -15,11 +15,22 @@
     <img src="icon.png" class="logo" />
     <h1>Live Vote Dashboard</h1>
     <p class="subtitle">For theater staff – updates in real time.</p>
+
+    <div style="margin: 12px 0;">
+      <select id="eventSelector" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #ccc;font-size:14px;background:#fff;cursor:pointer;">
+        <option value="">Loading events…</option>
+      </select>
+    </div>
+
     <p id="eventLabel" class="subtitle"></p>
     <p id="updatedAt" class="subtitle"></p>
 
     <div id="adminMovies" class="chosen-section">
-      <p class="chosen-label">Current votes:</p>
+      <div class="ballot-section">
+        <p class="chosen-label">Movies on the ballot:</p>
+        <div id="ballotList" class="chosen-list" style="margin-bottom:16px;"></div>
+      </div>
+      <p class="chosen-label" style="margin-top:8px;">Live vote counts:</p>
       <div id="adminList" class="chosen-list"></div>
     </div>
 
@@ -29,6 +40,7 @@
   </div>
 </div>
 
+<script src="events-config.js"></script>
 <script type="module" src="admin.js"></script>
 </body>
 </html>
