@@ -277,10 +277,6 @@ exports.submitVote = onCall(async (request) => {
       throw new HttpsError("resource-exhausted", "Please wait a few seconds before trying again.");
     }
 
-    transaction.set(rateLimitRef, {
-      last_attempt_at: admin.firestore.FieldValue.serverTimestamp(),
-    }, {merge: true});
-
     if (voteKeyDoc.exists) {
       const existingVote = voteKeyDoc.data() || {};
       return {
@@ -320,6 +316,10 @@ exports.submitVote = onCall(async (request) => {
     if (!movieTitle) {
       throw new HttpsError("invalid-argument", "That movie cannot be voted for.");
     }
+
+    transaction.set(rateLimitRef, {
+      last_attempt_at: admin.firestore.FieldValue.serverTimestamp(),
+    }, {merge: true});
 
     const voteRef = votesRef.doc();
     const existingMovieVoteCount = movieDoc.exists

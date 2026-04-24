@@ -864,6 +864,13 @@ async function submitSelectedVote(email) {
   const voteResult = await recordVote(email);
   if (voteResult?.status === "already-voted") {
     resetCaptcha();
+    const searchSection = document.getElementById("search-section");
+    if (searchSection) {
+      searchSection.classList.add("hidden");
+      searchSection.style.display = "none";
+    }
+    searchResults.classList.add("hidden");
+    searchResults.setAttribute('style', '');
     await fetchChosenMovies();
     await showExistingVoteConfirmation({
       title: voteResult.movieTitle || selectedMovie.title,
@@ -977,8 +984,20 @@ window.shareVote = async function() {
 // Show confirmation page for an existing vote
 async function showExistingVoteConfirmation(movie) {
   // Hide voting interface
+  const searchSection = document.getElementById("search-section");
+  if (searchSection) {
+    searchSection.classList.add("hidden");
+    searchSection.style.display = 'none';
+  }
   if (searchInput && searchInput.parentElement) {
     searchInput.parentElement.style.display = 'none';
+  }
+  if (searchResults) {
+    searchResults.classList.add("hidden");
+    searchResults.setAttribute('style', '');
+  }
+  if (moviePreview) {
+    moviePreview.classList.add("hidden");
   }
   const searchDisclaimer = document.querySelector('.search-disclaimer');
   if (searchDisclaimer) {
