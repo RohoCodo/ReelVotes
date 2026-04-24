@@ -90,6 +90,11 @@ const resultsDiv = document.getElementById("results");
 const clearSearchBtn = document.getElementById("clearSearchBtn");
 const captchaContainer = document.getElementById("captchaContainer");
 const captchaNotice = document.getElementById("captchaNotice");
+const emailVoteModal = document.getElementById("emailVoteModal");
+const voteEmailInput = document.getElementById("voteEmailInput");
+const voteEmailStatus = document.getElementById("voteEmailStatus");
+const confirmEmailVoteBtn = document.getElementById("confirmEmailVoteBtn");
+const cancelEmailVoteBtn = document.getElementById("cancelEmailVoteBtn");
 
 let captchaToken = null;
 let captchaWidgetId = null;
@@ -119,6 +124,42 @@ function setCaptchaNotice(message) {
 function updateSubmitButtonState() {
   const hasSelectedMovie = Boolean(selectedMovie);
   submitBtn.disabled = !hasSelectedMovie || (CAPTCHA_ENABLED && !captchaToken);
+}
+
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || "").trim());
+}
+
+function setVoteEmailStatus(message, isError = false) {
+  if (!voteEmailStatus) {
+    return;
+  }
+
+  voteEmailStatus.textContent = message;
+  voteEmailStatus.style.color = isError ? "#ff6b6b" : "#ccc";
+  voteEmailStatus.classList.toggle("hidden", !message);
+}
+
+function showEmailVoteModal() {
+  if (!emailVoteModal) {
+    return;
+  }
+
+  setVoteEmailStatus("");
+  if (voteEmailInput) {
+    voteEmailInput.value = "";
+  }
+  emailVoteModal.classList.remove("hidden");
+  voteEmailInput?.focus();
+}
+
+function hideEmailVoteModal() {
+  if (!emailVoteModal) {
+    return;
+  }
+
+  emailVoteModal.classList.add("hidden");
+  setVoteEmailStatus("");
 }
 
 async function waitForTurnstile() {
@@ -750,7 +791,7 @@ document.addEventListener("click", (e) => {
 });
 
 // Record vote to Firebase (new structure with individual votes)
-async function recordVote() {
+async function recordVote(email) {
   try {
     if (!selectedMovie || !voterClientId) return null;
     const movieTitle = selectedMovie.title;
@@ -759,7 +800,8 @@ async function recordVote() {
       eventId: EVENT_ID,
       movieTitle,
       clientId: voterClientId,
-      captchaToken
+      captchaToken,
+      email
     });
 
     const result = response.data || {};
@@ -770,33 +812,39 @@ async function recordVote() {
     return result;
   } catch (error) {
     console.error("Error recording vote:", error);
+    const errorMessage = String(error?.message || "");
+    const lowerErrorMessage = errorMessage.toLowerCase();
     if (error.code === "functions/resource-exhausted") {
       alert("You are moving too fast. Please wait a few seconds and try again.");
-    } else if (error.code === "functions/permission-denied" || error.code === "functions/invalid-argument") {
+    } else if (error.code === "functions/permission-denied") {
       resetCaptcha({ keepVisible: true });
       alert("Please complete the CAPTCHA challenge and try again.");
+    } else if (error.code === "functions/invalid-argument") {
+      if (lowerErrorMessage.includes("captcha")) {
+        resetCaptcha({ keepVisible: true });
+        alert("Please complete the CAPTCHA challenge and try again.");
+      } else if (lowerErrorMessage.includes("email")) {
+        alert("Please enter a valid email address.");
+      } else if (lowerErrorMessage.includes("movie")) {
+        alert("That movie cannot be voted for. Please pick one from the current list.");
+      } else {
+        alert(errorMessage || "Invalid vote request. Please try again.");
+      }
     } else if (error.code === "functions/unavailable") {
       resetCaptcha({ keepVisible: true });
       alert("CAPTCHA verification is temporarily unavailable. Please try again.");
     } else {
-      alert("Error recording vote: " + (error.message || "Please try again."));
+      alert("Error recording vote: " + (errorMessage || "Please try again."));
     }
     throw error;
   }
 }
 
-// Submit vote
-submitBtn.onclick = async () => {
+async function submitSelectedVote(email) {
   if (!selectedMovie) return;
 
-  if (CAPTCHA_ENABLED && !captchaToken) {
-    await ensureCaptchaWidget();
-    setCaptchaNotice("Complete the CAPTCHA to enable vote submission.");
-    return;
-  }
-
   console.log("Submitting vote for:", selectedMovie);
-  
+
   // Hide voting interface
   moviePreview.classList.add("hidden");
   if (searchInput && searchInput.parentElement) {
@@ -813,7 +861,7 @@ submitBtn.onclick = async () => {
 
   // Record vote and refresh data
   console.log("Recording vote...");
-  const voteResult = await recordVote();
+  const voteResult = await recordVote(email);
   if (voteResult?.status === "already-voted") {
     resetCaptcha();
     await fetchChosenMovies();
@@ -835,7 +883,7 @@ submitBtn.onclick = async () => {
   // Keep chosen section hidden on confirmation screen
   chosenSection.classList.add("hidden");
   chosenSection.style.display = "none !important";
-  
+
   // Hide the movies list
   searchResults.classList.add("hidden");
   searchResults.setAttribute('style', '');
@@ -850,12 +898,64 @@ submitBtn.onclick = async () => {
         <p class="voted-movie"><b>${selectedMovie.title}</b></p>
       </div>
       <p class="vote-counted">The vote has been counted</p>
-      
+
     </div>
 
     <button class="share-btn" onclick="shareVote()">📤 Share & Grow</button>
   `;
+}
+
+// Submit vote
+submitBtn.onclick = async () => {
+  if (!selectedMovie) return;
+
+  if (CAPTCHA_ENABLED && !captchaToken) {
+    await ensureCaptchaWidget();
+    setCaptchaNotice("Complete the CAPTCHA to enable vote submission.");
+    return;
+  }
+
+  showEmailVoteModal();
 };
+
+cancelEmailVoteBtn?.addEventListener("click", () => {
+  hideEmailVoteModal();
+});
+
+emailVoteModal?.addEventListener("click", (event) => {
+  if (event.target === emailVoteModal) {
+    hideEmailVoteModal();
+  }
+});
+
+voteEmailInput?.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    confirmEmailVoteBtn?.click();
+  }
+});
+
+confirmEmailVoteBtn?.addEventListener("click", async () => {
+  const email = String(voteEmailInput?.value || "").trim();
+  if (!isValidEmail(email)) {
+    setVoteEmailStatus("Invalid email. Please enter a valid email address.", true);
+    voteEmailInput?.focus();
+    return;
+  }
+
+  try {
+    confirmEmailVoteBtn.disabled = true;
+    confirmEmailVoteBtn.textContent = "Counting...";
+    setVoteEmailStatus("");
+    hideEmailVoteModal();
+    await submitSelectedVote(email);
+  } catch (error) {
+    console.error("Vote submission failed after email confirmation:", error);
+  } finally {
+    confirmEmailVoteBtn.disabled = false;
+    confirmEmailVoteBtn.textContent = "Count my vote";
+  }
+});
 
 window.shareVote = async function() {
   const text = `I'm backing ${selectedMovie.title} for movie night! 🎬 Join the vote and make it happen!`;

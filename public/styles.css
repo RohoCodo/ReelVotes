@@ -71,6 +71,33 @@ body {
     width: 70px;
     margin-bottom: 10px;
   }
+
+  .top-right-links {
+    position: absolute;
+    top: 12px;
+    right: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #aaa;
+  }
+
+  .top-right-links .app-link {
+    margin-top: 0;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .admin-inline-link {
+    margin: -12px 0 14px;
+    text-align: center;
+    font-size: 12px;
+  }
+
+  .admin-inline-link .app-link {
+    margin-top: 0;
+  }
   
   /* Titles */
   h1 {
@@ -760,6 +787,58 @@ body {
 
   .email-help a:hover {
     text-decoration: underline;
+  }
+
+  .vote-email-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.7);
+  }
+
+  .vote-email-modal-card {
+    width: 100%;
+    max-width: 420px;
+    background: rgba(20, 20, 20, 0.96);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+    margin: 0;
+  }
+
+  .vote-email-disclaimer {
+    margin-top: 0;
+    margin-bottom: 14px;
+    text-align: left;
+  }
+
+  .vote-email-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .secondary-btn {
+    width: 100%;
+    padding: 12px;
+    background: transparent;
+    color: #ddd;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.2s ease, color 0.2s ease;
+  }
+
+  .secondary-btn:hover {
+    border-color: rgba(255, 255, 255, 0.55);
+    color: #fff;
   }
 
   .hidden {

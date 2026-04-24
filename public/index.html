@@ -14,6 +14,12 @@
 <div class="container">
   <div class="card">
 
+    <div class="top-right-links" aria-label="Legal and support links">
+      <a href="/support.html" class="app-link">Support</a>
+      <span aria-hidden="true">•</span>
+      <a href="/privacy.html" class="app-link">Privacy Policy</a>
+    </div>
+
     <!-- ICON -->
     <img src="icon.png" class="logo" />
 
@@ -24,6 +30,10 @@
     </p>
 
     <p class="subtitle" id="eventSubtitle"></p>
+
+    <p class="admin-inline-link">
+      <a href="admin.html" class="app-link">Admin dashboard</a>
+    </p>
 
     <p class="vote-mode-note">Public poll. One vote per person. You may vote for as many movies as you want on that single ballot.</p>
 
@@ -77,6 +87,31 @@
     <p id="captchaNotice" class="captcha-notice hidden"></p>
     <div id="captchaContainer" class="captcha-container hidden"></div>
 
+    <div id="emailVoteModal" class="vote-email-modal hidden" role="dialog" aria-modal="true" aria-labelledby="emailVoteTitle">
+      <div class="vote-email-modal-card email-step">
+        <h2 id="emailVoteTitle">Confirm your vote</h2>
+        <p class="subtitle vote-email-disclaimer">
+          Your vote is <strong>not counted</strong> until a valid email is added.
+        </p>
+
+        <label for="voteEmailInput">Email address</label>
+        <input
+          id="voteEmailInput"
+          type="email"
+          name="voteEmail"
+          placeholder="you@example.com"
+          autocomplete="email"
+          required
+        />
+        <p id="voteEmailStatus" class="email-help hidden"></p>
+
+        <div class="vote-email-actions">
+          <button id="cancelEmailVoteBtn" type="button" class="secondary-btn">Cancel</button>
+          <button id="confirmEmailVoteBtn" type="button" class="submit-btn">Count my vote</button>
+        </div>
+      </div>
+    </div>
+
     <div id="results" class="hidden"></div>
 
     <!-- APP LINK -->
@@ -90,15 +125,6 @@
         <a href="email-signup.html" class="app-link">Join the email list →</a>
       </p>
 
-      <p style="margin-top: 10px; font-size: 12px; color: #777;">
-        <a href="/support.html" class="app-link">Support</a>
-        &nbsp;•&nbsp;
-        <a href="/privacy.html" class="app-link">Privacy Policy</a>
-      </p>
-
-      <p style="margin-top: 6px; font-size: 12px; color: #777;">
-        <a href="admin.html" class="app-link">Admin dashboard →</a>
-      </p>
     </div>
 
   </div>

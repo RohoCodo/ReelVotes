@@ -34,6 +34,14 @@ const EVENTBRITE_EVENT_ID = "1985653305489";
 const RATE_LIMIT_WINDOW_MS = 15000;
 const TURNSTILE_VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
 const TURNSTILE_SECRET_KEY = process.env.TURNSTILE_SECRET_KEY || "";
+function normalizeMovieTitle(movieTitle) {
+  return String(movieTitle || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[\u2018\u2019]/g, "'")
+    .replace(/\s+/g, " ");
+}
+
 const ALLOWED_MOVIES = new Set([
   "Back to the Future",
   "Jurassic Park",
@@ -46,6 +54,9 @@ const ALLOWED_MOVIES = new Set([
   "Battle Royale",
   "Mad Max: Fury Road",
 ]);
+const ALLOWED_MOVIE_LOOKUP = new Map(
+  Array.from(ALLOWED_MOVIES).map((title) => [normalizeMovieTitle(title), title]),
+);
 
 // Cache for attendees
 let attendeesCache = null;
@@ -130,8 +141,8 @@ function sanitizeEventId(eventId) {
 
 function sanitizeMovieTitle(movieTitle) {
   const normalizedMovieTitle = String(movieTitle || "").trim();
-  if (!ALLOWED_MOVIES.has(normalizedMovieTitle)) {
-    throw new HttpsError("invalid-argument", "That movie cannot be voted for.");
+  if (!normalizedMovieTitle || normalizedMovieTitle.length > 200) {
+    throw new HttpsError("invalid-argument", "A valid movie title is required.");
   }
   return normalizedMovieTitle;
 }
@@ -168,7 +179,12 @@ function sanitizeCaptchaToken(captchaToken) {
 }
 
 function movieDocId(movieTitle) {
-  return movieTitle;
+  return String(movieTitle || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .replace(/_+/g, "_");
 }
 
 function getRequesterIp(request) {
@@ -236,19 +252,25 @@ exports.getVoteStatus = onCall(async (request) => {
 exports.submitVote = onCall(async (request) => {
   const eventId = sanitizeEventId(request.data?.eventId);
   const clientId = sanitizeClientId(request.data?.clientId);
-  const movieTitle = sanitizeMovieTitle(request.data?.movieTitle);
+  const requestedMovieTitle = sanitizeMovieTitle(request.data?.movieTitle);
+  const email = sanitizeEmail(request.data?.email);
   await verifyCaptchaToken(request, request.data?.captchaToken);
   const {clientIdHash, voteKeyRef} = buildVoteLookup(eventId, clientId);
+  const emailHash = hashValue(email);
   const ipHash = hashValue(`${eventId}:${getRequesterIp(request)}`);
   const eventRef = db.collection("events").doc(eventId);
   const votesRef = eventRef.collection("votes");
   const rateLimitRef = eventRef.collection("rate_limits").doc(ipHash);
-  const movieRef = eventRef.collection("movies").doc(movieDocId(movieTitle));
+  const emailKeyRef = eventRef.collection("email_keys").doc(emailHash);
+  const movieRef = eventRef.collection("movies").doc(movieDocId(requestedMovieTitle));
+  const legacyMovieRef = eventRef.collection("movies").doc(requestedMovieTitle);
 
   return db.runTransaction(async (transaction) => {
     const rateLimitDoc = await transaction.get(rateLimitRef);
     const voteKeyDoc = await transaction.get(voteKeyRef);
+    const emailKeyDoc = await transaction.get(emailKeyRef);
     const movieDoc = await transaction.get(movieRef);
+    const legacyMovieDoc = await transaction.get(legacyMovieRef);
 
     const lastAttemptAt = rateLimitDoc.exists ? rateLimitDoc.data()?.last_attempt_at : null;
     if (lastAttemptAt && Date.now() - lastAttemptAt.toMillis() < RATE_LIMIT_WINDOW_MS) {
@@ -267,17 +289,65 @@ exports.submitVote = onCall(async (request) => {
       };
     }
 
+    if (emailKeyDoc.exists) {
+      const existingEmailVote = emailKeyDoc.data() || {};
+      return {
+        status: "already-voted",
+        movieTitle: existingEmailVote.movie_title || null,
+      };
+    }
+
+    // Legacy fallback: if old records exist without email_keys, still enforce one vote per email.
+    const existingEmailVoteQuery = votesRef.where("email_hash", "==", emailHash).limit(1);
+    const existingEmailVoteSnapshot = await transaction.get(existingEmailVoteQuery);
+    if (!existingEmailVoteSnapshot.empty) {
+      const existingEmailVoteDoc = existingEmailVoteSnapshot.docs[0]?.data() || {};
+      return {
+        status: "already-voted",
+        movieTitle: existingEmailVoteDoc.movie_title || null,
+      };
+    }
+
+    const canonicalMovieTitleFromEvent = movieDoc.exists
+      ? String(movieDoc.data()?.movie_title || "").trim()
+      : legacyMovieDoc.exists
+        ? String(legacyMovieDoc.data()?.movie_title || "").trim()
+        : "";
+
+    const canonicalMovieTitleFromAllowList = ALLOWED_MOVIE_LOOKUP.get(normalizeMovieTitle(requestedMovieTitle)) || "";
+    const movieTitle = canonicalMovieTitleFromEvent || canonicalMovieTitleFromAllowList;
+
+    if (!movieTitle) {
+      throw new HttpsError("invalid-argument", "That movie cannot be voted for.");
+    }
+
     const voteRef = votesRef.doc();
-    const nextVoteCount = (movieDoc.exists ? (movieDoc.data()?.vote_count || 0) : 0) + 1;
+    const existingMovieVoteCount = movieDoc.exists
+      ? (movieDoc.data()?.vote_count || 0)
+      : legacyMovieDoc.exists
+        ? (legacyMovieDoc.data()?.vote_count || 0)
+        : 0;
+    const nextVoteCount = existingMovieVoteCount + 1;
 
     transaction.set(voteRef, {
       client_id_hash: clientIdHash,
+      email,
+      email_hash: emailHash,
       movie_title: movieTitle,
       created_at: admin.firestore.FieldValue.serverTimestamp(),
       ip_hash: ipHash,
     });
 
     transaction.set(voteKeyRef, {
+      client_id_hash: clientIdHash,
+      email_hash: emailHash,
+      movie_title: movieTitle,
+      vote_id: voteRef.id,
+      created_at: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    transaction.set(emailKeyRef, {
+      email_hash: emailHash,
       client_id_hash: clientIdHash,
       movie_title: movieTitle,
       vote_id: voteRef.id,
@@ -286,6 +356,11 @@ exports.submitVote = onCall(async (request) => {
 
     if (movieDoc.exists) {
       transaction.update(movieRef, {
+        vote_count: admin.firestore.FieldValue.increment(1),
+        updated_at: admin.firestore.FieldValue.serverTimestamp(),
+      });
+    } else if (legacyMovieDoc.exists) {
+      transaction.update(legacyMovieRef, {
         vote_count: admin.firestore.FieldValue.increment(1),
         updated_at: admin.firestore.FieldValue.serverTimestamp(),
       });
