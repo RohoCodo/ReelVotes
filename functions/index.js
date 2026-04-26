@@ -284,7 +284,8 @@ exports.submitVote = onCall(async (request) => {
   const eventRef = db.collection("events").doc(eventId);
   const votesRef = eventRef.collection("votes");
   const rateLimitRef = eventRef.collection("rate_limits").doc(ipHash);
-  const emailKeyRef = emailHash ? eventRef.collection("email_keys").doc(emailHash) : null;
+  const emailKeyRef = email ? eventRef.collection("email_keys").doc(email) : null;
+  const legacyEmailKeyRef = emailHash ? eventRef.collection("email_keys").doc(emailHash) : null;
   const movieRef = eventRef.collection("movies").doc(movieDocId(requestedMovieTitle));
   const legacyMovieRef = eventRef.collection("movies").doc(requestedMovieTitle);
 
@@ -292,6 +293,7 @@ exports.submitVote = onCall(async (request) => {
     const rateLimitDoc = await transaction.get(rateLimitRef);
     const voteKeyDoc = await transaction.get(voteKeyRef);
     const emailKeyDoc = emailKeyRef ? await transaction.get(emailKeyRef) : null;
+    const legacyEmailKeyDoc = legacyEmailKeyRef ? await transaction.get(legacyEmailKeyRef) : null;
     const movieDoc = await transaction.get(movieRef);
     const legacyMovieDoc = await transaction.get(legacyMovieRef);
 
@@ -316,12 +318,30 @@ exports.submitVote = onCall(async (request) => {
       };
     }
 
+    if (legacyEmailKeyDoc?.exists) {
+      const existingEmailVote = legacyEmailKeyDoc.data() || {};
+      return {
+        status: "already-voted",
+        movieTitle: existingEmailVote.movie_title || null,
+      };
+    }
+
     if (emailHash) {
-      // Legacy fallback: if old records exist without email_keys, still enforce one vote per email.
-      const existingEmailVoteQuery = votesRef.where("email_hash", "==", emailHash).limit(1);
-      const existingEmailVoteSnapshot = await transaction.get(existingEmailVoteQuery);
-      if (!existingEmailVoteSnapshot.empty) {
-        const existingEmailVoteDoc = existingEmailVoteSnapshot.docs[0]?.data() || {};
+      const existingPlainEmailVoteQuery = votesRef.where("email", "==", email).limit(1);
+      const existingPlainEmailVoteSnapshot = await transaction.get(existingPlainEmailVoteQuery);
+      if (!existingPlainEmailVoteSnapshot.empty) {
+        const existingEmailVoteDoc = existingPlainEmailVoteSnapshot.docs[0]?.data() || {};
+        return {
+          status: "already-voted",
+          movieTitle: existingEmailVoteDoc.movie_title || null,
+        };
+      }
+
+      // Legacy fallback: if old records exist without plain-email keys, still enforce one vote per email.
+      const existingHashedEmailVoteQuery = votesRef.where("email_hash", "==", emailHash).limit(1);
+      const existingHashedEmailVoteSnapshot = await transaction.get(existingHashedEmailVoteQuery);
+      if (!existingHashedEmailVoteSnapshot.empty) {
+        const existingEmailVoteDoc = existingHashedEmailVoteSnapshot.docs[0]?.data() || {};
         return {
           status: "already-voted",
           movieTitle: existingEmailVoteDoc.movie_title || null,
@@ -363,7 +383,6 @@ exports.submitVote = onCall(async (request) => {
 
     if (email) {
       voteRecord.email = email;
-      voteRecord.email_hash = emailHash;
     }
 
     transaction.set(voteRef, voteRecord);
@@ -376,14 +395,14 @@ exports.submitVote = onCall(async (request) => {
     };
 
     if (emailHash) {
-      voteKeyRecord.email_hash = emailHash;
+      voteKeyRecord.email = email;
     }
 
     transaction.set(voteKeyRef, voteKeyRecord);
 
-    if (emailKeyRef && emailHash) {
+    if (emailKeyRef && email) {
       transaction.set(emailKeyRef, {
-        email_hash: emailHash,
+        email,
         client_id_hash: clientIdHash,
         movie_title: movieTitle,
         vote_id: voteRef.id,
@@ -432,20 +451,18 @@ exports.addEmailSignup = onCall(async (request) => {
     eventId = "unknown";
   }
 
-  const emailHash = hashValue(email);
   const ipHash = hashValue(`email:${getRequesterIp(request)}`);
 
-  const signupRef = db.collection("email_signups").doc(emailHash);
+  const signupRef = db.collection("email_signups").doc(email);
 
   await signupRef.set({
     email,
-    email_hash: emailHash,
     event_id: eventId,
     ip_hash: ipHash,
     updated_at: admin.firestore.FieldValue.serverTimestamp(),
   }, {merge: true});
 
-  logger.info("Email signup recorded", {eventId, emailHash});
+  logger.info("Email signup recorded", {eventId, email});
 
   return {
     status: "ok",
