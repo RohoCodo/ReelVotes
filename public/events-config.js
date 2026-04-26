@@ -33,7 +33,18 @@ window.REELVOTES_EVENTS = [
     firestoreEventId: "np-2026-06-01-1830",
     screeningLabel: "6/1 @ 6:30pm",
     screeningDateTime: "2026-06-01T18:30:00",
-    voteWindowLabel: "Voting now"
+    voteStatus: "live",
+    requireEmail: false,
+    showLiveVoteCounts: true,
+    voteWindowLabel: "Voting now",
+    allowedMovies: [
+      "RomComs",
+      "Sci-fi",
+      "Coming of Age",
+      "Thrillers/Mystery",
+      "Comedy (or Satire/Black Comedy)",
+      "Action/Adventure"
+    ]
   },
   {
     id: "2026-06-08",

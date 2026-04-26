@@ -30,8 +30,8 @@ const TMDB_TITLE_OVERRIDES = {
 // Restricted list - movies that cannot be voted for
 const RESTRICTED_MOVIES = new Set([]);
 
-// Allowed movies - only these can be voted for
-const ALLOWED_MOVIES = [
+// Default allowed movies - used when an event-specific list is not configured
+const DEFAULT_ALLOWED_MOVIES = [
   "Back to the Future",
   "Jurassic Park",
   "Blade Runner",
@@ -67,6 +67,12 @@ const selectedEvent = window.REELVOTES_EVENT || configuredEvents.find(
 ) || null;
 const EVENT_ID = selectedEvent?.firestoreEventId || requestedEventDataId || "newparkway1";
 const EVENT_STATUS = selectedEvent?.voteStatus || null;
+const EVENT_REQUIRES_EMAIL = selectedEvent?.requireEmail !== false;
+const EVENT_SHOW_LIVE_VOTE_COUNTS = selectedEvent?.showLiveVoteCounts === true;
+const EVENT_ALLOWED_MOVIES = Array.isArray(selectedEvent?.allowedMovies)
+  ? selectedEvent.allowedMovies.filter((title) => typeof title === "string" && title.trim().length > 0)
+  : [];
+const ACTIVE_ALLOWED_MOVIES = EVENT_ALLOWED_MOVIES.length > 0 ? EVENT_ALLOWED_MOVIES : DEFAULT_ALLOWED_MOVIES;
 
 console.log("[app] Bootstrap", {
   href: window.location.href,
@@ -128,6 +134,20 @@ function updateSubmitButtonState() {
 
 function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || "").trim());
+}
+
+function buildAnonymousVoteEmail() {
+  const safeEventId = String(EVENT_ID || "event")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 40) || "event";
+  const safeClientId = String(voterClientId || "client")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 40) || "client";
+  return `anon-${safeEventId}-${safeClientId}@reelvotes.local`;
 }
 
 function setVoteEmailStatus(message, isError = false) {
@@ -382,7 +402,7 @@ async function fetchChosenMovies() {
     } else {
       console.log("Found votes - showing section");
       chosenSection.style.display = "block";
-      await displayChosenMovies();
+        await displayChosenMovies(EVENT_SHOW_LIVE_VOTE_COUNTS);
     }
   } catch (error) {
     console.error("Error fetching votes:", error);
@@ -478,16 +498,19 @@ async function displayAllowedMovies() {
   searchResults.innerHTML = "";
 
   const allowedMovieData = await Promise.all(
-    ALLOWED_MOVIES.map(async (movieTitle) => {
+    ACTIVE_ALLOWED_MOVIES.map(async (movieTitle) => {
       const metadata = await getMovieMetadataByTitle(movieTitle);
       return { title: movieTitle, ...metadata };
     })
   );
 
   for (const movie of allowedMovieData) {
-    // Find if this movie already has votes
-    const existingMovie = chosenMovies.find(m => m.title === movie.title || m.title.startsWith(movie.title));
-    
+    const existingMovie = chosenMovies.find(m =>
+      String(m.title || "").trim().toLowerCase() === String(movie.title || "").trim().toLowerCase()
+    );
+    const voteCount = existingMovie?.vote_count || 0;
+    const showCount = EVENT_SHOW_LIVE_VOTE_COUNTS;
+
     const item = document.createElement("div");
     item.className = "search-result-item allowed-movie-item";
     item.innerHTML = `
@@ -496,6 +519,7 @@ async function displayAllowedMovies() {
           <img class="allowed-movie-poster" src="${movie.poster || ''}" alt="${movie.title} poster" ${movie.poster ? '' : 'style="display:none;"'} />
           <span class="allowed-movie-title">${movie.title}</span>
         </div>
+        ${showCount ? `<span class="allowed-movie-votes">${voteCount} vote${voteCount !== 1 ? 's' : ''}</span>` : ''}
       </div>
     `;
     item.onclick = () => selectMovie({ title: movie.title, poster: movie.poster, tmdbId: movie.tmdbId });
@@ -621,12 +645,38 @@ async function selectMovie(tmdbMovie) {
 async function displayChosenMovies(showVoteCounts = false) {
   chosenList.innerHTML = "";
 
-  if (chosenMovies.length === 0) {
+  const shouldShowLiveThemeCounts = Boolean(
+    showVoteCounts &&
+    EVENT_SHOW_LIVE_VOTE_COUNTS &&
+    EVENT_STATUS === "live" &&
+    ACTIVE_ALLOWED_MOVIES.length > 0
+  );
+
+  let moviesSource = chosenMovies;
+
+  if (shouldShowLiveThemeCounts) {
+    const existingByTitle = new Map(
+      chosenMovies.map((movie) => [String(movie.title || "").trim().toLowerCase(), movie])
+    );
+
+    moviesSource = ACTIVE_ALLOWED_MOVIES.map((themeTitle) => {
+      const key = String(themeTitle || "").trim().toLowerCase();
+      const existing = existingByTitle.get(key);
+      return existing || {
+        id: key,
+        title: themeTitle,
+        vote_count: 0,
+        year: null,
+      };
+    });
+  }
+
+  if (moviesSource.length === 0) {
     chosenSection.style.display = "none";
     return;
   }
 
-  const movies = chosenMovies.map(movie => ({
+  const movies = moviesSource.map(movie => ({
     movie,
     voteCount: movie.vote_count || 0
   }));
@@ -773,7 +823,7 @@ clearSearchBtn.addEventListener("click", () => {
   selectedMovie = null;
   selectedMovieCard = null;
   updateVoteActionState();
-  displayChosenMovies();
+  displayChosenMovies(EVENT_SHOW_LIVE_VOTE_COUNTS);
 });
 
 // Hide clear button on blur if input is empty
@@ -791,18 +841,26 @@ document.addEventListener("click", (e) => {
 });
 
 // Record vote to Firebase (new structure with individual votes)
-async function recordVote(email) {
+async function recordVote(email = null) {
   try {
     if (!selectedMovie || !voterClientId) return null;
     const movieTitle = selectedMovie.title;
 
-    const response = await submitVoteCallable({
+    const payload = {
       eventId: EVENT_ID,
       movieTitle,
       clientId: voterClientId,
-      captchaToken,
-      email
-    });
+      captchaToken
+    };
+
+    if (EVENT_REQUIRES_EMAIL && email) {
+      payload.email = email;
+    } else if (!EVENT_REQUIRES_EMAIL) {
+      // Backward-compatible fallback while some deployed backends still require an email field.
+      payload.email = buildAnonymousVoteEmail();
+    }
+
+    const response = await submitVoteCallable(payload);
 
     const result = response.data || {};
     if (result.movieTitle) {
@@ -840,7 +898,7 @@ async function recordVote(email) {
   }
 }
 
-async function submitSelectedVote(email) {
+async function submitSelectedVote(email = null) {
   if (!selectedMovie) return;
 
   console.log("Submitting vote for:", selectedMovie);
@@ -922,7 +980,12 @@ submitBtn.onclick = async () => {
     return;
   }
 
-  showEmailVoteModal();
+  if (EVENT_REQUIRES_EMAIL) {
+    showEmailVoteModal();
+    return;
+  }
+
+  await submitSelectedVote();
 };
 
 cancelEmailVoteBtn?.addEventListener("click", () => {
@@ -1102,7 +1165,7 @@ function showVotingInterface() {
     moviePreview.classList.add("hidden");
   }
   
-  // Show the allowed movies list instead
+  // Show the allowed movies list instead (vote counts are shown on the cards)
   displayAllowedMovies();
   updateVoteActionState();
 }

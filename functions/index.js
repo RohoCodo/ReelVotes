@@ -34,6 +34,14 @@ const EVENTBRITE_EVENT_ID = "1985653305489";
 const RATE_LIMIT_WINDOW_MS = 15000;
 const TURNSTILE_VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
 const TURNSTILE_SECRET_KEY = process.env.TURNSTILE_SECRET_KEY || "";
+const EMAIL_OPTIONAL_EVENT_IDS = new Set([
+  "np-2026-06-01-1830",
+]);
+
+function requiresEmailForEvent(eventId) {
+  return !EMAIL_OPTIONAL_EVENT_IDS.has(eventId);
+}
+
 function normalizeMovieTitle(movieTitle) {
   return String(movieTitle || "")
     .trim()
@@ -53,6 +61,12 @@ const ALLOWED_MOVIES = new Set([
   "Blade",
   "Battle Royale",
   "Mad Max: Fury Road",
+  "RomComs",
+  "Sci-fi",
+  "Coming of Age",
+  "Thrillers/Mystery",
+  "Comedy (or Satire/Black Comedy)",
+  "Action/Adventure",
 ]);
 const ALLOWED_MOVIE_LOOKUP = new Map(
   Array.from(ALLOWED_MOVIES).map((title) => [normalizeMovieTitle(title), title]),
@@ -170,6 +184,14 @@ function sanitizeEmail(email) {
   return normalizedEmail;
 }
 
+function sanitizeOptionalEmail(email) {
+  const normalizedEmail = String(email || "").trim().toLowerCase();
+  if (!normalizedEmail) {
+    return null;
+  }
+  return sanitizeEmail(normalizedEmail);
+}
+
 function sanitizeCaptchaToken(captchaToken) {
   const normalizedCaptchaToken = String(captchaToken || "").trim();
   if (!normalizedCaptchaToken) {
@@ -253,22 +275,23 @@ exports.submitVote = onCall(async (request) => {
   const eventId = sanitizeEventId(request.data?.eventId);
   const clientId = sanitizeClientId(request.data?.clientId);
   const requestedMovieTitle = sanitizeMovieTitle(request.data?.movieTitle);
-  const email = sanitizeEmail(request.data?.email);
+  const requiresEmail = requiresEmailForEvent(eventId);
+  const email = requiresEmail ? sanitizeEmail(request.data?.email) : sanitizeOptionalEmail(request.data?.email);
   await verifyCaptchaToken(request, request.data?.captchaToken);
   const {clientIdHash, voteKeyRef} = buildVoteLookup(eventId, clientId);
-  const emailHash = hashValue(email);
+  const emailHash = email ? hashValue(email) : null;
   const ipHash = hashValue(`${eventId}:${getRequesterIp(request)}`);
   const eventRef = db.collection("events").doc(eventId);
   const votesRef = eventRef.collection("votes");
   const rateLimitRef = eventRef.collection("rate_limits").doc(ipHash);
-  const emailKeyRef = eventRef.collection("email_keys").doc(emailHash);
+  const emailKeyRef = emailHash ? eventRef.collection("email_keys").doc(emailHash) : null;
   const movieRef = eventRef.collection("movies").doc(movieDocId(requestedMovieTitle));
   const legacyMovieRef = eventRef.collection("movies").doc(requestedMovieTitle);
 
   return db.runTransaction(async (transaction) => {
     const rateLimitDoc = await transaction.get(rateLimitRef);
     const voteKeyDoc = await transaction.get(voteKeyRef);
-    const emailKeyDoc = await transaction.get(emailKeyRef);
+    const emailKeyDoc = emailKeyRef ? await transaction.get(emailKeyRef) : null;
     const movieDoc = await transaction.get(movieRef);
     const legacyMovieDoc = await transaction.get(legacyMovieRef);
 
@@ -285,7 +308,7 @@ exports.submitVote = onCall(async (request) => {
       };
     }
 
-    if (emailKeyDoc.exists) {
+    if (emailKeyDoc?.exists) {
       const existingEmailVote = emailKeyDoc.data() || {};
       return {
         status: "already-voted",
@@ -293,15 +316,17 @@ exports.submitVote = onCall(async (request) => {
       };
     }
 
-    // Legacy fallback: if old records exist without email_keys, still enforce one vote per email.
-    const existingEmailVoteQuery = votesRef.where("email_hash", "==", emailHash).limit(1);
-    const existingEmailVoteSnapshot = await transaction.get(existingEmailVoteQuery);
-    if (!existingEmailVoteSnapshot.empty) {
-      const existingEmailVoteDoc = existingEmailVoteSnapshot.docs[0]?.data() || {};
-      return {
-        status: "already-voted",
-        movieTitle: existingEmailVoteDoc.movie_title || null,
-      };
+    if (emailHash) {
+      // Legacy fallback: if old records exist without email_keys, still enforce one vote per email.
+      const existingEmailVoteQuery = votesRef.where("email_hash", "==", emailHash).limit(1);
+      const existingEmailVoteSnapshot = await transaction.get(existingEmailVoteQuery);
+      if (!existingEmailVoteSnapshot.empty) {
+        const existingEmailVoteDoc = existingEmailVoteSnapshot.docs[0]?.data() || {};
+        return {
+          status: "already-voted",
+          movieTitle: existingEmailVoteDoc.movie_title || null,
+        };
+      }
     }
 
     const canonicalMovieTitleFromEvent = movieDoc.exists
@@ -329,30 +354,42 @@ exports.submitVote = onCall(async (request) => {
         : 0;
     const nextVoteCount = existingMovieVoteCount + 1;
 
-    transaction.set(voteRef, {
+    const voteRecord = {
       client_id_hash: clientIdHash,
-      email,
-      email_hash: emailHash,
       movie_title: movieTitle,
       created_at: admin.firestore.FieldValue.serverTimestamp(),
       ip_hash: ipHash,
-    });
+    };
 
-    transaction.set(voteKeyRef, {
-      client_id_hash: clientIdHash,
-      email_hash: emailHash,
-      movie_title: movieTitle,
-      vote_id: voteRef.id,
-      created_at: admin.firestore.FieldValue.serverTimestamp(),
-    });
+    if (email) {
+      voteRecord.email = email;
+      voteRecord.email_hash = emailHash;
+    }
 
-    transaction.set(emailKeyRef, {
-      email_hash: emailHash,
+    transaction.set(voteRef, voteRecord);
+
+    const voteKeyRecord = {
       client_id_hash: clientIdHash,
       movie_title: movieTitle,
       vote_id: voteRef.id,
       created_at: admin.firestore.FieldValue.serverTimestamp(),
-    });
+    };
+
+    if (emailHash) {
+      voteKeyRecord.email_hash = emailHash;
+    }
+
+    transaction.set(voteKeyRef, voteKeyRecord);
+
+    if (emailKeyRef && emailHash) {
+      transaction.set(emailKeyRef, {
+        email_hash: emailHash,
+        client_id_hash: clientIdHash,
+        movie_title: movieTitle,
+        vote_id: voteRef.id,
+        created_at: admin.firestore.FieldValue.serverTimestamp(),
+      });
+    }
 
     if (movieDoc.exists) {
       transaction.update(movieRef, {
