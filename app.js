@@ -47,6 +47,7 @@ const DEFAULT_ALLOWED_MOVIES = [
 let selectedMovie = null;
 let selectedMovieCard = null;
 let chosenMovies = [];
+const eliminatedMovieTitles = new Set();
 let hasActiveMovieList = false;
 let voterClientId = null;
 const movieMetadataCache = new Map();
@@ -312,31 +313,44 @@ function getPersistedCastVote() {
   }
 }
 
+function clearPersistedCastVote() {
+  try {
+    window.localStorage.removeItem(CAST_VOTE_KEY(EVENT_ID));
+  } catch (error) {
+    console.error("Error clearing stored vote:", error);
+  }
+}
+
 async function getExistingVote() {
-  const localVote = getPersistedCastVote();
-  if (localVote?.title) {
+  try {
+    const response = await getVoteStatusCallable({
+      eventId: EVENT_ID,
+      clientId: voterClientId
+    });
+
+    if (!response.data?.hasVoted || !response.data.movieTitle) {
+      clearPersistedCastVote();
+      return null;
+    }
+
+    persistCastVote(response.data.movieTitle);
+    return {
+      title: response.data.movieTitle,
+      vote_count: 0,
+      year: null
+    };
+  } catch (error) {
+    console.error("Error fetching vote status, falling back to local vote:", error);
+    const localVote = getPersistedCastVote();
+    if (!localVote?.title) {
+      return null;
+    }
     return {
       title: localVote.title,
       vote_count: 0,
       year: null
     };
   }
-
-  const response = await getVoteStatusCallable({
-    eventId: EVENT_ID,
-    clientId: voterClientId
-  });
-
-  if (!response.data?.hasVoted || !response.data.movieTitle) {
-    return null;
-  }
-
-  persistCastVote(response.data.movieTitle);
-  return {
-    title: response.data.movieTitle,
-    vote_count: 0,
-    year: null
-  };
 }
 
 async function routeCurrentVoter() {
@@ -374,12 +388,17 @@ async function fetchChosenMovies() {
     console.log("Query snapshot size:", querySnapshot.size);
     
     const moviesArray = [];
+    eliminatedMovieTitles.clear();
     querySnapshot.forEach((doc) => {
       const data = doc.data();
+      if (data.eliminated === true && data.movie_title) {
+        eliminatedMovieTitles.add(String(data.movie_title).trim().toLowerCase());
+      }
       moviesArray.push({
         id: doc.id,
         title: data.movie_title,
         vote_count: data.vote_count || 0,
+        eliminated: data.eliminated === true,
         year: null
       });
     });
@@ -508,11 +527,12 @@ async function displayAllowedMovies() {
     const existingMovie = chosenMovies.find(m =>
       String(m.title || "").trim().toLowerCase() === String(movie.title || "").trim().toLowerCase()
     );
+    const isEliminated = Boolean(existingMovie?.eliminated) || eliminatedMovieTitles.has(String(movie.title || "").trim().toLowerCase());
     const voteCount = existingMovie?.vote_count || 0;
     const showCount = EVENT_SHOW_LIVE_VOTE_COUNTS;
 
     const item = document.createElement("div");
-    item.className = "search-result-item allowed-movie-item";
+    item.className = `search-result-item allowed-movie-item${isEliminated ? " eliminated" : ""}`;
     item.innerHTML = `
       <div class="allowed-movie-content">
         <div class="allowed-movie-main">
@@ -522,7 +542,12 @@ async function displayAllowedMovies() {
         ${showCount ? `<span class="allowed-movie-votes">${voteCount} vote${voteCount !== 1 ? 's' : ''}</span>` : ''}
       </div>
     `;
-    item.onclick = () => selectMovie({ title: movie.title, poster: movie.poster, tmdbId: movie.tmdbId });
+    item.onclick = () => {
+      if (isEliminated) {
+        return;
+      }
+      selectMovie({ title: movie.title, poster: movie.poster, tmdbId: movie.tmdbId, eliminated: false });
+    };
     searchResults.appendChild(item);
   }
   
@@ -563,6 +588,16 @@ async function displaySearchResults(query) {
 // Select and preview a movie
 async function selectMovie(tmdbMovie) {
   console.log("selectMovie called with:", tmdbMovie);
+
+  if (tmdbMovie?.eliminated) {
+    return;
+  }
+
+  const normalizedTitle = String(tmdbMovie?.title || "").trim().toLowerCase();
+  if (normalizedTitle && eliminatedMovieTitles.has(normalizedTitle)) {
+    alert("That movie has been eliminated and cannot be selected.");
+    return;
+  }
   
   // For allowed movies (passed as simple objects with just title)
   if (!tmdbMovie.id && tmdbMovie.title) {

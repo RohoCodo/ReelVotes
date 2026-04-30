@@ -36,6 +36,8 @@ window.REELVOTES_EVENTS = [
     voteStatus: "live",
     requireEmail: false,
     showLiveVoteCounts: true,
+    eliminationEnabled: true,
+    eliminationsPerNight: 3,
     voteWindowLabel: "Voting now",
     allowedMovies: [
       "RomComs",

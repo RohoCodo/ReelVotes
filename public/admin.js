@@ -1,5 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
 import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-functions.js";
 
 // Firebase Config (same as main app)
 const firebaseConfig = {
@@ -13,6 +14,8 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const functions = getFunctions(app);
+const runEliminationRoundCallable = httpsCallable(functions, "runEliminationRound");
 
 // Hardcoded total votes needed to reach goal (same as main app)
 const VOTES_NEEDED = 50;
@@ -42,6 +45,9 @@ const adminList = document.getElementById("adminList");
 const ballotListEl = document.getElementById("ballotList");
 const eventSelector = document.getElementById("eventSelector");
 const backLink = document.querySelector("a[href='index.html']");
+const runEliminationBtn = document.getElementById("runEliminationBtn");
+const eliminationStatusEl = document.getElementById("eliminationStatus");
+let currentAdminEmail = null;
 
 // Populate event selector dropdown
 function populateSelector() {
@@ -97,6 +103,57 @@ function normalizeEmail(email) {
 
 function isAdminEmail(email) {
   return ADMIN_EMAILS.has(normalizeEmail(email));
+}
+
+function setEliminationStatus(message, isError = false) {
+  if (!eliminationStatusEl) return;
+  eliminationStatusEl.textContent = message;
+  eliminationStatusEl.style.color = isError ? "#ff6b6b" : "#bbb";
+}
+
+async function runEliminationRoundNow() {
+  if (!currentAdminEmail) {
+    setEliminationStatus("Admin session missing. Refresh and sign in again.", true);
+    return;
+  }
+
+  if (!currentEventId) {
+    setEliminationStatus("No event selected.", true);
+    return;
+  }
+
+  try {
+    if (runEliminationBtn) {
+      runEliminationBtn.disabled = true;
+      runEliminationBtn.textContent = "Running…";
+    }
+    setEliminationStatus("Running elimination round...");
+
+    const response = await runEliminationRoundCallable({
+      eventId: currentEventId,
+      adminEmail: currentAdminEmail,
+    });
+
+    const result = response.data || {};
+    if (result.status === "eliminated") {
+      const removed = Array.isArray(result.eliminatedTitles) ? result.eliminatedTitles.join(", ") : "";
+      setEliminationStatus(`Round ${result.round}: eliminated ${removed || "movies"}. Notified ${result.notifiedEmailCount || 0} voters.`);
+    } else if (result.status === "winner") {
+      setEliminationStatus(`Winner locked: ${result.winner || "final movie"}.`);
+    } else if (result.status === "disabled") {
+      setEliminationStatus("Elimination is disabled for this event.", true);
+    } else {
+      setEliminationStatus(`No changes (${result.status || "no-op"}).`);
+    }
+  } catch (error) {
+    console.error("Manual elimination failed:", error);
+    setEliminationStatus(error?.message || "Failed to run elimination.", true);
+  } finally {
+    if (runEliminationBtn) {
+      runEliminationBtn.disabled = false;
+      runEliminationBtn.textContent = "Run elimination round now";
+    }
+  }
 }
 
 function renderMovies(movies) {
@@ -218,11 +275,19 @@ async function ensureAdminAccess() {
 }
 
 ensureAdminAccess()
-  .then(() => {
+  .then((adminEmail) => {
+    currentAdminEmail = adminEmail;
     startLiveListener(currentEventId);
+    if (runEliminationBtn) {
+      runEliminationBtn.disabled = false;
+      runEliminationBtn.addEventListener("click", runEliminationRoundNow);
+    }
   })
   .catch((err) => {
     console.warn("Admin access blocked:", err.message);
+    if (runEliminationBtn) {
+      runEliminationBtn.disabled = true;
+    }
   });
 
 if (backLink) {
