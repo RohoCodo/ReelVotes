@@ -46,6 +46,7 @@ const DEFAULT_ALLOWED_MOVIES = [
 
 let selectedMovie = null;
 let selectedMovieCard = null;
+let selectedBallotMovies = [];
 let chosenMovies = [];
 const eliminatedMovieTitles = new Set();
 let hasActiveMovieList = false;
@@ -98,10 +99,13 @@ const clearSearchBtn = document.getElementById("clearSearchBtn");
 const captchaContainer = document.getElementById("captchaContainer");
 const captchaNotice = document.getElementById("captchaNotice");
 const emailVoteModal = document.getElementById("emailVoteModal");
+const singleVoteReminderModal = document.getElementById("singleVoteReminderModal");
 const voteEmailInput = document.getElementById("voteEmailInput");
 const voteEmailStatus = document.getElementById("voteEmailStatus");
 const confirmEmailVoteBtn = document.getElementById("confirmEmailVoteBtn");
 const cancelEmailVoteBtn = document.getElementById("cancelEmailVoteBtn");
+const singleVoteReminderAddMoreBtn = document.getElementById("singleVoteReminderAddMoreBtn");
+const singleVoteReminderOkBtn = document.getElementById("singleVoteReminderOkBtn");
 
 let captchaToken = null;
 let captchaWidgetId = null;
@@ -129,8 +133,8 @@ function setCaptchaNotice(message) {
 }
 
 function updateSubmitButtonState() {
-  const hasSelectedMovie = Boolean(selectedMovie);
-  submitBtn.disabled = !hasSelectedMovie || (CAPTCHA_ENABLED && !captchaToken);
+  const hasSelectedMovies = selectedBallotMovies.length > 0;
+  submitBtn.disabled = !hasSelectedMovies || (CAPTCHA_ENABLED && !captchaToken);
 }
 
 function isValidEmail(email) {
@@ -181,6 +185,28 @@ function hideEmailVoteModal() {
 
   emailVoteModal.classList.add("hidden");
   setVoteEmailStatus("");
+}
+
+function showSingleVoteReminderModal() {
+  if (!singleVoteReminderModal) {
+    return;
+  }
+
+  singleVoteReminderModal.classList.remove("hidden");
+  singleVoteReminderOkBtn?.focus();
+}
+
+function hideSingleVoteReminderModal() {
+  if (!singleVoteReminderModal) {
+    return;
+  }
+
+  singleVoteReminderModal.classList.add("hidden");
+}
+
+function continueAddingMovies() {
+  hideSingleVoteReminderModal();
+  searchInput?.focus();
 }
 
 async function waitForTurnstile() {
@@ -250,7 +276,7 @@ function resetCaptcha({ keepVisible = false } = {}) {
 }
 
 function updateVoteActionState() {
-  if (!selectedMovie) {
+  if (selectedBallotMovies.length === 0) {
     submitBtn.classList.add("hidden");
     resetCaptcha();
     return;
@@ -296,9 +322,14 @@ function getOrCreateClientId() {
   }
 }
 
-function persistCastVote(movieTitle) {
+function persistCastVote(movieTitles) {
+  const normalizedTitles = Array.isArray(movieTitles)
+    ? movieTitles.filter((title) => typeof title === "string" && title.trim().length > 0)
+    : [];
+
   window.localStorage.setItem(CAST_VOTE_KEY(EVENT_ID), JSON.stringify({
-    title: movieTitle,
+    titles: normalizedTitles,
+    title: normalizedTitles[0] || null,
     storedAt: Date.now()
   }));
 }
@@ -328,25 +359,38 @@ async function getExistingVote() {
       clientId: voterClientId
     });
 
-    if (!response.data?.hasVoted || !response.data.movieTitle) {
+    const responseTitles = Array.isArray(response.data?.movieTitles)
+      ? response.data.movieTitles
+      : response.data?.movieTitle
+        ? [response.data.movieTitle]
+        : [];
+
+    if (!response.data?.hasVoted || responseTitles.length === 0) {
       clearPersistedCastVote();
       return null;
     }
 
-    persistCastVote(response.data.movieTitle);
+    persistCastVote(responseTitles);
     return {
-      title: response.data.movieTitle,
+      titles: responseTitles,
+      title: responseTitles[0],
       vote_count: 0,
       year: null
     };
   } catch (error) {
     console.error("Error fetching vote status, falling back to local vote:", error);
     const localVote = getPersistedCastVote();
-    if (!localVote?.title) {
+    const localTitles = Array.isArray(localVote?.titles)
+      ? localVote.titles
+      : localVote?.title
+        ? [localVote.title]
+        : [];
+    if (localTitles.length === 0) {
       return null;
     }
     return {
-      title: localVote.title,
+      titles: localTitles,
+      title: localTitles[0],
       vote_count: 0,
       year: null
     };
@@ -375,6 +419,53 @@ async function routeCurrentVoter() {
 
   await fetchChosenMovies();
   showVotingInterface();
+}
+
+function movieTitleKey(movieTitle) {
+  return String(movieTitle || "").trim().toLowerCase();
+}
+
+function isMovieSelected(movieTitle) {
+  const targetKey = movieTitleKey(movieTitle);
+  return selectedBallotMovies.some((item) => movieTitleKey(item.title) === targetKey);
+}
+
+function updateAllowedMovieHighlights() {
+  const allMovieItems = document.querySelectorAll(".allowed-movie-item");
+  allMovieItems.forEach((item) => {
+    const itemTitle = item.dataset.movieTitle || "";
+    const selected = isMovieSelected(itemTitle);
+    item.style.backgroundColor = selected ? "#FFD700" : "";
+    item.style.fontWeight = selected ? "bold" : "normal";
+  });
+}
+
+function refreshSelectedBallotUi() {
+  if (!submitBtn) {
+    return;
+  }
+  submitBtn.textContent = selectedBallotMovies.length > 1
+    ? `Submit ${selectedBallotMovies.length} Votes`
+    : "Submit Vote";
+  updateAllowedMovieHighlights();
+  updateSubmitButtonState();
+}
+
+function toggleSelectedMovie(movie) {
+  if (!movie?.title) {
+    return;
+  }
+
+  const targetKey = movieTitleKey(movie.title);
+  const alreadyIncluded = isMovieSelected(movie.title);
+  if (alreadyIncluded) {
+    selectedBallotMovies = selectedBallotMovies.filter((item) => movieTitleKey(item.title) !== targetKey);
+    refreshSelectedBallotUi();
+    return;
+  }
+
+  selectedBallotMovies.push(movie);
+  refreshSelectedBallotUi();
 }
 
 // Fetch active movies from Firebase
@@ -533,6 +624,7 @@ async function displayAllowedMovies() {
 
     const item = document.createElement("div");
     item.className = `search-result-item allowed-movie-item${isEliminated ? " eliminated" : ""}`;
+    item.dataset.movieTitle = movie.title;
     item.innerHTML = `
       <div class="allowed-movie-content">
         <div class="allowed-movie-main">
@@ -550,6 +642,8 @@ async function displayAllowedMovies() {
     };
     searchResults.appendChild(item);
   }
+
+  updateAllowedMovieHighlights();
   
   // Remove hidden class - it has !important in CSS so this is crucial
   searchResults.classList.remove("hidden");
@@ -616,22 +710,6 @@ async function selectMovie(tmdbMovie) {
     
     console.log("Selected movie:", selectedMovie);
     
-    // Highlight the selected item in yellow
-    const allMovieItems = document.querySelectorAll('.allowed-movie-item');
-    console.log("Found movie items:", allMovieItems.length);
-    
-    allMovieItems.forEach(item => {
-      console.log("Checking item:", item.innerText);
-      if (item.innerText.includes(selectedMovie.title)) {
-        item.style.backgroundColor = '#FFD700'; // Gold/yellow
-        item.style.fontWeight = 'bold';
-        console.log("Highlighted:", selectedMovie.title);
-      } else {
-        item.style.backgroundColor = '';
-        item.style.fontWeight = 'normal';
-      }
-    });
-    
     // Make sure searchResults is visible (remove hidden class which has !important)
     if (searchResults) {
       searchResults.classList.remove("hidden");
@@ -640,6 +718,7 @@ async function selectMovie(tmdbMovie) {
     }
     
     console.log("Showing submit button");
+    toggleSelectedMovie(selectedMovie);
     updateVoteActionState();
     
     return;
@@ -665,14 +744,8 @@ async function selectMovie(tmdbMovie) {
   
   console.log("Selected movie:", selectedMovie);
   
-  // Highlight the selected item in yellow
-  const allMovieItems = document.querySelectorAll('.allowed-movie-item');
-  allMovieItems.forEach(item => {
-    item.style.backgroundColor = '';
-    item.style.fontWeight = 'normal';
-  });
-  
   console.log("Showing submit button");
+  toggleSelectedMovie(selectedMovie);
   updateVoteActionState();
 }
 
@@ -808,10 +881,12 @@ async function displayChosenMovies(showVoteCounts = false) {
 // Clear movie selection
 function clearMovieSelection() {
   selectedMovie = null;
+  selectedBallotMovies = [];
   moviePreview.classList.add("hidden");
   searchInput.value = "";
   searchResults.classList.add("hidden");
   clearSearchBtn.classList.remove("shown");
+  refreshSelectedBallotUi();
   updateVoteActionState();
 }
 
@@ -878,12 +953,19 @@ document.addEventListener("click", (e) => {
 // Record vote to Firebase (new structure with individual votes)
 async function recordVote(email = null) {
   try {
-    if (!selectedMovie || !voterClientId) return null;
-    const movieTitle = selectedMovie.title;
+    if (!selectedBallotMovies.length || !voterClientId) return null;
+    const movieTitles = selectedBallotMovies
+      .map((movie) => String(movie?.title || "").trim())
+      .filter((title) => title.length > 0);
+
+    if (movieTitles.length === 0) {
+      return null;
+    }
 
     const payload = {
       eventId: EVENT_ID,
-      movieTitle,
+      movieTitle: movieTitles[0],
+      movieTitles,
       clientId: voterClientId,
       captchaToken
     };
@@ -898,45 +980,51 @@ async function recordVote(email = null) {
     const response = await submitVoteCallable(payload);
 
     const result = response.data || {};
-    if (result.movieTitle) {
-      persistCastVote(result.movieTitle);
+    const recordedTitles = Array.isArray(result.movieTitles)
+      ? result.movieTitles
+      : result.movieTitle
+        ? [result.movieTitle]
+        : movieTitles;
+
+    if (recordedTitles.length > 0) {
+      persistCastVote(recordedTitles);
     }
 
     return result;
   } catch (error) {
     console.error("Error recording vote:", error);
-    const message = String(error?.message || "");
-    const lowerMessage = message.toLowerCase();
+    const errorMessage = String(error?.message || "");
+    const lowerErrorMessage = errorMessage.toLowerCase();
     if (error.code === "functions/resource-exhausted") {
       alert("You are moving too fast. Please wait a few seconds and try again.");
     } else if (error.code === "functions/permission-denied") {
       resetCaptcha({ keepVisible: true });
       alert("Please complete the CAPTCHA challenge and try again.");
     } else if (error.code === "functions/invalid-argument") {
-      if (lowerMessage.includes("captcha")) {
+      if (lowerErrorMessage.includes("captcha")) {
         resetCaptcha({ keepVisible: true });
         alert("Please complete the CAPTCHA challenge and try again.");
-      } else if (lowerMessage.includes("email")) {
+      } else if (lowerErrorMessage.includes("email")) {
         alert("Please enter a valid email address.");
-      } else if (lowerMessage.includes("movie")) {
+      } else if (lowerErrorMessage.includes("movie")) {
         alert("That movie cannot be voted for. Please pick one from the current list.");
       } else {
-        alert(message || "Invalid vote details. Please try again.");
+        alert(errorMessage || "Invalid vote request. Please try again.");
       }
     } else if (error.code === "functions/unavailable") {
       resetCaptcha({ keepVisible: true });
       alert("CAPTCHA verification is temporarily unavailable. Please try again.");
     } else {
-      alert("Error recording vote: " + (message || "Please try again."));
+      alert("Error recording vote: " + (errorMessage || "Please try again."));
     }
     throw error;
   }
 }
 
 async function submitSelectedVote(email = null) {
-  if (!selectedMovie) return;
+  if (!selectedBallotMovies.length) return;
 
-  console.log("Submitting vote for:", selectedMovie);
+  console.log("Submitting vote for:", selectedBallotMovies);
 
   // Hide voting interface
   moviePreview.classList.add("hidden");
@@ -965,8 +1053,14 @@ async function submitSelectedVote(email = null) {
     searchResults.classList.add("hidden");
     searchResults.setAttribute('style', '');
     await fetchChosenMovies();
+    const existingTitles = Array.isArray(voteResult.movieTitles)
+      ? voteResult.movieTitles
+      : voteResult.movieTitle
+        ? [voteResult.movieTitle]
+        : selectedBallotMovies.map((movie) => movie.title);
     await showExistingVoteConfirmation({
-      title: voteResult.movieTitle || selectedMovie.title,
+      titles: existingTitles,
+      title: existingTitles[0] || null,
       vote_count: 0,
       year: null
     });
@@ -977,8 +1071,12 @@ async function submitSelectedVote(email = null) {
   resetCaptcha();
   await fetchChosenMovies();
 
-  const movieData = chosenMovies.find(m => m.title === selectedMovie.title);
-  const voteCount = movieData?.vote_count || 1;
+  const submittedTitles = Array.isArray(voteResult?.movieTitles)
+    ? voteResult.movieTitles
+    : selectedBallotMovies.map((movie) => movie.title);
+
+  const posterMovie = selectedBallotMovies[0] || null;
+  const listItems = submittedTitles.map((title) => `<li>${title}</li>`).join("");
 
   // Keep chosen section hidden on confirmation screen
   chosenSection.classList.add("hidden");
@@ -991,12 +1089,13 @@ async function submitSelectedVote(email = null) {
   resultsDiv.classList.remove("hidden");
   resultsDiv.innerHTML = `
     <div class="confirmation">
-      ${selectedMovie.poster ? `<img class="confirmation-poster" src="${selectedMovie.poster}" alt="${selectedMovie.title} poster" />` : ''}
-      <h2>You voted for:</h2>
+      ${posterMovie?.poster ? `<img class="confirmation-poster" src="${posterMovie.poster}" alt="${posterMovie.title} poster" />` : ''}
+      <h2>Your ballot has been counted</h2>
       <div class="voted-movie-row">
         <div class="checkmark">✓</div>
-        <p class="voted-movie"><b>${selectedMovie.title}</b></p>
+        <p class="voted-movie"><b>${submittedTitles.length} movie${submittedTitles.length === 1 ? "" : "s"} selected</b></p>
       </div>
+      <ul style="text-align:left;margin:10px 0 0 26px;">${listItems}</ul>
       <p class="vote-counted">The vote has been counted</p>
 
     </div>
@@ -1007,7 +1106,12 @@ async function submitSelectedVote(email = null) {
 
 // Submit vote
 submitBtn.onclick = async () => {
-  if (!selectedMovie) return;
+  if (!selectedBallotMovies.length) return;
+
+  if (selectedBallotMovies.length === 1) {
+    showSingleVoteReminderModal();
+    return;
+  }
 
   if (CAPTCHA_ENABLED && !captchaToken) {
     await ensureCaptchaWidget();
@@ -1062,10 +1166,35 @@ confirmEmailVoteBtn?.addEventListener("click", async () => {
   }
 });
 
+singleVoteReminderOkBtn?.addEventListener("click", async () => {
+  hideSingleVoteReminderModal();
+
+  if (CAPTCHA_ENABLED && !captchaToken) {
+    await ensureCaptchaWidget();
+    setCaptchaNotice("Complete the CAPTCHA to enable vote submission.");
+    return;
+  }
+
+  if (EVENT_REQUIRES_EMAIL) {
+    showEmailVoteModal();
+    return;
+  }
+
+  await submitSelectedVote();
+});
+
+singleVoteReminderAddMoreBtn?.addEventListener("click", () => {
+  continueAddingMovies();
+});
+
 window.shareVote = async function() {
-  const text = `I'm backing ${selectedMovie.title} for movie night! 🎬 Join the vote and make it happen!`;
+  const ballotTitles = selectedBallotMovies.map((movie) => movie.title);
+  const leadTitle = ballotTitles[0] || "a movie";
+  const text = ballotTitles.length > 1
+    ? `I just voted for ${ballotTitles.length} movies on ReelVotes (including ${leadTitle})! 🎬 Join the vote and make it happen!`
+    : `I'm backing ${leadTitle} for movie night! 🎬 Join the vote and make it happen!`;
   const appLink = await generateAppLink();
-  const url = `${appLink}&vote=${encodeURIComponent(selectedMovie.title)}`;
+  const url = `${appLink}&vote=${encodeURIComponent(leadTitle)}`;
   
   if (navigator.share) {
     navigator.share({
@@ -1081,6 +1210,14 @@ window.shareVote = async function() {
 
 // Show confirmation page for an existing vote
 async function showExistingVoteConfirmation(movie) {
+  const movieTitles = Array.isArray(movie?.titles)
+    ? movie.titles
+    : movie?.title
+      ? [movie.title]
+      : [];
+
+  const leadTitle = movieTitles[0] || "your selected movie";
+
   // Hide voting interface
   const searchSection = document.getElementById("search-section");
   if (searchSection) {
@@ -1105,22 +1242,24 @@ async function showExistingVoteConfirmation(movie) {
   chosenSection.style.display = "none !important";
   submitBtn.classList.add("hidden");
   
-  const movieMetadata = await getMovieMetadataByTitle(movie.title);
+  const movieMetadata = await getMovieMetadataByTitle(leadTitle);
+  const listItems = movieTitles.map((title) => `<li>${title}</li>`).join("");
   
   // Display confirmation
   resultsDiv.classList.remove("hidden");
   resultsDiv.innerHTML = `
     <div class="confirmation">
-      ${movieMetadata.poster ? `<img class="confirmation-poster" src="${movieMetadata.poster}" alt="${movie.title} poster" />` : ''}
+      ${movieMetadata.poster ? `<img class="confirmation-poster" src="${movieMetadata.poster}" alt="${leadTitle} poster" />` : ''}
       <h2>You've Already Voted!</h2>
       <div class="voted-movie-row">
         <div class="checkmark">✓</div>
-        <p class="voted-movie"><b>${movie.title}</b></p>
+        <p class="voted-movie"><b>${movieTitles.length} movie${movieTitles.length === 1 ? "" : "s"} on your ballot</b></p>
       </div>
+      ${movieTitles.length ? `<ul style="text-align:left;margin:10px 0 0 26px;">${listItems}</ul>` : ""}
       <p class="vote-counted">Your vote has been counted</p>
     </div>
 
-    <button class="share-btn" onclick="shareExistingVote('${movie.title}')">📤 Share & Grow</button>
+    <button class="share-btn" onclick="shareExistingVote('${leadTitle.replace(/'/g, "\\'")}')">📤 Share & Grow</button>
   `;
 }
 
@@ -1170,6 +1309,8 @@ function showVotingInterface() {
 
   // Hide results if visible
   resultsDiv.classList.add("hidden");
+  selectedBallotMovies = [];
+  refreshSelectedBallotUi();
 
   if (!hasActiveMovieList) {
     if (searchInput && searchInput.parentElement) {

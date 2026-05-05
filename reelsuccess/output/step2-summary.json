@@ -1,0 +1,13 @@
+{
+  "input": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/output/screenings.json",
+  "year": "2023",
+  "unique_theaters": 668,
+  "unique_city_state_pairs": 423,
+  "matched_theaters": 635,
+  "unmatched_theaters": 33,
+  "outputs": {
+    "theater_profiles_json": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/output/theater_profiles_step2.json",
+    "theater_profiles_csv": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/output/theater_profiles_step2.csv",
+    "city_demographics_json": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/output/city_demographics.json"
+  }
+}

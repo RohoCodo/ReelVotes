@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>ReelSuccess</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" type="image/png" href="icon.png" />
+</head>
+<body>
+  <div class="overlay"></div>
+
+  <div class="container">
+    <div class="card reelsuccess-card">
+      <img src="icon.png" class="logo" />
+      <h1>ReelSuccess</h1>
+      <p class="subtitle">Find similar theaters and proven movie recommendations.</p>
+
+      <p style="margin: 0 0 10px; text-align: left;">
+        <a href="index.html" class="app-link">← Back to ReelVotes</a>
+      </p>
+
+      <div class="reelsuccess-controls">
+        <input id="theaterSearchInput" class="search-input" type="text" placeholder="Search theater, city, or code..." autocomplete="off" />
+        <select id="theaterSelect" class="reelsuccess-select">
+          <option value="">Loading theaters...</option>
+        </select>
+      </div>
+
+      <p id="reelsuccessStatus" class="subtitle" style="margin-top:10px;"></p>
+
+      <section id="reelsuccessProfile" class="info-box hidden"></section>
+
+      <section id="reelsuccessSimilarSection" class="info-box hidden">
+        <h2>Most Similar Theaters</h2>
+        <div class="reelsuccess-table-wrap">
+          <table class="reelsuccess-table">
+            <thead>
+              <tr>
+                <th>Theater</th>
+                <th>City</th>
+                <th>Score</th>
+              </tr>
+            </thead>
+            <tbody id="similarTheatersBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="reelsuccessRecsSection" class="info-box hidden">
+        <h2>Recommended Movies</h2>
+        <div class="reelsuccess-table-wrap">
+          <table class="reelsuccess-table">
+            <thead>
+              <tr>
+                <th>Movie</th>
+                <th>Score</th>
+                <th>Support</th>
+              </tr>
+            </thead>
+            <tbody id="recommendationsBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script type="module" src="reelsuccess.js"></script>
+</body>
+</html>

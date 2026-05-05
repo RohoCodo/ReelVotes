@@ -1,0 +1,11 @@
+{
+  "created_at": "2026-05-03T03:16:35.842Z",
+  "source_files": {
+    "theaters": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/output/theaters_step3.json",
+    "similarity": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/output/theater_similarity_topk_step4.json",
+    "recommendations": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/output/theater_recommendations_step4.json"
+  },
+  "theater_count": 668,
+  "has_similarity_for": 668,
+  "has_recommendations_for": 668
+}

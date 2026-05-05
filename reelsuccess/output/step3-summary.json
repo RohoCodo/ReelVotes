@@ -1,0 +1,23 @@
+{
+  "inputs": {
+    "screenings": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/output/screenings.json",
+    "theaterProfiles": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/output/theater_profiles_step2.json"
+  },
+  "thresholds": {
+    "minMovieTheaters": 3
+  },
+  "counts": {
+    "screenings_raw": 8878,
+    "screenings_clean": 6930,
+    "dropped_noise_titles": 1948,
+    "unique_theaters": 668,
+    "movie_features": 119,
+    "matrix_rows": 668
+  },
+  "outputs": {
+    "screenings_clean": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/output/screenings_clean_step3.json",
+    "theaters": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/output/theaters_step3.json",
+    "movie_index": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/output/movie_index_step3.json",
+    "feature_matrix": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/output/theater_feature_matrix_step3.json"
+  }
+}

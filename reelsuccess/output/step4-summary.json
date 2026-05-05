@@ -1,0 +1,27 @@
+{
+  "inputs": {
+    "matrix": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/output/theater_feature_matrix_step3.json",
+    "theaters": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/output/theaters_step3.json",
+    "screenings": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/output/screenings_clean_step3.json",
+    "movieIndex": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/output/movie_index_step3.json"
+  },
+  "params": {
+    "topKSimilar": 15,
+    "topKRecMovies": 15,
+    "neighborPool": 30,
+    "weights": {
+      "movie": 0.6,
+      "demographics": 0.25,
+      "operations": 0.15
+    }
+  },
+  "counts": {
+    "theaters": 668,
+    "recommendation_rows_total": 9020,
+    "avg_recommendations_per_theater": 13.5
+  },
+  "outputs": {
+    "similarity": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/output/theater_similarity_topk_step4.json",
+    "recommendations": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/output/theater_recommendations_step4.json"
+  }
+}

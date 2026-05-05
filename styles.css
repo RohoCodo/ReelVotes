@@ -65,10 +65,87 @@ body {
   .hidden {
     display: none !important;
   }
+
+  /* ReelSuccess */
+  .reelsuccess-card {
+    max-width: 860px;
+    text-align: left;
+  }
+
+  .reelsuccess-card h1,
+  .reelsuccess-card .subtitle {
+    text-align: center;
+  }
+
+  .reelsuccess-controls {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .reelsuccess-select {
+    width: 100%;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid #555;
+    background: #1f1f1f;
+    color: #fff;
+    font-size: 14px;
+  }
+
+  .reelsuccess-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 12px;
+  }
+
+  .reelsuccess-stats-grid > div {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 8px;
+  }
+
+  .reelsuccess-stats-grid strong {
+    display: block;
+    font-size: 14px;
+    color: #fff;
+  }
+
+  .reelsuccess-stats-grid span {
+    font-size: 12px;
+    color: #bbb;
+  }
+
+  .reelsuccess-table-wrap {
+    overflow-x: auto;
+  }
+
+  .reelsuccess-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  .reelsuccess-table th,
+  .reelsuccess-table td {
+    text-align: left;
+    padding: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    white-space: nowrap;
+  }
+
+  .reelsuccess-table th {
+    color: #ff8e8e;
+    font-weight: 700;
+  }
+
   
   /* 🎬 Logo */
   .logo {
     width: 70px;
+    margin-top: 8px;
     margin-bottom: 10px;
   }
 

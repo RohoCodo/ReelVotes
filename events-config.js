@@ -13,8 +13,8 @@ window.REELVOTES_EVENTS = [
     firestoreEventId: "np-2026-05-26-1830",
     screeningLabel: "5/26 @ 6:30pm",
     screeningDateTime: "2026-05-26T18:30:00",
-    voteStatus: "live",
-    voteWindowLabel: "Voting now",
+    voteStatus: "ended",
+    voteWindowLabel: "Voting ended",
     allowedMovies: [
       "Back to the Future",
       "Jurassic Park",

@@ -8,6 +8,8 @@
  */
 
 const crypto = require("crypto");
+const fs = require("fs");
+const path = require("path");
 const admin = require("firebase-admin");
 const {setGlobalOptions} = require("firebase-functions");
 const {onCall, HttpsError} = require("firebase-functions/v2/https");
@@ -51,6 +53,63 @@ const ADMIN_EMAILS = new Set([
   "programming@thenewparkway.com",
   "nikki@thenewparkwaytheater.com",
 ]);
+const REELSUCCESS_DATA_DIR = path.join(__dirname, "reelsuccess-data");
+let reelSuccessCache = null;
+
+function readJsonFileSafe(filePath) {
+  if (!fs.existsSync(filePath)) {
+    throw new HttpsError("failed-precondition", `Missing ReelSuccess data file: ${path.basename(filePath)}`);
+  }
+
+  const raw = fs.readFileSync(filePath, "utf8");
+  return JSON.parse(raw);
+}
+
+function loadReelSuccessData() {
+  if (reelSuccessCache) {
+    return reelSuccessCache;
+  }
+
+  const theaterIndexPath = path.join(REELSUCCESS_DATA_DIR, "theater_index.json");
+  const theaterInsightsPath = path.join(REELSUCCESS_DATA_DIR, "theater_insights_by_key.json");
+  const metadataPath = path.join(REELSUCCESS_DATA_DIR, "metadata.json");
+
+  const theaterIndex = readJsonFileSafe(theaterIndexPath);
+  const theaterInsightsByKey = readJsonFileSafe(theaterInsightsPath);
+  const metadata = readJsonFileSafe(metadataPath);
+
+  reelSuccessCache = {
+    theaterIndex,
+    theaterInsightsByKey,
+    metadata,
+  };
+
+  return reelSuccessCache;
+}
+
+function sanitizePositiveInt(value, fallback, maxValue) {
+  const n = Number(value);
+  if (!Number.isFinite(n) || n <= 0) {
+    return fallback;
+  }
+  const floored = Math.floor(n);
+  return Math.min(floored, maxValue);
+}
+
+function normalizeSearchQuery(query) {
+  return String(query || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ");
+}
+
+function sanitizeTheaterKey(value) {
+  const theaterKey = String(value || "").trim();
+  if (!theaterKey) {
+    throw new HttpsError("invalid-argument", "theaterKey is required.");
+  }
+  return theaterKey;
+}
 
 function requiresEmailForEvent(eventId) {
   return !EMAIL_OPTIONAL_EVENT_IDS.has(eventId);
@@ -84,6 +143,34 @@ function assertAdminEmail(email) {
   const normalizedEmail = normalizeEmail(email);
   if (!ADMIN_EMAILS.has(normalizedEmail)) {
     throw new HttpsError("permission-denied", "Admin access denied.");
+  }
+  return normalizedEmail;
+}
+
+async function hasReelSuccessAccess(email) {
+  const normalizedEmail = normalizeEmail(email);
+  if (!normalizedEmail) {
+    return false;
+  }
+
+  if (ADMIN_EMAILS.has(normalizedEmail)) {
+    return true;
+  }
+
+  const accessDoc = await db.collection("reelsuccess_access").doc("users").collection("allowed").doc(normalizedEmail).get();
+  if (!accessDoc.exists) {
+    return false;
+  }
+
+  const accessData = accessDoc.data() || {};
+  return accessData.enabled !== false;
+}
+
+async function assertReelSuccessAccess(email) {
+  const normalizedEmail = normalizeEmail(email);
+  const allowed = await hasReelSuccessAccess(normalizedEmail);
+  if (!allowed) {
+    throw new HttpsError("permission-denied", "ReelSuccess access denied.");
   }
   return normalizedEmail;
 }
@@ -205,6 +292,36 @@ function sanitizeMovieTitle(movieTitle) {
     throw new HttpsError("invalid-argument", "A valid movie title is required.");
   }
   return normalizedMovieTitle;
+}
+
+function sanitizeMovieTitles(movieTitlesInput) {
+  const rawTitles = Array.isArray(movieTitlesInput)
+    ? movieTitlesInput
+    : movieTitlesInput == null
+      ? []
+      : [movieTitlesInput];
+
+  const deduped = [];
+  const seen = new Set();
+
+  rawTitles.forEach((title) => {
+    const sanitized = sanitizeMovieTitle(title);
+    const key = normalizeMovieTitle(sanitized);
+    if (!seen.has(key)) {
+      seen.add(key);
+      deduped.push(sanitized);
+    }
+  });
+
+  if (deduped.length === 0) {
+    throw new HttpsError("invalid-argument", "Select at least one movie before submitting.");
+  }
+
+  if (deduped.length > 20) {
+    throw new HttpsError("invalid-argument", "You can submit up to 20 movies per ballot.");
+  }
+
+  return deduped;
 }
 
 function sanitizeClientId(clientId) {
@@ -346,6 +463,7 @@ async function runNightlyEliminationForEvent(eventId) {
   const eventRef = db.collection("events").doc(eventId);
 
   const eliminationResult = await db.runTransaction(async (transaction) => {
+    // 1. All reads first
     const eventDoc = await transaction.get(eventRef);
     const eventData = eventDoc.exists ? (eventDoc.data() || {}) : {};
     if (!isEliminationEnabledForEvent(eventId, eventData)) {
@@ -356,7 +474,16 @@ async function runNightlyEliminationForEvent(eventId) {
     }
 
     const moviesRef = eventRef.collection("movies");
-    const moviesSnapshot = await transaction.get(moviesRef);
+    const voteKeysRef = eventRef.collection("voter_keys");
+    const emailKeysRef = eventRef.collection("email_keys");
+
+    // Read all required data before any writes
+    const [moviesSnapshot, voteKeysSnapshot, emailKeysSnapshot] = await Promise.all([
+      transaction.get(moviesRef),
+      transaction.get(voteKeysRef),
+      transaction.get(emailKeysRef),
+    ]);
+
     const movies = moviesSnapshot.docs.map((doc) => ({
       ref: doc.ref,
       id: doc.id,
@@ -377,7 +504,6 @@ async function runNightlyEliminationForEvent(eventId) {
           winner,
         };
       }
-
       return {
         status: "no-active-movies",
         eventId,
@@ -407,6 +533,7 @@ async function runNightlyEliminationForEvent(eventId) {
     const eliminatedMovies = activeMovies.slice(0, eliminateCount);
     const eliminatedTitles = eliminatedMovies.map((movie) => String(movie.data.movie_title || movie.id));
 
+    // 2. All writes after reads
     eliminatedMovies.forEach((movie) => {
       transaction.set(movie.ref, {
         eliminated: true,
@@ -415,8 +542,6 @@ async function runNightlyEliminationForEvent(eventId) {
       }, {merge: true});
     });
 
-    const voteKeysRef = eventRef.collection("voter_keys");
-    const voteKeysSnapshot = await transaction.get(voteKeysRef);
     const emailsToNotify = new Set();
 
     voteKeysSnapshot.docs.forEach((doc) => {
@@ -448,8 +573,6 @@ async function runNightlyEliminationForEvent(eventId) {
       }
     });
 
-    const emailKeysRef = eventRef.collection("email_keys");
-    const emailKeysSnapshot = await transaction.get(emailKeysRef);
     emailKeysSnapshot.docs.forEach((doc) => {
       const keyData = doc.data() || {};
       const keyMovieTitle = String(keyData.movie_title || "");
@@ -510,19 +633,20 @@ async function runNightlyEliminationForEvent(eventId) {
   return eliminationResult;
 }
 
-exports.runNightlyElimination = onSchedule({
-  schedule: ELIMINATION_SCHEDULE,
-  timeZone: ELIMINATION_TIMEZONE,
-}, async () => {
-  const eventIds = Array.from(ELIMINATION_ENABLED_EVENT_IDS);
-  for (const eventId of eventIds) {
-    try {
-      await runNightlyEliminationForEvent(eventId);
-    } catch (error) {
-      logger.error("Nightly elimination failed for event", {eventId, error});
-    }
-  }
-});
+// Nightly elimination is currently disabled. To re-enable, uncomment the code below.
+// exports.runNightlyElimination = onSchedule({
+//   schedule: ELIMINATION_SCHEDULE,
+//   timeZone: ELIMINATION_TIMEZONE,
+// }, async () => {
+//   const eventIds = Array.from(ELIMINATION_ENABLED_EVENT_IDS);
+//   for (const eventId of eventIds) {
+//     try {
+//       await runNightlyEliminationForEvent(eventId);
+//     } catch (error) {
+//       logger.error("Nightly elimination failed for event", {eventId, error});
+//     }
+//   }
+// });
 
 exports.runEliminationRound = onCall(async (request) => {
   const eventId = sanitizeEventId(request.data?.eventId);
@@ -567,13 +691,22 @@ exports.getVoteStatus = onCall(async (request) => {
   return {
     hasVoted: true,
     movieTitle: data.movie_title || null,
+    movieTitles: Array.isArray(data.movie_titles)
+      ? data.movie_titles
+      : data.movie_title
+        ? [data.movie_title]
+        : [],
   };
 });
 
 exports.submitVote = onCall(async (request) => {
   const eventId = sanitizeEventId(request.data?.eventId);
   const clientId = sanitizeClientId(request.data?.clientId);
-  const requestedMovieTitle = sanitizeMovieTitle(request.data?.movieTitle);
+  const requestedMovieTitles = sanitizeMovieTitles(
+    Array.isArray(request.data?.movieTitles) && request.data.movieTitles.length > 0
+      ? request.data.movieTitles
+      : request.data?.movieTitle,
+  );
   const requiresEmail = requiresEmailForEvent(eventId);
   const email = requiresEmail ? sanitizeEmail(request.data?.email) : sanitizeOptionalEmail(request.data?.email);
   await verifyCaptchaToken(request, request.data?.captchaToken);
@@ -585,16 +718,27 @@ exports.submitVote = onCall(async (request) => {
   const rateLimitRef = eventRef.collection("rate_limits").doc(ipHash);
   const emailKeyRef = email ? eventRef.collection("email_keys").doc(email) : null;
   const legacyEmailKeyRef = emailHash ? eventRef.collection("email_keys").doc(emailHash) : null;
-  const movieRef = eventRef.collection("movies").doc(movieDocId(requestedMovieTitle));
-  const legacyMovieRef = eventRef.collection("movies").doc(requestedMovieTitle);
+  const requestedMovieRefs = requestedMovieTitles.map((requestedMovieTitle) => ({
+    requestedMovieTitle,
+    movieRef: eventRef.collection("movies").doc(movieDocId(requestedMovieTitle)),
+    legacyMovieRef: eventRef.collection("movies").doc(requestedMovieTitle),
+  }));
 
   return db.runTransaction(async (transaction) => {
     const rateLimitDoc = await transaction.get(rateLimitRef);
     const voteKeyDoc = await transaction.get(voteKeyRef);
     const emailKeyDoc = emailKeyRef ? await transaction.get(emailKeyRef) : null;
     const legacyEmailKeyDoc = legacyEmailKeyRef ? await transaction.get(legacyEmailKeyRef) : null;
-    const movieDoc = await transaction.get(movieRef);
-    const legacyMovieDoc = await transaction.get(legacyMovieRef);
+    const requestedMovieDocs = [];
+    for (const requested of requestedMovieRefs) {
+      const movieDoc = await transaction.get(requested.movieRef);
+      const legacyMovieDoc = await transaction.get(requested.legacyMovieRef);
+      requestedMovieDocs.push({
+        ...requested,
+        movieDoc,
+        legacyMovieDoc,
+      });
+    }
 
     const lastAttemptAt = rateLimitDoc.exists ? rateLimitDoc.data()?.last_attempt_at : null;
     if (lastAttemptAt && Date.now() - lastAttemptAt.toMillis() < RATE_LIMIT_WINDOW_MS) {
@@ -614,6 +758,11 @@ exports.submitVote = onCall(async (request) => {
       return {
         status: "already-voted",
         movieTitle: existingVote.movie_title || null,
+        movieTitles: Array.isArray(existingVote.movie_titles)
+          ? existingVote.movie_titles
+          : existingVote.movie_title
+            ? [existingVote.movie_title]
+            : [],
       };
     }
 
@@ -622,6 +771,11 @@ exports.submitVote = onCall(async (request) => {
       return {
         status: "already-voted",
         movieTitle: existingEmailVote.movie_title || null,
+        movieTitles: Array.isArray(existingEmailVote.movie_titles)
+          ? existingEmailVote.movie_titles
+          : existingEmailVote.movie_title
+            ? [existingEmailVote.movie_title]
+            : [],
       };
     }
 
@@ -630,6 +784,11 @@ exports.submitVote = onCall(async (request) => {
       return {
         status: "already-voted",
         movieTitle: existingEmailVote.movie_title || null,
+        movieTitles: Array.isArray(existingEmailVote.movie_titles)
+          ? existingEmailVote.movie_titles
+          : existingEmailVote.movie_title
+            ? [existingEmailVote.movie_title]
+            : [],
       };
     }
 
@@ -641,6 +800,9 @@ exports.submitVote = onCall(async (request) => {
         return {
           status: "already-voted",
           movieTitle: existingEmailVoteDoc.movie_title || null,
+          movieTitles: existingEmailVoteDoc.movie_title
+            ? [existingEmailVoteDoc.movie_title]
+            : [],
         };
       }
 
@@ -652,63 +814,94 @@ exports.submitVote = onCall(async (request) => {
         return {
           status: "already-voted",
           movieTitle: existingEmailVoteDoc.movie_title || null,
+          movieTitles: existingEmailVoteDoc.movie_title
+            ? [existingEmailVoteDoc.movie_title]
+            : [],
         };
       }
     }
 
-    const canonicalMovieTitleFromEvent = movieDoc.exists
-      ? String(movieDoc.data()?.movie_title || "").trim()
-      : legacyMovieDoc.exists
-        ? String(legacyMovieDoc.data()?.movie_title || "").trim()
-        : "";
+    const canonicalMovieMeta = [];
+    const seenCanonicalTitles = new Set();
 
-    const canonicalMovieTitleFromAllowList = ALLOWED_MOVIE_LOOKUP.get(normalizeMovieTitle(requestedMovieTitle)) || "";
-    const movieTitle = canonicalMovieTitleFromEvent || canonicalMovieTitleFromAllowList;
+    requestedMovieDocs.forEach((requested) => {
+      const canonicalMovieTitleFromEvent = requested.movieDoc.exists
+        ? String(requested.movieDoc.data()?.movie_title || "").trim()
+        : requested.legacyMovieDoc.exists
+          ? String(requested.legacyMovieDoc.data()?.movie_title || "").trim()
+          : "";
 
-    if (!movieTitle) {
-      throw new HttpsError("invalid-argument", "That movie cannot be voted for.");
+      const canonicalMovieTitleFromAllowList = ALLOWED_MOVIE_LOOKUP.get(normalizeMovieTitle(requested.requestedMovieTitle)) || "";
+      const movieTitle = canonicalMovieTitleFromEvent || canonicalMovieTitleFromAllowList;
+
+      if (!movieTitle) {
+        throw new HttpsError("invalid-argument", `That movie cannot be voted for: ${requested.requestedMovieTitle}`);
+      }
+
+      const isMovieEliminated = requested.movieDoc.exists
+        ? requested.movieDoc.data()?.eliminated === true
+        : requested.legacyMovieDoc.exists
+          ? requested.legacyMovieDoc.data()?.eliminated === true
+          : false;
+      if (isMovieEliminated) {
+        throw new HttpsError("invalid-argument", `That movie has been eliminated: ${movieTitle}`);
+      }
+
+      const canonicalKey = normalizeMovieTitle(movieTitle);
+      if (seenCanonicalTitles.has(canonicalKey)) {
+        return;
+      }
+      seenCanonicalTitles.add(canonicalKey);
+
+      canonicalMovieMeta.push({
+        movieTitle,
+        movieRef: requested.movieRef,
+        legacyMovieRef: requested.legacyMovieRef,
+        movieDoc: requested.movieDoc,
+        legacyMovieDoc: requested.legacyMovieDoc,
+      });
+    });
+
+    if (canonicalMovieMeta.length === 0) {
+      throw new HttpsError("invalid-argument", "Select at least one valid movie before submitting.");
     }
 
-    const isMovieEliminated = movieDoc.exists
-      ? movieDoc.data()?.eliminated === true
-      : legacyMovieDoc.exists
-        ? legacyMovieDoc.data()?.eliminated === true
-        : false;
-    if (isMovieEliminated) {
-      throw new HttpsError("invalid-argument", "That movie has been eliminated from this round.");
-    }
+    const movieTitles = canonicalMovieMeta.map((item) => item.movieTitle);
+    const primaryMovieTitle = movieTitles[0];
 
     transaction.set(rateLimitRef, {
       last_attempt_at: admin.firestore.FieldValue.serverTimestamp(),
     }, {merge: true});
 
-    const voteRef = votesRef.doc();
-    const existingMovieVoteCount = movieDoc.exists
-      ? (movieDoc.data()?.vote_count || 0)
-      : legacyMovieDoc.exists
-        ? (legacyMovieDoc.data()?.vote_count || 0)
-        : 0;
-    const nextVoteCount = existingMovieVoteCount + 1;
     const updatedRevoteCredits = reVoteCredits > 0 ? reVoteCredits - 1 : 0;
 
-    const voteRecord = {
-      client_id_hash: clientIdHash,
-      movie_title: movieTitle,
-      created_at: admin.firestore.FieldValue.serverTimestamp(),
-      ip_hash: ipHash,
-      is_active: true,
-    };
+    const ballotId = votesRef.doc().id;
+    const voteRefs = canonicalMovieMeta.map(() => votesRef.doc());
 
-    if (email) {
-      voteRecord.email = email;
-    }
+    voteRefs.forEach((voteRef, index) => {
+      const voteRecord = {
+        ballot_id: ballotId,
+        client_id_hash: clientIdHash,
+        movie_title: movieTitles[index],
+        movie_titles: movieTitles,
+        created_at: admin.firestore.FieldValue.serverTimestamp(),
+        ip_hash: ipHash,
+        is_active: true,
+      };
 
-    transaction.set(voteRef, voteRecord);
+      if (email) {
+        voteRecord.email = email;
+      }
+
+      transaction.set(voteRef, voteRecord);
+    });
 
     const voteKeyRecord = {
       client_id_hash: clientIdHash,
-      movie_title: movieTitle,
-      vote_id: voteRef.id,
+      movie_title: primaryMovieTitle,
+      movie_titles: movieTitles,
+      vote_id: voteRefs[0].id,
+      vote_ids: voteRefs.map((ref) => ref.id),
       created_at: admin.firestore.FieldValue.serverTimestamp(),
     };
 
@@ -727,43 +920,61 @@ exports.submitVote = onCall(async (request) => {
       }, {merge: true});
     }
 
+    if (Array.isArray(existingVoteKeyData?.vote_ids)) {
+      existingVoteKeyData.vote_ids.forEach((voteId) => {
+        if (!voteId) {
+          return;
+        }
+        const previousVoteRef = votesRef.doc(String(voteId));
+        transaction.set(previousVoteRef, {
+          is_active: false,
+          superseded_at: admin.firestore.FieldValue.serverTimestamp(),
+        }, {merge: true});
+      });
+    }
+
     if (emailKeyRef && email) {
       transaction.set(emailKeyRef, {
         email,
         client_id_hash: clientIdHash,
-        movie_title: movieTitle,
-        vote_id: voteRef.id,
+        movie_title: primaryMovieTitle,
+        movie_titles: movieTitles,
+        vote_id: voteRefs[0].id,
+        vote_ids: voteRefs.map((ref) => ref.id),
         reVoteCredits: updatedRevoteCredits,
         created_at: admin.firestore.FieldValue.serverTimestamp(),
       });
     }
 
-    if (movieDoc.exists) {
-      transaction.update(movieRef, {
-        vote_count: admin.firestore.FieldValue.increment(1),
-        updated_at: admin.firestore.FieldValue.serverTimestamp(),
-      });
-    } else if (legacyMovieDoc.exists) {
-      transaction.update(legacyMovieRef, {
-        vote_count: admin.firestore.FieldValue.increment(1),
-        updated_at: admin.firestore.FieldValue.serverTimestamp(),
-      });
-    } else {
-      transaction.set(movieRef, {
-        movie_title: movieTitle,
-        vote_count: 1,
-        event_id: eventId,
-        created_at: admin.firestore.FieldValue.serverTimestamp(),
-        updated_at: admin.firestore.FieldValue.serverTimestamp(),
-      });
-    }
+    canonicalMovieMeta.forEach((movieMeta) => {
+      if (movieMeta.movieDoc.exists) {
+        transaction.update(movieMeta.movieRef, {
+          vote_count: admin.firestore.FieldValue.increment(1),
+          updated_at: admin.firestore.FieldValue.serverTimestamp(),
+        });
+      } else if (movieMeta.legacyMovieDoc.exists) {
+        transaction.update(movieMeta.legacyMovieRef, {
+          vote_count: admin.firestore.FieldValue.increment(1),
+          updated_at: admin.firestore.FieldValue.serverTimestamp(),
+        });
+      } else {
+        transaction.set(movieMeta.movieRef, {
+          movie_title: movieMeta.movieTitle,
+          vote_count: 1,
+          event_id: eventId,
+          created_at: admin.firestore.FieldValue.serverTimestamp(),
+          updated_at: admin.firestore.FieldValue.serverTimestamp(),
+        });
+      }
+    });
 
-    logger.info("Vote recorded", {eventId, movieTitle, clientIdHash});
+    logger.info("Vote recorded", {eventId, movieTitles, clientIdHash});
 
     return {
       status: "recorded",
-      movieTitle,
-      voteCount: nextVoteCount,
+      movieTitle: primaryMovieTitle,
+      movieTitles,
+      voteCount: movieTitles.length,
     };
   });
 });
@@ -794,6 +1005,100 @@ exports.addEmailSignup = onCall(async (request) => {
 
   return {
     status: "ok",
+  };
+});
+
+exports.reelSuccessListTheaters = onCall(async (request) => {
+  await assertReelSuccessAccess(request.data?.adminEmail);
+  const {theaterIndex, metadata} = loadReelSuccessData();
+
+  const query = normalizeSearchQuery(request.data?.query);
+  const limit = sanitizePositiveInt(request.data?.limit, 25, 100);
+
+  let filtered = theaterIndex;
+  if (query) {
+    filtered = theaterIndex.filter((row) => {
+      const haystack = [
+        row.theater_name,
+        row.theater_city_state,
+        row.theater_code,
+        row.city,
+        row.state_abbr,
+      ].join(" ").toLowerCase();
+      return haystack.includes(query);
+    });
+  }
+
+  return {
+    ok: true,
+    total: filtered.length,
+    limit,
+    dataVersion: metadata?.created_at || null,
+    theaters: filtered.slice(0, limit),
+  };
+});
+
+exports.reelSuccessGetTheaterInsights = onCall(async (request) => {
+  await assertReelSuccessAccess(request.data?.adminEmail);
+  const {theaterInsightsByKey, metadata} = loadReelSuccessData();
+  const theaterKey = sanitizeTheaterKey(request.data?.theaterKey);
+
+  const insights = theaterInsightsByKey[theaterKey] || null;
+  if (!insights) {
+    throw new HttpsError("not-found", "No ReelSuccess insights found for theaterKey.");
+  }
+
+  return {
+    ok: true,
+    dataVersion: metadata?.created_at || null,
+    ...insights,
+  };
+});
+
+exports.reelSuccessSetAccess = onCall(async (request) => {
+  const adminEmail = assertAdminEmail(request.data?.adminEmail);
+  const targetEmail = normalizeEmail(request.data?.targetEmail);
+  const enabled = request.data?.enabled !== false;
+
+  if (!targetEmail || !targetEmail.includes("@")) {
+    throw new HttpsError("invalid-argument", "Valid targetEmail is required.");
+  }
+
+  const accessRef = db.collection("reelsuccess_access").doc("users").collection("allowed").doc(targetEmail);
+  await accessRef.set({
+    email: targetEmail,
+    enabled,
+    updated_by: adminEmail,
+    updated_at: admin.firestore.FieldValue.serverTimestamp(),
+  }, {merge: true});
+
+  return {
+    ok: true,
+    targetEmail,
+    enabled,
+  };
+});
+
+exports.reelSuccessListAccess = onCall(async (request) => {
+  assertAdminEmail(request.data?.adminEmail);
+
+  const snapshot = await db.collection("reelsuccess_access").doc("users").collection("allowed").get();
+  const users = snapshot.docs
+    .map((doc) => {
+      const row = doc.data() || {};
+      return {
+        email: row.email || doc.id,
+        enabled: row.enabled !== false,
+        updated_by: row.updated_by || null,
+        updated_at: row.updated_at || null,
+      };
+    })
+    .sort((a, b) => String(a.email || "").localeCompare(String(b.email || "")));
+
+  return {
+    ok: true,
+    count: users.length,
+    users,
   };
 });
 

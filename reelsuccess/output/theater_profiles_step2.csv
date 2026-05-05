@@ -1,0 +1,669 @@
+theater_code,theater_name,theater_city_state,city,state_abbr,demographics_status,population,median_household_income,median_age,pct_white_alone,pct_black_alone,pct_asian_alone,pct_hispanic_latino,pct_bachelors_degree,pct_below_poverty,matched_place_name,source
+AMC,"AMC Metreon 16 with IMAX, Dolby","San Francisco, CA",San Francisco,CA,matched,836321,141446,39.7,40.49,5.09,34.97,15.93,35.07,10.58,"San Francisco city, California",US Census ACS5 2023
+APPL,Apple Cinemas Van Ness IMAX,"San Francisco, CA",San Francisco,CA,matched,836321,141446,39.7,40.49,5.09,34.97,15.93,35.07,10.58,"San Francisco city, California",US Census ACS5 2023
+AMC,AMC Kabuki 8,"San Francisco, CA",San Francisco,CA,matched,836321,141446,39.7,40.49,5.09,34.97,15.93,35.07,10.58,"San Francisco city, California",US Census ACS5 2023
+LAND,Opera Plaza 4,"San Francisco, CA",San Francisco,CA,matched,836321,141446,39.7,40.49,5.09,34.97,15.93,35.07,10.58,"San Francisco city, California",US Census ACS5 2023
+ESP,Presidio Theatre,"San Francisco, CA",San Francisco,CA,matched,836321,141446,39.7,40.49,5.09,34.97,15.93,35.07,10.58,"San Francisco city, California",US Census ACS5 2023
+PFR,Vogue,"San Francisco, CA",San Francisco,CA,matched,836321,141446,39.7,40.49,5.09,34.97,15.93,35.07,10.58,"San Francisco city, California",US Census ACS5 2023
+ESP,Marina Theatre,"San Francisco, CA",San Francisco,CA,matched,836321,141446,39.7,40.49,5.09,34.97,15.93,35.07,10.58,"San Francisco city, California",US Census ACS5 2023
+PFR,Balboa 2,"San Francisco, CA",San Francisco,CA,matched,836321,141446,39.7,40.49,5.09,34.97,15.93,35.07,10.58,"San Francisco city, California",US Census ACS5 2023
+RXSF,Roxie,"San Francisco, CA",San Francisco,CA,matched,836321,141446,39.7,40.49,5.09,34.97,15.93,35.07,10.58,"San Francisco city, California",US Census ACS5 2023
+CNMK,Century Tanforan 20 + XD,"San Bruno, CA",San Bruno,CA,matched,42612,135976,39.8,34.76,1.29,32.06,29.87,29.87,5.14,"San Bruno city, California",US Census ACS5 2023
+LAND,Aquarius 2,"Palo Alto, CA",Palo Alto,CA,matched,67231,220408,42.5,48.4,2.17,36.09,7.1,27.15,5.4,"Palo Alto city, California",US Census ACS5 2023
+CNMK,San Mateo 12,"San Mateo, CA",San Mateo,CA,matched,103555,152669,38,41.24,1.49,27.06,26.77,31.38,7.94,"San Mateo city, California",US Census ACS5 2023
+CNPL,Cinepolis San Mateo,"San Mateo, CA",San Mateo,CA,matched,103555,152669,38,41.24,1.49,27.06,26.77,31.38,7.94,"San Mateo city, California",US Census ACS5 2023
+CNMK,Mountain View Cinema 16,"Mountain View, CA",Mountain View,CA,matched,2072,84818,47.1,69.5,4.83,10.62,16.55,27.49,7.29,"Mountain View CDP, California",US Census ACS5 2023
+AMC,"AMC Saratoga 14 with IMAX, Dolby","San Jose, CA",San Jose,CA,matched,990054,141565,38.1,29.01,2.91,38.58,30.95,26.24,7.85,"San Jose city, California",US Census ACS5 2023
+TMKO,Pruneyard Cinemas,"Campbell, CA",Campbell,CA,matched,42848,147128,39.2,52.48,1.43,25.32,18.94,35.13,5.29,"Campbell city, California",US Census ACS5 2023
+INDLF,The Tech IMAX Dome,"San Jose, CA",San Jose,CA,matched,990054,141565,38.1,29.01,2.91,38.58,30.95,26.24,7.85,"San Jose city, California",US Census ACS5 2023
+WWDI,Capitol 6 DI,"San Jose, CA",San Jose,CA,matched,990054,141565,38.1,29.01,2.91,38.58,30.95,26.24,7.85,"San Jose city, California",US Census ACS5 2023
+CNMK,Milpitas Great Mall 20 + XD,"Milpitas, CA",Milpitas,CA,matched,78216,176822,36.4,11.61,2.05,71.95,13.35,32.73,5.43,"Milpitas city, California",US Census ACS5 2023
+CNMK,San Jose Santana Row 6,"San Jose, CA",San Jose,CA,matched,990054,141565,38.1,29.01,2.91,38.58,30.95,26.24,7.85,"San Jose city, California",US Census ACS5 2023
+CLG,Cine Lounge Fremont 7,"Fremont, CA",Fremont,CA,matched,228518,176350,38.8,19.45,2.85,62.47,12.93,32.52,5.08,"Fremont city, California",US Census ACS5 2023
+CNMK,Century at Hayward,"Hayward, CA",Hayward,CA,matched,159201,113775,38.2,19.58,9.04,29.63,40.9,23.18,9.46,"Hayward city, California",US Census ACS5 2023
+CNMK,Century at Pacific Commons + XD,"Fremont, CA",Fremont,CA,matched,228518,176350,38.8,19.45,2.85,62.47,12.93,32.52,5.08,"Fremont city, California",US Census ACS5 2023
+TSU,Chabot,"Castro Valley, CA",Castro Valley,CA,matched,65389,138069,42.8,38.3,8.73,34.11,17.64,26.87,7.47,"Castro Valley CDP, California",US Census ACS5 2023
+REG,Regal Jack London,"Oakland, CA",Oakland,CA,matched,438072,97369,37.6,30.51,21.09,15.54,28.88,26.51,13.68,"Oakland city, California",US Census ACS5 2023
+LAND,Piedmont 3,"Piedmont, CA",Piedmont,CA,matched,11012,250001,43.5,67.89,0.73,22.56,4.14,34.89,3.81,"Piedmont city, California",US Census ACS5 2023
+CNMK,San Leandro Bayfair 16,"San Leandro, CA",San Leandro,CA,matched,88531,98063,41.5,25.32,9.92,35.08,28.76,23.28,8.64,"San Leandro city, California",US Census ACS5 2023
+TMKO,Grand Lake 4,"Oakland, CA",Oakland,CA,matched,438072,97369,37.6,30.51,21.09,15.54,28.88,26.51,13.68,"Oakland city, California",US Census ACS5 2023
+CNMK,Richmond Hilltop 16,"Richmond, CA",Richmond,CA,matched,115396,90038,37.6,21.4,17.35,13.12,46.94,20.15,13.65,"Richmond city, California",US Census ACS5 2023
+AMC,"AMC NewPark 12 with IMAX, Dolby","Newark, CA",Newark,CA,matched,47145,164909,37.3,23.43,3.66,43.09,28.63,24.67,4.19,"Newark city, California",US Census ACS5 2023
+CNMK,Century Southland Mall,"Hayward, CA",Hayward,CA,matched,159201,113775,38.2,19.58,9.04,29.63,40.9,23.18,9.46,"Hayward city, California",US Census ACS5 2023
+WWDI,Solano Twin DI,"Concord, CA",Concord,CA,matched,124260,109195,38.6,48.11,3.85,13.45,32.29,26.1,8.88,"Concord city, California",US Census ACS5 2023
+BREN,Concord 14 + JBX,"Concord, CA",Concord,CA,matched,124260,109195,38.6,48.11,3.85,13.45,32.29,26.1,8.88,"Concord city, California",US Census ACS5 2023
+TMKO,Contra Costa 8,"Martinez, CA",Martinez,CA,matched,36926,125436,42.3,63.57,2.46,10.41,19.39,31.19,6.68,"Martinez city, California",US Census ACS5 2023
+ESP,Orinda 3,"Orinda, CA",Orinda,CA,matched,19472,250001,49.1,68.27,0.4,15.51,6.26,39.35,2.05,"Orinda city, California",US Census ACS5 2023
+ESP,Rialto Cinemas Elmwood,"Berkeley, CA",Berkeley,CA,matched,120223,108558,32.9,54.8,7.42,20.72,12.11,33.41,16.79,"Berkeley city, California",US Census ACS5 2023
+ESP,Rialto Cinemas Cerrito,"El Cerrito, CA",El Cerrito,CA,matched,25781,127475,42.4,47.7,4.69,29.29,14.28,33.69,7.5,"El Cerrito city, California",US Census ACS5 2023
+ESP,Vine Twin,"Livermore, CA",Livermore,CA,matched,85870,153602,40.5,60.64,1.5,16.08,23.11,30.66,4.43,"Livermore city, California",US Census ACS5 2023
+TMKO,Rheem 4,"Moraga, CA",Moraga,CA,matched,16790,199800,41.4,63.85,0.86,22.16,9.18,41.95,8.4,"Moraga town, California",US Census ACS5 2023
+PFR,The New Parkway Theater,"Oakland, CA",Oakland,CA,matched,438072,97369,37.6,30.51,21.09,15.54,28.88,26.51,13.68,"Oakland city, California",US Census ACS5 2023
+INDRP,Cinelounge,"Tiburon - Tiburon, CA",Tiburon - Tiburon,CA,matched,9035,212794,50.5,81.29,0.6,9.29,5.19,37.55,1.33,"Tiburon town, California",US Census ACS5 2023
+CNMK,Century Walnut Creek 14 + XD,"Walnut Creek, CA",Walnut Creek,CA,matched,69790,135665,46.1,65.04,2.37,16.68,11.84,38.83,5.95,"Walnut Creek city, California",US Census ACS5 2023
+CNMK,Century Downtown Pleasant Hill 16 + XD,"Pleasant Hill, CA",Pleasant Hill,CA,matched,34335,144513,42.5,61.31,3.7,17.29,15.2,33.09,6.14,"Pleasant Hill city, California",US Census ACS5 2023
+TMKO,Livermore Cinemas,"Livermore, CA",Livermore,CA,matched,85870,153602,40.5,60.64,1.5,16.08,23.11,30.66,4.43,"Livermore city, California",US Census ACS5 2023
+TMKO,Larkspur Landing Cinema,"Larkspur, CA",Larkspur,CA,matched,12856,134744,49.9,75.99,0.69,6.41,10.76,36,7.11,"Larkspur city, California",US Census ACS5 2023
+TMKO,Fairfax 6,"Fairfax, CA",Fairfax,CA,matched,1654,50326,32.1,71.58,0,0,74.12,6.17,27.22,"Fairfax CDP, California",US Census ACS5 2023
+TMKO,Airport Stadium 12,"Santa Rosa, CA",Santa Rosa,CA,matched,177216,97410,40.5,56.19,1.89,6.52,35.76,21.32,9.5,"Santa Rosa city, California",US Census ACS5 2023
+CTRN,The LOT City Center,"San Ramon, CA",San Ramon,CA,matched,85734,197358,40.9,36.52,2.99,49.37,7.79,38.96,4.13,"San Ramon city, California",US Census ACS5 2023
+JAC,Lark,"Larkspur, CA",Larkspur,CA,matched,12856,134744,49.9,75.99,0.69,6.41,10.76,36,7.11,"Larkspur city, California",US Census ACS5 2023
+CNMK,Novato Rowland Plaza 8,"Novato, CA",Novato,CA,matched,52689,112193,47.8,62.47,3.71,6.6,27.05,29.31,9,"Novato city, California",US Census ACS5 2023
+CNMK,Vallejo 14,"Vallejo, CA",Vallejo,CA,matched,124637,89496,40,27.29,17.39,22.95,30,19.7,11.98,"Vallejo city, California",US Census ACS5 2023
+PFR,Sequoia Cinema,"Mill Valley, CA",Mill Valley,CA,matched,14064,208466,47.2,83.28,0.9,7.17,3.99,39.7,4.99,"Mill Valley city, California",US Census ACS5 2023
+ESP,Rialto Cinemas Sebastopol,"Sebastopol, CA",Sebastopol,CA,matched,7466,99600,48.4,74.15,1.57,6.34,13.84,29.61,8.33,"Sebastopol city, California",US Census ACS5 2023
+REG,Regal Davis Holiday,"Davis, CA",Davis,CA,matched,66801,87421,27.2,56.27,2.63,24.62,15.24,31.99,25.13,"Davis city, California",US Census ACS5 2023
+BREN,Vacaville 16 + JBX,"Vacaville, CA",Vacaville,CA,matched,102085,108580,38.1,57.35,8.72,10.84,26.68,18.91,7.47,"Vacaville city, California",US Census ACS5 2023
+TMKO,Roxy Stadium 14,"Santa Rosa, CA",Santa Rosa,CA,matched,177216,97410,40.5,56.19,1.89,6.52,35.76,21.32,9.5,"Santa Rosa city, California",US Census ACS5 2023
+ARCE,Davis Varsity,"Davis, CA",Davis,CA,matched,66801,87421,27.2,56.27,2.63,24.62,15.24,31.99,25.13,"Davis city, California",US Census ACS5 2023
+TMKO,State Theatre,"Woodland, CA",Woodland,CA,matched,61256,87880,37,52.43,2.2,8.01,49.74,18.22,8.15,"Woodland city, California",US Census ACS5 2023
+TMKO,Boulevard 14,"Petaluma, CA",Petaluma,CA,matched,59321,109823,45,71.62,1.36,4.2,21.12,27.5,6.15,"Petaluma city, California",US Census ACS5 2023
+CNMK,Sacramento Greenback 16 + XD,"Sacramento, CA",Sacramento,CA,matched,524802,83753,35.7,36.76,12.43,19.71,29.5,22.85,14.37,"Sacramento city, California",US Census ACS5 2023
+REG,Regal Natomas Marketplace,"Sacramento, CA",Sacramento,CA,matched,524802,83753,35.7,36.76,12.43,19.71,29.5,22.85,14.37,"Sacramento city, California",US Census ACS5 2023
+CNMK,Century Napa Valley 12 + XD,"Napa, CA",Napa,CA,matched,78816,102231,41.2,62.74,1.06,2.95,40.95,23.29,8.69,"Napa city, California",US Census ACS5 2023
+WWDI,Sacramento 6 DI,"Sacramento, CA",Sacramento,CA,matched,524802,83753,35.7,36.76,12.43,19.71,29.5,22.85,14.37,"Sacramento city, California",US Census ACS5 2023
+CNMK,Century Downtown Commons + XD,"Sacramento, CA",Sacramento,CA,matched,524802,83753,35.7,36.76,12.43,19.71,29.5,22.85,14.37,"Sacramento city, California",US Census ACS5 2023
+TMKO,Cinema West Olympus Pointe,"Roseville, CA",Roseville,CA,matched,152438,117354,39.8,67.41,2.26,13.06,16.49,30.05,5.96,"Roseville city, California",US Census ACS5 2023
+REG,Regal Edwards Fairfield,"Fairfield, CA",Fairfield,CA,matched,119985,102321,36.8,35.95,15.27,17.43,31.78,17.81,10.47,"Fairfield city, California",US Census ACS5 2023
+ANKA,Tower 3,"Sacramento, CA",Sacramento,CA,matched,524802,83753,35.7,36.76,12.43,19.71,29.5,22.85,14.37,"Sacramento city, California",US Census ACS5 2023
+CNMK,Century Arden 14 and XD,"Sacramento, CA",Sacramento,CA,matched,524802,83753,35.7,36.76,12.43,19.71,29.5,22.85,14.37,"Sacramento city, California",US Census ACS5 2023
+REG,Regal UA Laguna Village,"Sacramento, CA",Sacramento,CA,matched,524802,83753,35.7,36.76,12.43,19.71,29.5,22.85,14.37,"Sacramento city, California",US Census ACS5 2023
+TMKO,Angel 6,"Angels Camp, CA",Angels Camp,CA,matched,3721,60353,54.1,89.38,0.43,0.11,2.74,18.08,13.49,"Angels city, California",US Census ACS5 2023
+SMG,Studio Movie Grill Rocklin,"Rocklin, CA",Rocklin,CA,matched,72340,120916,38.2,68.34,1.4,10.96,14.92,31.59,5.07,"Rocklin city, California",US Census ACS5 2023
+TMKO,Lodi Stadium 12,"Lodi, CA",Lodi,CA,matched,67008,84402,35.9,51,1.04,11.04,40,15.01,13.5,"Lodi city, California",US Census ACS5 2023
+REG,Regal El Dorado Hills,"El Dorado Hills, CA",El Dorado Hills,CA,matched,50553,163544,45.6,72.21,1.68,12.26,9.66,36.89,3.73,"El Dorado Hills CDP, California",US Census ACS5 2023
+BREN,Brenden 18 + JBX,"Modesto, CA",Modesto,CA,matched,218614,77899,35.4,50.77,4.69,7.44,43.91,13.8,12.97,"Modesto city, California",US Census ACS5 2023
+TMKO,Palladio 16 Cinema and LUXE,"Folsom, CA",Folsom,CA,matched,82140,139263,40.4,60.25,5.12,19.5,14.1,31.41,5.33,"Folsom city, California",US Census ACS5 2023
+REG,Regal Turlock,"Turlock, CA",Turlock,CA,matched,72400,79807,34.6,54.45,2.08,5.91,43.65,16.9,10.84,"Turlock city, California",US Census ACS5 2023
+CNMK,Elk Grove Laguna 16 + XD,"Elk Grove, CA",Elk Grove,CA,matched,177221,122229,39,34.92,10.87,31.77,18.02,25.42,7.41,"Elk Grove city, California",US Census ACS5 2023
+IMAX,Esquire IMAX,"Sacramento, CA",Sacramento,CA,matched,524802,83753,35.7,36.76,12.43,19.71,29.5,22.85,14.37,"Sacramento city, California",US Census ACS5 2023
+AMC,"AMC Brentwood 14 with IMAX, Dolby","Brentwood, CA",Brentwood,CA,matched,64609,139567,40.5,47.98,10.21,16.78,24.78,25.67,7.79,"Brentwood city, California",US Census ACS5 2023
+REG,Regal Stockton Holiday,"Stockton, CA",Stockton,CA,matched,320470,76851,33.7,26.61,11.57,21.13,45.18,12.99,15.37,"Stockton city, California",US Census ACS5 2023
+TMKO,Country Club Cinema,"Sacramento, CA",Sacramento,CA,matched,524802,83753,35.7,36.76,12.43,19.71,29.5,22.85,14.37,"Sacramento city, California",US Census ACS5 2023
+AMC,AMC Manteca 16 with Dolby,"Manteca, CA",Manteca,CA,matched,86521,94718,36.6,46.83,3.53,14.1,39.9,14.61,10.39,"Manteca city, California",US Census ACS5 2023
+REG,Regal Delta Shores,"Sacramento, CA",Sacramento,CA,matched,524802,83753,35.7,36.76,12.43,19.71,29.5,22.85,14.37,"Sacramento city, California",US Census ACS5 2023
+AFBS,Premiere 8 Los Banos,"Los Banos, CA",Los Banos,CA,matched,46776,70893,30.4,38.44,1.86,2.44,73.15,9.52,16.17,"Los Banos city, California",US Census ACS5 2023
+CGT,Madera 7,"Madera, CA",Madera,CA,matched,67133,63619,30.4,31.2,3.11,1.98,80.21,6.75,25.97,"Madera city, California",US Census ACS5 2023
+CNMK,Cinemark Yuba City 12,"Yuba City, CA",Yuba City,CA,matched,69545,72322,36.1,46.22,2.3,20.1,32.54,13.44,15.6,"Yuba City city, California",US Census ACS5 2023
+MAYA,Maya Fresno 16 Cinemas,"Fresno, CA",Fresno,CA,matched,543615,66804,32.4,37.98,6.67,14.23,50.55,16.71,20.9,"Fresno city, California",US Census ACS5 2023
+REG,Regal Stockton City Centre,"Stockton, CA",Stockton,CA,matched,320470,76851,33.7,26.61,11.57,21.13,45.18,12.99,15.37,"Stockton city, California",US Census ACS5 2023
+STMO,State,"Modesto, CA",Modesto,CA,matched,218614,77899,35.4,50.77,4.69,7.44,43.91,13.8,12.97,"Modesto city, California",US Census ACS5 2023
+GALX,Galaxy Riverbank,"Riverbank, CA",Riverbank,CA,matched,24881,90216,32.9,47.04,1.76,5.03,59.13,14.42,13.87,"Riverbank city, California",US Census ACS5 2023
+REG,Regal Manchester,"Fresno - Fresno, CA",Fresno - Fresno,CA,matched,543615,66804,32.4,37.98,6.67,14.23,50.55,16.71,20.9,"Fresno city, California",US Census ACS5 2023
+CNMK,Movies 8,"Hanford, CA",Hanford,CA,matched,59389,73544,32.5,54.07,5.94,3.55,51.25,12.36,14.86,"Hanford city, California",US Census ACS5 2023
+CNMK,Movies 14,"Tracy, CA",Tracy,CA,matched,95358,118253,35.2,34.85,6.08,21.96,41.44,18.33,7.67,"Tracy city, California",US Census ACS5 2023
+REG,Regal Modesto,"Modesto, CA",Modesto,CA,matched,218614,77899,35.4,50.77,4.69,7.44,43.91,13.8,12.97,"Modesto city, California",US Census ACS5 2023
+WWDI,Santa Cruz 9,"Santa Cruz, CA",Santa Cruz,CA,matched,60953,111427,30.7,65.78,1.88,9.88,22.41,29.32,17.62,"Santa Cruz city, California",US Census ACS5 2023
+CGT,Madera DI,"Madera, CA",Madera,CA,matched,67133,63619,30.4,31.2,3.11,1.98,80.21,6.75,25.97,"Madera city, California",US Census ACS5 2023
+REG,Regal Hollywood Merced,"Merced, CA",Merced,CA,matched,89766,59938,29.8,31.69,4.95,9.82,58.48,11.65,22.99,"Merced city, California",US Census ACS5 2023
+SSFS,Yosemite Cinema 8,"Oakhurst, CA",Oakhurst,CA,matched,4956,76606,55.4,87.65,0.5,0.67,11.84,14.91,12.95,"Oakhurst CDP, California",US Census ACS5 2023
+CNMK,Century Marina + XD,"Marina, CA",Marina,CA,matched,22324,88518,36.7,42.57,6.34,14.18,30.16,19.85,14.57,"Marina city, California",US Census ACS5 2023
+MPC,Selma 6,"Selma, CA",Selma,CA,matched,24586,55839,33.3,43.71,0.92,3.05,82.38,7.49,19.83,"Selma city, California",US Census ACS5 2023
+BESP,Lighthouse 4,"Pacific Grove, CA",Pacific Grove,CA,matched,15003,105568,50.3,75.16,0.89,7.37,11.84,29.66,7.11,"Pacific Grove city, California",US Census ACS5 2023
+TMKO,Sierra Vista Cinemas,"Clovis, CA",Clovis,CA,matched,122719,100360,35.3,57.37,2.16,13.63,32.32,22.87,7.44,"Clovis city, California",US Census ACS5 2023
+CONT,Dinuba Cinema is D' Place,"Dinuba, CA",Dinuba,CA,matched,25201,59048,29.8,38.7,0.27,0.9,88.41,8.46,28.15,"Dinuba city, California",US Census ACS5 2023
+CNMK,Salinas Northridge 14,"Salinas, CA",Salinas,CA,matched,161993,89150,32.1,21.83,1.42,5.71,80.26,11.4,14.25,"Salinas city, California",US Census ACS5 2023
+ARCE,Trinity,"Weaverville, CA",Weaverville,CA,matched,3198,73670,57.1,75.39,0.13,1.22,2.6,8.02,9.06,"Weaverville CDP, California",US Census ACS5 2023
+CNMK,Redding 14 + XD,"Redding, CA",Redding,CA,matched,93268,69443,38.7,78.21,1.37,4.1,12.52,17.57,13.6,"Redding city, California",US Census ACS5 2023
+REG,Regal Visalia,"Visalia, CA",Visalia,CA,matched,142649,79952,33.5,49.3,2.47,6.45,51.66,14.32,11.33,"Visalia city, California",US Census ACS5 2023
+LAND,Del Mar 3,"Santa Cruz, CA",Santa Cruz,CA,matched,60953,111427,30.7,65.78,1.88,9.88,22.41,29.32,17.62,"Santa Cruz city, California",US Census ACS5 2023
+CONT,Feather River 6,"Oroville, CA",Oroville,CA,matched,19855,51893,35.5,63.79,3.32,11.34,20.24,9.8,21.83,"Oroville city, California",US Census ACS5 2023
+CTRN,Mount Shasta Cinemas,"Mount Shasta, CA",Mount Shasta,CA,matched,3208,48157,53.1,83.7,0.65,1.31,6.39,24.31,15.99,"Mount Shasta city, California",US Census ACS5 2023
+CTRN,Crescent City Cinema,"Crescent City, CA",Crescent City,CA,matched,6180,41131,37.5,57.94,10.19,1.49,29.61,10.62,19.87,"Crescent City city, California",US Census ACS5 2023
+CLRK,Noyo 3,"Willits, CA",Willits,CA,matched,4945,55971,41.4,67.24,1.13,0.59,31.85,10.83,13.69,"Willits city, California",US Census ACS5 2023
+MAYA,Maya Salinas 14,"Salinas, CA",Salinas,CA,matched,161993,89150,32.1,21.83,1.42,5.71,80.26,11.4,14.25,"Salinas city, California",US Census ACS5 2023
+TMKO,Lakeport 5,"Lakeport, CA",Lakeport,CA,matched,5085,59294,42.6,76.97,0.51,1.47,15.83,14.07,15.74,"Lakeport city, California",US Census ACS5 2023
+REG,Regal Ukiah,"Ukiah, CA",Ukiah,CA,matched,16419,67122,39.3,65.53,1.51,3.84,31.45,11.9,16.28,"Ukiah city, California",US Census ACS5 2023
+TSU,Riverside Plaza Cinemas,"Red Bluff, CA",Red Bluff,CA,matched,14592,50216,35.2,70.51,3.21,2.12,23.03,9.25,17.64,"Red Bluff city, California",US Census ACS5 2023
+CNMK,Tinseltown 14 + XD,"Chico, CA",Chico,CA,matched,102032,67929,31,72.25,2,5.21,20.7,26.86,22.08,"Chico city, California",US Census ACS5 2023
+INDRP,Minor 3,"Arcata, CA",Arcata,CA,matched,18578,48731,28,73.92,2.41,2.22,15.41,28.34,29.58,"Arcata city, California",US Census ACS5 2023
+TMKO,Placerville Cinema,"Placerville, CA",Placerville,CA,matched,10730,70602,46.2,83.34,1.37,1.33,23.46,17.2,15.7,"Placerville city, California",US Census ACS5 2023
+TSU,Del Oro 3,"Grass Valley, CA",Grass Valley,CA,matched,14126,48850,49.6,84.04,0.4,1.85,8.67,18.85,20.71,"Grass Valley city, California",US Census ACS5 2023
+CNMK,Reno Parklane 16,"Reno, NV",Reno,NV,matched,268959,78448,37.3,63.47,3.19,7.03,24.57,21.38,12.49,"Reno city, Nevada",US Census ACS5 2023
+TMKO,Coast 4,"Fort Bragg, CA",Fort Bragg,CA,matched,7001,53580,50.4,68.85,0.21,2.54,33.57,15.82,14.96,"Fort Bragg city, California",US Census ACS5 2023
+CTRN,Broadway Cinema,"Eureka, CA",Eureka,CA,matched,26302,60253,38.9,70.3,2.31,5.74,14.15,20.57,17.55,"Eureka city, California",US Census ACS5 2023
+TSU,Sutton Twin,"Grass Valley, CA",Grass Valley,CA,matched,14126,48850,49.6,84.04,0.4,1.85,8.67,18.85,20.71,"Grass Valley city, California",US Census ACS5 2023
+CTRN,Crater Lake Cinema,"White City, OR",White City,OR,matched,10913,65370,32.8,66.96,0.05,1.26,41.07,10.06,21.42,"White City CDP, Oregon",US Census ACS5 2023
+ACTA,Arcata,"Arcata, CA",Arcata,CA,matched,18578,48731,28,73.92,2.41,2.22,15.41,28.34,29.58,"Arcata city, California",US Census ACS5 2023
+ESP,Jackson Cinema is D?Place,"Jackson, CA",Jackson,CA,matched,5061,75051,50.2,77.65,2.04,4.11,18.49,13.2,10.13,"Jackson city, California",US Census ACS5 2023
+REG,Regal Auburn,"California - Auburn, CA",California - Auburn,CA,matched,14821,55271,33.8,41.55,23.25,1.48,39.87,7.59,24.3,"California City city, California",US Census ACS5 2023
+CTRN,The ONYX,"Nevada City, CA",Nevada City,CA,matched,3168,69552,49.4,91.76,0.41,0.66,2.53,21.69,8.65,"Nevada City city, California",US Census ACS5 2023
+CNMK,Tinseltown 15,"Medford, OR",Medford,OR,matched,85794,70497,39.1,79.8,1.01,1.44,16.38,19.12,12.54,"Medford city, Oregon",US Census ACS5 2023
+CTRN,Pelican Cinema,"Klamath Falls, OR",Klamath Falls,OR,matched,21879,47268,35.7,77.49,0.87,1.22,15.71,11.29,23.22,"Klamath Falls city, Oregon",US Census ACS5 2023
+CNMK,Summit Sierra 16,"Reno, NV",Reno,NV,matched,268959,78448,37.3,63.47,3.19,7.03,24.57,21.38,12.49,"Reno city, Nevada",US Census ACS5 2023
+CNMK,Union City 25 + XD,"Union City, CA",Union City,CA,matched,68141,137194,42.1,17.93,5.32,55.88,19.32,27.7,6.95,"Union City city, California",US Census ACS5 2023
+BRIE,Carson Valley Cinemas,"Minden, NV",Minden,NV,matched,3309,86806,50.1,91.02,0.03,2.18,6.8,22.82,10.69,"Minden CDP, Nevada",US Census ACS5 2023
+CTRN,Varsity Theatre,"Ashland, OR",Ashland,OR,matched,21343,71782,47.7,85.71,0.5,1.9,8.86,34.44,14.25,"Ashland city, Oregon",US Census ACS5 2023
+WWDI,El Rancho 4 DI,"Sparks, NV",Sparks,NV,matched,109106,86979,36.9,62.01,2.23,5.32,32.64,16.86,9.02,"Sparks city, Nevada",US Census ACS5 2023
+GALX,Galaxy Victorian,"Sparks, NV",Sparks,NV,matched,109106,86979,36.9,62.01,2.23,5.32,32.64,16.86,9.02,"Sparks city, Nevada",US Census ACS5 2023
+AMC,"AMC Bay Street 16 with IMAX, Dolby","Emeryville, CA",Emeryville,CA,matched,12756,120302,35.5,38.02,18.86,29.66,10.14,40.18,9.57,"Emeryville city, California",US Census ACS5 2023
+CNMK,"Daly City 20 + XD, IMAX","Daly City, CA",Daly City,CA,matched,102560,119570,41.7,16.36,3,58.78,21.45,29.2,7.25,"Daly City city, California",US Census ACS5 2023
+GALX,Galaxy Carson City,"Carson City, NV",Carson City,NV,matched,58364,71809,42.1,72,1.96,2.67,25.88,15.64,11.1,"Carson City, Nevada",US Census ACS5 2023
+AMC,"AMC Eastridge 15 with IMAX, Dolby","San Jose, CA",San Jose,CA,matched,990054,141565,38.1,29.01,2.91,38.58,30.95,26.24,7.85,"San Jose city, California",US Census ACS5 2023
+CNMK,Redwood Downtown 20 + XD,"Redwood City, CA",Redwood City,CA,matched,82423,150840,37.5,43.17,2.42,18.08,35.23,27.64,6.62,"Redwood City city, California",US Census ACS5 2023
+REG,Regal Hacienda Crossings,"Dublin, CA",Dublin,CA,matched,70542,205046,37.3,27.87,3.89,53.47,10.83,37.9,4.25,"Dublin city, California",US Census ACS5 2023
+AMC,"AMC Mercado 20 with IMAX, Dolby, Prime","Santa Clara, CA",Santa Clara,CA,matched,129239,173670,34.5,31.87,2.09,47.57,16.06,31.36,7.83,"Santa Clara city, California",US Census ACS5 2023
+CNMK,San Jose Oakridge 20 + XD,"San Jose, CA",San Jose,CA,matched,990054,141565,38.1,29.01,2.91,38.58,30.95,26.24,7.85,"San Jose city, California",US Census ACS5 2023
+REG,Regal Fresno Riverpark,"Fresno, CA",Fresno,CA,matched,543615,66804,32.4,37.98,6.67,14.23,50.55,16.71,20.9,"Fresno city, California",US Census ACS5 2023
+REG,Regal Marketplace @ El Paseo,"Fresno, CA",Fresno,CA,matched,543615,66804,32.4,37.98,6.67,14.23,50.55,16.71,20.9,"Fresno city, California",US Census ACS5 2023
+GALX,Galaxy Porterville,"Porterville, CA",Porterville,CA,matched,62765,59012,31.2,36.19,0.85,2.73,73.59,9.32,17.87,"Porterville city, California",US Census ACS5 2023
+GALX,Galaxy Tulare,"Tulare, CA",Tulare,CA,matched,69984,69517,29.5,46.46,2.57,2.79,63.5,6.79,18.04,"Tulare city, California",US Census ACS5 2023
+CNMK,Folsom 14,"Folsom, CA",Folsom,CA,matched,82140,139263,40.4,60.25,5.12,19.5,14.1,31.41,5.33,"Folsom city, California",US Census ACS5 2023
+TMKO,Veranda LUXE Cinema & IMAX,"Concord, CA",Concord,CA,matched,124260,109195,38.6,48.11,3.85,13.45,32.29,26.1,8.88,"Concord city, California",US Census ACS5 2023
+GALX,Galaxy Legends,"Sparks, NV",Sparks,NV,matched,109106,86979,36.9,62.01,2.23,5.32,32.64,16.86,9.02,"Sparks city, Nevada",US Census ACS5 2023
+DRFT,Alamo New Mission 5,"San Francisco, CA",San Francisco,CA,matched,836321,141446,39.7,40.49,5.09,34.97,15.93,35.07,10.58,"San Francisco city, California",US Census ACS5 2023
+REG,Regal Guam,"Tamuning, GU",Tamuning,GU,api-error,,,,,,,,,,,
+MAYA,Maya Pittsburg 16,"Pittsburg, CA",Pittsburg,CA,matched,75868,101099,35.8,22.74,14.41,18.57,43.95,16.74,11.02,"Pittsburg city, California",US Census ACS5 2023
+CNMK,Monterey Cinemas 13,"Monterey, CA",Monterey,CA,matched,29772,104110,37.1,66.99,3.25,6.66,21.07,27.62,10.46,"Monterey city, California",US Census ACS5 2023
+CNMK,Blue Oaks Century 16 + XD,"Rocklin, CA",Rocklin,CA,matched,72340,120916,38.2,68.34,1.4,10.96,14.92,31.59,5.07,"Rocklin city, California",US Census ACS5 2023
+AMC,"AMC Sunnyvale 12 with IMAX, Dolby","Sunnyvale, CA",Sunnyvale,CA,matched,153455,181862,35.1,30.36,1.46,49.35,16.67,30.26,5.6,"Sunnyvale city, California",US Census ACS5 2023
+REG,Regal Stonestown Galleria,"San Francisco, CA",San Francisco,CA,matched,836321,141446,39.7,40.49,5.09,34.97,15.93,35.07,10.58,"San Francisco city, California",US Census ACS5 2023
+CNMK,Cinemark Roseville Galleria 14 + XD,"Roseville, CA",Roseville,CA,matched,152438,117354,39.8,67.41,2.26,13.06,16.49,30.05,5.96,"Roseville city, California",US Census ACS5 2023
+AFBS,Premiere Cinemas Soledad,"Soledad, CA",Soledad,CA,matched,24476,93204,37.1,19.06,7.29,3.1,79.45,4.29,15.83,"Soledad city, California",US Census ACS5 2023
+INDRP,The Dreamland Cinema,"Sacramento, CA",Sacramento,CA,matched,524802,83753,35.7,36.76,12.43,19.71,29.5,22.85,14.37,"Sacramento city, California",US Census ACS5 2023
+DRFT,Alamo Mountain View,"Mountain View, CA",Mountain View,CA,matched,2072,84818,47.1,69.5,4.83,10.62,16.55,27.49,7.29,"Mountain View CDP, California",US Census ACS5 2023
+DRFT,Alamo Valley Fair,"Santa Clara, CA",Santa Clara,CA,matched,129239,173670,34.5,31.87,2.09,47.57,16.06,31.36,7.83,"Santa Clara city, California",US Census ACS5 2023
+BALC,True West Film Center,"Healdsburg, CA",Healdsburg,CA,matched,11274,100082,43.3,67.17,0,1.43,32.87,23.89,11.31,"Healdsburg city, California",US Census ACS5 2023
+ANKA,"Cinemas 1, 2  3rd Avenue","New York, NY",New York,NY,matched,8516202,79713,38,35.85,22.7,14.62,28.42,23.64,17.36,"New York city, New York",US Census ACS5 2023
+AMC,AMC MJ Harlem 9 with Dolby,"New York, NY",New York,NY,matched,8516202,79713,38,35.85,22.7,14.62,28.42,23.64,17.36,"New York city, New York",US Census ACS5 2023
+AMC,AMC Orpheum 7,"New York, NY",New York,NY,matched,8516202,79713,38,35.85,22.7,14.62,28.42,23.64,17.36,"New York city, New York",US Census ACS5 2023
+FSLC,Film Society of Lincoln Center,"New York, NY",New York,NY,matched,8516202,79713,38,35.85,22.7,14.62,28.42,23.64,17.36,"New York city, New York",US Census ACS5 2023
+AMC,AMC 84th Street 6,"New York, NY",New York,NY,matched,8516202,79713,38,35.85,22.7,14.62,28.42,23.64,17.36,"New York city, New York",US Census ACS5 2023
+AMC,"AMC 34th Street 14 with IMAX, Dolby","New York, NY",New York,NY,matched,8516202,79713,38,35.85,22.7,14.62,28.42,23.64,17.36,"New York city, New York",US Census ACS5 2023
+AMC,"AMC Lincoln Square 13 with IMAX, Dolby","New York, NY",New York,NY,matched,8516202,79713,38,35.85,22.7,14.62,28.42,23.64,17.36,"New York city, New York",US Census ACS5 2023
+AMC,AMC 19th Street East 6,"New York, NY",New York,NY,matched,8516202,79713,38,35.85,22.7,14.62,28.42,23.64,17.36,"New York city, New York",US Census ACS5 2023
+AMC,AMC Kips Bay 15 with IMAX,"New York, NY",New York,NY,matched,8516202,79713,38,35.85,22.7,14.62,28.42,23.64,17.36,"New York city, New York",US Census ACS5 2023
+ANKA,Angelika Film Center 6,"New York, NY",New York,NY,matched,8516202,79713,38,35.85,22.7,14.62,28.42,23.64,17.36,"New York city, New York",US Census ACS5 2023
+FFOR,Film Forum 4,"New York, NY",New York,NY,matched,8516202,79713,38,35.85,22.7,14.62,28.42,23.64,17.36,"New York city, New York",US Census ACS5 2023
+IFCE,IFC Center,"New York, NY",New York,NY,matched,8516202,79713,38,35.85,22.7,14.62,28.42,23.64,17.36,"New York city, New York",US Census ACS5 2023
+QUAD,Quad Cinema,"New York, NY",New York,NY,matched,8516202,79713,38,35.85,22.7,14.62,28.42,23.64,17.36,"New York city, New York",US Census ACS5 2023
+REG,Regal Union Square,"New York, NY",New York,NY,matched,8516202,79713,38,35.85,22.7,14.62,28.42,23.64,17.36,"New York city, New York",US Census ACS5 2023
+CVT,Cinema Village 3,"New York, NY",New York,NY,matched,8516202,79713,38,35.85,22.7,14.62,28.42,23.64,17.36,"New York city, New York",US Census ACS5 2023
+AMC,AMC Village 7,"New York, NY",New York,NY,matched,8516202,79713,38,35.85,22.7,14.62,28.42,23.64,17.36,"New York city, New York",US Census ACS5 2023
+ANKA,Village East 7,"New York, NY",New York,NY,matched,8516202,79713,38,35.85,22.7,14.62,28.42,23.64,17.36,"New York city, New York",US Census ACS5 2023
+REG,Regal Concourse 10,"Bronx, NY",Bronx,NY,matched,8516202,79713,38,35.85,22.7,14.62,28.42,23.64,17.36,"New York city, New York",US Census ACS5 2023
+DRFT,Alamo Manhattan 14,"New York, NY",New York,NY,matched,8516202,79713,38,35.85,22.7,14.62,28.42,23.64,17.36,"New York city, New York",US Census ACS5 2023
+REG,Regal Essex Crossing,"New York, NY",New York,NY,matched,8516202,79713,38,35.85,22.7,14.62,28.42,23.64,17.36,"New York city, New York",US Census ACS5 2023
+REG,Regal Battery Park,"New York, NY",New York,NY,matched,8516202,79713,38,35.85,22.7,14.62,28.42,23.64,17.36,"New York city, New York",US Census ACS5 2023
+JAC,Nitehawk Cinema,"Prospect Park - Brooklyn, NY",Prospect Park - Brooklyn,NY,matched,337,46413,44.8,76.85,18.1,0,0,2.04,0,"Prospect CDP, New York",US Census ACS5 2023
+MINI,Kent Triplex,"Brooklyn, NY",Brooklyn,NY,matched,8516202,79713,38,35.85,22.7,14.62,28.42,23.64,17.36,"New York city, New York",US Census ACS5 2023
+DRFT,Alamo Staten Island 9,"Staten Island, NY",Staten Island,NY,matched,8516202,79713,38,35.85,22.7,14.62,28.42,23.64,17.36,"New York city, New York",US Census ACS5 2023
+REG,Regal Bricktown Charleston,"Staten Island, NY",Staten Island,NY,matched,8516202,79713,38,35.85,22.7,14.62,28.42,23.64,17.36,"New York city, New York",US Census ACS5 2023
+AMC,"AMC Staten Island Mall 11 with IMAX, Dolby","Staten Island, NY",Staten Island,NY,matched,8516202,79713,38,35.85,22.7,14.62,28.42,23.64,17.36,"New York city, New York",US Census ACS5 2023
+IPIC,iPic Theaters at Fulton Market,"New York, NY",New York,NY,matched,8516202,79713,38,35.85,22.7,14.62,28.42,23.64,17.36,"New York city, New York",US Census ACS5 2023
+NTC,Bam Rose Cinema,"Brooklyn, NY",Brooklyn,NY,matched,8516202,79713,38,35.85,22.7,14.62,28.42,23.64,17.36,"New York city, New York",US Census ACS5 2023
+IPIC,iPic Theaters Hudson Lights,"Fort Lee, NJ",Fort Lee,NJ,matched,39818,105535,47.2,40.54,2.75,44.11,12.42,35.21,8.41,"Fort Lee borough, New Jersey",US Census ACS5 2023
+REG,Regal Tangram,"Flushing, NY",Flushing,NY,matched,8516202,79713,38,35.85,22.7,14.62,28.42,23.64,17.36,"New York city, New York",US Census ACS5 2023
+CREA,Cinemart Cinemas,"Forest Hills, NY",Forest Hills,NY,matched,8516202,79713,38,35.85,22.7,14.62,28.42,23.64,17.36,"New York city, New York",US Census ACS5 2023
+AMC,AMC Bay Terrace 6,"Bayside, NY",Bayside,NY,matched,8516202,79713,38,35.85,22.7,14.62,28.42,23.64,17.36,"New York city, New York",US Census ACS5 2023
+DRFT,Alamo Brooklyn 12,"Brooklyn, NY",Brooklyn,NY,matched,8516202,79713,38,35.85,22.7,14.62,28.42,23.64,17.36,"New York city, New York",US Census ACS5 2023
+JAC,Nitehawk Cinema,"Williamsburg - Brooklyn, NY",Williamsburg - Brooklyn,NY,matched,8516202,79713,38,35.85,22.7,14.62,28.42,23.64,17.36,"New York city, New York",US Census ACS5 2023
+REG,Regal UA Sheepshead Bay,"Brooklyn, NY",Brooklyn,NY,matched,8516202,79713,38,35.85,22.7,14.62,28.42,23.64,17.36,"New York city, New York",US Census ACS5 2023
+MGPH,Metrograph,"New York, NY",New York,NY,matched,8516202,79713,38,35.85,22.7,14.62,28.42,23.64,17.36,"New York city, New York",US Census ACS5 2023
+REG,Regal UA Midway,"Forest Hills, NY",Forest Hills,NY,matched,8516202,79713,38,35.85,22.7,14.62,28.42,23.64,17.36,"New York city, New York",US Census ACS5 2023
+REG,Regal Atlas Park,"Glendale, NY",Glendale,NY,matched,8516202,79713,38,35.85,22.7,14.62,28.42,23.64,17.36,"New York city, New York",US Census ACS5 2023
+NAM,Cross County Multiplex 10,"Yonkers, NY",Yonkers,NY,matched,209529,81816,39,38.03,17.28,5.15,44.41,19.57,14.67,"Yonkers city, New York",US Census ACS5 2023
+NTC,The Picture House Bronxville,"Bronxville, NY",Bronxville,NY,matched,6539,215726,39.9,83.97,0.87,5.09,8.69,35.88,4.79,"Bronxville village, New York",US Census ACS5 2023
+NTC,Bedford Playhouse,"Bedford, NY",Bedford,NY,matched,2118,250001,43.4,88.43,0.24,2.93,5.81,40.92,8.03,"Bedford CDP, New York",US Census ACS5 2023
+BRIE,Mount Kisco 5,"Mount Kisco, NY",Mount Kisco,NY,matched,10782,93057,40.1,59.17,7,2.73,40.54,27.57,9.3,"Mount Kisco village, New York",US Census ACS5 2023
+BRIE,Mamaroneck Cinemas,"Mamaroneck, NY",Mamaroneck,NY,matched,19840,125459,40.7,63.52,5.47,4.54,28.48,29.37,7.71,"Mamaroneck village, New York",US Census ACS5 2023
+AMC,"AMC Port Chester 14 with IMAX, Dolby","Port Chester, NY",Port Chester,NY,matched,31162,99916,38.6,37.9,7.84,2.49,59.73,20.29,11.99,"Port Chester village, New York",US Census ACS5 2023
+CNMK,Cinemark Willowbrook Mall + XD,"Wayne, NJ",Wayne,NJ,no-match,,,,,,,,,,,
+DRFT,Alamo Yonkers 6,"Yonkers, NY",Yonkers,NY,matched,209529,81816,39,38.03,17.28,5.15,44.41,19.57,14.67,"Yonkers city, New York",US Census ACS5 2023
+AMC,AMC Glen Cove 6,"Glen Cove, NY",Glen Cove,NY,matched,28101,91355,43.1,62.75,5.07,4.89,33.73,24.4,13.33,"Glen Cove city, New York",US Census ACS5 2023
+NTC,The Picture House Pelham,"Pelham, NY",Pelham,NY,matched,7247,179561,38.2,64.22,9.58,6.21,16.56,31.26,3.48,"Pelham village, New York",US Census ACS5 2023
+AMC,AMC Levittown 10,"Levittown, NY",Levittown,NY,matched,51557,139696,41.8,70.69,1.88,11.27,17.14,21.23,4.79,"Levittown CDP, New York",US Census ACS5 2023
+APPL,Apple Cinemas White Plains IMAX City Center,"White Plains, NY",White Plains,NY,matched,59818,115586,41.5,48.59,12.41,8.54,32.89,24.48,10.92,"White Plains city, New York",US Census ACS5 2023
+LOOK,Look Cinemas Dobbs Ferry,"Dobbs Ferry, NY",Dobbs Ferry,NY,matched,11397,167927,40.2,71.73,3.24,10.37,12.18,27.3,6.07,"Dobbs Ferry village, New York",US Census ACS5 2023
+AMC,AMC Roosevelt Field 8,"Garden City, NY",Garden City,NY,matched,22866,228807,41.6,87.01,1.27,4.6,6.59,37.42,2.83,"Garden City village, New York",US Census ACS5 2023
+REG,Regal UA Cortlandt Town Center,"Mohegan Lake, NY",Mohegan Lake,NY,matched,5566,160741,41.8,71.54,8.1,3.16,21.99,31.15,5.59,"Lake Mohegan CDP, New York",US Census ACS5 2023
+BALC,Jacob Burns Film Center 5,"Pleasantville, NY",Pleasantville,NY,matched,7395,177591,41,83.34,1.3,1.61,18.82,37.18,5.1,"Pleasantville village, New York",US Census ACS5 2023
+REG,Regal Westbury,"Westbury, NY",Westbury,NY,matched,15789,136917,44.6,37.7,18.08,11.4,37.39,26.81,3.79,"Westbury village, New York",US Census ACS5 2023
+REG,Regal Lynbrook,"Lynbrook, NY",Lynbrook,NY,matched,20251,138866,42.2,67.24,8.01,6.65,22.1,23.88,7.22,"Lynbrook village, New York",US Census ACS5 2023
+REG,Regal UA Farmingdale,"Farmingdale, NY",Farmingdale,NY,matched,8450,134037,42.8,73.55,3.95,9.69,11.15,30.05,4.99,"Farmingdale village, New York",US Census ACS5 2023
+CLRK,North Fork Arts Center,"Greenport, NY",Greenport,NY,matched,2574,82692,51.2,62.74,2.33,0.89,38.54,25.45,9.46,"Greenport village, New York",US Census ACS5 2023
+AMC,AMC Fantasy 5,"Rockville Centre, NY",Rockville Centre,NY,matched,25770,144516,43.8,80,4.31,5.54,10.08,32.29,4.98,"Rockville Centre village, New York",US Census ACS5 2023
+AMC,AMC Raceway 10,"Westbury, NY",Westbury,NY,matched,15789,136917,44.6,37.7,18.08,11.4,37.39,26.81,3.79,"Westbury village, New York",US Census ACS5 2023
+CAC,Cinema Arts Center 3,"Huntington, NY",Huntington,NY,matched,20117,162066,47.2,86.82,1.13,3.62,5.86,32.83,4.83,"Huntington CDP, New York",US Census ACS5 2023
+AMC,AMC Shore 8,"Huntington, NY",Huntington,NY,matched,20117,162066,47.2,86.82,1.13,3.62,5.86,32.83,4.83,"Huntington CDP, New York",US Census ACS5 2023
+BRIE,Sayville Theater,"Sayville, NY",Sayville,NY,matched,15593,145278,44.6,89.92,0.67,1.26,6.33,30.17,5.54,"Sayville CDP, New York",US Census ACS5 2023
+NAM,Farmingdale 14,"Farmingdale, NY",Farmingdale,NY,matched,8450,134037,42.8,73.55,3.95,9.69,11.15,30.05,4.99,"Farmingdale village, New York",US Census ACS5 2023
+NAM,Island 16,"Holtsville, NY",Holtsville,NY,matched,19250,130851,39.7,79.71,5.34,3.57,15.95,18.25,3.4,"Holtsville CDP, New York",US Census ACS5 2023
+CLRK,Sunset Theater,"West Hampton Beach, NY",West Hampton Beach,NY,matched,2476,137888,53.6,86.43,1.37,2.95,8.32,31.75,8.44,"Westhampton Beach village, New York",US Census ACS5 2023
+AMC,AMC Palisades 21 with IMAX,"West Nyack, NY",West Nyack,NY,matched,3437,136696,52,70,6.75,6.37,23.31,30.41,2.76,"West Nyack CDP, New York",US Census ACS5 2023
+REG,Regal Ronkonkoma,"Ronkonkoma, NY",Ronkonkoma,NY,matched,18368,125534,37.9,74.08,5.15,6.79,22.78,18.96,3.2,"Ronkonkoma CDP, New York",US Census ACS5 2023
+AMC,"AMC Stony Brook 17 with IMAX, Dolby","Stony Brook, NY",Stony Brook,NY,matched,12827,162054,45.4,80.09,3.2,11.25,7.3,23.98,4.35,"Stony Brook CDP, New York",US Census ACS5 2023
+CSI,Southampton Playhouse,"Southampton, NY",Southampton,NY,matched,4557,177045,57.5,81.54,7.81,3.71,9.9,30.72,5.22,"Southampton village, New York",US Census ACS5 2023
+AMC,AMC Crystal Run 16,"Middletown, NY",Middletown,NY,matched,30227,77174,35.7,33.99,24.86,3.24,42.34,10.48,15.51,"Middletown city, New York",US Census ACS5 2023
+REG,Regal UA East Hampton,"East Hampton, NY",East Hampton,NY,matched,1277,114375,57.9,80.66,3.29,0.31,16.68,36.12,6.92,"East Hampton village, New York",US Census ACS5 2023
+AMC,"AMC Huntington 12 with Dolby, Prime","East Northport, NY",East Northport,NY,matched,19672,153380,45.3,86.45,2.55,3.79,7.8,27.49,4.92,"East Northport CDP, New York",US Census ACS5 2023
+NTC,Moviehouse 3,"Millerton, NY",Millerton,NY,matched,801,80897,35.3,49.81,0.87,8.49,35.96,13.62,2,"Millerton village, New York",US Census ACS5 2023
+UPNY,Upstate Films Orpheum Theatre,"Saugerties, NY",Saugerties,NY,matched,3877,45213,44.8,83.83,0.67,0.59,7.12,12.38,16.41,"Saugerties village, New York",US Census ACS5 2023
+NTC,Sag Harbor Cinema,"Sag Harbor, NY",Sag Harbor,NY,matched,2449,154583,50.5,88.24,3.39,0.33,6.74,28.04,3.72,"Sag Harbor village, New York",US Census ACS5 2023
+BRIE,Hyde Park Roosevelt Cinemas 7,"Hyde Park, NY",Hyde Park,NY,matched,2100,86346,44.1,85.38,7.43,0.62,6.81,18.03,11.4,"Hyde Park CDP, New York",US Census ACS5 2023
+BRIE,Lyceum 7,"Red Hook, NY",Red Hook,NY,matched,2119,104022,44.9,89,2.41,1.42,3.78,19.6,8.03,"Red Hook village, New York",US Census ACS5 2023
+NTC,Rosendale Theater,"Rosendale, NY",Rosendale,NY,matched,898,61375,59.9,86.19,5.23,2.34,1.56,28.78,11.78,"Rosendale CDP, New York",US Census ACS5 2023
+FLSH,Monroe Theater,"Monroe, NY",Monroe,NY,matched,9466,110806,32.8,59.61,10.65,4.01,29.19,26.59,9.33,"Monroe village, New York",US Census ACS5 2023
+BRIE,New Paltz Cinema,"New Paltz, NY",New Paltz,NY,matched,8028,59375,21.6,71.08,8.12,6.37,12.73,33.93,36.37,"New Paltz village, New York",US Census ACS5 2023
+INDRP,Callicoon,"Callicoon, NY",Callicoon,NY,matched,169,88819,58.4,81.07,11.83,4.73,0,26.43,0,"Callicoon CDP, New York",US Census ACS5 2023
+REG,Regal Galleria Mall,"Poughkeepsie, NY",Poughkeepsie,NY,matched,31778,60050,37.9,38.14,32.24,1.44,24.66,16.63,18.04,"Poughkeepsie city, New York",US Census ACS5 2023
+REG,Regal Deer Park,"Deer Park, NY",Deer Park,NY,matched,27334,138950,41.5,58.7,11.85,10.36,22.49,20.99,4.62,"Deer Park CDP, New York",US Census ACS5 2023
+UPNY,Upstate Films Starr Cinema,"Rhinebeck, NY",Rhinebeck,NY,matched,2674,75075,51.9,78.87,2.17,3.59,12.23,16.8,2.65,"Rhinebeck village, New York",US Census ACS5 2023
+BRIE,Westwood Movie House,"Westwood, NJ",Westwood,NJ,matched,11221,169026,41.7,68.61,3.19,8.31,19.21,33.77,4.34,"Westwood borough, New Jersey",US Census ACS5 2023
+BRIE,Hawthorne 5,"Hawthorne, NJ",Hawthorne,NJ,matched,19472,118093,42.3,73.36,3.36,1.27,23.92,28.23,5.09,"Hawthorne borough, New Jersey",US Census ACS5 2023
+NCG,NCG Kingston 12,"Kingston, NY",Kingston,NY,matched,23942,65413,36.8,63.5,14.16,1.81,17.12,17.4,19.13,"Kingston city, New York",US Census ACS5 2023
+SHDW,Teaneck Quad,"Teaneck, NJ",Teaneck,NJ,no-match,,,,,,,,,,,
+CLRK,Beacon Movie Theater,"Beacon, NY",Beacon,NY,matched,14629,93347,41.6,68.3,12.59,1.39,19.39,23.59,8.37,"Beacon city, New York",US Census ACS5 2023
+AMC,"AMC Garden State Plaza 15 with IMAX, Dolby","Paramus, NJ",Paramus,NJ,matched,26500,139707,49.1,59.24,4.26,23.69,13.2,31.7,5.53,"Paramus borough, New Jersey",US Census ACS5 2023
+AMC,AMC Ridgefield Park 12,"Ridgefield Park, NJ",Ridgefield Park,NJ,matched,13167,98184,38,49.68,6.83,7.91,49.5,23.89,13.02,"Ridgefield Park village, New Jersey",US Census ACS5 2023
+REG,Regal UA Kaufman Astoria,"Astoria, NY",Astoria,NY,matched,8516202,79713,38,35.85,22.7,14.62,28.42,23.64,17.36,"New York city, New York",US Census ACS5 2023
+AMC,AMC DINE-IN Menlo Park 12,"Edison, NJ",Edison,NJ,no-match,,,,,,,,,,,
+AMC,AMC DINE-IN Essex Green 9,"West Orange, NJ",West Orange,NJ,no-match,,,,,,,,,,,
+AMC,AMC Bay Plaza 13,"Bronx, NY",Bronx,NY,matched,8516202,79713,38,35.85,22.7,14.62,28.42,23.64,17.36,"New York city, New York",US Census ACS5 2023
+REG,Regal Times Square,"New York, NY",New York,NY,matched,8516202,79713,38,35.85,22.7,14.62,28.42,23.64,17.36,"New York city, New York",US Census ACS5 2023
+AMC,"AMC Clifton Commons 16 with IMAX, Dolby","Clifton, NJ",Clifton,NJ,matched,89247,99003,41.1,55.27,4.73,7.76,39.36,23.5,7.43,"Clifton city, New Jersey",US Census ACS5 2023
+AMC,AMC Freehold 14,"Freehold, NJ",Freehold,NJ,matched,12504,82183,35.4,51.75,7.03,3.05,52.24,20.55,14.29,"Freehold borough, New Jersey",US Census ACS5 2023
+READ,Reading Manville with Titan Luxe,"Manville, NJ",Manville,NJ,matched,10870,93872,42.4,61.67,8.36,2.8,25.55,19.42,12.28,"Manville borough, New Jersey",US Census ACS5 2023
+BRIE,Hillsborough 10,"Hillsborough, NJ",Hillsborough,NJ,matched,22302,142275,41.7,63.68,3.52,17.96,12.66,32.89,2.98,"Hillsborough CDP, New Jersey",US Census ACS5 2023
+AMC,AMC Newport Centre 11,"Jersey City, NJ",Jersey City,NJ,matched,289691,94813,34.7,28.73,21.45,25.78,25.7,29.41,15.62,"Jersey City city, New Jersey",US Census ACS5 2023
+AMC,AMC Wayne 12 with Prime,"Wayne, NJ",Wayne,NJ,no-match,,,,,,,,,,,
+AMC,AMC DINE-IN Shops at Riverside 9 with Dolby,"Hackensack, NJ",Hackensack,NJ,matched,45768,82212,41.5,36.66,20.71,12.14,36.04,26.66,11.25,"Hackensack city, New Jersey",US Census ACS5 2023
+TSN,Bernardsville 3,"Bernardsville, NJ",Bernardsville,NJ,matched,7871,231006,41.2,86.74,0.57,2.76,10.66,41.61,1.03,"Bernardsville borough, New Jersey",US Census ACS5 2023
+INDRP,Clairidge Cinemas,"Montclair, NJ",Montclair,NJ,matched,2177,-666666666,20,70,13.46,8.08,11.39,78.64,,"Montclair State University CDP, New Jersey",US Census ACS5 2023
+AMC,AMC Brunswick Square 13,"East Brunswick, NJ",East Brunswick,NJ,no-match,,,,,,,,,,,
+LAND,Landmark Closter Plaza,"Closter, NJ",Closter,NJ,matched,8544,187500,40.3,50.69,2.75,32.21,9.88,36.19,7.18,"Closter borough, New Jersey",US Census ACS5 2023
+BRIE,Montgomery 6,"Skillman, NJ",Skillman,NJ,matched,285,-666666666,54.3,68.77,20,0,1.4,24.07,3.86,"Skillman CDP, New Jersey",US Census ACS5 2023
+AMC,AMC Fresh Meadows 7 with IMAX,"Fresh Meadows, NY",Fresh Meadows,NY,matched,8516202,79713,38,35.85,22.7,14.62,28.42,23.64,17.36,"New York city, New York",US Census ACS5 2023
+AMC,AMC DINE-IN Bridgewater Commons 7,"Bridgewater, NJ",Bridgewater,NJ,matched,6198,201250,41.7,67.42,4.78,15.2,5.74,32.3,2.73,"Bridgewater Center CDP, New Jersey",US Census ACS5 2023
+INDRP,Bellevue 3,"Upper Montclair, NJ",Upper Montclair,NJ,matched,12279,250001,41.3,75.91,4.91,4.39,6.52,35.67,1.77,"Upper Montclair CDP, New Jersey",US Census ACS5 2023
+BRIE,South Orange Cinemas,"South Orange, NJ",South Orange,NJ,no-match,,,,,,,,,,,
+CNMK,Hazlet 12,"Hazlet, NJ",Hazlet,NJ,no-match,,,,,,,,,,,
+AMC,"AMC Jersey Gardens 20 with IMAX, Dolby","Elizabeth, NJ",Elizabeth,NJ,matched,135887,63874,35.8,24.84,17.08,1.79,66.75,9.81,15.3,"Elizabeth city, New Jersey",US Census ACS5 2023
+REG,Regal New Roc,"New Rochelle, NY",New Rochelle,NY,matched,81591,103813,41.9,48.34,19.43,5.46,30.63,22.54,10.64,"New Rochelle city, New York",US Census ACS5 2023
+AMC,AMC Mountainside 10,"Mountainside, NJ",Mountainside,NJ,matched,6967,210100,48.7,75.28,1.11,12.33,13.61,29.25,2.85,"Mountainside borough, New Jersey",US Census ACS5 2023
+AMC,"AMC Monmouth Mall 15 with IMAX, Dolby","Eatontown, NJ",Eatontown,NJ,matched,13537,90174,45.5,65.6,7.22,12.89,14.89,24.21,5.75,"Eatontown borough, New Jersey",US Census ACS5 2023
+AMC,AMC East Hanover 12,"East Hanover, NJ",East Hanover,NJ,no-match,,,,,,,,,,,
+BRIE,Cranford Theatre,"Cranford, NJ",Cranford,NJ,matched,1783,82222,43.6,81.32,3.53,3.42,6.06,41.96,3.13,"Cranford CDP, New Jersey",US Census ACS5 2023
+REG,Regal Commerce Center,"North Brunswick, NJ",North Brunswick,NJ,no-match,,,,,,,,,,,
+REG,Regal Secaucus ShowPlace 14,"Secaucus, NJ",Secaucus,NJ,matched,21437,134746,38.6,40.66,6.34,34.51,19.35,34.34,5.99,"Secaucus town, New Jersey",US Census ACS5 2023
+AMC,AMC Headquarters Plaza 10,"Morristown, NJ",Morristown,NJ,matched,20256,115409,34,58.15,9.22,4.7,29.28,33.14,9.23,"Morristown town, New Jersey",US Census ACS5 2023
+BRIE,Box Office Cinemas,"Sparta, NJ",Sparta,NJ,no-match,,,,,,,,,,,
+AMC,"AMC Empire 25 with IMAX, Dolby, Prime","New York, NY",New York,NY,matched,8516202,79713,38,35.85,22.7,14.62,28.42,23.64,17.36,"New York city, New York",US Census ACS5 2023
+CNPL,Cinepolis Mansfield 14,"Hackettstown, NJ",Hackettstown,NJ,matched,10143,91250,38,71.78,4,4.72,25.69,23.23,7.84,"Hackettstown town, New Jersey",US Census ACS5 2023
+PFR,Basie Center Cinema,"Red Bank, NJ",Red Bank,NJ,matched,12864,101738,39.7,63.69,7.11,1.38,30.99,28.68,8.89,"Red Bank borough, New Jersey",US Census ACS5 2023
+BRIE,Smodcastle Cinemas,"Atlantic Highlands, NJ",Atlantic Highlands,NJ,matched,4409,125438,47.9,89.77,0.68,1.16,5.87,36.39,4.26,"Atlantic Highlands borough, New Jersey",US Census ACS5 2023
+REG,Regal Hadley,"South Plainfield, NJ",South Plainfield,NJ,matched,24231,126063,41.7,54.95,10.96,16.01,18.64,24.7,3.55,"South Plainfield borough, New Jersey",US Census ACS5 2023
+CFLM,Greenwood Features,"Bethel, CT",Bethel,CT,matched,11606,88344,40.9,61.74,10.08,4.9,13.28,23,5.86,"Bethel CDP, Connecticut",US Census ACS5 2023
+AMC,"AMC Aviation 12 with IMAX, Dolby","Linden, NJ",Linden,NJ,matched,43614,91036,39.8,37.93,28.14,3.59,35.59,15.98,8.96,"Linden city, New Jersey",US Census ACS5 2023
+AMC,AMC Majestic 6 with Prime,"Stamford, CT",Stamford,CT,matched,135806,107474,38.2,49.07,19.88,7.09,28.1,28.93,9.53,"Stamford city, Connecticut",US Census ACS5 2023
+AMC,AMC SoNo 8,"Norwalk, CT",Norwalk,CT,matched,91375,105301,40.2,50.34,18.15,4.7,31.39,25.93,10.12,"Norwalk city, Connecticut",US Census ACS5 2023
+AMC,AMC Brick Plaza 10,"Brick Township, NJ",Brick Township,NJ,no-match,,,,,,,,,,,
+AMC,AMC Royale 6,"Norwalk, CT",Norwalk,CT,matched,91375,105301,40.2,50.34,18.15,4.7,31.39,25.93,10.12,"Norwalk city, Connecticut",US Census ACS5 2023
+AMC,"AMC New Brunswick 18 with IMAX, Dolby","New Brunswick, NJ",New Brunswick,NJ,matched,55744,60248,24.5,37.3,13.11,8.61,51.13,12.79,31.58,"New Brunswick city, New Jersey",US Census ACS5 2023
+MARQ,Marquee Orchard 10,"Toms River, NJ",Toms River,NJ,matched,93915,95759,41.6,79.83,5.11,3.87,11.77,23.07,6.28,"Toms River CDP, New Jersey",US Census ACS5 2023
+AMC,AMC Landmark 8,"Stamford, CT",Stamford,CT,matched,135806,107474,38.2,49.07,19.88,7.09,28.1,28.93,9.53,"Stamford city, Connecticut",US Census ACS5 2023
+CNMK,Cinemark Watchung and XD,"Watchung, NJ",Watchung,NJ,matched,6429,166536,46.4,78.78,1.34,11.46,8.88,37.32,2.1,"Watchung borough, New Jersey",US Census ACS5 2023
+AMC,"AMC Rockaway 16 with IMAX, Dolby","Rockaway, NJ",Rockaway,NJ,matched,6589,100028,45.2,73.85,0.74,7.8,19.87,28.38,6.25,"Rockaway borough, New Jersey",US Census ACS5 2023
+AMC,"AMC Danbury 16 with IMAX, Dolby","Danbury, CT",Danbury,CT,matched,86086,83422,40.5,47.6,12.88,4.83,31.12,19.71,11.13,"Danbury city, Connecticut",US Census ACS5 2023
+BTIE,New Canaan Playhouse,"New Canaan, CT",New Canaan,CT,matched,7032,163355,44.6,84.81,1.64,7.57,2.97,39.58,4.19,"New Canaan CDP, Connecticut",US Census ACS5 2023
+AMC,AMC Marquis 16 with Dolby,"Trumbull, CT",Trumbull,CT,matched,10137,124547,41.7,70.24,3.73,9.48,8.79,34.18,7.33,"Trumbull Center CDP, Connecticut",US Census ACS5 2023
+NTC,Prospector Theater,"Ridgefield, CT",Ridgefield,CT,matched,7103,143286,45.7,90.5,3.84,2.27,5.53,43.36,2.56,"Ridgefield CDP, Connecticut",US Census ACS5 2023
+JAC,Plaza & Media Arts Center,"Patchogue, NY",Patchogue,NY,matched,12368,104423,37.9,69.91,4.92,4.94,23.16,18.31,8.11,"Patchogue village, New York",US Census ACS5 2023
+REG,Regal Nanuet,"Nanuet, NY",Nanuet,NY,matched,20089,113582,43.8,51.24,18,12.46,19.79,25.33,7.48,"Nanuet CDP, New York",US Census ACS5 2023
+21CC,Four Brothers DI|#,"Amenia, NY",Amenia,NY,matched,928,82781,41.1,62.5,0,0,34.38,23.11,7.11,"Amenia CDP, New York",US Census ACS5 2023
+JAC,Rutgers Cinema,"Piscataway, NJ",Piscataway,NJ,no-match,,,,,,,,,,,
+BRIE,Speciality Theatre,"Hamilton, BM",Hamilton,BM,no-match,,,,,,,,,,,
+MTMI,Museum of the Moving Image,"Astoria, NY",Astoria,NY,matched,8516202,79713,38,35.85,22.7,14.62,28.42,23.64,17.36,"New York city, New York",US Census ACS5 2023
+NAM,Showcase Cinema de Lux Ridge Hill,"Yonkers, NY",Yonkers,NY,matched,209529,81816,39,38.03,17.28,5.15,44.41,19.57,14.67,"Yonkers city, New York",US Census ACS5 2023
+INDRP,Roxy Cinema Tribeca,"New York, NY",New York,NY,matched,8516202,79713,38,35.85,22.7,14.62,28.42,23.64,17.36,"New York city, New York",US Census ACS5 2023
+CLRK,Hurleyville Arts Centre,"Hurleyville, NY",Hurleyville,NY,matched,1249,-666666666,44.5,76.14,3.92,0.72,17.21,9.66,18,"Hurleyville CDP, New York",US Census ACS5 2023
+IRAM,Chatham Hickory Cinema,"Chatham, NJ",Chatham,NJ,matched,9219,250001,37.4,82.35,0.47,10.55,5.4,42.14,2.51,"Chatham borough, New Jersey",US Census ACS5 2023
+INDRP,DCTV's Firehouse Cinema,"New York, NY",New York,NY,matched,8516202,79713,38,35.85,22.7,14.62,28.42,23.64,17.36,"New York city, New York",US Census ACS5 2023
+CAC,Barrymore Film Center,"Fort Lee, NJ",Fort Lee,NJ,matched,39818,105535,47.2,40.54,2.75,44.11,12.42,35.21,8.41,"Fort Lee borough, New Jersey",US Census ACS5 2023
+CFB,The Cinema @ Townsend,"Old Greenwich, CT",Old Greenwich,CT,matched,6904,250001,40.5,79.65,0.46,8.91,7.65,43.73,3.35,"Old Greenwich CDP, Connecticut",US Census ACS5 2023
+UPNY,Upstate Midtown,"Kingston, NY",Kingston,NY,matched,23942,65413,36.8,63.5,14.16,1.81,17.12,17.4,19.13,"Kingston city, New York",US Census ACS5 2023
+LAND,The Landmark Westwood,"Los Angeles, CA",Los Angeles,CA,matched,3857897,80366,36.9,37.32,8.51,12.03,47.23,24.5,16.55,"Los Angeles city, California",US Census ACS5 2023
+IPIC,iPic Westwood,"Los Angeles, CA",Los Angeles,CA,matched,3857897,80366,36.9,37.32,8.51,12.03,47.23,24.5,16.55,"Los Angeles city, California",US Census ACS5 2023
+AMC,"AMC Century City 15 with IMAX, Dolby, Prime","Century City, CA",Century City,CA,no-match,,,,,,,,,,,
+ELCP,El Capitan,"Hollywood, CA",Hollywood,CA,matched,35090,94844,39.6,73.78,4.09,5.49,13.49,40.93,13.13,"West Hollywood city, California",US Census ACS5 2023
+NWBV,Vista,"Los Angeles, CA",Los Angeles,CA,matched,3857897,80366,36.9,37.32,8.51,12.03,47.23,24.5,16.55,"Los Angeles city, California",US Census ACS5 2023
+ESP,Los Feliz 3,"Los Angeles, CA",Los Angeles,CA,matched,3857897,80366,36.9,37.32,8.51,12.03,47.23,24.5,16.55,"Los Angeles city, California",US Census ACS5 2023
+LAND,Landmark Theatres Sunset,"West Hollywood, CA",West Hollywood,CA,matched,35090,94844,39.6,73.78,4.09,5.49,13.49,40.93,13.13,"West Hollywood city, California",US Census ACS5 2023
+AMC,"AMC Grove 14 with IMAX, Dolby, Prime","Los Angeles, CA",Los Angeles,CA,matched,3857897,80366,36.9,37.32,8.51,12.03,47.23,24.5,16.55,"Los Angeles city, California",US Census ACS5 2023
+INDRP,Lumiere Cinemas,"Beverly Hills, CA",Beverly Hills,CA,matched,31955,127979,47.7,75.81,1.93,11.89,6.23,34.63,9.03,"Beverly Hills city, California",US Census ACS5 2023
+AMC,AMC Santa Monica 7,"Santa Monica, CA",Santa Monica,CA,matched,91535,109739,42.9,66.87,4.86,9.75,16.42,39.45,11.61,"Santa Monica city, California",US Census ACS5 2023
+LAEM,Monica Film Center,"Santa Monica, CA",Santa Monica,CA,matched,91535,109739,42.9,66.87,4.86,9.75,16.42,39.45,11.61,"Santa Monica city, California",US Census ACS5 2023
+LAEM,Royal,"Los Angeles, CA",Los Angeles,CA,matched,3857897,80366,36.9,37.32,8.51,12.03,47.23,24.5,16.55,"Los Angeles city, California",US Census ACS5 2023
+LAND,Nuart,"Los Angeles, CA",Los Angeles,CA,matched,3857897,80366,36.9,37.32,8.51,12.03,47.23,24.5,16.55,"Los Angeles city, California",US Census ACS5 2023
+AMC,AMC DINE-IN Marina 12,"Marina Del Rey, CA",Marina Del Rey,CA,matched,8844,142440,37.8,67.97,4.49,9.81,10.17,49.02,0.81,"Marina del Rey CDP, California",US Census ACS5 2023
+CNMK,Playa Vista 9 + XD,"Los Angeles, CA",Los Angeles,CA,matched,3857897,80366,36.9,37.32,8.51,12.03,47.23,24.5,16.55,"Los Angeles city, California",US Census ACS5 2023
+CNMK,Baldwin Hills 15 + XD,"Baldwin Hills, CA",Baldwin Hills,CA,no-match,,,,,,,,,,,
+CULV,The Culver Theater,"Culver City, CA",Culver City,CA,matched,39993,122312,41.2,51.57,8.01,19.33,18.6,33.98,6.46,"Culver City city, California",US Census ACS5 2023
+CONS,Olino by Consolidated Theatres with TITAN LUXE,"Kapolei, HI",Kapolei,HI,matched,23033,129260,33.4,14.52,3.2,26.59,17.03,22.71,8.11,"Kapolei CDP, Hawaii",US Census ACS5 2023
+CNMK,Cinemark 12 and XD,"Los Angeles, CA",Los Angeles,CA,matched,3857897,80366,36.9,37.32,8.51,12.03,47.23,24.5,16.55,"Los Angeles city, California",US Census ACS5 2023
+RGCY,Regency Korea Town,"Los Angeles, CA",Los Angeles,CA,matched,3857897,80366,36.9,37.32,8.51,12.03,47.23,24.5,16.55,"Los Angeles city, California",US Census ACS5 2023
+INDLF,California Science Center IMAX Theater,"Los Angeles, CA",Los Angeles,CA,matched,3857897,80366,36.9,37.32,8.51,12.03,47.23,24.5,16.55,"Los Angeles city, California",US Census ACS5 2023
+AMC,"AMC Universal Citywalk Hollywood 19 with IMAX, Prime","Universal City, CA",Universal City,CA,no-match,,,,,,,,,,,
+DRFT,Alamo DTLA 12,"Los Angeles, CA",Los Angeles,CA,matched,3857897,80366,36.9,37.32,8.51,12.03,47.23,24.5,16.55,"Los Angeles city, California",US Census ACS5 2023
+RGCY,Plant 16,"Van Nuys, CA",Van Nuys,CA,no-match,,,,,,,,,,,
+CNMK,Cinemark North Hollywood,"North Hollywood, CA",North Hollywood,CA,matched,3857897,80366,36.9,37.32,8.51,12.03,47.23,24.5,16.55,"Los Angeles city, California",US Census ACS5 2023
+AMC,AMC Fallbrook 7,"West Hills, CA",West Hills,CA,no-match,,,,,,,,,,,
+AMC,AMC Northridge 10,"Northridge, CA",Northridge,CA,no-match,,,,,,,,,,,
+LAEM,Town Center 5,"Encino, CA",Encino,CA,no-match,,,,,,,,,,,
+RGCY,Granada Hills 9,"Granada Hills, CA",Granada Hills,CA,no-match,,,,,,,,,,,
+AMC,"AMC Porter Ranch 9 with Dolby, Prime","Porter Ranch, CA",Porter Ranch,CA,no-match,,,,,,,,,,,
+REG,Regal Edwards Canyon Country,"Santa Clarita, CA",Santa Clarita,CA,matched,229021,119926,38.1,53.07,4.43,11.4,36.04,26.46,7.74,"Santa Clarita city, California",US Census ACS5 2023
+REG,Regal Edwards Valencia,"Santa Clarita, CA",Santa Clarita,CA,matched,229021,119926,38.1,53.07,4.43,11.4,36.04,26.46,7.74,"Santa Clarita city, California",US Census ACS5 2023
+CTRN,The Lot Liberty Station,"San Diego, CA",San Diego,CA,matched,1385061,104321,36,50.43,5.7,17.58,29.56,28.8,11.11,"San Diego city, California",US Census ACS5 2023
+HARK,Cerritos 16,"Cerritos, CA",Cerritos,CA,matched,48340,133953,47,14.53,6.78,62.15,14.9,35.35,5.87,"Cerritos city, California",US Census ACS5 2023
+TMKO,Roxy Stadium 11,"Camarillo, CA",Camarillo,CA,matched,70244,109390,41.2,62.88,3.54,10.83,30.82,26.37,7.53,"Camarillo city, California",US Census ACS5 2023
+AMC,AMC DINE-IN Thousand Oaks 14 with Dolby,"Thousand Oaks, CA",Thousand Oaks,CA,matched,125676,134367,44.5,68.26,2.05,9.64,19.81,29.5,8.03,"Thousand Oaks city, California",US Census ACS5 2023
+REG,Regal Simi Valley Civic Center,"Simi Valley, CA",Simi Valley,CA,matched,125769,117703,41.8,63.3,1.38,10.68,27.13,24.89,6.69,"Simi Valley city, California",US Census ACS5 2023
+CNMK,Ventura Downtown 10,"Ventura, CA",Ventura,CA,matched,109900,100407,41,68.42,1.61,4.29,35.66,25.29,10.42,"San Buenaventura (Ventura) city, California",US Census ACS5 2023
+REG,Regal Kapolei Commons,"Kapolei, HI",Kapolei,HI,matched,23033,129260,33.4,14.52,3.2,26.59,17.03,22.71,8.11,"Kapolei CDP, Hawaii",US Census ACS5 2023
+RGCY,Santa Paula 7,"Santa Paula, CA",Santa Paula,CA,matched,31202,77130,35.2,60.41,1.33,1.24,80.61,9.87,15.32,"Santa Paula city, California",US Census ACS5 2023
+HARK,Mountain Grove 16,"Redlands, CA",Redlands,CA,matched,72985,99158,35.6,53.7,5.7,9.31,35.88,20.23,7.37,"Redlands city, California",US Census ACS5 2023
+TMKO,Plaza Stadium 14,"Oxnard, CA",Oxnard,CA,matched,201014,93372,34,36.93,1.82,6.56,77.04,13.35,10.82,"Oxnard city, California",US Census ACS5 2023
+REG,Regal Edwards Camarillo Palace,"Camarillo, CA",Camarillo,CA,matched,70244,109390,41.2,62.88,3.54,10.83,30.82,26.37,7.53,"Camarillo city, California",US Census ACS5 2023
+CNMK,Cinemark 16 +XD,"Victorville, CA",Victorville,CA,matched,135983,70663,32,36.54,17.11,4.36,55.26,8.29,19.95,"Victorville city, California",US Census ACS5 2023
+CNMK,Cinemark 22 + IMAX,"Lancaster, CA",Lancaster,CA,matched,170013,76083,34.2,35.46,21.38,4.04,45.89,12.68,15.46,"Lancaster city, California",US Census ACS5 2023
+CNMK,Cinemark 16,"Palmdale, CA",Palmdale,CA,matched,165487,81151,33.2,31.81,13.67,4.46,62.76,11.38,14.58,"Palmdale city, California",US Census ACS5 2023
+CLRK,Window Rock Cinema,"Window Rock, AZ",Window Rock,AZ,matched,2384,44918,35,4.49,0.13,0.38,7.68,20.21,29.82,"Window Rock CDP, Arizona",US Census ACS5 2023
+AMC,"AMC Americana at Brand 18 With IMAX, Dolby, Prime","Glendale, CA",Glendale,CA,matched,192270,84262,41.4,67.44,1.66,13.34,18.47,28.71,13.44,"Glendale city, California",US Census ACS5 2023
+REG,Regal UA La Canada,"La Canada Flt, CA",La Canada Flt,CA,no-match,,,,,,,,,,,
+LAND,Landmark Theatres Pasadena,"Pasadena, CA",Pasadena,CA,matched,136462,103778,40.1,41.44,7.7,17.76,34.12,30.01,13.21,"Pasadena city, California",US Census ACS5 2023
+CNMK,Cinemark Apple Valley 12,"Apple Valley, CA",Apple Valley,CA,matched,75478,65926,35.5,56.98,7.62,3.63,39.35,11.17,17.21,"Apple Valley town, California",US Census ACS5 2023
+RGCY,Academy 6,"Pasadena, CA",Pasadena,CA,matched,136462,103778,40.1,41.44,7.7,17.76,34.12,30.01,13.21,"Pasadena city, California",US Census ACS5 2023
+LAEM,Laemmle Glendale,"Glendale, CA",Glendale,CA,matched,192270,84262,41.4,67.44,1.66,13.34,18.47,28.71,13.44,"Glendale city, California",US Census ACS5 2023
+CNMK,Cinemark Downey 14 and XD,"Downey, CA",Downey,CA,matched,111793,87400,37,29.83,3.7,7.37,75.26,17.77,9.14,"Downey city, California",US Census ACS5 2023
+NWBV,New Beverly,"Los Angeles, CA",Los Angeles,CA,matched,3857897,80366,36.9,37.32,8.51,12.03,47.23,24.5,16.55,"Los Angeles city, California",US Census ACS5 2023
+IPIC,One Colorado Cinemas,"Pasadena, CA",Pasadena,CA,matched,136462,103778,40.1,41.44,7.7,17.76,34.12,30.01,13.21,"Pasadena city, California",US Census ACS5 2023
+RGCY,Foothill Center 10,"Azusa, CA",Azusa,CA,matched,49318,85727,33.9,31.71,2.87,15.04,64.9,17.36,12.57,"Azusa city, California",US Census ACS5 2023
+AMC,"AMC Glendora 12 with IMAX, Dolby","Glendora, CA",Glendora,CA,matched,51350,111915,40.5,52.24,2.7,11.79,39.67,23.83,7.36,"Glendora city, California",US Census ACS5 2023
+REG,Regal Edwards Alhambra Renaissance,"Alhambra, CA",Alhambra,CA,matched,81483,85189,41.9,14.82,2.52,51.11,35.06,25.84,12.26,"Alhambra city, California",US Census ACS5 2023
+REG,Regal Edwards West Covina,"West Covina, CA",West Covina,CA,matched,107436,98570,40.1,20.02,4.07,30.57,53.19,21.35,9.73,"West Covina city, California",US Census ACS5 2023
+AMC,AMC Covina 17 with IMAX,"Covina, CA",Covina,CA,matched,50143,94792,38.2,36.46,3.77,13.96,59.12,19.02,8.94,"Covina city, California",US Census ACS5 2023
+REG,Regal Edwards La Verne,"La Verne, CA",La Verne,CA,matched,30804,104565,46.9,55.24,3.36,10.56,36.02,24.91,8.18,"La Verne city, California",US Census ACS5 2023
+AMC,"AMC Puente Hills 20 with IMAX, Dolby","Industry, CA",Industry,CA,matched,181,62500,37.8,33.15,0,23.2,51.93,8.45,16.81,"Industry city, California",US Census ACS5 2023
+AMC,"AMC Montclair 12 with IMAX, Dolby","Montclair, CA",Montclair,CA,matched,37809,76338,33.5,27.64,5.38,10.14,72.38,11.78,16.73,"Montclair city, California",US Census ACS5 2023
+AMC,AMC Montebello 10,"Montebello, CA",Montebello,CA,matched,61376,74955,39.4,23.41,0.59,13.72,78.82,15.26,12.82,"Montebello city, California",US Census ACS5 2023
+AMC,"AMC Norwalk 20 with IMAX, Dolby","Norwalk, CA",Norwalk,CA,matched,100713,98709,36.5,24.02,4.16,13.78,69.48,15.82,9.73,"Norwalk city, California",US Census ACS5 2023
+CNPL,Cinepolis Pico Rivera 14,"Pico Rivera, CA",Pico Rivera,CA,matched,60821,86956,39.2,22.71,1.88,3.46,90.53,12,9.61,"Pico Rivera city, California",US Census ACS5 2023
+STLT,Whittier Village,"Whittier, CA",Whittier,CA,matched,85925,92374,38.3,36.68,1.15,4.91,66.7,18.46,8.84,"Whittier city, California",US Census ACS5 2023
+ESP,Bianchi 11,"Paramount, CA",Paramount,CA,matched,52546,70912,33.2,16.07,8.73,3.12,82.32,9.74,13.3,"Paramount city, California",US Census ACS5 2023
+RGCY,Commerce 14,"Commerce, CA",Commerce,CA,matched,12072,71768,36.1,24.25,0.82,1.85,94.42,9.54,13.65,"Commerce city, California",US Census ACS5 2023
+AMC,AMC La Mirada 7,"La Mirada, CA",La Mirada,CA,matched,46945,110177,42.4,36.79,2.14,23.12,44.74,25.87,6.53,"La Mirada city, California",US Census ACS5 2023
+REG,Regal Promenade,"Rolling Hills Estates, CA",Rolling Hills Estates,CA,matched,8158,187500,47.4,61,1.89,26.64,6.21,40.65,3.55,"Rolling Hills Estates city, California",US Census ACS5 2023
+INDRP,Digital Gym CINEMA North Park,"San Diego, CA",San Diego,CA,matched,1385061,104321,36,50.43,5.7,17.58,29.56,28.8,11.11,"San Diego city, California",US Census ACS5 2023
+AMC,AMC South Bay Galleria 16 with Dolby,"Redondo Beach, CA",Redondo Beach,CA,matched,69814,144588,40.7,60.07,2.41,17.98,13.93,41.83,5,"Redondo Beach city, California",US Census ACS5 2023
+AMC,"AMC Del Amo 18 with IMAX, Dolby","Torrance, CA",Torrance,CA,matched,143499,113105,43.1,36.42,3.49,38.67,19.3,34.19,6.9,"Torrance city, California",US Census ACS5 2023
+SMG,Studio Movie Grill Simi Valley,"Simi Valley, CA",Simi Valley,CA,matched,125769,117703,41.8,63.3,1.38,10.68,27.13,24.89,6.69,"Simi Valley city, California",US Census ACS5 2023
+REG,Regal Edwards Cerritos,"Cerritos, CA",Cerritos,CA,matched,48340,133953,47,14.53,6.78,62.15,14.9,35.35,5.87,"Cerritos city, California",US Census ACS5 2023
+STLT,Starlight Lakewood Center 16,"Lakewood, CA",Lakewood,CA,matched,80510,116794,39,39.43,7.97,17.8,36.15,22.2,5.89,"Lakewood city, California",US Census ACS5 2023
+REG,Regal Garden Grove,"Garden Grove, CA",Garden Grove,CA,matched,170603,90166,39.6,28.43,1.28,41.64,37.61,18.87,12.2,"Garden Grove city, California",US Census ACS5 2023
+STLT,West Grove Cinemas,"Garden Grove, CA",Garden Grove,CA,matched,170603,90166,39.6,28.43,1.28,41.64,37.61,18.87,12.2,"Garden Grove city, California",US Census ACS5 2023
+ESP,Art Theatre of Long Beach,"Long Beach, CA",Long Beach,CA,matched,458491,83969,36.8,41.63,11.93,12.79,43.42,22.28,14.96,"Long Beach city, California",US Census ACS5 2023
+RGCY,Westminster 10,"Westminster, CA",Westminster,CA,matched,90147,82686,41.7,24.41,0.91,51.23,24.25,18.54,15.82,"Westminster city, California",US Census ACS5 2023
+CNMK,Orange Stadium Promenade 25 + XD,"Orange, CA",Orange,CA,matched,138723,116945,36.9,53.59,1.59,13.06,39.98,25.94,9.15,"Orange city, California",US Census ACS5 2023
+CTRN,MetroLux 10 San Clemente,"San Clemente, CA",San Clemente,CA,matched,63510,134735,44.6,75.42,1.53,4.57,17.82,31.03,5.68,"San Clemente city, California",US Census ACS5 2023
+REG,Regal La Habra,"La Habra, CA",La Habra,CA,matched,62233,98158,38.1,39.19,2.14,12.18,59.93,19.98,9.68,"La Habra city, California",US Census ACS5 2023
+AMC,AMC Marina Pacifica 12,"Long Beach, CA",Long Beach,CA,matched,458491,83969,36.8,41.63,11.93,12.79,43.42,22.28,14.96,"Long Beach city, California",US Census ACS5 2023
+CLRK,Picture Show @ Main Place,"Santa Ana, CA",Santa Ana,CA,matched,311639,88354,34.3,19.51,0.8,11.97,77.26,12.78,11.09,"Santa Ana city, California",US Census ACS5 2023
+CNMK,Cinemark Carson 13 + XD,"Carson, CA",Carson,CA,matched,93523,107391,41.9,17.39,22.47,26.94,38.93,21.2,9.01,"Carson city, California",US Census ACS5 2023
+AMC,AMC DINE-IN Fullerton 20,"Fullerton, CA",Fullerton,CA,matched,141278,104219,36.1,43.01,2.09,24.52,39.57,27.44,12.2,"Fullerton city, California",US Census ACS5 2023
+CNMK,Cinemark 14 @ The Pike + XD,"Long Beach, CA",Long Beach,CA,matched,458491,83969,36.8,41.63,11.93,12.79,43.42,22.28,14.96,"Long Beach city, California",US Census ACS5 2023
+FRDA,The Frida Cinema,"Santa Ana, CA",Santa Ana,CA,matched,311639,88354,34.3,19.51,0.8,11.97,77.26,12.78,11.09,"Santa Ana city, California",US Census ACS5 2023
+CTRN,The Lot,"La Jolla, CA",La Jolla,CA,matched,1385061,104321,36,50.43,5.7,17.58,29.56,28.8,11.11,"San Diego city, California",US Census ACS5 2023
+REG,Regal Edwards Market Place,"Irvine, CA",Irvine,CA,matched,308160,129647,33.9,38.71,2.04,44.11,11.34,39.36,11.68,"Irvine city, California",US Census ACS5 2023
+HARK,Queen Creek 14,"Queen Creek, AZ",Queen Creek,AZ,matched,66369,134719,37.2,78.37,3.16,2.97,16.85,30.02,3.56,"Queen Creek town, Arizona",US Census ACS5 2023
+INDRP,Lemoore Stadium Cinemas,"Lemoore, CA",Lemoore,CA,matched,27023,82189,31.7,50.77,7.18,6.53,47.04,13.47,14.94,"Lemoore city, California",US Census ACS5 2023
+RGCY,Rancho Niguel Directors Cut,"Laguna Niguel, CA",Laguna Niguel,CA,matched,64023,140605,47.7,67.83,1.69,11.56,15.44,34.45,5.93,"Laguna Niguel city, California",US Census ACS5 2023
+REG,Regal Edwards Metro Pointe,"Costa Mesa, CA",Costa Mesa,CA,matched,110538,110073,36.5,52.7,1.6,8.8,36.36,30.94,8.94,"Costa Mesa city, California",US Census ACS5 2023
+AMC,AMC Woodbridge 5,"Irvine, CA",Irvine,CA,matched,308160,129647,33.9,38.71,2.04,44.11,11.34,39.36,11.68,"Irvine city, California",US Census ACS5 2023
+REG,Regal University Town Center,"Irvine, CA",Irvine,CA,matched,308160,129647,33.9,38.71,2.04,44.11,11.34,39.36,11.68,"Irvine city, California",US Census ACS5 2023
+REG,Regal Edwards Big Newport,"Newport Beach, CA",Newport Beach,CA,matched,84304,158461,46,79.23,0.68,8.05,10.13,41.1,7.3,"Newport Beach city, California",US Census ACS5 2023
+AMC,"AMC Rolling Hills 20 with IMAX, Dolby","Torrance, CA",Torrance,CA,matched,143499,113105,43.1,36.42,3.49,38.67,19.3,34.19,6.9,"Torrance city, California",US Census ACS5 2023
+REG,Regal Edwards Ontario Mountain Village,"Ontario, CA",Ontario,CA,matched,178347,82806,33.1,29.4,6.43,8.55,68.27,15.14,12.68,"Ontario city, California",US Census ACS5 2023
+AMC,AMC Victoria Gardens 12 with Dolby,"Rancho Cucamonga, CA",Rancho Cucamonga,CA,matched,174693,109511,37.9,44,8.31,15.37,38.45,22.85,8.03,"Rancho Cucamonga city, California",US Census ACS5 2023
+CNPL,Cinepolis Laguna Niguel,"Laguna Niguel, CA",Laguna Niguel,CA,matched,64023,140605,47.7,67.83,1.69,11.56,15.44,34.45,5.93,"Laguna Niguel city, California",US Census ACS5 2023
+RGCY,Fontana 8,"Fontana, CA",Fontana,CA,matched,211921,98187,33.3,21.85,8.42,8.16,67.87,14.66,10.34,"Fontana city, California",US Census ACS5 2023
+CTRN,The LOT Fashion Island,"Newport Beach, CA",Newport Beach,CA,matched,84304,158461,46,79.23,0.68,8.05,10.13,41.1,7.3,"Newport Beach city, California",US Census ACS5 2023
+REG,Regal Janss Marketplace,"Thousand Oaks, CA",Thousand Oaks,CA,matched,125676,134367,44.5,68.26,2.05,9.64,19.81,29.5,8.03,"Thousand Oaks city, California",US Census ACS5 2023
+AMC,AMC Anaheim GardenWalk 6,"Anaheim, CA",Anaheim,CA,matched,344553,90583,35.9,41.2,2.5,18.62,52.52,19.46,12.47,"Anaheim city, California",US Census ACS5 2023
+TMKO,Cinema West Beach Cities,"El Segundo, CA",El Segundo,CA,matched,16863,149149,38.2,62.79,2.8,11.55,20.76,38.87,4.36,"El Segundo city, California",US Census ACS5 2023
+AMC,"AMC Tustin 14 with IMAX, Dolby, Prime","Tustin, CA",Tustin,CA,matched,79035,108435,36.8,38.27,2.76,25.12,40.13,27.42,10.39,"Tustin city, California",US Census ACS5 2023
+REG,Regal Irvine Spectrum,"Irvine, CA",Irvine,CA,matched,308160,129647,33.9,38.71,2.04,44.11,11.34,39.36,11.68,"Irvine city, California",US Census ACS5 2023
+MAYA,Maya Cinemas Chino 8,"Chino, CA",Chino,CA,matched,91775,103845,36.8,31.96,6.99,18.7,54.15,20.16,7.44,"Chino city, California",US Census ACS5 2023
+RGCY,CGV by Regency Cinemas Buena Park,"Buena Park, CA",Buena Park,CA,matched,83052,108187,37.4,33.26,2.17,32.1,42.49,22.39,8.57,"Buena Park city, California",US Census ACS5 2023
+CLRK,Palace Cinemas,"Lemoore, CA",Lemoore,CA,matched,27023,82189,31.7,50.77,7.18,6.53,47.04,13.47,14.94,"Lemoore city, California",US Census ACS5 2023
+REG,Regal Carlsbad,"Carlsbad, CA",Carlsbad,CA,matched,114500,139326,42.8,71.04,1.04,9.83,16.75,36.82,6.94,"Carlsbad city, California",US Census ACS5 2023
+REG,Regal Edwards Kaleidoscope,"Mission Viejo, CA",Mission Viejo,CA,matched,92415,136071,46.1,64.24,1.01,14.4,19.84,32.08,5.03,"Mission Viejo city, California",US Census ACS5 2023
+STLT,Starlight Terra Vista Cinemas,"Rancho Cucamonga, CA",Rancho Cucamonga,CA,matched,174693,109511,37.9,44,8.31,15.37,38.45,22.85,8.03,"Rancho Cucamonga city, California",US Census ACS5 2023
+REG,Regal Edwards Aliso Viejo,"Aliso Viejo, CA",Aliso Viejo,CA,matched,51320,137970,38.6,60.95,2.15,16.88,19.34,36.19,5.19,"Aliso Viejo city, California",US Census ACS5 2023
+CLRK,Paradigm Cinemas: Yucca Valley,"Yucca Valley, CA",Yucca Valley,CA,matched,21744,55302,40.2,67.37,3.47,1.89,25,13.95,19.17,"Yucca Valley town, California",US Census ACS5 2023
+REG,Regal Edwards Ontario Palace,"Ontario, CA",Ontario,CA,matched,178347,82806,33.1,29.4,6.43,8.55,68.27,15.14,12.68,"Ontario city, California",US Census ACS5 2023
+REG,Regal Summerlin Luxury,"Las Vegas, NV",Las Vegas,NV,matched,650873,70723,38.5,49.23,11.9,6.93,34.13,17.27,14.22,"Las Vegas city, Nevada",US Census ACS5 2023
+HARK,Chino Hills 18,"Chino Hills, CA",Chino Hills,CA,matched,78024,122600,40.6,29.63,4.72,40.21,28.11,31.3,6.88,"Chino Hills city, California",US Census ACS5 2023
+ESP,Fox Cinemas is D'Place,"Banning, CA",Banning,CA,matched,30680,57699,43.3,45.06,6.57,5.22,49.53,11.17,19.05,"Banning city, California",US Census ACS5 2023
+DANZ,Van Buren 3 DI,"Riverside, CA",Riverside,CA,matched,316241,88575,33.1,39.16,6.04,8.28,54.61,15.25,12.52,"Riverside city, California",US Census ACS5 2023
+REG,Regal LA Live,"Los Angeles, CA",Los Angeles,CA,matched,3857897,80366,36.9,37.32,8.51,12.03,47.23,24.5,16.55,"Los Angeles city, California",US Census ACS5 2023
+DANZ,Rubidoux Triple DI,"Riverside, CA",Riverside,CA,matched,316241,88575,33.1,39.16,6.04,8.28,54.61,15.25,12.52,"Riverside city, California",US Census ACS5 2023
+READ,Reading Cal Oaks 17 with Titan LUXE,"Murrieta, CA",Murrieta,CA,matched,111621,109780,36,56.18,5.06,8.39,32.53,20.55,5.94,"Murrieta city, California",US Census ACS5 2023
+ESP,Temeku 7,"Temecula, CA",Temecula,CA,matched,110404,117840,36.3,57,4.28,11.54,28.5,25.69,7.4,"Temecula city, California",US Census ACS5 2023
+GALX,Galaxy Mission Grove,"Riverside, CA",Riverside,CA,matched,316241,88575,33.1,39.16,6.04,8.28,54.61,15.25,12.52,"Riverside city, California",US Census ACS5 2023
+RGCY,Sterling 6,"San Bernardino, CA",San Bernardino,CA,matched,221774,63988,31.9,27.57,11.84,4.11,69.6,8.96,19.53,"San Bernardino city, California",US Census ACS5 2023
+REG,Regal Riverside Plaza,"Riverside, CA",Riverside,CA,matched,316241,88575,33.1,39.16,6.04,8.28,54.61,15.25,12.52,"Riverside city, California",US Census ACS5 2023
+ESP,Mary Pickford 14,"Cathedral City, CA",Cathedral City,CA,matched,52047,67031,40.9,42.02,1.93,6.23,58.89,15.7,15.27,"Cathedral City city, California",US Census ACS5 2023
+RGCY,Towngate 8,"Moreno Valley, CA",Moreno Valley,CA,matched,210378,87477,32.1,22.41,17.63,5.54,59.69,12.08,11.85,"Moreno Valley city, California",US Census ACS5 2023
+UEC,Diamond Cinemas,"Lake Elsinore, CA",Lake Elsinore,CA,matched,71516,96527,33.4,42.97,5.9,6.88,52.75,16.43,9.37,"Lake Elsinore city, California",US Census ACS5 2023
+CONS,Cons Victoria Ward Stadium 16 with TITAN XC,"Honolulu, HI",Honolulu,HI,matched,50961,158398,49.3,24.06,0.6,46.22,5.35,33.77,4.13,"East Honolulu CDP, Hawaii",US Census ACS5 2023
+AMC,AMC Temecula 10,"Temecula, CA",Temecula,CA,matched,110404,117840,36.3,57,4.28,11.54,28.5,25.69,7.4,"Temecula city, California",US Census ACS5 2023
+AMC,"AMC Tyler 16 with IMAX, Dolby","Riverside, CA",Riverside,CA,matched,316241,88575,33.1,39.16,6.04,8.28,54.61,15.25,12.52,"Riverside city, California",US Census ACS5 2023
+AMC,AMC Ontario Mills 30 with Dolby,"Ontario, CA",Ontario,CA,matched,178347,82806,33.1,29.4,6.43,8.55,68.27,15.14,12.68,"Ontario city, California",US Census ACS5 2023
+REG,Regal Edwards Eastvale Gateway,"Mira Loma, CA",Mira Loma,CA,no-match,,,,,,,,,,,
+TBS,Village Theatre,"Big Bear Lake, CA",Big Bear Lake,CA,matched,5038,74728,45.5,74.04,0.64,2.48,25.25,21.67,9.38,"Big Bear Lake city, California",US Census ACS5 2023
+BALC,Festival Theaters 9,"Palm Springs, CA",Palm Springs,CA,matched,44998,71979,57.8,69.32,5.42,4.55,24.33,25.66,13.67,"Palm Springs city, California",US Census ACS5 2023
+SAGE,Camelot 3,"Palm Springs, CA",Palm Springs,CA,matched,44998,71979,57.8,69.32,5.42,4.55,24.33,25.66,13.67,"Palm Springs city, California",US Census ACS5 2023
+REG,Regal San Jacinto Metro,"San Jacinto, CA",San Jacinto,CA,matched,54756,78281,32.4,34.67,5.77,3.03,64.39,8.86,16.45,"San Jacinto city, California",US Census ACS5 2023
+ESP,King City 3,"King City, CA",King City,CA,matched,13512,63090,28.9,19.46,0.13,1.27,90.07,8.32,19.77,"King City city, California",US Census ACS5 2023
+HARK,Moreno Valley 16,"Moreno Valley, CA",Moreno Valley,CA,matched,210378,87477,32.1,22.41,17.63,5.54,59.69,12.08,11.85,"Moreno Valley city, California",US Census ACS5 2023
+INDRP,SBIFF Film Center,"Santa Barbara, CA",Santa Barbara,CA,matched,88024,101672,39.4,63.3,1.26,3.76,36.79,29.65,13.08,"Santa Barbara city, California",US Census ACS5 2023
+REG,Regal Edwards Corona Crossings,"Corona, CA",Corona,CA,matched,158839,106438,37.3,41.62,5.31,11.51,48.27,20.76,9.06,"Corona city, California",US Census ACS5 2023
+CNMK,Cinemark Rialto 13 + XD,"Rialto, CA",Rialto,CA,matched,103866,85521,31.8,26.32,12.57,2.09,74.34,9.17,12.61,"Rialto city, California",US Census ACS5 2023
+CGT,Movies 4,"Lompoc, CA",Lompoc,CA,matched,43819,70038,34.5,44.23,3.9,3.26,61.84,9.23,16.82,"Lompoc city, California",US Census ACS5 2023
+CNMK,Rancho Mirage River 15 + XD,"Rancho Mirage, CA",Rancho Mirage,CA,matched,17375,109943,65,80.06,1.69,3.62,15.21,23.43,10.94,"Rancho Mirage city, California",US Census ACS5 2023
+STLT,Dos Lagos 15 + Epex,"Corona, CA",Corona,CA,matched,158839,106438,37.3,41.62,5.31,11.51,48.27,20.76,9.06,"Corona city, California",US Census ACS5 2023
+CNMK,Huntington Beach Bella Terra 20 + XD,"Huntington Beach, CA",Huntington Beach,CA,matched,196010,119885,43.4,64.26,1.27,12.58,19.43,29.5,7.45,"Huntington Beach city, California",US Census ACS5 2023
+CCL,Park 9,"Paso Robles, CA",Paso Robles,CA,matched,31399,93098,38.8,62.6,0.33,3.36,36.64,18.91,12.76,"El Paso de Robles (Paso Robles) city, California",US Census ACS5 2023
+RCFB,Smith's Ranch DI,"Twentynine Palms, CA",Twentynine Palms,CA,matched,28738,56000,24.6,56.81,9.92,3.95,25.77,17.8,15.4,"Twentynine Palms city, California",US Census ACS5 2023
+REG,Regal Rancho Mirage,"Rancho Mirage, CA",Rancho Mirage,CA,matched,17375,109943,65,80.06,1.69,3.62,15.21,23.43,10.94,"Rancho Mirage city, California",US Census ACS5 2023
+REG,Regal Edwards Temecula,"Temecula, CA",Temecula,CA,matched,110404,117840,36.3,57,4.28,11.54,28.5,25.69,7.4,"Temecula city, California",US Census ACS5 2023
+CGT,Fair Oaks,"Arroyo Grande, CA",Arroyo Grande,CA,matched,18412,103258,45.2,76.48,0.42,3.66,16.72,28.5,4.64,"Arroyo Grande city, California",US Census ACS5 2023
+REG,Regal Arroyo Grande,"Arroyo Grande, CA",Arroyo Grande,CA,matched,18412,103258,45.2,76.48,0.42,3.66,16.72,28.5,4.64,"Arroyo Grande city, California",US Census ACS5 2023
+HARK,Superstition Springs 25,"Mesa, AZ",Mesa,AZ,matched,507478,78779,37.2,69.67,4.43,2.45,26.59,20.94,10.5,"Mesa city, Arizona",US Census ACS5 2023
+REG,Regal Edwards South Gate,"South Gate, CA",South Gate,CA,matched,91836,71315,35.2,23.87,1.02,0.79,94.95,9.4,13.23,"South Gate city, California",US Census ACS5 2023
+REG,Regal Edwards Bakersfield,"Bakersfield, CA",Bakersfield,CA,matched,408366,77397,31.9,46.91,6.15,7.77,53.58,15.11,15.99,"Bakersfield city, California",US Census ACS5 2023
+HARK,Santan Village 16,"Gilbert, AZ",Gilbert,AZ,matched,271118,121351,35.7,72.67,3.35,6.63,17.53,30.73,5.13,"Gilbert town, Arizona",US Census ACS5 2023
+AMC,"AMC Santa Anita 16 with IMAX, Dolby","Arcadia, CA",Arcadia,CA,matched,55550,116142,43.2,24.44,1.22,57.43,16.42,35.05,7.4,"Arcadia city, California",US Census ACS5 2023
+READ,Valley Plaza 16,"Bakersfield, CA",Bakersfield,CA,matched,408366,77397,31.9,46.91,6.15,7.77,53.58,15.11,15.99,"Bakersfield city, California",US Census ACS5 2023
+AMC,"AMC Orange 30 with IMAX, Dolby","Orange, CA",Orange,CA,matched,138723,116945,36.9,53.59,1.59,13.06,39.98,25.94,9.15,"Orange city, California",US Census ACS5 2023
+CGT,Skyline Twin DI|#,"Barstow, CA",Barstow,CA,matched,25198,51811,32.9,36.53,18.86,2.27,47.55,7.3,23.23,"Barstow city, California",US Census ACS5 2023
+ESP,Barstow Station is D'Place,"Barstow, CA",Barstow,CA,matched,25198,51811,32.9,36.53,18.86,2.27,47.55,7.3,23.23,"Barstow city, California",US Census ACS5 2023
+INDRP,Santa Barbara Internation Film,"Santa Barbara, CA",Santa Barbara,CA,matched,88024,101672,39.4,63.3,1.26,3.76,36.79,29.65,13.08,"Santa Barbara city, California",US Census ACS5 2023
+REG,Regal Edwards Mira Mesa,"San Diego, CA",San Diego,CA,matched,1385061,104321,36,50.43,5.7,17.58,29.56,28.8,11.11,"San Diego city, California",US Census ACS5 2023
+REG,Regal Sherman Oaks Galleria,"Sherman Oaks, CA",Sherman Oaks,CA,no-match,,,,,,,,,,,
+CLRK,Bay Theatre,"Morro Bay, CA",Morro Bay,CA,matched,10717,92553,52.9,79.74,0.28,5.07,12.65,26.94,9.93,"Morro Bay city, California",US Census ACS5 2023
+ESP,Fox 3,"Taft, CA",Taft,CA,matched,7228,64479,36.2,76.65,1.62,0.21,32.43,6.32,17.74,"Taft city, California",US Census ACS5 2023
+ESP,River Village Cinema is D'Place,"Bonsall, CA",Bonsall,CA,matched,4308,110316,42.6,74.4,0,2.02,22.42,32.21,15.36,"Bonsall CDP, California",US Census ACS5 2023
+INDRP,Bishop Twin,"Bishop, CA",Bishop,CA,matched,3793,82205,50.5,85.1,0,2.24,18.14,25.37,6.04,"Bishop city, California",US Census ACS5 2023
+AMC,AMC Bakersfield 6,"Bakersfield, CA",Bakersfield,CA,matched,408366,77397,31.9,46.91,6.15,7.77,53.58,15.11,15.99,"Bakersfield city, California",US Census ACS5 2023
+ESP,Minaret Cinemas is D'Place,"Mammoth Lakes, CA",Mammoth Lakes,CA,matched,7233,87121,37.7,73.93,0,3.1,27.54,11.96,8.56,"Mammoth Lakes town, California",US Census ACS5 2023
+REG,Regal Rancho Del Rey,"Chula Vista, CA",Chula Vista,CA,matched,275030,105173,37,32.75,5.28,14.93,60.41,21.95,8.42,"Chula Vista city, California",US Census ACS5 2023
+CNPL,Cinepolis Del Mar 11,"San Diego, CA",San Diego,CA,matched,1385061,104321,36,50.43,5.7,17.58,29.56,28.8,11.11,"San Diego city, California",US Census ACS5 2023
+CGT,Sunset DI|#,"San Luis Obispo, CA",San Luis Obispo,CA,matched,48039,66711,26.2,75.91,1.19,5.36,17.3,31.19,29.98,"San Luis Obispo city, California",US Census ACS5 2023
+AMC,AMC Chula Vista 10,"Chula Vista, CA",Chula Vista,CA,matched,275030,105173,37,32.75,5.28,14.93,60.41,21.95,8.42,"Chula Vista city, California",US Census ACS5 2023
+AMC,"AMC Mission Valley 20 with IMAX, Dolby","San Diego, CA",San Diego,CA,matched,1385061,104321,36,50.43,5.7,17.58,29.56,28.8,11.11,"San Diego city, California",US Census ACS5 2023
+CNPL,Cinepolis La Costa 6,"Carlsbad, CA",Carlsbad,CA,matched,114500,139326,42.8,71.04,1.04,9.83,16.75,36.82,6.94,"Carlsbad city, California",US Census ACS5 2023
+CNMK,Century La Quinta + XD,"La Quinta, CA",La Quinta,CA,matched,38299,97628,52.1,60.93,1.24,4.36,37.09,24.7,9.06,"La Quinta city, California",US Census ACS5 2023
+REG,Regal Edwards Long Beach,"Long Beach, CA",Long Beach,CA,matched,458491,83969,36.8,41.63,11.93,12.79,43.42,22.28,14.96,"Long Beach city, California",US Census ACS5 2023
+REG,Regal Oceanside,"Oceanside, CA",Oceanside,CA,matched,172542,93724,38.1,52.93,4.23,7.41,38.54,22.12,8.14,"Oceanside city, California",US Census ACS5 2023
+RIDG,Ridgecrest 8,"Ridgecrest, CA",Ridgecrest,CA,matched,28138,88107,34.8,68.7,4.89,3.61,21.09,21.76,11.65,"Ridgecrest city, California",US Census ACS5 2023
+REG,Regal Parkway Plaza,"El Cajon, CA",El Cajon,CA,matched,104909,66478,35.5,60.77,6.51,4.76,29.09,15.29,20.01,"El Cajon city, California",US Census ACS5 2023
+CGT,Movies El Centro 10,"Imperial, CA",Imperial,CA,matched,20943,83214,32.9,37.29,1.03,3.9,84.32,12.83,12.45,"Imperial city, California",US Census ACS5 2023
+ANKA,Angelika Carmel Mountain,"San Diego, CA",San Diego,CA,matched,1385061,104321,36,50.43,5.7,17.58,29.56,28.8,11.11,"San Diego city, California",US Census ACS5 2023
+MAYA,Maya Bakersfield 16,"Bakersfield, CA",Bakersfield,CA,matched,408366,77397,31.9,46.91,6.15,7.77,53.58,15.11,15.99,"Bakersfield city, California",US Census ACS5 2023
+AMC,AMC La Jolla Village 12,"La Jolla, CA",La Jolla,CA,matched,1385061,104321,36,50.43,5.7,17.58,29.56,28.8,11.11,"San Diego city, California",US Census ACS5 2023
+DANZ,South Bay Triple DI,"San Diego, CA",San Diego,CA,matched,1385061,104321,36,50.43,5.7,17.58,29.56,28.8,11.11,"San Diego city, California",US Census ACS5 2023
+INDRP,La Paloma,"Encinitas, CA",Encinitas,CA,matched,61585,150471,43,79.06,0.63,4.39,15.72,38.92,7.32,"Encinitas city, California",US Census ACS5 2023
+ULTR,UltraStar Mission Valley 7,"San Diego, CA",San Diego,CA,matched,1385061,104321,36,50.43,5.7,17.58,29.56,28.8,11.11,"San Diego city, California",US Census ACS5 2023
+ROAD,Roadhouse Cinema Scottsdale,"Scottsdale, AZ",Scottsdale,AZ,matched,242169,107372,49.2,81.85,1.98,5.08,9.41,37.12,7.13,"Scottsdale city, Arizona",US Census ACS5 2023
+AMC,"AMC Desert Ridge 18 with IMAX, Dolby","Phoenix, AZ",Phoenix,AZ,matched,1624832,77041,34.8,53.7,7.77,3.88,41.78,19.85,14.27,"Phoenix city, Arizona",US Census ACS5 2023
+AMC,AMC Fashion Valley 18,"San Diego, CA",San Diego,CA,matched,1385061,104321,36,50.43,5.7,17.58,29.56,28.8,11.11,"San Diego city, California",US Census ACS5 2023
+SMG,Studio Movie Grill Bakersfield,"Bakersfield, CA",Bakersfield,CA,matched,408366,77397,31.9,46.91,6.15,7.77,53.58,15.11,15.99,"Bakersfield city, California",US Census ACS5 2023
+AMC,AMC Poway 10,"Poway, CA",Poway,CA,matched,48515,143825,41.9,62.45,2.8,13.41,16.8,31.37,5.21,"Poway city, California",US Census ACS5 2023
+HARK,Shea 14,"Scottsdale, AZ",Scottsdale,AZ,matched,242169,107372,49.2,81.85,1.98,5.08,9.41,37.12,7.13,"Scottsdale city, Arizona",US Census ACS5 2023
+AMC,AMC Otay Ranch 12 with Dolby,"Chula Vista, CA",Chula Vista,CA,matched,275030,105173,37,32.75,5.28,14.93,60.41,21.95,8.42,"Chula Vista city, California",US Census ACS5 2023
+CNPL,Cinepolis La Costa Town Square 8,"Carlsbad, CA",Carlsbad,CA,matched,114500,139326,42.8,71.04,1.04,9.83,16.75,36.82,6.94,"Carlsbad city, California",US Census ACS5 2023
+REG,Regal Edwards Rancho San Diego,"El Cajon, CA",El Cajon,CA,matched,104909,66478,35.5,60.77,6.51,4.76,29.09,15.29,20.01,"El Cajon city, California",US Census ACS5 2023
+AMC,"AMC Plaza Bonita 14 with IMAX, Dolby","National City, CA",National City,CA,matched,55960,64248,36.6,32.49,4.42,16.95,65.76,12.98,13.97,"National City city, California",US Census ACS5 2023
+AMC,"AMC Palm Promenade 14 with IMAX, Dolby","San Diego, CA",San Diego,CA,matched,1385061,104321,36,50.43,5.7,17.58,29.56,28.8,11.11,"San Diego city, California",US Census ACS5 2023
+READ,Grossmont with TITAN XC,"La Mesa, CA",La Mesa,CA,matched,60835,84337,37.1,59.4,8.39,6.42,27.89,24.3,11.69,"La Mesa city, California",US Census ACS5 2023
+ESP,Paramount DI,"Paramount, CA",Paramount,CA,matched,52546,70912,33.2,16.07,8.73,3.12,82.32,9.74,13.3,"Paramount city, California",US Census ACS5 2023
+HARK,Arrowhead Fountains 18,"Peoria, AZ",Peoria,AZ,matched,194338,93403,42.1,72.56,3.35,5.75,19.68,21.58,8.41,"Peoria city, Arizona",US Census ACS5 2023
+REG,Regal Mission Marketplace,"Oceanside, CA",Oceanside,CA,matched,172542,93724,38.1,52.93,4.23,7.41,38.54,22.12,8.14,"Oceanside city, California",US Census ACS5 2023
+INDLF,Reuben H. Fleet Science Center,"San Diego, CA",San Diego,CA,matched,1385061,104321,36,50.43,5.7,17.58,29.56,28.8,11.11,"San Diego city, California",US Census ACS5 2023
+REG,Regal Edwards San Marcos,"San Marcos, CA",San Marcos,CA,matched,94078,105286,36.8,55.11,1.48,10.89,37.35,28.36,10.17,"San Marcos city, California",US Census ACS5 2023
+CNMK,Imperial Valley 14,"El Centro, CA",El Centro,CA,matched,44186,56093,31.6,24.11,4.28,1.18,86.9,9.96,20.13,"El Centro city, California",US Census ACS5 2023
+REG,Regal Gilbert,"Gilbert, AZ",Gilbert,AZ,matched,271118,121351,35.7,72.67,3.35,6.63,17.53,30.73,5.13,"Gilbert town, Arizona",US Census ACS5 2023
+CNPL,Cinepolis Vista 15,"Vista, CA",Vista,CA,matched,98646,91854,34.9,50.29,2.83,5.16,49.72,18.29,10.16,"Vista city, California",US Census ACS5 2023
+REG,Regal Escondido,"Escondido, CA",Escondido,CA,matched,149913,84477,37.1,47.14,2.27,7.03,51.73,18.27,13.41,"Escondido city, California",US Census ACS5 2023
+AMC,"AMC Mesa Grande 14 with IMAX, Dolby, Prime","Mesa, AZ",Mesa,AZ,matched,507478,78779,37.2,69.67,4.43,2.45,26.59,20.94,10.5,"Mesa city, Arizona",US Census ACS5 2023
+HARK,Gateway Pavilions 18,"Avondale, AZ",Avondale,AZ,matched,90644,81260,32.4,42.32,10.55,3.22,54.21,14.32,10.9,"Avondale city, Arizona",US Census ACS5 2023
+AMC,"AMC Arrowhead Town Center 14 with Dolby, Prime","Glendale, AZ",Glendale,AZ,matched,250193,70139,34.5,54.39,7,4.11,40.53,15.41,16.19,"Glendale city, Arizona",US Census ACS5 2023
+HARK,Scottsdale 101 14,"Phoenix, AZ",Phoenix,AZ,matched,1624832,77041,34.8,53.7,7.77,3.88,41.78,19.85,14.27,"Phoenix city, Arizona",US Census ACS5 2023
+INDRP,Saguaro,"Wickenburg, AZ",Wickenburg,AZ,matched,7468,65253,64.9,94.36,0.63,0.21,8.14,18.61,16.37,"Wickenburg town, Arizona",US Census ACS5 2023
+HARK,Arizona Mills 18 with IMAX,"Tempe, AZ",Tempe,AZ,matched,186419,77643,29.9,60.06,7.75,9.46,23.11,28.93,16.18,"Tempe city, Arizona",US Census ACS5 2023
+WWDI,Glendale 9 DI,"Glendale, AZ",Glendale,AZ,matched,250193,70139,34.5,54.39,7,4.11,40.53,15.41,16.19,"Glendale city, Arizona",US Census ACS5 2023
+CNMK,Tucson Park Place 20 + XD,"Tucson, AZ",Tucson,AZ,matched,543348,54546,34.6,58.17,4.99,3.15,42.71,17.71,18.83,"Tucson city, Arizona",US Census ACS5 2023
+HARK,Chandler Fashion Ctr 20,"Chandler, AZ",Chandler,AZ,matched,278123,103691,37.4,62.6,5.22,11.39,21.43,28.59,7.67,"Chandler city, Arizona",US Census ACS5 2023
+AMC,"AMC Deer Valley 17 with IMAX, Dolby","Phoenix, AZ",Phoenix,AZ,matched,1624832,77041,34.8,53.7,7.77,3.88,41.78,19.85,14.27,"Phoenix city, Arizona",US Census ACS5 2023
+CLRK,Tempe 6,"Tempe, AZ",Tempe,AZ,matched,186419,77643,29.9,60.06,7.75,9.46,23.11,28.93,16.18,"Tempe city, Arizona",US Census ACS5 2023
+HARK,Norterra 14,"Phoenix, AZ",Phoenix,AZ,matched,1624832,77041,34.8,53.7,7.77,3.88,41.78,19.85,14.27,"Phoenix city, Arizona",US Census ACS5 2023
+AMC,AMC DINE-IN Esplanade 14,"Phoenix, AZ",Phoenix,AZ,matched,1624832,77041,34.8,53.7,7.77,3.88,41.78,19.85,14.27,"Phoenix city, Arizona",US Census ACS5 2023
+HARK,Park West 14,"Peoria, AZ",Peoria,AZ,matched,194338,93403,42.1,72.56,3.35,5.75,19.68,21.58,8.41,"Peoria city, Arizona",US Census ACS5 2023
+AMC,AMC Surprise 14 with IMAX,"Surprise, AZ",Surprise,AZ,matched,149519,93371,41.6,75.03,4.78,2.58,19.24,19.88,7.79,"Surprise city, Arizona",US Census ACS5 2023
+AMC,AMC Ahwatukee 24 with Prime,"Phoenix, AZ",Phoenix,AZ,matched,1624832,77041,34.8,53.7,7.77,3.88,41.78,19.85,14.27,"Phoenix city, Arizona",US Census ACS5 2023
+BALC,The Loft Cinema,"Tucson, AZ",Tucson,AZ,matched,543348,54546,34.6,58.17,4.99,3.15,42.71,17.71,18.83,"Tucson city, Arizona",US Census ACS5 2023
+AMC,"AMC Westgate 20 with IMAX, Dolby","Glendale, AZ",Glendale,AZ,matched,250193,70139,34.5,54.39,7,4.11,40.53,15.41,16.19,"Glendale city, Arizona",US Census ACS5 2023
+REG,Regal Edwards Santa Maria Town Center,"Santa Maria, CA",Santa Maria,CA,matched,109880,84617,29.3,36.97,1.02,4.29,78.89,11.18,15.49,"Santa Maria city, California",US Census ACS5 2023
+ARCE,America Cinemas of Phoenix,"Phoenix, AZ",Phoenix,AZ,matched,1624832,77041,34.8,53.7,7.77,3.88,41.78,19.85,14.27,"Phoenix city, Arizona",US Census ACS5 2023
+HARK,Christown 14,"Phoenix, AZ",Phoenix,AZ,matched,1624832,77041,34.8,53.7,7.77,3.88,41.78,19.85,14.27,"Phoenix city, Arizona",US Census ACS5 2023
+AMC,AMC Arizona Center 14,"Phoenix, AZ",Phoenix,AZ,matched,1624832,77041,34.8,53.7,7.77,3.88,41.78,19.85,14.27,"Phoenix city, Arizona",US Census ACS5 2023
+CNMK,Century El Con + XD,"Tucson, AZ",Tucson,AZ,matched,543348,54546,34.6,58.17,4.99,3.15,42.71,17.71,18.83,"Tucson city, Arizona",US Census ACS5 2023
+ROAD,Roadhouse Cinema Crossroads,"Tucson, AZ",Tucson,AZ,matched,543348,54546,34.6,58.17,4.99,3.15,42.71,17.71,18.83,"Tucson city, Arizona",US Census ACS5 2023
+CNMK,Century Oro Valley Marketplace,"Oro Valley, AZ",Oro Valley,AZ,matched,47595,105342,54.6,80.82,1.38,3.65,14.58,32.22,6.28,"Oro Valley town, Arizona",US Census ACS5 2023
+HARK,Tempe Marketplace 16,"Tempe, AZ",Tempe,AZ,matched,186419,77643,29.9,60.06,7.75,9.46,23.11,28.93,16.18,"Tempe city, Arizona",US Census ACS5 2023
+CNMK,Sierra Vista 10,"Sierra Vista, AZ",Sierra Vista,AZ,matched,45203,69783,37.3,66.44,8.02,3.89,22.34,21.07,10.88,"Sierra Vista city, Arizona",US Census ACS5 2023
+HARK,Chandler Crossroads 12,"Chandler, AZ",Chandler,AZ,matched,278123,103691,37.4,62.6,5.22,11.39,21.43,28.59,7.67,"Chandler city, Arizona",US Census ACS5 2023
+HARK,Sedona 6,"Sedona, AZ",Sedona,AZ,matched,9770,67374,59,74.09,0.79,2.9,19.86,25.43,13.69,"Sedona city, Arizona",US Census ACS5 2023
+HARK,Prescott Valley 14,"Prescott Valley, AZ",Prescott Valley,AZ,matched,48048,70793,47.3,79.58,0.45,1.09,19.87,13.99,12.35,"Prescott Valley town, Arizona",US Census ACS5 2023
+AMC,AMC Centerpoint 11,"Tempe, AZ",Tempe,AZ,matched,186419,77643,29.9,60.06,7.75,9.46,23.11,28.93,16.18,"Tempe city, Arizona",US Census ACS5 2023
+CLRK,Picture Show @ Superstition,"Mesa, AZ",Mesa,AZ,matched,507478,78779,37.2,69.67,4.43,2.45,26.59,20.94,10.5,"Mesa city, Arizona",US Census ACS5 2023
+PBCM,FatCats Mesa,"Mesa, AZ",Mesa,AZ,matched,507478,78779,37.2,69.67,4.43,2.45,26.59,20.94,10.5,"Mesa city, Arizona",US Census ACS5 2023
+HARK,Camelview at Fashion Square,"Scottsdale, AZ",Scottsdale,AZ,matched,242169,107372,49.2,81.85,1.98,5.08,9.41,37.12,7.13,"Scottsdale city, Arizona",US Census ACS5 2023
+CNMK,Cinemark 16,"Mesa, AZ",Mesa,AZ,matched,507478,78779,37.2,69.67,4.43,2.45,26.59,20.94,10.5,"Mesa city, Arizona",US Census ACS5 2023
+CSI,Majestic Tempe 7,"Tempe, AZ",Tempe,AZ,matched,186419,77643,29.9,60.06,7.75,9.46,23.11,28.93,16.18,"Tempe city, Arizona",US Census ACS5 2023
+AMC,"AMC Foothills 15 with IMAX, Prime","Tucson, AZ",Tucson,AZ,matched,543348,54546,34.6,58.17,4.99,3.15,42.71,17.71,18.83,"Tucson city, Arizona",US Census ACS5 2023
+AMC,"AMC Superstition East 12 with IMAX, Dolby","Mesa, AZ",Mesa,AZ,matched,507478,78779,37.2,69.67,4.43,2.45,26.59,20.94,10.5,"Mesa city, Arizona",US Census ACS5 2023
+TAG,Hinkson Memorial Theatre,"Saint Johns, AZ",Saint Johns,AZ,no-match,,,,,,,,,,,
+MHAV,Movies Havasu 10,"Lake Havasu City, AZ",Lake Havasu City,AZ,matched,58037,66264,55.7,83.81,0.47,0.51,15.48,11.54,13.94,"Lake Havasu City city, Arizona",US Census ACS5 2023
+PBCM,FatCats Recline & Dine Cinemas,"Gilbert, AZ",Gilbert,AZ,matched,271118,121351,35.7,72.67,3.35,6.63,17.53,30.73,5.13,"Gilbert town, Arizona",US Census ACS5 2023
+HARK,Arizona Pavilions 12,"Tucson, AZ",Tucson,AZ,matched,543348,54546,34.6,58.17,4.99,3.15,42.71,17.71,18.83,"Tucson city, Arizona",US Census ACS5 2023
+HARK,Tucson Spectrum 18,"Tucson, AZ",Tucson,AZ,matched,543348,54546,34.6,58.17,4.99,3.15,42.71,17.71,18.83,"Tucson city, Arizona",US Census ACS5 2023
+REG,Regal Boulder Station,"Las Vegas, NV",Las Vegas,NV,matched,650873,70723,38.5,49.23,11.9,6.93,34.13,17.27,14.22,"Las Vegas city, Nevada",US Census ACS5 2023
+CNMK,Century Orleans 18 + XD,"Las Vegas, NV",Las Vegas,NV,matched,650873,70723,38.5,49.23,11.9,6.93,34.13,17.27,14.22,"Las Vegas city, Nevada",US Census ACS5 2023
+HARK,Estrella Falls 16,"Goodyear, AZ",Goodyear,AZ,matched,102891,101814,40.8,62.08,6.23,3.31,32.33,22.21,5.78,"Goodyear city, Arizona",US Census ACS5 2023
+CLRK,Tuba City Twin,"Tuba City, AZ",Tuba City,AZ,matched,8265,61092,33.2,4.2,0.76,0.28,5.51,9.03,27.54,"Tuba City CDP, Arizona",US Census ACS5 2023
+CSI,Majestic Gilbert 8,"Gilbert, AZ",Gilbert,AZ,matched,271118,121351,35.7,72.67,3.35,6.63,17.53,30.73,5.13,"Gilbert town, Arizona",US Census ACS5 2023
+AMC,AMC Rainbow Promenade 10,"Las Vegas, NV",Las Vegas,NV,matched,650873,70723,38.5,49.23,11.9,6.93,34.13,17.27,14.22,"Las Vegas city, Nevada",US Census ACS5 2023
+TRI,El Rio,"Springerville, AZ",Springerville,AZ,matched,1847,49886,40.9,76.23,0.22,0.05,28.37,17.07,7.63,"Springerville town, Arizona",US Census ACS5 2023
+HARK,Casa Grande 14,"Casa Grande, AZ",Casa Grande,AZ,matched,57590,66354,37.8,59.22,4.69,1.75,43.13,13.29,14.12,"Casa Grande city, Arizona",US Census ACS5 2023
+REG,Regal Green Valley Ranch,"Henderson, NV",Henderson,NV,matched,324523,88654,42.5,64.69,6.19,9.49,18.25,23.19,8.41,"Henderson city, Nevada",US Census ACS5 2023
+VICT,Victory Theatre,"Safford, AZ",Safford,AZ,matched,10217,65727,31.3,69.31,0.22,0.94,46.71,13.7,13.31,"Safford city, Arizona",US Census ACS5 2023
+CNMK,Las Vegas Suncoast 16 + XD,"Las Vegas, NV",Las Vegas,NV,matched,650873,70723,38.5,49.23,11.9,6.93,34.13,17.27,14.22,"Las Vegas city, Nevada",US Census ACS5 2023
+CNMK,Las Vegas Sam's Town 18,"Las Vegas, NV",Las Vegas,NV,matched,650873,70723,38.5,49.23,11.9,6.93,34.13,17.27,14.22,"Las Vegas city, Nevada",US Census ACS5 2023
+REG,Regal Aliante,"North Las Vegas, NV",North Las Vegas,NV,matched,270773,76772,34.3,34.52,21.93,6.95,41.3,12.36,12.21,"North Las Vegas city, Nevada",US Census ACS5 2023
+ESP,Ak,"Chin Circle Entertainment - Maricopa, AZ",Chin Circle Entertainment - Maricopa,AZ,matched,857,34056,41.7,87.16,0,0.82,20.19,16.72,23.45,"Circle City CDP, Arizona",US Census ACS5 2023
+CONS,Cons Kahala 8,"Honolulu, HI",Honolulu,HI,matched,50961,158398,49.3,24.06,0.6,46.22,5.35,33.77,4.13,"East Honolulu CDP, Hawaii",US Census ACS5 2023
+CLRK,Picture Show Frontier Village,"Prescott, AZ",Prescott,AZ,matched,46744,69151,60.3,88.04,0.58,2.08,9.24,22.98,11.56,"Prescott city, Arizona",US Census ACS5 2023
+CSI,Majestic Chandler 9,"Chandler, AZ",Chandler,AZ,matched,278123,103691,37.4,62.6,5.22,11.39,21.43,28.59,7.67,"Chandler city, Arizona",US Census ACS5 2023
+RGCY,Main Street 8,"Yuma, AZ",Yuma,AZ,matched,98461,62546,32.1,51.23,1.95,1.94,61.06,12.67,15.33,"Yuma city, Arizona",US Census ACS5 2023
+CLRK,Black Mesa Twin,"Kayenta, AZ",Kayenta,AZ,matched,5651,60925,27.8,3.42,0.05,0,0.16,10.4,26.31,"Kayenta CDP, Arizona",US Census ACS5 2023
+WWDI,Las Vegas 5 DI,"North Las Vegas, NV",North Las Vegas,NV,matched,270773,76772,34.3,34.52,21.93,6.95,41.3,12.36,12.21,"North Las Vegas city, Nevada",US Census ACS5 2023
+HARK,Yuma Palms 14,"Yuma, AZ",Yuma,AZ,matched,98461,62546,32.1,51.23,1.95,1.94,61.06,12.67,15.33,"Yuma city, Arizona",US Census ACS5 2023
+IFS,Oasis Cinema,"Nogales, AZ",Nogales,AZ,matched,19753,40745,37,33.5,0.33,0.09,94.41,11.93,26.14,"Nogales city, Arizona",US Census ACS5 2023
+CONS,Cons Kapolei 16,"Kapolei, HI",Kapolei,HI,matched,23033,129260,33.4,14.52,3.2,26.59,17.03,22.71,8.11,"Kapolei CDP, Hawaii",US Census ACS5 2023
+REG,Regal Prince Kuhio,"Hilo, HI",Hilo,HI,matched,48223,78713,42.6,16.35,0.8,31.83,11.39,21.14,14.07,"Hilo CDP, Hawaii",US Census ACS5 2023
+RGCY,Regency Kihei Cinemas,"Kihei, HI",Kihei,HI,matched,22564,87568,42,43.9,1.28,20.65,13.44,21.91,9.33,"Kihei CDP, Hawaii",US Census ACS5 2023
+CTRN,Bluewater Cinemas,"Parker, AZ",Parker,AZ,matched,3379,74643,35.5,37.2,0.24,2.31,44.84,15.59,10.67,"Parker town, Arizona",US Census ACS5 2023
+CONS,Cons Mililani 14 with TITAN LUXE,"Mililani, HI",Mililani,HI,matched,27495,124123,45.8,10.38,1.66,48.69,10.69,27.6,3.56,"Mililani Town CDP, Hawaii",US Census ACS5 2023
+CLRK,WME Village 8,"Lakeside, AZ",Lakeside,AZ,matched,4103,52207,49.6,79.7,0.85,0,11.07,16.98,10.57,"Pinetop-Lakeside town, Arizona",US Census ACS5 2023
+BREN,Brenden Kingman Cinemas,"Kingman, AZ",Kingman,AZ,matched,33850,60418,44.2,81.21,1.76,1.6,16.79,10.1,14.09,"Kingman city, Arizona",US Census ACS5 2023
+CNMK,Henderson 12,"Henderson, NV",Henderson,NV,matched,324523,88654,42.5,64.69,6.19,9.49,18.25,23.19,8.41,"Henderson city, Nevada",US Census ACS5 2023
+ESP,Roxy Theatre,"Holbrook, AZ",Holbrook,AZ,matched,4834,61979,36.2,43.3,6,0.06,30.1,6.1,21.44,"Holbrook city, Arizona",US Census ACS5 2023
+REG,Regal Keauhou,"Keauhou-Kona, HI",Keauhou-Kona,HI,no-match,,,,,,,,,,,
+AMC,"AMC Town Square 18 with IMAX, Dolby, ScreenX","Las Vegas, NV",Las Vegas,NV,matched,650873,70723,38.5,49.23,11.9,6.93,34.13,17.27,14.22,"Las Vegas city, Nevada",US Census ACS5 2023
+REG,Regal Pearl Highlands,"Pearl City, HI",Pearl City,HI,matched,45079,114682,45,10.57,1.72,53.96,7.94,25.66,6.22,"Pearl City CDP, Hawaii",US Census ACS5 2023
+CNMK,Las Vegas Santa Fe Station 16 + XD,"Las Vegas, NV",Las Vegas,NV,matched,650873,70723,38.5,49.23,11.9,6.93,34.13,17.27,14.22,"Las Vegas city, Nevada",US Census ACS5 2023
+GALX,Galaxy Cannery,"North Las Vegas, NV",North Las Vegas,NV,matched,270773,76772,34.3,34.52,21.93,6.95,41.3,12.36,12.21,"North Las Vegas city, Nevada",US Census ACS5 2023
+ESP,Riverside Cinema 6,"Laughlin, NV",Laughlin,NV,matched,8643,45248,57.5,76.45,4,0.76,16.37,13.56,21.14,"Laughlin CDP, Nevada",US Census ACS5 2023
+REG,Regal Red Rock,"Las Vegas, NV",Las Vegas,NV,matched,650873,70723,38.5,49.23,11.9,6.93,34.13,17.27,14.22,"Las Vegas city, Nevada",US Census ACS5 2023
+BREN,Brenden Palms 14 with IMAX + JBX,"Las Vegas, NV",Las Vegas,NV,matched,650873,70723,38.5,49.23,11.9,6.93,34.13,17.27,14.22,"Las Vegas city, Nevada",US Census ACS5 2023
+REG,Regal Maui Mall,"Kahului, HI",Kahului,HI,matched,27068,92062,43.5,11.01,0.91,56.08,6.82,19.5,9.29,"Kahului CDP, Hawaii",US Census ACS5 2023
+CNMK,Century Tucson Marketplace & XD,"Tucson, AZ",Tucson,AZ,matched,543348,54546,34.6,58.17,4.99,3.15,42.71,17.71,18.83,"Tucson city, Arizona",US Census ACS5 2023
+CONS,Cons Pearlridge West 16,"Aiea, HI",Aiea,HI,matched,9155,135286,42.9,12.71,2.02,53.18,8.31,22.85,3.66,"Aiea CDP, Hawaii",US Census ACS5 2023
+GALX,Galaxy Tucson,"Tucson, AZ",Tucson,AZ,matched,543348,54546,34.6,58.17,4.99,3.15,42.71,17.71,18.83,"Tucson city, Arizona",US Census ACS5 2023
+HARK,Flagstaff 16,"Flagstaff, AZ",Flagstaff,AZ,matched,76333,68041,26,64.59,1.96,2.66,19.7,30.86,19.36,"Flagstaff city, Arizona",US Census ACS5 2023
+BREN,Brenden Avi,"Laughlin, NV",Laughlin,NV,matched,8643,45248,57.5,76.45,4,0.76,16.37,13.56,21.14,"Laughlin CDP, Nevada",US Census ACS5 2023
+CNMK,Las Vegas South Point 16 + XD,"Las Vegas, NV",Las Vegas,NV,matched,650873,70723,38.5,49.23,11.9,6.93,34.13,17.27,14.22,"Las Vegas city, Nevada",US Census ACS5 2023
+REG,Regal Nu'uuli Place Twin,"Pago Pago, AA",Pago Pago,AA,no-match,,,,,,,,,,,
+REG,Regal Sunset Station,"Henderson, NV",Henderson,NV,matched,324523,88654,42.5,64.69,6.19,9.49,18.25,23.19,8.41,"Henderson city, Nevada",US Census ACS5 2023
+REG,Regal Windward,"Kaneohe, HI",Kaneohe,HI,matched,35945,124632,45.3,17.04,0.63,39.65,10.56,22.43,8.99,"Kaneohe CDP, Hawaii",US Census ACS5 2023
+CTC,TCL Chinese Theatre + IMAX,"Hollywood, CA",Hollywood,CA,matched,35090,94844,39.6,73.78,4.09,5.49,13.49,40.93,13.13,"West Hollywood city, California",US Census ACS5 2023
+REG,Regal Dole Cannery,"Honolulu, HI",Honolulu,HI,matched,50961,158398,49.3,24.06,0.6,46.22,5.35,33.77,4.13,"East Honolulu CDP, Hawaii",US Census ACS5 2023
+ALMO,MM Theatres,"Dededo, GU",Dededo,GU,api-error,,,,,,,,,,,
+REG,Regal Cinebarre Palace Station,"Las Vegas, NV",Las Vegas,NV,matched,650873,70723,38.5,49.23,11.9,6.93,34.13,17.27,14.22,"Las Vegas city, Nevada",US Census ACS5 2023
+GALX,Galaxy Boulevard Mall,"Las Vegas, NV",Las Vegas,NV,matched,650873,70723,38.5,49.23,11.9,6.93,34.13,17.27,14.22,"Las Vegas city, Nevada",US Census ACS5 2023
+REG,Regal Edwards Brea East,"Brea, CA",Brea,CA,matched,47337,124837,39.6,46.59,1.78,26.49,30.8,31.14,6.37,"Brea city, California",US Census ACS5 2023
+INDRP,Vidiots,"Eagle Rock, CA",Eagle Rock,CA,no-match,,,,,,,,,,,
+CSI,Waikoloa Luxury Cinemas,"Waikoloa, HI",Waikoloa,HI,matched,7028,92713,42.1,46.46,1.99,13.67,11.72,21.86,6.88,"Waikoloa Village CDP, Hawaii",US Census ACS5 2023
+AMC,"AMC Burbank 30 with IMAX, Dolby, Prime","Burbank, CA",Burbank,CA,matched,105165,95816,39.8,60.53,3.41,11.85,24.58,30.96,10.73,"Burbank city, California",US Census ACS5 2023
+CNPL,Cinepolis Rancho Santa Margarita 6,"Rancho Santa Margarita, CA",Rancho Santa Margarita,CA,matched,47257,146827,40.3,65.12,1.47,12.18,19.95,32,5.08,"Rancho Santa Margarita city, California",US Census ACS5 2023
+CNPL,Cinepolis Westlake Village 8,"Westlake Village, CA",Westlake Village,CA,matched,7829,174069,49.9,79.51,0.2,5.8,10.46,40.83,6.44,"Westlake Village city, California",US Census ACS5 2023
+GALX,Galaxy Green Valley,"Henderson, NV",Henderson,NV,matched,324523,88654,42.5,64.69,6.19,9.49,18.25,23.19,8.41,"Henderson city, Nevada",US Census ACS5 2023
+WGT,Water Gardens Kailua Cinemas,"Kailua, HI",Kailua,HI,matched,21851,86743,42.2,42.23,0.2,18.03,6.18,19.99,13.4,"Kailua CDP (Hawaii County), Hawaii",US Census ACS5 2023
+AMC,"AMC UTC 14 with Dolby, Prime","La Jolla, CA",La Jolla,CA,matched,1385061,104321,36,50.43,5.7,17.58,29.56,28.8,11.11,"San Diego city, California",US Census ACS5 2023
+CNMK,Century River Park 16 + XD,"Oxnard, CA",Oxnard,CA,matched,201014,93372,34,36.93,1.82,6.56,77.04,13.35,10.82,"Oxnard city, California",US Census ACS5 2023
+TMKO,Civic Plaza 12,"Hesperia, CA",Hesperia,CA,matched,100141,68971,32.9,53.64,4.74,1.86,60.31,8.22,17.45,"Hesperia city, California",US Census ACS5 2023
+REG,Regal San Bernardino,"San Bernardino, CA",San Bernardino,CA,matched,221774,63988,31.9,27.57,11.84,4.11,69.6,8.96,19.53,"San Bernardino city, California",US Census ACS5 2023
+MDFT,Mary D. Fisher Theatre,"Sedona, AZ",Sedona,AZ,matched,9770,67374,59,74.09,0.79,2.9,19.86,25.43,13.69,"Sedona city, Arizona",US Census ACS5 2023
+LAEM,Laemmle's NoHo 7,"North Hollywood, CA",North Hollywood,CA,matched,3857897,80366,36.9,37.32,8.51,12.03,47.23,24.5,16.55,"Los Angeles city, California",US Census ACS5 2023
+LAND,Landmark Scottsdale Quarter,"Scottsdale, AZ",Scottsdale,AZ,matched,242169,107372,49.2,81.85,1.98,5.08,9.41,37.12,7.13,"Scottsdale city, Arizona",US Census ACS5 2023
+RGCY,BLVD Cinemas,"Lancaster, CA",Lancaster,CA,matched,170013,76083,34.2,35.46,21.38,4.04,45.89,12.68,15.46,"Lancaster city, California",US Census ACS5 2023
+ESP,Village Coronado,"Coronado, CA",Coronado,CA,matched,18558,135056,41.9,77.26,2.52,3.88,19.45,34.49,4.79,"Coronado city, California",US Census ACS5 2023
+AMC,AMC Atlantic Times Square 14,"Monterey Park, CA",Monterey Park,CA,matched,59639,77605,45.5,11.51,1.01,64.71,26.73,24.95,13.18,"Monterey Park city, California",US Census ACS5 2023
+MAYA,Maya Delano 12,"Delano, CA",Delano,CA,matched,50835,61817,33.5,24.48,4.05,13.81,75.95,6.55,15.89,"Delano city, California",US Census ACS5 2023
+MAYA,Maya Cinemas North Las Vegas 14,"Las Vegas, NV",Las Vegas,NV,matched,650873,70723,38.5,49.23,11.9,6.93,34.13,17.27,14.22,"Las Vegas city, Nevada",US Census ACS5 2023
+REG,Regal Yorba Linda,"Yorba Linda, CA",Yorba Linda,CA,matched,67407,152060,44.7,57.33,0.93,25.55,17.16,33.76,5.57,"Yorba Linda city, California",US Census ACS5 2023
+LOOK,Look Cinemas Glendale,"Glendale, CA",Glendale,CA,matched,192270,84262,41.4,67.44,1.66,13.34,18.47,28.71,13.44,"Glendale city, California",US Census ACS5 2023
+REG,Regal North Hollywood,"Los Angeles, CA",Los Angeles,CA,matched,3857897,80366,36.9,37.32,8.51,12.03,47.23,24.5,16.55,"Los Angeles city, California",US Census ACS5 2023
+PBCM,FatCats Queen Creek 8,"Queen Creek, AZ",Queen Creek,AZ,matched,66369,134719,37.2,78.37,3.16,2.97,16.85,30.02,3.56,"Queen Creek town, Arizona",US Census ACS5 2023
+LAEM,Newhall,"Santa Clarita, CA",Santa Clarita,CA,matched,229021,119926,38.1,53.07,4.43,11.4,36.04,26.46,7.74,"Santa Clarita city, California",US Census ACS5 2023
+TMKO,2nd Street Cinema,"Beaumont, CA",Beaumont,CA,matched,54817,105164,35.4,48.18,9.22,7.82,45.92,17.13,9.22,"Beaumont city, California",US Census ACS5 2023
+INDRP,The Beverly Theater,"Las Vegas, NV",Las Vegas,NV,matched,650873,70723,38.5,49.23,11.9,6.93,34.13,17.27,14.22,"Las Vegas city, Nevada",US Census ACS5 2023
+AMC,"AMC Topanga 12 with IMAX, Dolby","Canoga Park, CA",Canoga Park,CA,no-match,,,,,,,,,,,
+PBCM,FatCats Surprise,"Surprise, AZ",Surprise,AZ,matched,149519,93371,41.6,75.03,4.78,2.58,19.24,19.88,7.79,"Surprise city, Arizona",US Census ACS5 2023
+REG,Regal Paseo,"Pasadena, CA",Pasadena,CA,matched,136462,103778,40.1,41.44,7.7,17.76,34.12,30.01,13.21,"Pasadena city, California",US Census ACS5 2023
+CSI,The Mango Theater,"Kaunakakai, HI",Kaunakakai,HI,matched,3721,76944,33.7,10.45,0.05,11.23,13.03,11.14,18.77,"Kaunakakai CDP, Hawaii",US Census ACS5 2023
+CNPL,Cinepolis Inglewood,"Inglewood, CA",Inglewood,CA,matched,105575,71029,37.5,14.15,39.94,2.4,48.95,16.44,14.86,"Inglewood city, California",US Census ACS5 2023
+HARK,Harkins Lake Pleasant Cine Grill 9,"Peoria, AZ",Peoria,AZ,matched,194338,93403,42.1,72.56,3.35,5.75,19.68,21.58,8.41,"Peoria city, Arizona",US Census ACS5 2023

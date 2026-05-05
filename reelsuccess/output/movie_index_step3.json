@@ -1,0 +1,597 @@
+[
+  {
+    "feature_index": 0,
+    "movie_title": "Acting",
+    "theater_count": 4
+  },
+  {
+    "feature_index": 1,
+    "movie_title": "AI Doc: Or How I Became an",
+    "theater_count": 19
+  },
+  {
+    "feature_index": 2,
+    "movie_title": "Antelope Valley, CA",
+    "theater_count": 4
+  },
+  {
+    "feature_index": 3,
+    "movie_title": "Avatar: Fire and Ash",
+    "theater_count": 5
+  },
+  {
+    "feature_index": 4,
+    "movie_title": "Bakersfield, CA",
+    "theater_count": 6
+  },
+  {
+    "feature_index": 5,
+    "movie_title": "Beast",
+    "theater_count": 257
+  },
+  {
+    "feature_index": 6,
+    "movie_title": "Bergen County",
+    "theater_count": 4
+  },
+  {
+    "feature_index": 7,
+    "movie_title": "Bonolota Express",
+    "theater_count": 7
+  },
+  {
+    "feature_index": 8,
+    "movie_title": "BTS WORLD TOUR 'ARIRANG' IN",
+    "theater_count": 283
+  },
+  {
+    "feature_index": 9,
+    "movie_title": "Bunny!!",
+    "theater_count": 5
+  },
+  {
+    "feature_index": 10,
+    "movie_title": "Caddyshack",
+    "theater_count": 53
+  },
+  {
+    "feature_index": 11,
+    "movie_title": "ChaO",
+    "theater_count": 96
+  },
+  {
+    "feature_index": 12,
+    "movie_title": "Chime",
+    "theater_count": 3
+  },
+  {
+    "feature_index": 13,
+    "movie_title": "Christophers, The",
+    "theater_count": 14
+  },
+  {
+    "feature_index": 14,
+    "movie_title": "Copyright 2026 comScore Inc.",
+    "theater_count": 102
+  },
+  {
+    "feature_index": 15,
+    "movie_title": "CW",
+    "theater_count": 47
+  },
+  {
+    "feature_index": 16,
+    "movie_title": "Dacoit: A Love Story",
+    "theater_count": 87
+  },
+  {
+    "feature_index": 17,
+    "movie_title": "Dhurandhar The Revenge",
+    "theater_count": 64
+  },
+  {
+    "feature_index": 18,
+    "movie_title": "Drama, The",
+    "theater_count": 543
+  },
+  {
+    "feature_index": 19,
+    "movie_title": "Dutchess County",
+    "theater_count": 4
+  },
+  {
+    "feature_index": 20,
+    "movie_title": "E.T. The Extra-Terrestrial",
+    "theater_count": 14
+  },
+  {
+    "feature_index": 21,
+    "movie_title": "EPiC: Elvis Presley In Conc",
+    "theater_count": 7
+  },
+  {
+    "feature_index": 22,
+    "movie_title": "Essex County",
+    "theater_count": 3
+  },
+  {
+    "feature_index": 23,
+    "movie_title": "Etranger, L'/ The Stranger",
+    "theater_count": 11
+  },
+  {
+    "feature_index": 24,
+    "movie_title": "Eureka, CA",
+    "theater_count": 3
+  },
+  {
+    "feature_index": 25,
+    "movie_title": "Exit 8",
+    "theater_count": 157
+  },
+  {
+    "feature_index": 26,
+    "movie_title": "Faces of Death",
+    "theater_count": 333
+  },
+  {
+    "feature_index": 27,
+    "movie_title": "Faces of Death #",
+    "theater_count": 3
+  },
+  {
+    "feature_index": 28,
+    "movie_title": "Fantasy Life",
+    "theater_count": 27
+  },
+  {
+    "feature_index": 29,
+    "movie_title": "Ferris Bueller's Day Off (1",
+    "theater_count": 53
+  },
+  {
+    "feature_index": 30,
+    "movie_title": "Forbidden Fruits",
+    "theater_count": 14
+  },
+  {
+    "feature_index": 31,
+    "movie_title": "Fresno, CA",
+    "theater_count": 4
+  },
+  {
+    "feature_index": 32,
+    "movie_title": "Getaway, The (re: 1972)",
+    "theater_count": 6
+  },
+  {
+    "feature_index": 33,
+    "movie_title": "Ghost World",
+    "theater_count": 8
+  },
+  {
+    "feature_index": 34,
+    "movie_title": "GOAT",
+    "theater_count": 37
+  },
+  {
+    "feature_index": 35,
+    "movie_title": "Golden Boy",
+    "theater_count": 14
+  },
+  {
+    "feature_index": 36,
+    "movie_title": "Great Awakening, A",
+    "theater_count": 169
+  },
+  {
+    "feature_index": 37,
+    "movie_title": "Hamlet",
+    "theater_count": 99
+  },
+  {
+    "feature_index": 38,
+    "movie_title": "Hamnet",
+    "theater_count": 3
+  },
+  {
+    "feature_index": 39,
+    "movie_title": "He'll Provide a Way",
+    "theater_count": 3
+  },
+  {
+    "feature_index": 40,
+    "movie_title": "High Plains Drifter",
+    "theater_count": 3
+  },
+  {
+    "feature_index": 41,
+    "movie_title": "Hollywood/Beverly Hills, CA - Beverly",
+    "theater_count": 4
+  },
+  {
+    "feature_index": 42,
+    "movie_title": "Hoppers",
+    "theater_count": 471
+  },
+  {
+    "feature_index": 43,
+    "movie_title": "Hunting Matthew Nichols",
+    "theater_count": 311
+  },
+  {
+    "feature_index": 44,
+    "movie_title": "Jerry Maguire",
+    "theater_count": 123
+  },
+  {
+    "feature_index": 45,
+    "movie_title": "King of Kings, The",
+    "theater_count": 8
+  },
+  {
+    "feature_index": 46,
+    "movie_title": "King's Warden, The",
+    "theater_count": 7
+  },
+  {
+    "feature_index": 47,
+    "movie_title": "Kontinental '25",
+    "theater_count": 5
+  },
+  {
+    "feature_index": 48,
+    "movie_title": "Legends of the Lost Ark",
+    "theater_count": 54
+  },
+  {
+    "feature_index": 49,
+    "movie_title": "Little Shop Of Horrors (198",
+    "theater_count": 4
+  },
+  {
+    "feature_index": 50,
+    "movie_title": "Long Beach, CA",
+    "theater_count": 6
+  },
+  {
+    "feature_index": 51,
+    "movie_title": "Love Insurance Kompany (LIK",
+    "theater_count": 37
+  },
+  {
+    "feature_index": 52,
+    "movie_title": "Marin County, CA",
+    "theater_count": 4
+  },
+  {
+    "feature_index": 53,
+    "movie_title": "Middlesex County",
+    "theater_count": 5
+  },
+  {
+    "feature_index": 54,
+    "movie_title": "Miroirs No. 3",
+    "theater_count": 10
+  },
+  {
+    "feature_index": 55,
+    "movie_title": "Miscellaneous Revenue",
+    "theater_count": 19
+  },
+  {
+    "feature_index": 56,
+    "movie_title": "Modesto, CA",
+    "theater_count": 4
+  },
+  {
+    "feature_index": 57,
+    "movie_title": "Mohiniyattam",
+    "theater_count": 5
+  },
+  {
+    "feature_index": 58,
+    "movie_title": "Monmouth County",
+    "theater_count": 5
+  },
+  {
+    "feature_index": 59,
+    "movie_title": "Monterey/Salinas, CA",
+    "theater_count": 4
+  },
+  {
+    "feature_index": 60,
+    "movie_title": "Nassau County - Westbury",
+    "theater_count": 4
+  },
+  {
+    "feature_index": 61,
+    "movie_title": "National Lampoon's Vacation",
+    "theater_count": 53
+  },
+  {
+    "feature_index": 62,
+    "movie_title": "ND",
+    "theater_count": 3
+  },
+  {
+    "feature_index": 63,
+    "movie_title": "NE",
+    "theater_count": 3
+  },
+  {
+    "feature_index": 64,
+    "movie_title": "Newborn",
+    "theater_count": 63
+  },
+  {
+    "feature_index": 65,
+    "movie_title": "Orange County",
+    "theater_count": 3
+  },
+  {
+    "feature_index": 66,
+    "movie_title": "Our Hero, Balthazar",
+    "theater_count": 4
+  },
+  {
+    "feature_index": 67,
+    "movie_title": "Palestine '36",
+    "theater_count": 20
+  },
+  {
+    "feature_index": 68,
+    "movie_title": "Palm Springs, CA",
+    "theater_count": 6
+  },
+  {
+    "feature_index": 69,
+    "movie_title": "Passaic County",
+    "theater_count": 3
+  },
+  {
+    "feature_index": 70,
+    "movie_title": "Pillion",
+    "theater_count": 6
+  },
+  {
+    "feature_index": 71,
+    "movie_title": "Police Story 4k Double Feat",
+    "theater_count": 5
+  },
+  {
+    "feature_index": 72,
+    "movie_title": "Pout-Pout Fish, The",
+    "theater_count": 9
+  },
+  {
+    "feature_index": 73,
+    "movie_title": "President's Cake, The",
+    "theater_count": 3
+  },
+  {
+    "feature_index": 74,
+    "movie_title": "Pride & Prejudice (2005)",
+    "theater_count": 3
+  },
+  {
+    "feature_index": 75,
+    "movie_title": "Project Hail Mary",
+    "theater_count": 591
+  },
+  {
+    "feature_index": 76,
+    "movie_title": "Project Hail Mary #",
+    "theater_count": 4
+  },
+  {
+    "feature_index": 77,
+    "movie_title": "Queens, NY",
+    "theater_count": 3
+  },
+  {
+    "feature_index": 78,
+    "movie_title": "Raakaasaa",
+    "theater_count": 5
+  },
+  {
+    "feature_index": 79,
+    "movie_title": "Rabb Da Radio 3",
+    "theater_count": 16
+  },
+  {
+    "feature_index": 80,
+    "movie_title": "Ready or Not 2: Here I Come",
+    "theater_count": 186
+  },
+  {
+    "feature_index": 81,
+    "movie_title": "Reminders of Him",
+    "theater_count": 134
+  },
+  {
+    "feature_index": 82,
+    "movie_title": "Rocky Horror Picture Show,",
+    "theater_count": 4
+  },
+  {
+    "feature_index": 83,
+    "movie_title": "Royal Ballet: Giselle (2026",
+    "theater_count": 126
+  },
+  {
+    "feature_index": 84,
+    "movie_title": "San Bernardino, CA",
+    "theater_count": 4
+  },
+  {
+    "feature_index": 85,
+    "movie_title": "Santa Barbara, CA",
+    "theater_count": 3
+  },
+  {
+    "feature_index": 86,
+    "movie_title": "Santa Maria/San Luis Obispo, CA",
+    "theater_count": 8
+  },
+  {
+    "feature_index": 87,
+    "movie_title": "Santa Rosa, CA",
+    "theater_count": 3
+  },
+  {
+    "feature_index": 88,
+    "movie_title": "Scream 7",
+    "theater_count": 70
+  },
+  {
+    "feature_index": 89,
+    "movie_title": "Serpent's Skin, The",
+    "theater_count": 5
+  },
+  {
+    "feature_index": 90,
+    "movie_title": "Shepherd and the Bear, The",
+    "theater_count": 3
+  },
+  {
+    "feature_index": 91,
+    "movie_title": "Sirat",
+    "theater_count": 6
+  },
+  {
+    "feature_index": 92,
+    "movie_title": "Snowball on a Sunny Day, Th",
+    "theater_count": 10
+  },
+  {
+    "feature_index": 93,
+    "movie_title": "Solo Mio",
+    "theater_count": 3
+  },
+  {
+    "feature_index": 94,
+    "movie_title": "Somerset County",
+    "theater_count": 3
+  },
+  {
+    "feature_index": 95,
+    "movie_title": "Something Wild",
+    "theater_count": 8
+  },
+  {
+    "feature_index": 96,
+    "movie_title": "South Bay, CA",
+    "theater_count": 5
+  },
+  {
+    "feature_index": 97,
+    "movie_title": "Space Station 3D",
+    "theater_count": 24
+  },
+  {
+    "feature_index": 98,
+    "movie_title": "Spy Kids (2001) (re)",
+    "theater_count": 50
+  },
+  {
+    "feature_index": 99,
+    "movie_title": "Suffolk County - Commack",
+    "theater_count": 3
+  },
+  {
+    "feature_index": 100,
+    "movie_title": "Suffolk County - Farmingdale",
+    "theater_count": 3
+  },
+  {
+    "feature_index": 101,
+    "movie_title": "Super Mario Galaxy Movie, #",
+    "theater_count": 3
+  },
+  {
+    "feature_index": 102,
+    "movie_title": "Super Mario Galaxy Movie, T",
+    "theater_count": 589
+  },
+  {
+    "feature_index": 103,
+    "movie_title": "They Will Kill You",
+    "theater_count": 149
+  },
+  {
+    "feature_index": 104,
+    "movie_title": "They Will Kill You #",
+    "theater_count": 3
+  },
+  {
+    "feature_index": 105,
+    "movie_title": "TN 2026 (Thanga Natchathira",
+    "theater_count": 7
+  },
+  {
+    "feature_index": 106,
+    "movie_title": "TR - Theatre Rented, W - Weather",
+    "theater_count": 3
+  },
+  {
+    "feature_index": 107,
+    "movie_title": "Trolls Band Together",
+    "theater_count": 4
+  },
+  {
+    "feature_index": 108,
+    "movie_title": "True Story of Tamara de Lem",
+    "theater_count": 5
+  },
+  {
+    "feature_index": 109,
+    "movie_title": "Two Prosecutors",
+    "theater_count": 8
+  },
+  {
+    "feature_index": 110,
+    "movie_title": "UFC 327: Prochazka vs Ulber",
+    "theater_count": 29
+  },
+  {
+    "feature_index": 111,
+    "movie_title": "Ulster County",
+    "theater_count": 5
+  },
+  {
+    "feature_index": 112,
+    "movie_title": "Undertone",
+    "theater_count": 36
+  },
+  {
+    "feature_index": 113,
+    "movie_title": "Union County",
+    "theater_count": 3
+  },
+  {
+    "feature_index": 114,
+    "movie_title": "Upland/Montclair/Ontario, CA",
+    "theater_count": 4
+  },
+  {
+    "feature_index": 115,
+    "movie_title": "Vaazha 2",
+    "theater_count": 9
+  },
+  {
+    "feature_index": 116,
+    "movie_title": "Ventura County, CA",
+    "theater_count": 7
+  },
+  {
+    "feature_index": 117,
+    "movie_title": "Yes",
+    "theater_count": 3
+  },
+  {
+    "feature_index": 118,
+    "movie_title": "You, Me & Tuscany",
+    "theater_count": 514
+  }
+]

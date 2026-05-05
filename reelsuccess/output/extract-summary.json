@@ -1,0 +1,20 @@
+{
+  "files": [
+    {
+      "file": "/Users/rohantyagi/Downloads/branch_area_20260410_SF.pdf",
+      "rows": 2059,
+      "textLines": 25748
+    },
+    {
+      "file": "/Users/rohantyagi/Downloads/branch_area_20260410_NY.pdf",
+      "rows": 1989,
+      "textLines": 24345
+    },
+    {
+      "file": "/Users/rohantyagi/Downloads/branch_area_20260410_LA.pdf",
+      "rows": 4830,
+      "textLines": 60588
+    }
+  ],
+  "totalRows": 8878
+}

@@ -15,6 +15,8 @@
   <div class="card">
 
     <div class="top-right-links" aria-label="Legal and support links">
+      <a href="reelsuccess.html" class="app-link">ReelSuccess</a>
+      <span aria-hidden="true">•</span>
       <a href="/support.html" class="app-link">Support</a>
       <span aria-hidden="true">•</span>
       <a href="/privacy.html" class="app-link">Privacy Policy</a>
@@ -108,6 +110,23 @@
         <div class="vote-email-actions">
           <button id="cancelEmailVoteBtn" type="button" class="secondary-btn">Cancel</button>
           <button id="confirmEmailVoteBtn" type="button" class="submit-btn">Count my vote</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="singleVoteReminderModal" class="vote-email-modal hidden" role="dialog" aria-modal="true" aria-labelledby="singleVoteReminderTitle">
+      <div class="vote-email-modal-card email-step">
+        <h2 id="singleVoteReminderTitle">You can vote for multiple movies</h2>
+        <p class="subtitle vote-email-disclaimer">
+          ReelVotes allows one <strong>ballot</strong> per person, and each ballot can include multiple movies.
+        </p>
+        <p class="subtitle vote-email-disclaimer" style="margin-top:-6px;">
+          Press OK to continue with your current selection, or go back and highlight more movies first.
+        </p>
+
+        <div class="vote-email-actions">
+          <button id="singleVoteReminderAddMoreBtn" type="button" class="secondary-btn">Add more</button>
+          <button id="singleVoteReminderOkBtn" type="button" class="submit-btn">OK</button>
         </div>
       </div>
     </div>
