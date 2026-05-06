@@ -83,6 +83,29 @@ body {
     gap: 10px;
   }
 
+  .reelsuccess-search-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .reelsuccess-any-button {
+    white-space: nowrap;
+    padding: 12px 14px;
+    margin-top: 0;
+  }
+
+  @media (max-width: 640px) {
+    .reelsuccess-search-row {
+      grid-template-columns: 1fr;
+    }
+
+    .reelsuccess-any-button {
+      width: 100%;
+    }
+  }
+
   .reelsuccess-select {
     width: 100%;
     padding: 12px;

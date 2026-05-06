@@ -47,6 +47,20 @@
   </div>
 </div>
 
+<div id="loginModal" class="vote-email-modal hidden" role="dialog" aria-modal="true" aria-labelledby="loginModalTitle">
+  <div class="vote-email-modal-card email-step">
+    <img src="icon.png" style="width:48px;display:block;margin:0 auto 12px;" />
+    <h2 id="loginModalTitle" style="text-align:center;margin-bottom:4px;">Theater Staff Login</h2>
+    <p class="subtitle vote-email-disclaimer">Enter your authorized theater email to continue.</p>
+    <label for="loginEmailInput">Email address</label>
+    <input id="loginEmailInput" type="email" placeholder="you@yourtheater.com" autocomplete="email" />
+    <p id="loginEmailError" class="email-help" style="color:#ff6b6b;margin-top:6px;min-height:18px;"></p>
+    <div style="margin-top:10px;">
+      <button id="loginSubmitBtn" type="button" class="submit-btn" style="width:100%;margin-top:0;">Continue</button>
+    </div>
+  </div>
+</div>
+
 <script src="events-config.js"></script>
 <script type="module" src="admin.js"></script>
 </body>

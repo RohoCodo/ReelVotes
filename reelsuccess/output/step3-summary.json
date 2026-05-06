@@ -8,10 +8,10 @@
   },
   "counts": {
     "screenings_raw": 8878,
-    "screenings_clean": 6930,
-    "dropped_noise_titles": 1948,
+    "screenings_clean": 6649,
+    "dropped_noise_titles": 2229,
     "unique_theaters": 668,
-    "movie_features": 119,
+    "movie_features": 89,
     "matrix_rows": 668
   },
   "outputs": {

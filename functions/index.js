@@ -53,6 +53,14 @@ const ADMIN_EMAILS = new Set([
   "programming@thenewparkway.com",
   "nikki@thenewparkwaytheater.com",
 ]);
+
+// Maps known admin/programmer emails to their theater's theater_key in the ReelSuccess index.
+// Used as the authoritative fallback for My Theater when no Firestore theater_key is stored.
+const ADMIN_EMAIL_THEATER_KEY_MAP = new Map([
+  ["moses@thenewparkway.com", "PFR|The New Parkway Theater|Oakland, CA"],
+  ["programming@thenewparkway.com", "PFR|The New Parkway Theater|Oakland, CA"],
+  ["nikki@thenewparkwaytheater.com", "PFR|The New Parkway Theater|Oakland, CA"],
+]);
 const REELSUCCESS_DATA_DIR = path.join(__dirname, "reelsuccess-data");
 let reelSuccessCache = null;
 
@@ -101,6 +109,202 @@ function normalizeSearchQuery(query) {
     .trim()
     .toLowerCase()
     .replace(/\s+/g, " ");
+}
+
+function normalizeAlphaNumeric(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "");
+}
+
+function tokenizeMeaningfulText(value) {
+  const stopWords = new Set([
+    "the", "theater", "theatre", "cinema", "cinemas", "movies", "movie",
+    "films", "film", "screen", "screens", "plex", "mall", "center", "centre",
+    "regal", "amc",
+  ]);
+  return String(value || "")
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .map((t) => t.trim())
+    .filter((t) => t.length >= 4 && !stopWords.has(t));
+}
+
+function commonPrefixLength(a, b) {
+  const min = Math.min(a.length, b.length);
+  let i = 0;
+  while (i < min && a[i] === b[i]) i++;
+  return i;
+}
+
+function inferTheaterFromEmail(email, theaterIndex = []) {
+  const normalizedEmail = normalizeEmail(email);
+  if (!normalizedEmail || !normalizedEmail.includes("@")) return null;
+
+  const [localPart, domainPart] = normalizedEmail.split("@");
+  // Strip TLD so "thenewparkway.com" -> "thenewparkway"
+  const domainRoot = normalizeAlphaNumeric(
+    String(domainPart || "").split(".").slice(0, -1).join(""),
+  );
+  const emailHaystack = normalizeAlphaNumeric(`${localPart} ${domainRoot} ${normalizedEmail}`);
+
+  const scoredMatches = theaterIndex.map((theater) => {
+    const nameKey = normalizeAlphaNumeric(theater.theater_name);
+    const cityKey = normalizeAlphaNumeric(theater.city || "");
+    const nameTokens = tokenizeMeaningfulText(theater.theater_name);
+    const cityTokens = tokenizeMeaningfulText(theater.city || "");
+
+    let score = 0;
+
+    // Full normalized name is a substring of the email haystack
+    if (nameKey.length >= 6 && emailHaystack.includes(nameKey)) {
+      score += 120 + Math.min(nameKey.length, 30);
+    }
+
+    // Long common prefix between domain root and theater name key
+    // Catches "thenewparkway" matching "thenewparkwaytheater"
+    if (domainRoot.length >= 6 && nameKey.length >= 6) {
+      const prefixLen = commonPrefixLength(domainRoot, nameKey);
+      if (prefixLen >= 6) {
+        score += 40 + prefixLen * 4;
+      }
+    }
+
+    // Each meaningful name token that appears as a substring in the email haystack
+    let tokenHits = 0;
+    let tokenScore = 0;
+    for (const token of nameTokens) {
+      if (token.length >= 5 && emailHaystack.includes(token)) {
+        tokenHits++;
+        tokenScore += 25 + Math.min(token.length, 12);
+      }
+    }
+    if (tokenHits >= 2) {
+      score += tokenScore + 25;
+    } else if (tokenHits === 1) {
+      score += tokenScore;
+    }
+
+    // City token in email
+    for (const token of cityTokens) {
+      if (token.length >= 5 && emailHaystack.includes(token)) {
+        score += 15;
+        break;
+      }
+    }
+    if (cityKey.length >= 4 && emailHaystack.includes(cityKey)) {
+      score += 10;
+    }
+
+    return {theater, score};
+  })
+  .filter((row) => row.score >= 30)
+  .sort((a, b) => b.score - a.score);
+
+  if (!scoredMatches.length) return null;
+
+  const best = scoredMatches[0];
+  const runnerUp = scoredMatches[1] || null;
+
+  // Require a clear margin so we don't guess wrong
+  if (runnerUp && best.score < runnerUp.score + 20) return null;
+
+  return best.theater || null;
+}
+function tokenizeMeaningfulText(value) {
+  const stopWords = new Set([
+    "the", "theater", "theatre", "cinema", "cinemas", "movies", "movie",
+    "films", "film", "screen", "screens", "plex", "mall", "center", "centre",
+    "regal", "amc",
+  ]);
+  return String(value || "")
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .map((t) => t.trim())
+    .filter((t) => t.length >= 4 && !stopWords.has(t));
+}
+
+function commonPrefixLength(a, b) {
+  const min = Math.min(a.length, b.length);
+  let i = 0;
+  while (i < min && a[i] === b[i]) i++;
+  return i;
+}
+
+function inferTheaterFromEmail(email, theaterIndex = []) {
+  const normalizedEmail = normalizeEmail(email);
+  if (!normalizedEmail || !normalizedEmail.includes("@")) return null;
+
+  const [localPart, domainPart] = normalizedEmail.split("@");
+  // domainRoot = everything before the TLD, e.g. "thenewparkway" from "thenewparkway.com"
+  const domainRoot = normalizeAlphaNumeric(
+    String(domainPart || "").split(".").slice(0, -1).join(""),
+  );
+  const emailHaystack = normalizeAlphaNumeric(`${localPart} ${domainRoot} ${normalizedEmail}`);
+
+  const scoredMatches = theaterIndex.map((theater) => {
+    const nameKey = normalizeAlphaNumeric(theater.theater_name);
+    const cityKey = normalizeAlphaNumeric(theater.city || "");
+    const nameTokens = tokenizeMeaningfulText(theater.theater_name);
+    const cityTokens = tokenizeMeaningfulText(theater.city || "");
+
+    let score = 0;
+
+    // Full normalized name is a substring of the email haystack — very strong
+    if (nameKey.length >= 6 && emailHaystack.includes(nameKey)) {
+      score += 120 + Math.min(nameKey.length, 30);
+    }
+
+    // Long common prefix between domain root and theater name key
+    // Catches "thenewparkway" ↔ "thenewparkwaytheater"
+    if (domainRoot.length >= 6 && nameKey.length >= 6) {
+      const prefixLen = commonPrefixLength(domainRoot, nameKey);
+      if (prefixLen >= 6) {
+        score += 40 + prefixLen * 4;
+      }
+    }
+
+    // Each meaningful name token that appears as a substring in the email haystack
+    let tokenHits = 0;
+    let tokenScore = 0;
+    for (const token of nameTokens) {
+      if (token.length >= 5 && emailHaystack.includes(token)) {
+        tokenHits++;
+        tokenScore += 25 + Math.min(token.length, 12);
+      }
+    }
+    if (tokenHits >= 2) {
+      score += tokenScore + 25;
+    } else if (tokenHits === 1) {
+      score += tokenScore;
+    }
+
+    // City token in email
+    for (const token of cityTokens) {
+      if (token.length >= 5 && emailHaystack.includes(token)) {
+        score += 15;
+        break;
+      }
+    }
+    if (cityKey.length >= 4 && emailHaystack.includes(cityKey)) {
+      score += 10;
+    }
+
+    return {theater, score};
+  })
+  .filter((row) => row.score >= 30)
+  .sort((a, b) => b.score - a.score);
+
+  if (!scoredMatches.length) return null;
+
+  const best = scoredMatches[0];
+  const runnerUp = scoredMatches[1] || null;
+
+  // Require a clear margin so we don't guess wrong
+  if (runnerUp && best.score < runnerUp.score + 20) return null;
+
+  return best.theater || null;
 }
 
 function sanitizeTheaterKey(value) {
@@ -164,6 +368,20 @@ async function hasReelSuccessAccess(email) {
 
   const accessData = accessDoc.data() || {};
   return accessData.enabled !== false;
+}
+
+async function getReelSuccessAccessData(email) {
+  const normalizedEmail = normalizeEmail(email);
+  if (!normalizedEmail) {
+    return null;
+  }
+
+  const accessDoc = await db.collection("reelsuccess_access").doc("users").collection("allowed").doc(normalizedEmail).get();
+  if (!accessDoc.exists) {
+    return null;
+  }
+
+  return accessDoc.data() || {};
 }
 
 async function assertReelSuccessAccess(email) {
@@ -1055,27 +1273,85 @@ exports.reelSuccessGetTheaterInsights = onCall(async (request) => {
   };
 });
 
+exports.reelSuccessGetMyTheater = onCall(async (request) => {
+  const adminEmail = await assertReelSuccessAccess(request.data?.adminEmail);
+  const accessData = await getReelSuccessAccessData(adminEmail);
+  const {theaterIndex, metadata} = loadReelSuccessData();
+
+  let theater = null;
+
+  // 1. Hardcoded admin map (guaranteed correct for known staff)
+  const hardcodedKey = ADMIN_EMAIL_THEATER_KEY_MAP.get(adminEmail);
+  if (hardcodedKey) {
+    theater = theaterIndex.find((row) => row.theater_key === hardcodedKey) || null;
+  }
+
+  // 2. Explicit theater_key stored on the Firestore access record
+  const requestedTheaterKey = String(accessData?.theater_key || accessData?.theaterKey || "").trim();
+  if (!theater && requestedTheaterKey) {
+    theater = theaterIndex.find((row) => row.theater_key === requestedTheaterKey) || null;
+  }
+
+  // 3. theater_code or theater_name on the access record
+  const requestedTheaterCode = normalizeSearchQuery(accessData?.theater_code || accessData?.theaterCode || "");
+  const requestedTheaterName = normalizeSearchQuery(accessData?.theater_name || accessData?.theaterName || "");
+
+  if (!theater && requestedTheaterCode) {
+    theater = theaterIndex.find((row) => normalizeSearchQuery(row.theater_code) === requestedTheaterCode) || null;
+  }
+
+  if (!theater && requestedTheaterName) {
+    theater = theaterIndex.find((row) => normalizeSearchQuery(row.theater_name) === requestedTheaterName) || null;
+  }
+
+  // 4. Heuristic inference from login email domain/local part
+  if (!theater) {
+    theater = inferTheaterFromEmail(adminEmail, theaterIndex);
+  }
+
+  if (!theater) {
+    throw new HttpsError(
+      "not-found",
+      "No theater could be inferred from this ReelSuccess login email. Add theater_key to the user's access record.",
+    );
+  }
+
+  return {
+    ok: true,
+    dataVersion: metadata?.created_at || null,
+    theater,
+  };
+});
+
 exports.reelSuccessSetAccess = onCall(async (request) => {
   const adminEmail = assertAdminEmail(request.data?.adminEmail);
   const targetEmail = normalizeEmail(request.data?.targetEmail);
   const enabled = request.data?.enabled !== false;
+  const theaterKeyInput = request.data?.theaterKey;
 
   if (!targetEmail || !targetEmail.includes("@")) {
     throw new HttpsError("invalid-argument", "Valid targetEmail is required.");
   }
 
   const accessRef = db.collection("reelsuccess_access").doc("users").collection("allowed").doc(targetEmail);
-  await accessRef.set({
+  const payload = {
     email: targetEmail,
     enabled,
     updated_by: adminEmail,
     updated_at: admin.firestore.FieldValue.serverTimestamp(),
-  }, {merge: true});
+  };
+
+  if (theaterKeyInput !== undefined) {
+    payload.theater_key = theaterKeyInput ? sanitizeTheaterKey(theaterKeyInput) : admin.firestore.FieldValue.delete();
+  }
+
+  await accessRef.set(payload, {merge: true});
 
   return {
     ok: true,
     targetEmail,
     enabled,
+    theaterKey: payload.theater_key && typeof payload.theater_key === "string" ? payload.theater_key : null,
   };
 });
 
@@ -1089,6 +1365,7 @@ exports.reelSuccessListAccess = onCall(async (request) => {
       return {
         email: row.email || doc.id,
         enabled: row.enabled !== false,
+        theater_key: row.theater_key || null,
         updated_by: row.updated_by || null,
         updated_at: row.updated_at || null,
       };

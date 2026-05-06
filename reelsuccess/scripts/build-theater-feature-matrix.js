@@ -62,6 +62,9 @@ function isNoiseMovieTitle(title) {
   if (/^(total|gross)$/i.test(t)) return true;
   if (/^(data valid as of:|page\s+\d+\s+of\s+\d+)/i.test(t)) return true;
   if (/^# denotes/i.test(t) || /^\* denotes/i.test(t)) return true;
+  if (/^[A-Za-z .'/&-]+,\s*[A-Z]{2}$/.test(t)) return true;
+  if (/^[A-Za-z .'/&-]+\/[A-Za-z .'/&-]+,\s*[A-Z]{2}$/.test(t)) return true;
+  if (/\bCounty\b/i.test(t)) return true;
   return false;
 }
 

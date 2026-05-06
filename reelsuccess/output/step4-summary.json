@@ -17,8 +17,8 @@
   },
   "counts": {
     "theaters": 668,
-    "recommendation_rows_total": 9020,
-    "avg_recommendations_per_theater": 13.5
+    "recommendation_rows_total": 8420,
+    "avg_recommendations_per_theater": 12.6
   },
   "outputs": {
     "similarity": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/output/theater_similarity_topk_step4.json",

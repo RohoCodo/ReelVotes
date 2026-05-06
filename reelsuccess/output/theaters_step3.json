@@ -2046,15 +2046,11 @@
       "pct_bachelors_degree": 31.19,
       "pct_below_poverty": 6.68
     },
-    "total_rows": 9,
-    "total_screens": 747,
-    "unique_movies": 9,
-    "non_friday_rate": 0.1111,
+    "total_rows": 8,
+    "total_screens": 280,
+    "unique_movies": 8,
+    "non_friday_rate": 0.125,
     "top_movies": [
-      {
-        "movie_title": "East Bay, CA",
-        "screen_count": 467
-      },
       {
         "movie_title": "Copyright 2026 comScore Inc.",
         "screen_count": 263
@@ -2324,18 +2320,14 @@
       "pct_bachelors_degree": 26.51,
       "pct_below_poverty": 13.68
     },
-    "total_rows": 8,
-    "total_screens": 680,
-    "unique_movies": 8,
-    "non_friday_rate": 0.25,
+    "total_rows": 7,
+    "total_screens": 552,
+    "unique_movies": 7,
+    "non_friday_rate": 0.2857,
     "top_movies": [
       {
         "movie_title": "Copyright 2026 comScore Inc.",
         "screen_count": 542
-      },
-      {
-        "movie_title": "Marin County, CA",
-        "screen_count": 128
       },
       {
         "movie_title": "Project Hail Mary",
@@ -2588,18 +2580,14 @@
       "pct_bachelors_degree": 30.66,
       "pct_below_poverty": 4.43
     },
-    "total_rows": 11,
-    "total_screens": 566,
-    "unique_movies": 11,
-    "non_friday_rate": 0.0909,
+    "total_rows": 10,
+    "total_screens": 506,
+    "unique_movies": 10,
+    "non_friday_rate": 0.1,
     "top_movies": [
       {
         "movie_title": "Copyright 2026 comScore Inc.",
         "screen_count": 480
-      },
-      {
-        "movie_title": "Marin County, CA",
-        "screen_count": 60
       },
       {
         "movie_title": "Hoppers",
@@ -2706,15 +2694,11 @@
       "pct_bachelors_degree": 6.17,
       "pct_below_poverty": 27.22
     },
-    "total_rows": 6,
-    "total_screens": 911,
-    "unique_movies": 6,
-    "non_friday_rate": 0.1667,
+    "total_rows": 5,
+    "total_screens": 9,
+    "unique_movies": 5,
+    "non_friday_rate": 0.2,
     "top_movies": [
-      {
-        "movie_title": "Santa Rosa, CA",
-        "screen_count": 902
-      },
       {
         "movie_title": "Project Hail Mary",
         "screen_count": 4
@@ -2759,15 +2743,11 @@
       "pct_bachelors_degree": 21.32,
       "pct_below_poverty": 9.5
     },
-    "total_rows": 11,
-    "total_screens": 192,
-    "unique_movies": 11,
-    "non_friday_rate": 0.1818,
+    "total_rows": 10,
+    "total_screens": 27,
+    "unique_movies": 10,
+    "non_friday_rate": 0.2,
     "top_movies": [
-      {
-        "movie_title": "San Ramon, CA",
-        "screen_count": 165
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -2832,15 +2812,11 @@
       "pct_bachelors_degree": 38.96,
       "pct_below_poverty": 4.13
     },
-    "total_rows": 12,
-    "total_screens": 110,
-    "unique_movies": 12,
-    "non_friday_rate": 0.1667,
+    "total_rows": 11,
+    "total_screens": 28,
+    "unique_movies": 11,
+    "non_friday_rate": 0.1818,
     "top_movies": [
-      {
-        "movie_title": "Marin County, CA",
-        "screen_count": 82
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -3035,15 +3011,11 @@
       "pct_bachelors_degree": 19.7,
       "pct_below_poverty": 11.98
     },
-    "total_rows": 11,
-    "total_screens": 301,
-    "unique_movies": 11,
-    "non_friday_rate": 0.1818,
+    "total_rows": 10,
+    "total_screens": 25,
+    "unique_movies": 10,
+    "non_friday_rate": 0.2,
     "top_movies": [
-      {
-        "movie_title": "Marin County, CA",
-        "screen_count": 276
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -3108,15 +3080,11 @@
       "pct_bachelors_degree": 39.7,
       "pct_below_poverty": 4.99
     },
-    "total_rows": 3,
-    "total_screens": 598,
-    "unique_movies": 3,
-    "non_friday_rate": 0.3333,
+    "total_rows": 2,
+    "total_screens": 6,
+    "unique_movies": 2,
+    "non_friday_rate": 0.5,
     "top_movies": [
-      {
-        "movie_title": "Santa Rosa, CA",
-        "screen_count": 592
-      },
       {
         "movie_title": "Project Hail Mary",
         "screen_count": 4
@@ -3149,15 +3117,11 @@
       "pct_bachelors_degree": 29.61,
       "pct_below_poverty": 8.33
     },
-    "total_rows": 11,
-    "total_screens": 719,
-    "unique_movies": 11,
-    "non_friday_rate": 0.1818,
+    "total_rows": 10,
+    "total_screens": 208,
+    "unique_movies": 10,
+    "non_friday_rate": 0.2,
     "top_movies": [
-      {
-        "movie_title": "Woodland/Davis, CA",
-        "screen_count": 511
-      },
       {
         "movie_title": "Copyright 2026 comScore Inc.",
         "screen_count": 189
@@ -3222,15 +3186,11 @@
       "pct_bachelors_degree": 31.99,
       "pct_below_poverty": 25.13
     },
-    "total_rows": 7,
-    "total_screens": 983,
-    "unique_movies": 7,
-    "non_friday_rate": 0.1429,
+    "total_rows": 6,
+    "total_screens": 16,
+    "unique_movies": 6,
+    "non_friday_rate": 0.1667,
     "top_movies": [
-      {
-        "movie_title": "Vacaville, CA",
-        "screen_count": 967
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -3279,15 +3239,11 @@
       "pct_bachelors_degree": 18.91,
       "pct_below_poverty": 7.47
     },
-    "total_rows": 12,
-    "total_screens": 523,
-    "unique_movies": 12,
-    "non_friday_rate": 0.1667,
+    "total_rows": 11,
+    "total_screens": 25,
+    "unique_movies": 11,
+    "non_friday_rate": 0.1818,
     "top_movies": [
-      {
-        "movie_title": "Santa Rosa, CA",
-        "screen_count": 498
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -3356,15 +3312,11 @@
       "pct_bachelors_degree": 21.32,
       "pct_below_poverty": 9.5
     },
-    "total_rows": 16,
-    "total_screens": 113,
-    "unique_movies": 16,
-    "non_friday_rate": 0.1875,
+    "total_rows": 15,
+    "total_screens": 38,
+    "unique_movies": 15,
+    "non_friday_rate": 0.2,
     "top_movies": [
-      {
-        "movie_title": "Woodland/Davis, CA",
-        "screen_count": 75
-      },
       {
         "movie_title": "Scream 7",
         "screen_count": 7
@@ -3486,15 +3438,11 @@
       "pct_bachelors_degree": 18.22,
       "pct_below_poverty": 8.15
     },
-    "total_rows": 9,
-    "total_screens": 644,
-    "unique_movies": 9,
-    "non_friday_rate": 0.1111,
+    "total_rows": 8,
+    "total_screens": 24,
+    "unique_movies": 8,
+    "non_friday_rate": 0.125,
     "top_movies": [
-      {
-        "movie_title": "Petaluma, CA",
-        "screen_count": 620
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -3717,15 +3665,11 @@
       "pct_bachelors_degree": 22.85,
       "pct_below_poverty": 14.37
     },
-    "total_rows": 21,
-    "total_screens": 77,
-    "unique_movies": 21,
-    "non_friday_rate": 0.3333,
+    "total_rows": 20,
+    "total_screens": 35,
+    "unique_movies": 20,
+    "non_friday_rate": 0.35,
     "top_movies": [
-      {
-        "movie_title": "Napa, CA",
-        "screen_count": 42
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -3800,6 +3744,10 @@
       },
       {
         "movie_title": "Dacoit: A Love Story",
+        "screen_count": 1
+      },
+      {
+        "movie_title": "Spy Kids (2001) (re)",
         "screen_count": 1
       }
     ]
@@ -4001,15 +3949,11 @@
       "pct_bachelors_degree": 30.05,
       "pct_below_poverty": 5.96
     },
-    "total_rows": 8,
-    "total_screens": 909,
-    "unique_movies": 8,
-    "non_friday_rate": 0.125,
+    "total_rows": 7,
+    "total_screens": 17,
+    "unique_movies": 7,
+    "non_friday_rate": 0.1429,
     "top_movies": [
-      {
-        "movie_title": "Fairfield, CA",
-        "screen_count": 892
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -4297,15 +4241,11 @@
       "pct_bachelors_degree": 22.85,
       "pct_below_poverty": 14.37
     },
-    "total_rows": 17,
-    "total_screens": 39,
-    "unique_movies": 17,
-    "non_friday_rate": 0.2941,
+    "total_rows": 16,
+    "total_screens": 29,
+    "unique_movies": 16,
+    "non_friday_rate": 0.3125,
     "top_movies": [
-      {
-        "movie_title": "Angels Camp, CA",
-        "screen_count": 10
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -4577,15 +4517,11 @@
       "pct_bachelors_degree": 36.89,
       "pct_below_poverty": 3.73
     },
-    "total_rows": 18,
-    "total_screens": 92,
-    "unique_movies": 18,
-    "non_friday_rate": 0.3889,
+    "total_rows": 17,
+    "total_screens": 30,
+    "unique_movies": 17,
+    "non_friday_rate": 0.4118,
     "top_movies": [
-      {
-        "movie_title": "Modesto, CA",
-        "screen_count": 62
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -4771,15 +4707,11 @@
       "pct_bachelors_degree": 31.41,
       "pct_below_poverty": 5.33
     },
-    "total_rows": 10,
-    "total_screens": 149,
-    "unique_movies": 10,
-    "non_friday_rate": 0.1,
+    "total_rows": 9,
+    "total_screens": 24,
+    "unique_movies": 9,
+    "non_friday_rate": 0.1111,
     "top_movies": [
-      {
-        "movie_title": "Modesto, CA",
-        "screen_count": 125
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -5002,15 +4934,11 @@
       "pct_bachelors_degree": 22.85,
       "pct_below_poverty": 14.37
     },
-    "total_rows": 4,
-    "total_screens": 271,
-    "unique_movies": 4,
-    "non_friday_rate": 0.25,
+    "total_rows": 3,
+    "total_screens": 14,
+    "unique_movies": 3,
+    "non_friday_rate": 0.3333,
     "top_movies": [
-      {
-        "movie_title": "Stockton, CA",
-        "screen_count": 257
-      },
       {
         "movie_title": "Miscellaneous Revenue",
         "screen_count": 10
@@ -5201,15 +5129,11 @@
       "pct_bachelors_degree": 22.85,
       "pct_below_poverty": 14.37
     },
-    "total_rows": 10,
-    "total_screens": 64,
-    "unique_movies": 10,
-    "non_friday_rate": 0.1,
+    "total_rows": 9,
+    "total_screens": 22,
+    "unique_movies": 9,
+    "non_friday_rate": 0.1111,
     "top_movies": [
-      {
-        "movie_title": "Manteca, CA",
-        "screen_count": 42
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -5363,15 +5287,11 @@
       "pct_bachelors_degree": 22.85,
       "pct_below_poverty": 14.37
     },
-    "total_rows": 18,
-    "total_screens": 54,
-    "unique_movies": 18,
-    "non_friday_rate": 0.3889,
+    "total_rows": 17,
+    "total_screens": 32,
+    "unique_movies": 17,
+    "non_friday_rate": 0.4118,
     "top_movies": [
-      {
-        "movie_title": "Los Banos, CA",
-        "screen_count": 22
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -5464,15 +5384,11 @@
       "pct_bachelors_degree": 9.52,
       "pct_below_poverty": 16.17
     },
-    "total_rows": 8,
-    "total_screens": 283,
-    "unique_movies": 8,
-    "non_friday_rate": 0.125,
+    "total_rows": 7,
+    "total_screens": 23,
+    "unique_movies": 7,
+    "non_friday_rate": 0.1429,
     "top_movies": [
-      {
-        "movie_title": "Madera, CA",
-        "screen_count": 260
-      },
       {
         "movie_title": "Scream 7",
         "screen_count": 7
@@ -5578,15 +5494,11 @@
       "pct_bachelors_degree": 13.44,
       "pct_below_poverty": 15.6
     },
-    "total_rows": 10,
-    "total_screens": 235,
-    "unique_movies": 10,
-    "non_friday_rate": 0.2,
+    "total_rows": 9,
+    "total_screens": 24,
+    "unique_movies": 9,
+    "non_friday_rate": 0.2222,
     "top_movies": [
-      {
-        "movie_title": "Fresno, CA",
-        "screen_count": 211
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -5736,15 +5648,11 @@
       "pct_bachelors_degree": 12.99,
       "pct_below_poverty": 15.37
     },
-    "total_rows": 20,
-    "total_screens": 55,
-    "unique_movies": 20,
-    "non_friday_rate": 0.3,
+    "total_rows": 19,
+    "total_screens": 33,
+    "unique_movies": 19,
+    "non_friday_rate": 0.3158,
     "top_movies": [
-      {
-        "movie_title": "Modesto, CA",
-        "screen_count": 22
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -5882,15 +5790,11 @@
       "pct_bachelors_degree": 14.42,
       "pct_below_poverty": 13.87
     },
-    "total_rows": 15,
-    "total_screens": 42,
-    "unique_movies": 15,
-    "non_friday_rate": 0.2,
+    "total_rows": 14,
+    "total_screens": 32,
+    "unique_movies": 14,
+    "non_friday_rate": 0.2143,
     "top_movies": [
-      {
-        "movie_title": "Fresno, CA",
-        "screen_count": 10
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -5971,15 +5875,11 @@
       "pct_bachelors_degree": 16.71,
       "pct_below_poverty": 20.9
     },
-    "total_rows": 23,
-    "total_screens": 165,
-    "unique_movies": 23,
-    "non_friday_rate": 0.3043,
+    "total_rows": 22,
+    "total_screens": 52,
+    "unique_movies": 22,
+    "non_friday_rate": 0.3182,
     "top_movies": [
-      {
-        "movie_title": "Hanford, CA",
-        "screen_count": 113
-      },
       {
         "movie_title": "Scream 7",
         "screen_count": 7
@@ -6055,6 +5955,10 @@
       {
         "movie_title": "Caddyshack",
         "screen_count": 1
+      },
+      {
+        "movie_title": "Legends of the Lost Ark",
+        "screen_count": 1
       }
     ]
   },
@@ -6080,15 +5984,11 @@
       "pct_bachelors_degree": 12.36,
       "pct_below_poverty": 14.86
     },
-    "total_rows": 7,
-    "total_screens": 689,
-    "unique_movies": 7,
-    "non_friday_rate": 0.2857,
+    "total_rows": 6,
+    "total_screens": 16,
+    "unique_movies": 6,
+    "non_friday_rate": 0.3333,
     "top_movies": [
-      {
-        "movie_title": "Tracy, CA",
-        "screen_count": 673
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -6137,15 +6037,11 @@
       "pct_bachelors_degree": 18.33,
       "pct_below_poverty": 7.67
     },
-    "total_rows": 12,
-    "total_screens": 247,
-    "unique_movies": 12,
-    "non_friday_rate": 0.3333,
+    "total_rows": 11,
+    "total_screens": 25,
+    "unique_movies": 11,
+    "non_friday_rate": 0.3636,
     "top_movies": [
-      {
-        "movie_title": "Modesto, CA",
-        "screen_count": 222
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -6214,15 +6110,11 @@
       "pct_bachelors_degree": 13.8,
       "pct_below_poverty": 12.97
     },
-    "total_rows": 12,
-    "total_screens": 1342,
-    "unique_movies": 12,
-    "non_friday_rate": 0.1667,
+    "total_rows": 11,
+    "total_screens": 662,
+    "unique_movies": 11,
+    "non_friday_rate": 0.1818,
     "top_movies": [
-      {
-        "movie_title": "Santa Cruz, CA",
-        "screen_count": 680
-      },
       {
         "movie_title": "Copyright 2026 comScore Inc.",
         "screen_count": 635
@@ -6291,15 +6183,11 @@
       "pct_bachelors_degree": 29.32,
       "pct_below_poverty": 17.62
     },
-    "total_rows": 10,
-    "total_screens": 168,
-    "unique_movies": 10,
-    "non_friday_rate": 0.3,
+    "total_rows": 9,
+    "total_screens": 14,
+    "unique_movies": 9,
+    "non_friday_rate": 0.3333,
     "top_movies": [
-      {
-        "movie_title": "Madera, CA",
-        "screen_count": 154
-      },
       {
         "movie_title": "Project Hail Mary",
         "screen_count": 4
@@ -6506,15 +6394,11 @@
       "pct_bachelors_degree": 14.91,
       "pct_below_poverty": 12.95
     },
-    "total_rows": 7,
-    "total_screens": 573,
-    "unique_movies": 7,
-    "non_friday_rate": 0.2857,
+    "total_rows": 6,
+    "total_screens": 15,
+    "unique_movies": 6,
+    "non_friday_rate": 0.3333,
     "top_movies": [
-      {
-        "movie_title": "Marina, CA",
-        "screen_count": 558
-      },
       {
         "movie_title": "Experience Yosemite",
         "screen_count": 5
@@ -6563,15 +6447,11 @@
       "pct_bachelors_degree": 19.85,
       "pct_below_poverty": 14.57
     },
-    "total_rows": 4,
-    "total_screens": 576,
-    "unique_movies": 4,
-    "non_friday_rate": 0.25,
+    "total_rows": 3,
+    "total_screens": 7,
+    "unique_movies": 3,
+    "non_friday_rate": 0.3333,
     "top_movies": [
-      {
-        "movie_title": "Selma, CA",
-        "screen_count": 569
-      },
       {
         "movie_title": "Project Hail Mary",
         "screen_count": 4
@@ -6608,15 +6488,11 @@
       "pct_bachelors_degree": 7.49,
       "pct_below_poverty": 19.83
     },
-    "total_rows": 6,
-    "total_screens": 903,
-    "unique_movies": 6,
-    "non_friday_rate": 0.1667,
+    "total_rows": 5,
+    "total_screens": 15,
+    "unique_movies": 5,
+    "non_friday_rate": 0.2,
     "top_movies": [
-      {
-        "movie_title": "Monterey/Salinas, CA",
-        "screen_count": 888
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -6661,17 +6537,13 @@
       "pct_bachelors_degree": 29.66,
       "pct_below_poverty": 7.11
     },
-    "total_rows": 3,
-    "total_screens": 989,
-    "unique_movies": 3,
-    "non_friday_rate": 0.3333,
+    "total_rows": 2,
+    "total_screens": 495,
+    "unique_movies": 2,
+    "non_friday_rate": 0.5,
     "top_movies": [
       {
         "movie_title": "CW",
-        "screen_count": 494
-      },
-      {
-        "movie_title": "Fresno, CA",
         "screen_count": 494
       },
       {
@@ -6702,15 +6574,11 @@
       "pct_bachelors_degree": 22.87,
       "pct_below_poverty": 7.44
     },
-    "total_rows": 15,
-    "total_screens": 63,
-    "unique_movies": 15,
-    "non_friday_rate": 0.2667,
+    "total_rows": 14,
+    "total_screens": 37,
+    "unique_movies": 14,
+    "non_friday_rate": 0.2857,
     "top_movies": [
-      {
-        "movie_title": "Dinuba, CA",
-        "screen_count": 26
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -6791,15 +6659,11 @@
       "pct_bachelors_degree": 8.46,
       "pct_below_poverty": 28.15
     },
-    "total_rows": 8,
-    "total_screens": 657,
-    "unique_movies": 7,
-    "non_friday_rate": 0.25,
+    "total_rows": 7,
+    "total_screens": 243,
+    "unique_movies": 6,
+    "non_friday_rate": 0.2857,
     "top_movies": [
-      {
-        "movie_title": "Monterey/Salinas, CA",
-        "screen_count": 414
-      },
       {
         "movie_title": "CW",
         "screen_count": 229
@@ -6848,15 +6712,11 @@
       "pct_bachelors_degree": 11.4,
       "pct_below_poverty": 14.25
     },
-    "total_rows": 13,
-    "total_screens": 354,
-    "unique_movies": 13,
-    "non_friday_rate": 0.1538,
+    "total_rows": 12,
+    "total_screens": 33,
+    "unique_movies": 12,
+    "non_friday_rate": 0.1667,
     "top_movies": [
-      {
-        "movie_title": "Weaverville, CA",
-        "screen_count": 321
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -6929,15 +6789,11 @@
       "pct_bachelors_degree": 8.02,
       "pct_below_poverty": 9.06
     },
-    "total_rows": 5,
-    "total_screens": 879,
-    "unique_movies": 5,
-    "non_friday_rate": 0.2,
+    "total_rows": 4,
+    "total_screens": 69,
+    "unique_movies": 4,
+    "non_friday_rate": 0.25,
     "top_movies": [
-      {
-        "movie_title": "Redding, CA",
-        "screen_count": 810
-      },
       {
         "movie_title": "CW",
         "screen_count": 64
@@ -6978,15 +6834,11 @@
       "pct_bachelors_degree": 17.57,
       "pct_below_poverty": 13.6
     },
-    "total_rows": 13,
-    "total_screens": 129,
-    "unique_movies": 13,
-    "non_friday_rate": 0.3077,
+    "total_rows": 12,
+    "total_screens": 27,
+    "unique_movies": 12,
+    "non_friday_rate": 0.3333,
     "top_movies": [
-      {
-        "movie_title": "Visalia, CA",
-        "screen_count": 102
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -7059,15 +6911,11 @@
       "pct_bachelors_degree": 14.32,
       "pct_below_poverty": 11.33
     },
-    "total_rows": 11,
-    "total_screens": 443,
-    "unique_movies": 11,
-    "non_friday_rate": 0.1818,
+    "total_rows": 10,
+    "total_screens": 24,
+    "unique_movies": 10,
+    "non_friday_rate": 0.2,
     "top_movies": [
-      {
-        "movie_title": "Santa Cruz, CA",
-        "screen_count": 419
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -7132,18 +6980,14 @@
       "pct_bachelors_degree": 29.32,
       "pct_below_poverty": 17.62
     },
-    "total_rows": 6,
-    "total_screens": 397,
-    "unique_movies": 6,
-    "non_friday_rate": 0.1667,
+    "total_rows": 5,
+    "total_screens": 377,
+    "unique_movies": 5,
+    "non_friday_rate": 0.2,
     "top_movies": [
       {
         "movie_title": "CW",
         "screen_count": 368
-      },
-      {
-        "movie_title": "Oroville, CA",
-        "screen_count": 20
       },
       {
         "movie_title": "Project Hail Mary",
@@ -7185,15 +7029,11 @@
       "pct_bachelors_degree": 9.8,
       "pct_below_poverty": 21.83
     },
-    "total_rows": 7,
-    "total_screens": 366,
-    "unique_movies": 7,
-    "non_friday_rate": 0.1429,
+    "total_rows": 6,
+    "total_screens": 16,
+    "unique_movies": 6,
+    "non_friday_rate": 0.1667,
     "top_movies": [
-      {
-        "movie_title": "Mt Shasta, CA",
-        "screen_count": 350
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -7242,15 +7082,11 @@
       "pct_bachelors_degree": 24.31,
       "pct_below_poverty": 15.99
     },
-    "total_rows": 5,
-    "total_screens": 432,
-    "unique_movies": 5,
-    "non_friday_rate": 0.2,
+    "total_rows": 4,
+    "total_screens": 9,
+    "unique_movies": 4,
+    "non_friday_rate": 0.25,
     "top_movies": [
-      {
-        "movie_title": "Cresent City, CA",
-        "screen_count": 423
-      },
       {
         "movie_title": "Project Hail Mary",
         "screen_count": 4
@@ -7291,15 +7127,11 @@
       "pct_bachelors_degree": 10.62,
       "pct_below_poverty": 19.87
     },
-    "total_rows": 11,
-    "total_screens": 1860,
-    "unique_movies": 9,
-    "non_friday_rate": 0.1818,
+    "total_rows": 10,
+    "total_screens": 895,
+    "unique_movies": 8,
+    "non_friday_rate": 0.2,
     "top_movies": [
-      {
-        "movie_title": "Willits, CA",
-        "screen_count": 965
-      },
       {
         "movie_title": "CW",
         "screen_count": 878
@@ -7356,15 +7188,11 @@
       "pct_bachelors_degree": 10.83,
       "pct_below_poverty": 13.69
     },
-    "total_rows": 4,
-    "total_screens": 1645,
-    "unique_movies": 4,
-    "non_friday_rate": 0.25,
+    "total_rows": 3,
+    "total_screens": 820,
+    "unique_movies": 3,
+    "non_friday_rate": 0.3333,
     "top_movies": [
-      {
-        "movie_title": "Monterey/Salinas, CA",
-        "screen_count": 825
-      },
       {
         "movie_title": "Copyright 2026 comScore Inc.",
         "screen_count": 814
@@ -7401,15 +7229,11 @@
       "pct_bachelors_degree": 11.4,
       "pct_below_poverty": 14.25
     },
-    "total_rows": 12,
-    "total_screens": 979,
-    "unique_movies": 12,
-    "non_friday_rate": 0.0833,
+    "total_rows": 11,
+    "total_screens": 31,
+    "unique_movies": 11,
+    "non_friday_rate": 0.0909,
     "top_movies": [
-      {
-        "movie_title": "Quincy, CA",
-        "screen_count": 948
-      },
       {
         "movie_title": "Scream 7",
         "screen_count": 7
@@ -7478,15 +7302,11 @@
       "pct_bachelors_degree": 14.07,
       "pct_below_poverty": 15.74
     },
-    "total_rows": 5,
-    "total_screens": 325,
-    "unique_movies": 5,
-    "non_friday_rate": 0.2,
+    "total_rows": 4,
+    "total_screens": 8,
+    "unique_movies": 4,
+    "non_friday_rate": 0.25,
     "top_movies": [
-      {
-        "movie_title": "Ukiah, CA",
-        "screen_count": 317
-      },
       {
         "movie_title": "Project Hail Mary",
         "screen_count": 4
@@ -7527,15 +7347,11 @@
       "pct_bachelors_degree": 11.9,
       "pct_below_poverty": 16.28
     },
-    "total_rows": 7,
-    "total_screens": 643,
-    "unique_movies": 7,
-    "non_friday_rate": 0.1429,
+    "total_rows": 6,
+    "total_screens": 16,
+    "unique_movies": 6,
+    "non_friday_rate": 0.1667,
     "top_movies": [
-      {
-        "movie_title": "Red Bluff, CA",
-        "screen_count": 627
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -7641,15 +7457,11 @@
       "pct_bachelors_degree": 26.86,
       "pct_below_poverty": 22.08
     },
-    "total_rows": 11,
-    "total_screens": 278,
-    "unique_movies": 11,
-    "non_friday_rate": 0.1818,
+    "total_rows": 10,
+    "total_screens": 27,
+    "unique_movies": 10,
+    "non_friday_rate": 0.2,
     "top_movies": [
-      {
-        "movie_title": "Eureka, CA",
-        "screen_count": 251
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -7714,15 +7526,11 @@
       "pct_bachelors_degree": 28.34,
       "pct_below_poverty": 29.58
     },
-    "total_rows": 4,
-    "total_screens": 520,
-    "unique_movies": 4,
-    "non_friday_rate": 0.25,
+    "total_rows": 3,
+    "total_screens": 8,
+    "unique_movies": 3,
+    "non_friday_rate": 0.3333,
     "top_movies": [
-      {
-        "movie_title": "Placerville, CA",
-        "screen_count": 512
-      },
       {
         "movie_title": "Project Hail Mary",
         "screen_count": 4
@@ -7759,15 +7567,11 @@
       "pct_bachelors_degree": 17.2,
       "pct_below_poverty": 15.7
     },
-    "total_rows": 10,
-    "total_screens": 1302,
-    "unique_movies": 9,
-    "non_friday_rate": 0.1,
+    "total_rows": 9,
+    "total_screens": 644,
+    "unique_movies": 8,
+    "non_friday_rate": 0.1111,
     "top_movies": [
-      {
-        "movie_title": "Grass Valley, CA",
-        "screen_count": 658
-      },
       {
         "movie_title": "CW",
         "screen_count": 626
@@ -7824,15 +7628,11 @@
       "pct_bachelors_degree": 18.85,
       "pct_below_poverty": 20.71
     },
-    "total_rows": 4,
-    "total_screens": 712,
-    "unique_movies": 4,
-    "non_friday_rate": 0.25,
+    "total_rows": 3,
+    "total_screens": 7,
+    "unique_movies": 3,
+    "non_friday_rate": 0.3333,
     "top_movies": [
-      {
-        "movie_title": "Reno, NV",
-        "screen_count": 705
-      },
       {
         "movie_title": "Project Hail Mary",
         "screen_count": 4
@@ -7938,15 +7738,11 @@
       "pct_bachelors_degree": 15.82,
       "pct_below_poverty": 14.96
     },
-    "total_rows": 7,
-    "total_screens": 1730,
-    "unique_movies": 6,
-    "non_friday_rate": 0.1429,
+    "total_rows": 6,
+    "total_screens": 867,
+    "unique_movies": 5,
+    "non_friday_rate": 0.1667,
     "top_movies": [
-      {
-        "movie_title": "Eureka, CA",
-        "screen_count": 863
-      },
       {
         "movie_title": "CW",
         "screen_count": 859
@@ -7991,15 +7787,11 @@
       "pct_bachelors_degree": 20.57,
       "pct_below_poverty": 17.55
     },
-    "total_rows": 11,
-    "total_screens": 995,
-    "unique_movies": 11,
-    "non_friday_rate": 0.0909,
+    "total_rows": 10,
+    "total_screens": 25,
+    "unique_movies": 10,
+    "non_friday_rate": 0.1,
     "top_movies": [
-      {
-        "movie_title": "Grass Valley, CA",
-        "screen_count": 970
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -8064,15 +7856,11 @@
       "pct_bachelors_degree": 18.85,
       "pct_below_poverty": 20.71
     },
-    "total_rows": 4,
-    "total_screens": 666,
-    "unique_movies": 4,
+    "total_rows": 3,
+    "total_screens": 3,
+    "unique_movies": 3,
     "non_friday_rate": 0,
     "top_movies": [
-      {
-        "movie_title": "Medford, OR",
-        "screen_count": 663
-      },
       {
         "movie_title": "You, Me & Tuscany",
         "screen_count": 1
@@ -8109,15 +7897,11 @@
       "pct_bachelors_degree": 10.06,
       "pct_below_poverty": 21.42
     },
-    "total_rows": 6,
-    "total_screens": 914,
-    "unique_movies": 6,
-    "non_friday_rate": 0.1667,
+    "total_rows": 5,
+    "total_screens": 14,
+    "unique_movies": 5,
+    "non_friday_rate": 0.2,
     "top_movies": [
-      {
-        "movie_title": "Eureka, CA",
-        "screen_count": 900
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -8162,17 +7946,13 @@
       "pct_bachelors_degree": 28.34,
       "pct_below_poverty": 29.58
     },
-    "total_rows": 3,
-    "total_screens": 417,
-    "unique_movies": 3,
-    "non_friday_rate": 0.3333,
+    "total_rows": 2,
+    "total_screens": 209,
+    "unique_movies": 2,
+    "non_friday_rate": 0.5,
     "top_movies": [
       {
         "movie_title": "CW",
-        "screen_count": 208
-      },
-      {
-        "movie_title": "Jackson, CA",
         "screen_count": 208
       },
       {
@@ -8248,15 +8028,11 @@
       "pct_bachelors_degree": 7.59,
       "pct_below_poverty": 24.3
     },
-    "total_rows": 9,
-    "total_screens": 572,
-    "unique_movies": 9,
-    "non_friday_rate": 0.1111,
+    "total_rows": 8,
+    "total_screens": 18,
+    "unique_movies": 8,
+    "non_friday_rate": 0.125,
     "top_movies": [
-      {
-        "movie_title": "Nevada City, CA",
-        "screen_count": 554
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -8313,15 +8089,11 @@
       "pct_bachelors_degree": 21.69,
       "pct_below_poverty": 8.65
     },
-    "total_rows": 4,
-    "total_screens": 1004,
-    "unique_movies": 4,
-    "non_friday_rate": 0.25,
+    "total_rows": 3,
+    "total_screens": 7,
+    "unique_movies": 3,
+    "non_friday_rate": 0.3333,
     "top_movies": [
-      {
-        "movie_title": "Medford, OR",
-        "screen_count": 997
-      },
       {
         "movie_title": "Project Hail Mary",
         "screen_count": 4
@@ -8358,15 +8130,11 @@
       "pct_bachelors_degree": 19.12,
       "pct_below_poverty": 12.54
     },
-    "total_rows": 16,
-    "total_screens": 141,
-    "unique_movies": 16,
-    "non_friday_rate": 0.25,
+    "total_rows": 15,
+    "total_screens": 33,
+    "unique_movies": 15,
+    "non_friday_rate": 0.2667,
     "top_movies": [
-      {
-        "movie_title": "Klamath Falls, OR",
-        "screen_count": 108
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -8613,15 +8381,11 @@
       "pct_bachelors_degree": 27.7,
       "pct_below_poverty": 6.95
     },
-    "total_rows": 25,
-    "total_screens": 107,
-    "unique_movies": 25,
-    "non_friday_rate": 0.2,
+    "total_rows": 24,
+    "total_screens": 52,
+    "unique_movies": 24,
+    "non_friday_rate": 0.2083,
     "top_movies": [
-      {
-        "movie_title": "Minden, NV",
-        "screen_count": 55
-      },
       {
         "movie_title": "GOAT",
         "screen_count": 9
@@ -8697,6 +8461,10 @@
       {
         "movie_title": "Mohiniyattam",
         "screen_count": 1
+      },
+      {
+        "movie_title": "ChaO",
+        "screen_count": 1
       }
     ]
   },
@@ -8722,15 +8490,11 @@
       "pct_bachelors_degree": 22.82,
       "pct_below_poverty": 10.69
     },
-    "total_rows": 9,
-    "total_screens": 1064,
-    "unique_movies": 9,
-    "non_friday_rate": 0.1111,
+    "total_rows": 8,
+    "total_screens": 269,
+    "unique_movies": 8,
+    "non_friday_rate": 0.125,
     "top_movies": [
-      {
-        "movie_title": "Ashland, OR",
-        "screen_count": 795
-      },
       {
         "movie_title": "Copyright 2026 comScore Inc.",
         "screen_count": 251
@@ -8787,15 +8551,11 @@
       "pct_bachelors_degree": 34.44,
       "pct_below_poverty": 14.25
     },
-    "total_rows": 5,
-    "total_screens": 1002,
-    "unique_movies": 5,
-    "non_friday_rate": 0.2,
+    "total_rows": 4,
+    "total_screens": 9,
+    "unique_movies": 4,
+    "non_friday_rate": 0.25,
     "top_movies": [
-      {
-        "movie_title": "Reno, NV",
-        "screen_count": 993
-      },
       {
         "movie_title": "Project Hail Mary",
         "screen_count": 4
@@ -9067,15 +8827,11 @@
       "pct_bachelors_degree": 29.2,
       "pct_below_poverty": 7.25
     },
-    "total_rows": 18,
-    "total_screens": 201,
-    "unique_movies": 18,
-    "non_friday_rate": 0.2222,
+    "total_rows": 17,
+    "total_screens": 32,
+    "unique_movies": 17,
+    "non_friday_rate": 0.2353,
     "top_movies": [
-      {
-        "movie_title": "Carson City, NV",
-        "screen_count": 169
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -9665,15 +9421,11 @@
       "pct_bachelors_degree": 26.24,
       "pct_below_poverty": 7.85
     },
-    "total_rows": 20,
-    "total_screens": 266,
-    "unique_movies": 20,
-    "non_friday_rate": 0.3,
+    "total_rows": 19,
+    "total_screens": 42,
+    "unique_movies": 19,
+    "non_friday_rate": 0.3158,
     "top_movies": [
-      {
-        "movie_title": "Fresno, CA",
-        "screen_count": 224
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -9944,15 +9696,11 @@
       "pct_bachelors_degree": 9.32,
       "pct_below_poverty": 17.87
     },
-    "total_rows": 11,
-    "total_screens": 717,
-    "unique_movies": 11,
-    "non_friday_rate": 0.2727,
+    "total_rows": 10,
+    "total_screens": 20,
+    "unique_movies": 10,
+    "non_friday_rate": 0.3,
     "top_movies": [
-      {
-        "movie_title": "Tulare, CA",
-        "screen_count": 697
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -10078,15 +9826,11 @@
       "pct_bachelors_degree": 31.41,
       "pct_below_poverty": 5.33
     },
-    "total_rows": 12,
-    "total_screens": 114,
-    "unique_movies": 12,
-    "non_friday_rate": 0.4167,
+    "total_rows": 11,
+    "total_screens": 24,
+    "unique_movies": 11,
+    "non_friday_rate": 0.4545,
     "top_movies": [
-      {
-        "movie_title": "Concord, CA",
-        "screen_count": 90
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -10327,15 +10071,11 @@
     "theater_city_state": "Tamuning, GU",
     "demographics_status": "api-error",
     "demographics": null,
-    "total_rows": 11,
-    "total_screens": 714,
-    "unique_movies": 11,
-    "non_friday_rate": 0.0909,
+    "total_rows": 10,
+    "total_screens": 25,
+    "unique_movies": 10,
+    "non_friday_rate": 0.1,
     "top_movies": [
-      {
-        "movie_title": "Stockton, CA",
-        "screen_count": 689
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -10400,18 +10140,14 @@
       "pct_bachelors_degree": 16.74,
       "pct_below_poverty": 11.02
     },
-    "total_rows": 15,
-    "total_screens": 304,
-    "unique_movies": 15,
-    "non_friday_rate": 0.1333,
+    "total_rows": 14,
+    "total_screens": 274,
+    "unique_movies": 14,
+    "non_friday_rate": 0.1429,
     "top_movies": [
       {
         "movie_title": "Copyright 2026 comScore Inc.",
         "screen_count": 242
-      },
-      {
-        "movie_title": "Monterey/Salinas, CA",
-        "screen_count": 30
       },
       {
         "movie_title": "Scream 7",
@@ -10489,15 +10225,11 @@
       "pct_bachelors_degree": 27.62,
       "pct_below_poverty": 10.46
     },
-    "total_rows": 12,
-    "total_screens": 181,
-    "unique_movies": 12,
-    "non_friday_rate": 0.25,
+    "total_rows": 11,
+    "total_screens": 25,
+    "unique_movies": 11,
+    "non_friday_rate": 0.2727,
     "top_movies": [
-      {
-        "movie_title": "No Lake Tahoe , CA",
-        "screen_count": 156
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -10566,15 +10298,11 @@
       "pct_bachelors_degree": 31.59,
       "pct_below_poverty": 5.07
     },
-    "total_rows": 14,
-    "total_screens": 91,
-    "unique_movies": 14,
-    "non_friday_rate": 0.2143,
+    "total_rows": 13,
+    "total_screens": 28,
+    "unique_movies": 13,
+    "non_friday_rate": 0.2308,
     "top_movies": [
-      {
-        "movie_title": "Visalia, CA",
-        "screen_count": 63
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -10777,15 +10505,11 @@
       "pct_bachelors_degree": 30.05,
       "pct_below_poverty": 5.96
     },
-    "total_rows": 13,
-    "total_screens": 249,
-    "unique_movies": 13,
-    "non_friday_rate": 0.3077,
+    "total_rows": 12,
+    "total_screens": 30,
+    "unique_movies": 12,
+    "non_friday_rate": 0.3333,
     "top_movies": [
-      {
-        "movie_title": "Soledad, CA",
-        "screen_count": 219
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -11041,15 +10765,11 @@
       "pct_bachelors_degree": 31.36,
       "pct_below_poverty": 7.83
     },
-    "total_rows": 12,
-    "total_screens": 310,
-    "unique_movies": 12,
-    "non_friday_rate": 0.4167,
+    "total_rows": 11,
+    "total_screens": 21,
+    "unique_movies": 11,
+    "non_friday_rate": 0.4545,
     "top_movies": [
-      {
-        "movie_title": "Healdsburg, CA",
-        "screen_count": 289
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -12609,15 +12329,11 @@
       "pct_bachelors_degree": 23.64,
       "pct_below_poverty": 17.36
     },
-    "total_rows": 4,
-    "total_screens": 982,
-    "unique_movies": 4,
-    "non_friday_rate": 0.25,
+    "total_rows": 3,
+    "total_screens": 9,
+    "unique_movies": 3,
+    "non_friday_rate": 0.3333,
     "top_movies": [
-      {
-        "movie_title": "Staten Island, NY",
-        "screen_count": 973
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -13414,18 +13130,14 @@
       "pct_bachelors_degree": 23.64,
       "pct_below_poverty": 17.36
     },
-    "total_rows": 22,
-    "total_screens": 2217,
-    "unique_movies": 19,
-    "non_friday_rate": 0.5455,
+    "total_rows": 21,
+    "total_screens": 1891,
+    "unique_movies": 18,
+    "non_friday_rate": 0.5714,
     "top_movies": [
       {
         "movie_title": "CW",
         "screen_count": 1839
-      },
-      {
-        "movie_title": "Queens, NY",
-        "screen_count": 326
       },
       {
         "movie_title": "Miscellaneous Revenue",
@@ -13596,15 +13308,11 @@
       "pct_bachelors_degree": 23.64,
       "pct_below_poverty": 17.36
     },
-    "total_rows": 9,
-    "total_screens": 128,
-    "unique_movies": 9,
-    "non_friday_rate": 0.2222,
+    "total_rows": 8,
+    "total_screens": 20,
+    "unique_movies": 8,
+    "non_friday_rate": 0.25,
     "top_movies": [
-      {
-        "movie_title": "Westchester County - Bronxville",
-        "screen_count": 108
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -13714,15 +13422,11 @@
       "pct_bachelors_degree": 35.88,
       "pct_below_poverty": 4.79
     },
-    "total_rows": 4,
-    "total_screens": 964,
-    "unique_movies": 4,
-    "non_friday_rate": 0.25,
+    "total_rows": 3,
+    "total_screens": 8,
+    "unique_movies": 3,
+    "non_friday_rate": 0.3333,
     "top_movies": [
-      {
-        "movie_title": "Westchester County - Bedford",
-        "screen_count": 956
-      },
       {
         "movie_title": "Project Hail Mary",
         "screen_count": 4
@@ -13759,15 +13463,11 @@
       "pct_bachelors_degree": 40.92,
       "pct_below_poverty": 8.03
     },
-    "total_rows": 8,
-    "total_screens": 279,
-    "unique_movies": 7,
-    "non_friday_rate": 0.375,
+    "total_rows": 7,
+    "total_screens": 124,
+    "unique_movies": 6,
+    "non_friday_rate": 0.4286,
     "top_movies": [
-      {
-        "movie_title": "Westchester County",
-        "screen_count": 155
-      },
       {
         "movie_title": "CW",
         "screen_count": 115
@@ -13865,15 +13565,11 @@
       "pct_bachelors_degree": 29.37,
       "pct_below_poverty": 7.71
     },
-    "total_rows": 7,
-    "total_screens": 371,
-    "unique_movies": 7,
-    "non_friday_rate": 0.2857,
+    "total_rows": 6,
+    "total_screens": 11,
+    "unique_movies": 6,
+    "non_friday_rate": 0.3333,
     "top_movies": [
-      {
-        "movie_title": "Westchester County - Rye",
-        "screen_count": 360
-      },
       {
         "movie_title": "Project Hail Mary",
         "screen_count": 4
@@ -13922,15 +13618,11 @@
       "pct_bachelors_degree": 20.29,
       "pct_below_poverty": 11.99
     },
-    "total_rows": 15,
-    "total_screens": 61,
-    "unique_movies": 15,
-    "non_friday_rate": 0.2,
+    "total_rows": 14,
+    "total_screens": 28,
+    "unique_movies": 14,
+    "non_friday_rate": 0.2143,
     "top_movies": [
-      {
-        "movie_title": "Passaic County",
-        "screen_count": 33
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -13996,15 +13688,11 @@
     "theater_city_state": "Wayne, NJ",
     "demographics_status": "no-match",
     "demographics": null,
-    "total_rows": 11,
-    "total_screens": 105,
-    "unique_movies": 11,
-    "non_friday_rate": 0.3636,
+    "total_rows": 10,
+    "total_screens": 22,
+    "unique_movies": 10,
+    "non_friday_rate": 0.4,
     "top_movies": [
-      {
-        "movie_title": "Westchester County - Rye",
-        "screen_count": 83
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -14069,15 +13757,11 @@
       "pct_bachelors_degree": 19.57,
       "pct_below_poverty": 14.67
     },
-    "total_rows": 10,
-    "total_screens": 65,
-    "unique_movies": 10,
-    "non_friday_rate": 0.5,
+    "total_rows": 9,
+    "total_screens": 14,
+    "unique_movies": 9,
+    "non_friday_rate": 0.5556,
     "top_movies": [
-      {
-        "movie_title": "Nassau County - Manhasset",
-        "screen_count": 51
-      },
       {
         "movie_title": "Project Hail Mary",
         "screen_count": 4
@@ -14138,15 +13822,11 @@
       "pct_bachelors_degree": 24.4,
       "pct_below_poverty": 13.33
     },
-    "total_rows": 8,
-    "total_screens": 66,
-    "unique_movies": 8,
-    "non_friday_rate": 0.125,
+    "total_rows": 7,
+    "total_screens": 17,
+    "unique_movies": 7,
+    "non_friday_rate": 0.1429,
     "top_movies": [
-      {
-        "movie_title": "Westchester County - Bronville",
-        "screen_count": 49
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -14199,15 +13879,11 @@
       "pct_bachelors_degree": 31.26,
       "pct_below_poverty": 3.48
     },
-    "total_rows": 3,
-    "total_screens": 863,
-    "unique_movies": 3,
-    "non_friday_rate": 0.3333,
+    "total_rows": 2,
+    "total_screens": 3,
+    "unique_movies": 2,
+    "non_friday_rate": 0.5,
     "top_movies": [
-      {
-        "movie_title": "Nassau County - Westbury",
-        "screen_count": 860
-      },
       {
         "movie_title": "Super Mario Galaxy Movie, T",
         "screen_count": 2
@@ -14402,15 +14078,11 @@
       "pct_bachelors_degree": 27.3,
       "pct_below_poverty": 6.07
     },
-    "total_rows": 9,
-    "total_screens": 28,
-    "unique_movies": 9,
-    "non_friday_rate": 0.4444,
+    "total_rows": 8,
+    "total_screens": 18,
+    "unique_movies": 8,
+    "non_friday_rate": 0.5,
     "top_movies": [
-      {
-        "movie_title": "Nassau County - Westbury",
-        "screen_count": 10
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -14467,15 +14139,11 @@
       "pct_bachelors_degree": 37.42,
       "pct_below_poverty": 2.83
     },
-    "total_rows": 10,
-    "total_screens": 343,
-    "unique_movies": 10,
-    "non_friday_rate": 0.1,
+    "total_rows": 9,
+    "total_screens": 24,
+    "unique_movies": 9,
+    "non_friday_rate": 0.1111,
     "top_movies": [
-      {
-        "movie_title": "Westchester County - Bedford",
-        "screen_count": 319
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -14609,18 +14277,14 @@
       "pct_bachelors_degree": 37.18,
       "pct_below_poverty": 5.1
     },
-    "total_rows": 12,
-    "total_screens": 1137,
-    "unique_movies": 10,
-    "non_friday_rate": 0.0833,
+    "total_rows": 11,
+    "total_screens": 1005,
+    "unique_movies": 9,
+    "non_friday_rate": 0.0909,
     "top_movies": [
       {
         "movie_title": "CW",
         "screen_count": 990
-      },
-      {
-        "movie_title": "Nassau County - Westbury",
-        "screen_count": 132
       },
       {
         "movie_title": "Project Hail Mary",
@@ -14678,15 +14342,11 @@
       "pct_bachelors_degree": 26.81,
       "pct_below_poverty": 3.79
     },
-    "total_rows": 15,
-    "total_screens": 151,
-    "unique_movies": 15,
-    "non_friday_rate": 0.3333,
+    "total_rows": 14,
+    "total_screens": 31,
+    "unique_movies": 14,
+    "non_friday_rate": 0.3571,
     "top_movies": [
-      {
-        "movie_title": "Nassau County - Garden City",
-        "screen_count": 120
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -14767,18 +14427,14 @@
       "pct_bachelors_degree": 23.88,
       "pct_below_poverty": 7.22
     },
-    "total_rows": 16,
-    "total_screens": 236,
-    "unique_movies": 16,
-    "non_friday_rate": 0.3125,
+    "total_rows": 15,
+    "total_screens": 144,
+    "unique_movies": 15,
+    "non_friday_rate": 0.3333,
     "top_movies": [
       {
         "movie_title": "Copyright 2026 comScore Inc.",
         "screen_count": 108
-      },
-      {
-        "movie_title": "Suffolk County - Farmingdale",
-        "screen_count": 92
       },
       {
         "movie_title": "Scream 7",
@@ -14860,15 +14516,11 @@
       "pct_bachelors_degree": 30.05,
       "pct_below_poverty": 4.99
     },
-    "total_rows": 13,
-    "total_screens": 289,
-    "unique_movies": 13,
-    "non_friday_rate": 0.3077,
+    "total_rows": 12,
+    "total_screens": 28,
+    "unique_movies": 12,
+    "non_friday_rate": 0.3333,
     "top_movies": [
-      {
-        "movie_title": "Suffolk County",
-        "screen_count": 261
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -14941,15 +14593,11 @@
       "pct_bachelors_degree": 25.45,
       "pct_below_poverty": 9.46
     },
-    "total_rows": 5,
-    "total_screens": 1181,
-    "unique_movies": 5,
-    "non_friday_rate": 0.4,
+    "total_rows": 4,
+    "total_screens": 377,
+    "unique_movies": 4,
+    "non_friday_rate": 0.5,
     "top_movies": [
-      {
-        "movie_title": "Nassau County - Garden City",
-        "screen_count": 804
-      },
       {
         "movie_title": "CW",
         "screen_count": 372
@@ -14990,15 +14638,11 @@
       "pct_bachelors_degree": 32.29,
       "pct_below_poverty": 4.98
     },
-    "total_rows": 4,
-    "total_screens": 600,
-    "unique_movies": 4,
-    "non_friday_rate": 0.25,
+    "total_rows": 3,
+    "total_screens": 7,
+    "unique_movies": 3,
+    "non_friday_rate": 0.3333,
     "top_movies": [
-      {
-        "movie_title": "Nassau County - Westbury",
-        "screen_count": 593
-      },
       {
         "movie_title": "Project Hail Mary",
         "screen_count": 4
@@ -15035,15 +14679,11 @@
       "pct_bachelors_degree": 26.81,
       "pct_below_poverty": 3.79
     },
-    "total_rows": 13,
-    "total_screens": 321,
-    "unique_movies": 13,
-    "non_friday_rate": 0.1538,
+    "total_rows": 12,
+    "total_screens": 26,
+    "unique_movies": 12,
+    "non_friday_rate": 0.1667,
     "top_movies": [
-      {
-        "movie_title": "Suffolk County - Commack",
-        "screen_count": 295
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -15157,15 +14797,11 @@
       "pct_bachelors_degree": 32.83,
       "pct_below_poverty": 4.83
     },
-    "total_rows": 6,
-    "total_screens": 579,
-    "unique_movies": 6,
-    "non_friday_rate": 0.3333,
+    "total_rows": 5,
+    "total_screens": 14,
+    "unique_movies": 5,
+    "non_friday_rate": 0.4,
     "top_movies": [
-      {
-        "movie_title": "Suffolk County - Sayville",
-        "screen_count": 565
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 5
@@ -15210,15 +14846,11 @@
       "pct_bachelors_degree": 30.17,
       "pct_below_poverty": 5.54
     },
-    "total_rows": 4,
-    "total_screens": 635,
-    "unique_movies": 4,
-    "non_friday_rate": 0.25,
+    "total_rows": 3,
+    "total_screens": 8,
+    "unique_movies": 3,
+    "non_friday_rate": 0.3333,
     "top_movies": [
-      {
-        "movie_title": "Suffolk County - Farmingdale",
-        "screen_count": 627
-      },
       {
         "movie_title": "Project Hail Mary",
         "screen_count": 4
@@ -15255,15 +14887,11 @@
       "pct_bachelors_degree": 30.05,
       "pct_below_poverty": 4.99
     },
-    "total_rows": 16,
-    "total_screens": 85,
-    "unique_movies": 16,
-    "non_friday_rate": 0.3125,
+    "total_rows": 15,
+    "total_screens": 36,
+    "unique_movies": 15,
+    "non_friday_rate": 0.3333,
     "top_movies": [
-      {
-        "movie_title": "Suffolk County - Sayville",
-        "screen_count": 49
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -15348,18 +14976,14 @@
       "pct_bachelors_degree": 18.25,
       "pct_below_poverty": 3.4
     },
-    "total_rows": 17,
-    "total_screens": 837,
-    "unique_movies": 17,
-    "non_friday_rate": 0.2353,
+    "total_rows": 16,
+    "total_screens": 785,
+    "unique_movies": 16,
+    "non_friday_rate": 0.25,
     "top_movies": [
       {
         "movie_title": "Copyright 2026 comScore Inc.",
         "screen_count": 747
-      },
-      {
-        "movie_title": "Suffolk County - Hamptons",
-        "screen_count": 52
       },
       {
         "movie_title": "Scream 7",
@@ -15482,15 +15106,11 @@
       "pct_bachelors_degree": 30.41,
       "pct_below_poverty": 2.76
     },
-    "total_rows": 22,
-    "total_screens": 178,
-    "unique_movies": 22,
-    "non_friday_rate": 0.2273,
+    "total_rows": 21,
+    "total_screens": 52,
+    "unique_movies": 21,
+    "non_friday_rate": 0.2381,
     "top_movies": [
-      {
-        "movie_title": "Suffolk County - Commack",
-        "screen_count": 126
-      },
       {
         "movie_title": "GOAT",
         "screen_count": 9
@@ -15565,6 +15185,10 @@
       },
       {
         "movie_title": "Love Insurance Kompany (LIK",
+        "screen_count": 1
+      },
+      {
+        "movie_title": "Jerry Maguire",
         "screen_count": 1
       }
     ]
@@ -15664,15 +15288,11 @@
       "pct_bachelors_degree": 23.98,
       "pct_below_poverty": 4.35
     },
-    "total_rows": 20,
-    "total_screens": 72,
-    "unique_movies": 20,
-    "non_friday_rate": 0.25,
+    "total_rows": 19,
+    "total_screens": 39,
+    "unique_movies": 19,
+    "non_friday_rate": 0.2632,
     "top_movies": [
-      {
-        "movie_title": "Suffolk County",
-        "screen_count": 33
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -15773,15 +15393,11 @@
       "pct_bachelors_degree": 30.72,
       "pct_below_poverty": 5.22
     },
-    "total_rows": 5,
-    "total_screens": 278,
-    "unique_movies": 5,
-    "non_friday_rate": 0.4,
+    "total_rows": 4,
+    "total_screens": 9,
+    "unique_movies": 4,
+    "non_friday_rate": 0.5,
     "top_movies": [
-      {
-        "movie_title": "Orange County",
-        "screen_count": 269
-      },
       {
         "movie_title": "Project Hail Mary",
         "screen_count": 4
@@ -15822,18 +15438,14 @@
       "pct_bachelors_degree": 10.48,
       "pct_below_poverty": 15.51
     },
-    "total_rows": 20,
-    "total_screens": 306,
-    "unique_movies": 20,
-    "non_friday_rate": 0.25,
+    "total_rows": 19,
+    "total_screens": 270,
+    "unique_movies": 19,
+    "non_friday_rate": 0.2632,
     "top_movies": [
       {
         "movie_title": "Copyright 2026 comScore Inc.",
         "screen_count": 232
-      },
-      {
-        "movie_title": "Suffolk County - Hamptons",
-        "screen_count": 36
       },
       {
         "movie_title": "Hoppers",
@@ -15931,15 +15543,11 @@
       "pct_bachelors_degree": 36.12,
       "pct_below_poverty": 6.92
     },
-    "total_rows": 7,
-    "total_screens": 84,
-    "unique_movies": 7,
-    "non_friday_rate": 0.1429,
+    "total_rows": 6,
+    "total_screens": 16,
+    "unique_movies": 6,
+    "non_friday_rate": 0.1667,
     "top_movies": [
-      {
-        "movie_title": "East Northport, NY",
-        "screen_count": 68
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -15988,15 +15596,11 @@
       "pct_bachelors_degree": 27.49,
       "pct_below_poverty": 4.92
     },
-    "total_rows": 13,
-    "total_screens": 199,
-    "unique_movies": 13,
-    "non_friday_rate": 0.2308,
+    "total_rows": 12,
+    "total_screens": 26,
+    "unique_movies": 12,
+    "non_friday_rate": 0.25,
     "top_movies": [
-      {
-        "movie_title": "Dutchess County",
-        "screen_count": 173
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -16069,15 +15673,11 @@
       "pct_bachelors_degree": 13.62,
       "pct_below_poverty": 2
     },
-    "total_rows": 6,
-    "total_screens": 893,
-    "unique_movies": 6,
-    "non_friday_rate": 0.3333,
+    "total_rows": 5,
+    "total_screens": 10,
+    "unique_movies": 5,
+    "non_friday_rate": 0.4,
     "top_movies": [
-      {
-        "movie_title": "Ulster County",
-        "screen_count": 883
-      },
       {
         "movie_title": "Project Hail Mary",
         "screen_count": 4
@@ -16122,15 +15722,11 @@
       "pct_bachelors_degree": 12.38,
       "pct_below_poverty": 16.41
     },
-    "total_rows": 8,
-    "total_screens": 1907,
-    "unique_movies": 6,
-    "non_friday_rate": 0.125,
+    "total_rows": 7,
+    "total_screens": 921,
+    "unique_movies": 5,
+    "non_friday_rate": 0.1429,
     "top_movies": [
-      {
-        "movie_title": "Suffolk County - Commack",
-        "screen_count": 986
-      },
       {
         "movie_title": "CW",
         "screen_count": 909
@@ -16175,15 +15771,11 @@
       "pct_bachelors_degree": 28.04,
       "pct_below_poverty": 3.72
     },
-    "total_rows": 12,
-    "total_screens": 96,
-    "unique_movies": 12,
-    "non_friday_rate": 0.5833,
+    "total_rows": 11,
+    "total_screens": 15,
+    "unique_movies": 11,
+    "non_friday_rate": 0.6364,
     "top_movies": [
-      {
-        "movie_title": "Dutchess County",
-        "screen_count": 81
-      },
       {
         "movie_title": "Project Hail Mary",
         "screen_count": 4
@@ -16301,15 +15893,11 @@
       "pct_bachelors_degree": 19.6,
       "pct_below_poverty": 8.03
     },
-    "total_rows": 6,
-    "total_screens": 585,
-    "unique_movies": 6,
-    "non_friday_rate": 0.1667,
+    "total_rows": 5,
+    "total_screens": 15,
+    "unique_movies": 5,
+    "non_friday_rate": 0.2,
     "top_movies": [
-      {
-        "movie_title": "Ulster County",
-        "screen_count": 570
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -16354,17 +15942,13 @@
       "pct_bachelors_degree": 28.78,
       "pct_below_poverty": 11.78
     },
-    "total_rows": 3,
-    "total_screens": 1629,
-    "unique_movies": 3,
+    "total_rows": 2,
+    "total_screens": 815,
+    "unique_movies": 2,
     "non_friday_rate": 0,
     "top_movies": [
       {
         "movie_title": "CW",
-        "screen_count": 814
-      },
-      {
-        "movie_title": "Orange County",
         "screen_count": 814
       },
       {
@@ -16395,15 +15979,11 @@
       "pct_bachelors_degree": 26.59,
       "pct_below_poverty": 9.33
     },
-    "total_rows": 7,
-    "total_screens": 1323,
-    "unique_movies": 7,
-    "non_friday_rate": 0.1429,
+    "total_rows": 6,
+    "total_screens": 357,
+    "unique_movies": 6,
+    "non_friday_rate": 0.1667,
     "top_movies": [
-      {
-        "movie_title": "Ulster County",
-        "screen_count": 966
-      },
       {
         "movie_title": "CW",
         "screen_count": 342
@@ -16452,15 +16032,11 @@
       "pct_bachelors_degree": 33.93,
       "pct_below_poverty": 36.37
     },
-    "total_rows": 4,
-    "total_screens": 349,
-    "unique_movies": 4,
-    "non_friday_rate": 0.25,
+    "total_rows": 3,
+    "total_screens": 8,
+    "unique_movies": 3,
+    "non_friday_rate": 0.3333,
     "top_movies": [
-      {
-        "movie_title": "Sullivan County",
-        "screen_count": 341
-      },
       {
         "movie_title": "Project Hail Mary",
         "screen_count": 4
@@ -16497,15 +16073,11 @@
       "pct_bachelors_degree": 26.43,
       "pct_below_poverty": 0
     },
-    "total_rows": 2,
-    "total_screens": 604,
-    "unique_movies": 2,
+    "total_rows": 1,
+    "total_screens": 2,
+    "unique_movies": 1,
     "non_friday_rate": 0,
     "top_movies": [
-      {
-        "movie_title": "Ulster County",
-        "screen_count": 602
-      },
       {
         "movie_title": "Super Mario Galaxy Movie, T",
         "screen_count": 2
@@ -16534,15 +16106,11 @@
       "pct_bachelors_degree": 16.63,
       "pct_below_poverty": 18.04
     },
-    "total_rows": 22,
-    "total_screens": 89,
-    "unique_movies": 22,
-    "non_friday_rate": 0.2273,
+    "total_rows": 21,
+    "total_screens": 47,
+    "unique_movies": 21,
+    "non_friday_rate": 0.2381,
     "top_movies": [
-      {
-        "movie_title": "Suffolk County - Farmingdale",
-        "screen_count": 42
-      },
       {
         "movie_title": "Scream 7",
         "screen_count": 7
@@ -16618,6 +16186,10 @@
       {
         "movie_title": "ChaO",
         "screen_count": 1
+      },
+      {
+        "movie_title": "Caddyshack",
+        "screen_count": 1
       }
     ]
   },
@@ -16643,18 +16215,14 @@
       "pct_bachelors_degree": 20.99,
       "pct_below_poverty": 4.62
     },
-    "total_rows": 22,
-    "total_screens": 234,
-    "unique_movies": 22,
-    "non_friday_rate": 0.2727,
+    "total_rows": 21,
+    "total_screens": 209,
+    "unique_movies": 21,
+    "non_friday_rate": 0.2857,
     "top_movies": [
       {
         "movie_title": "Copyright 2026 comScore Inc.",
         "screen_count": 163
-      },
-      {
-        "movie_title": "Dutchess County",
-        "screen_count": 25
       },
       {
         "movie_title": "GOAT",
@@ -16727,6 +16295,10 @@
       {
         "movie_title": "ChaO",
         "screen_count": 1
+      },
+      {
+        "movie_title": "Jerry Maguire",
+        "screen_count": 1
       }
     ]
   },
@@ -16752,15 +16324,11 @@
       "pct_bachelors_degree": 16.8,
       "pct_below_poverty": 2.65
     },
-    "total_rows": 7,
-    "total_screens": 1277,
-    "unique_movies": 6,
-    "non_friday_rate": 0.2857,
+    "total_rows": 6,
+    "total_screens": 539,
+    "unique_movies": 5,
+    "non_friday_rate": 0.3333,
     "top_movies": [
-      {
-        "movie_title": "Bergen County",
-        "screen_count": 738
-      },
       {
         "movie_title": "CW",
         "screen_count": 534
@@ -16858,18 +16426,14 @@
       "pct_bachelors_degree": 28.23,
       "pct_below_poverty": 5.09
     },
-    "total_rows": 6,
-    "total_screens": 642,
-    "unique_movies": 6,
-    "non_friday_rate": 0.1667,
+    "total_rows": 5,
+    "total_screens": 468,
+    "unique_movies": 5,
+    "non_friday_rate": 0.2,
     "top_movies": [
       {
         "movie_title": "CW",
         "screen_count": 459
-      },
-      {
-        "movie_title": "Ulster County",
-        "screen_count": 174
       },
       {
         "movie_title": "Project Hail Mary",
@@ -16911,15 +16475,11 @@
       "pct_bachelors_degree": 17.4,
       "pct_below_poverty": 19.13
     },
-    "total_rows": 12,
-    "total_screens": 212,
-    "unique_movies": 12,
-    "non_friday_rate": 0.1667,
+    "total_rows": 11,
+    "total_screens": 22,
+    "unique_movies": 11,
+    "non_friday_rate": 0.1818,
     "top_movies": [
-      {
-        "movie_title": "Bergen County",
-        "screen_count": 190
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -16973,15 +16533,11 @@
     "theater_city_state": "Teaneck, NJ",
     "demographics_status": "no-match",
     "demographics": null,
-    "total_rows": 6,
-    "total_screens": 842,
-    "unique_movies": 6,
-    "non_friday_rate": 0.3333,
+    "total_rows": 5,
+    "total_screens": 311,
+    "unique_movies": 5,
+    "non_friday_rate": 0.4,
     "top_movies": [
-      {
-        "movie_title": "Orange County",
-        "screen_count": 531
-      },
       {
         "movie_title": "Copyright 2026 comScore Inc.",
         "screen_count": 301
@@ -17026,15 +16582,11 @@
       "pct_bachelors_degree": 23.59,
       "pct_below_poverty": 8.37
     },
-    "total_rows": 5,
-    "total_screens": 140,
-    "unique_movies": 5,
-    "non_friday_rate": 0.2,
+    "total_rows": 4,
+    "total_screens": 8,
+    "unique_movies": 4,
+    "non_friday_rate": 0.25,
     "top_movies": [
-      {
-        "movie_title": "Bergen County",
-        "screen_count": 132
-      },
       {
         "movie_title": "Project Hail Mary",
         "screen_count": 4
@@ -17180,15 +16732,11 @@
       "pct_bachelors_degree": 23.89,
       "pct_below_poverty": 13.02
     },
-    "total_rows": 13,
-    "total_screens": 74,
-    "unique_movies": 13,
-    "non_friday_rate": 0.2308,
+    "total_rows": 12,
+    "total_screens": 29,
+    "unique_movies": 12,
+    "non_friday_rate": 0.25,
     "top_movies": [
-      {
-        "movie_title": "Queens, NY",
-        "screen_count": 45
-      },
       {
         "movie_title": "King's Warden, The",
         "screen_count": 8
@@ -17261,15 +16809,11 @@
       "pct_bachelors_degree": 23.64,
       "pct_below_poverty": 17.36
     },
-    "total_rows": 14,
-    "total_screens": 560,
-    "unique_movies": 14,
-    "non_friday_rate": 0.1429,
+    "total_rows": 13,
+    "total_screens": 32,
+    "unique_movies": 13,
+    "non_friday_rate": 0.1538,
     "top_movies": [
-      {
-        "movie_title": "Middlesex County",
-        "screen_count": 528
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -17331,15 +16875,11 @@
     "theater_city_state": "Edison, NJ",
     "demographics_status": "no-match",
     "demographics": null,
-    "total_rows": 14,
-    "total_screens": 133,
-    "unique_movies": 14,
-    "non_friday_rate": 0.2143,
+    "total_rows": 13,
+    "total_screens": 29,
+    "unique_movies": 13,
+    "non_friday_rate": 0.2308,
     "top_movies": [
-      {
-        "movie_title": "Essex County",
-        "screen_count": 104
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -17401,15 +16941,11 @@
     "theater_city_state": "West Orange, NJ",
     "demographics_status": "no-match",
     "demographics": null,
-    "total_rows": 9,
-    "total_screens": 343,
-    "unique_movies": 9,
-    "non_friday_rate": 0.1111,
+    "total_rows": 8,
+    "total_screens": 20,
+    "unique_movies": 8,
+    "non_friday_rate": 0.125,
     "top_movies": [
-      {
-        "movie_title": "Bronx, NY",
-        "screen_count": 323
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -17547,15 +17083,11 @@
       "pct_bachelors_degree": 23.64,
       "pct_below_poverty": 17.36
     },
-    "total_rows": 14,
-    "total_screens": 138,
-    "unique_movies": 14,
-    "non_friday_rate": 0.2143,
+    "total_rows": 13,
+    "total_screens": 28,
+    "unique_movies": 13,
+    "non_friday_rate": 0.2308,
     "top_movies": [
-      {
-        "movie_title": "Passaic County",
-        "screen_count": 110
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -17632,18 +17164,14 @@
       "pct_bachelors_degree": 23.5,
       "pct_below_poverty": 7.43
     },
-    "total_rows": 23,
-    "total_screens": 184,
-    "unique_movies": 23,
-    "non_friday_rate": 0.2609,
+    "total_rows": 22,
+    "total_screens": 118,
+    "unique_movies": 22,
+    "non_friday_rate": 0.2727,
     "top_movies": [
       {
         "movie_title": "Copyright 2026 comScore Inc.",
         "screen_count": 69
-      },
-      {
-        "movie_title": "Monmouth County",
-        "screen_count": 66
       },
       {
         "movie_title": "GOAT",
@@ -17716,6 +17244,10 @@
       {
         "movie_title": "Legends of the Lost Ark",
         "screen_count": 1
+      },
+      {
+        "movie_title": "Royal Ballet: Giselle (2026",
+        "screen_count": 1
       }
     ]
   },
@@ -17741,15 +17273,11 @@
       "pct_bachelors_degree": 20.55,
       "pct_below_poverty": 14.29
     },
-    "total_rows": 15,
-    "total_screens": 355,
-    "unique_movies": 15,
-    "non_friday_rate": 0.1333,
+    "total_rows": 14,
+    "total_screens": 29,
+    "unique_movies": 14,
+    "non_friday_rate": 0.1429,
     "top_movies": [
-      {
-        "movie_title": "Somerset County",
-        "screen_count": 326
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -17907,18 +17435,14 @@
       "pct_bachelors_degree": 32.89,
       "pct_below_poverty": 2.98
     },
-    "total_rows": 7,
-    "total_screens": 1056,
-    "unique_movies": 7,
-    "non_friday_rate": 0.1429,
+    "total_rows": 6,
+    "total_screens": 589,
+    "unique_movies": 6,
+    "non_friday_rate": 0.1667,
     "top_movies": [
       {
         "movie_title": "CW",
         "screen_count": 574
-      },
-      {
-        "movie_title": "Hudson County",
-        "screen_count": 467
       },
       {
         "movie_title": "Hoppers",
@@ -17964,15 +17488,11 @@
       "pct_bachelors_degree": 29.41,
       "pct_below_poverty": 15.62
     },
-    "total_rows": 13,
-    "total_screens": 498,
-    "unique_movies": 13,
-    "non_friday_rate": 0.3077,
+    "total_rows": 12,
+    "total_screens": 27,
+    "unique_movies": 12,
+    "non_friday_rate": 0.3333,
     "top_movies": [
-      {
-        "movie_title": "Passaic County",
-        "screen_count": 471
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -18030,15 +17550,11 @@
     "theater_city_state": "Wayne, NJ",
     "demographics_status": "no-match",
     "demographics": null,
-    "total_rows": 15,
-    "total_screens": 95,
-    "unique_movies": 15,
-    "non_friday_rate": 0.3333,
+    "total_rows": 14,
+    "total_screens": 30,
+    "unique_movies": 14,
+    "non_friday_rate": 0.3571,
     "top_movies": [
-      {
-        "movie_title": "Bergen County",
-        "screen_count": 65
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -18119,15 +17635,11 @@
       "pct_bachelors_degree": 26.66,
       "pct_below_poverty": 11.25
     },
-    "total_rows": 8,
-    "total_screens": 656,
-    "unique_movies": 8,
-    "non_friday_rate": 0.125,
+    "total_rows": 7,
+    "total_screens": 23,
+    "unique_movies": 7,
+    "non_friday_rate": 0.1429,
     "top_movies": [
-      {
-        "movie_title": "Somerset County",
-        "screen_count": 633
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -18180,18 +17692,14 @@
       "pct_bachelors_degree": 41.61,
       "pct_below_poverty": 1.03
     },
-    "total_rows": 6,
-    "total_screens": 648,
-    "unique_movies": 6,
-    "non_friday_rate": 0.1667,
+    "total_rows": 5,
+    "total_screens": 371,
+    "unique_movies": 5,
+    "non_friday_rate": 0.2,
     "top_movies": [
       {
         "movie_title": "CW",
         "screen_count": 362
-      },
-      {
-        "movie_title": "Essex County",
-        "screen_count": 277
       },
       {
         "movie_title": "Project Hail Mary",
@@ -18233,15 +17741,11 @@
       "pct_bachelors_degree": 78.64,
       "pct_below_poverty": null
     },
-    "total_rows": 8,
-    "total_screens": 76,
-    "unique_movies": 8,
-    "non_friday_rate": 0.125,
+    "total_rows": 7,
+    "total_screens": 14,
+    "unique_movies": 7,
+    "non_friday_rate": 0.1429,
     "top_movies": [
-      {
-        "movie_title": "Middlesex County",
-        "screen_count": 62
-      },
       {
         "movie_title": "AI Doc: Or How I Became an",
         "screen_count": 3
@@ -18279,15 +17783,11 @@
     "theater_city_state": "East Brunswick, NJ",
     "demographics_status": "no-match",
     "demographics": null,
-    "total_rows": 13,
-    "total_screens": 199,
-    "unique_movies": 13,
-    "non_friday_rate": 0.2308,
+    "total_rows": 12,
+    "total_screens": 31,
+    "unique_movies": 12,
+    "non_friday_rate": 0.25,
     "top_movies": [
-      {
-        "movie_title": "Closter, NJ",
-        "screen_count": 168
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -18401,15 +17901,11 @@
       "pct_bachelors_degree": 24.07,
       "pct_below_poverty": 3.86
     },
-    "total_rows": 8,
-    "total_screens": 1429,
-    "unique_movies": 8,
+    "total_rows": 7,
+    "total_screens": 508,
+    "unique_movies": 7,
     "non_friday_rate": 0,
     "top_movies": [
-      {
-        "movie_title": "Queens, NY",
-        "screen_count": 921
-      },
       {
         "movie_title": "CW",
         "screen_count": 494
@@ -18462,15 +17958,11 @@
       "pct_bachelors_degree": 23.64,
       "pct_below_poverty": 17.36
     },
-    "total_rows": 9,
-    "total_screens": 741,
-    "unique_movies": 9,
-    "non_friday_rate": 0.1111,
+    "total_rows": 8,
+    "total_screens": 18,
+    "unique_movies": 8,
+    "non_friday_rate": 0.125,
     "top_movies": [
-      {
-        "movie_title": "Somerset County",
-        "screen_count": 723
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -18527,15 +18019,11 @@
       "pct_bachelors_degree": 32.3,
       "pct_below_poverty": 2.73
     },
-    "total_rows": 8,
-    "total_screens": 78,
-    "unique_movies": 8,
-    "non_friday_rate": 0.125,
+    "total_rows": 7,
+    "total_screens": 17,
+    "unique_movies": 7,
+    "non_friday_rate": 0.1429,
     "top_movies": [
-      {
-        "movie_title": "Upper Montclair, NJ",
-        "screen_count": 61
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -18588,15 +18076,11 @@
       "pct_bachelors_degree": 35.67,
       "pct_below_poverty": 1.77
     },
-    "total_rows": 5,
-    "total_screens": 418,
-    "unique_movies": 5,
-    "non_friday_rate": 0.2,
+    "total_rows": 4,
+    "total_screens": 8,
+    "unique_movies": 4,
+    "non_friday_rate": 0.25,
     "top_movies": [
-      {
-        "movie_title": "Essex County",
-        "screen_count": 410
-      },
       {
         "movie_title": "Project Hail Mary",
         "screen_count": 4
@@ -18622,15 +18106,11 @@
     "theater_city_state": "South Orange, NJ",
     "demographics_status": "no-match",
     "demographics": null,
-    "total_rows": 5,
-    "total_screens": 173,
-    "unique_movies": 5,
-    "non_friday_rate": 0.2,
+    "total_rows": 4,
+    "total_screens": 8,
+    "unique_movies": 4,
+    "non_friday_rate": 0.25,
     "top_movies": [
-      {
-        "movie_title": "Monmouth County",
-        "screen_count": 165
-      },
       {
         "movie_title": "Project Hail Mary",
         "screen_count": 3
@@ -18656,15 +18136,11 @@
     "theater_city_state": "Hazlet, NJ",
     "demographics_status": "no-match",
     "demographics": null,
-    "total_rows": 13,
-    "total_screens": 155,
-    "unique_movies": 13,
-    "non_friday_rate": 0.3846,
+    "total_rows": 12,
+    "total_screens": 27,
+    "unique_movies": 12,
+    "non_friday_rate": 0.4167,
     "top_movies": [
-      {
-        "movie_title": "Union County",
-        "screen_count": 128
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -18737,15 +18213,11 @@
       "pct_bachelors_degree": 9.81,
       "pct_below_poverty": 15.3
     },
-    "total_rows": 23,
-    "total_screens": 66,
-    "unique_movies": 23,
-    "non_friday_rate": 0.2609,
+    "total_rows": 22,
+    "total_screens": 51,
+    "unique_movies": 22,
+    "non_friday_rate": 0.2727,
     "top_movies": [
-      {
-        "movie_title": "Westchester County - Bronxville",
-        "screen_count": 15
-      },
       {
         "movie_title": "Scream 7",
         "screen_count": 7
@@ -18821,6 +18293,10 @@
       {
         "movie_title": "Hunting Matthew Nichols",
         "screen_count": 1
+      },
+      {
+        "movie_title": "TN 2026 (Thanga Natchathira",
+        "screen_count": 1
       }
     ]
   },
@@ -18846,15 +18322,11 @@
       "pct_bachelors_degree": 22.54,
       "pct_below_poverty": 10.64
     },
-    "total_rows": 23,
-    "total_screens": 98,
-    "unique_movies": 23,
-    "non_friday_rate": 0.2609,
+    "total_rows": 22,
+    "total_screens": 52,
+    "unique_movies": 22,
+    "non_friday_rate": 0.2727,
     "top_movies": [
-      {
-        "movie_title": "Hudson County",
-        "screen_count": 46
-      },
       {
         "movie_title": "Scream 7",
         "screen_count": 7
@@ -18930,6 +18402,10 @@
       {
         "movie_title": "ChaO",
         "screen_count": 1
+      },
+      {
+        "movie_title": "Caddyshack",
+        "screen_count": 1
       }
     ]
   },
@@ -18955,15 +18431,11 @@
       "pct_bachelors_degree": 29.25,
       "pct_below_poverty": 2.85
     },
-    "total_rows": 11,
-    "total_screens": 282,
-    "unique_movies": 11,
-    "non_friday_rate": 0.1818,
+    "total_rows": 10,
+    "total_screens": 22,
+    "unique_movies": 10,
+    "non_friday_rate": 0.2,
     "top_movies": [
-      {
-        "movie_title": "Monmouth County",
-        "screen_count": 260
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -19028,15 +18500,11 @@
       "pct_bachelors_degree": 24.21,
       "pct_below_poverty": 5.75
     },
-    "total_rows": 17,
-    "total_screens": 275,
-    "unique_movies": 17,
-    "non_friday_rate": 0.2353,
+    "total_rows": 16,
+    "total_screens": 30,
+    "unique_movies": 16,
+    "non_friday_rate": 0.25,
     "top_movies": [
-      {
-        "movie_title": "Morris County",
-        "screen_count": 245
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -19110,18 +18578,14 @@
     "theater_city_state": "East Hanover, NJ",
     "demographics_status": "no-match",
     "demographics": null,
-    "total_rows": 15,
-    "total_screens": 478,
-    "unique_movies": 15,
-    "non_friday_rate": 0.3333,
+    "total_rows": 14,
+    "total_screens": 463,
+    "unique_movies": 14,
+    "non_friday_rate": 0.3571,
     "top_movies": [
       {
         "movie_title": "Copyright 2026 comScore Inc.",
         "screen_count": 437
-      },
-      {
-        "movie_title": "Union County",
-        "screen_count": 15
       },
       {
         "movie_title": "Hoppers",
@@ -19199,15 +18663,11 @@
       "pct_bachelors_degree": 41.96,
       "pct_below_poverty": 3.13
     },
-    "total_rows": 3,
-    "total_screens": 988,
-    "unique_movies": 3,
-    "non_friday_rate": 0.3333,
+    "total_rows": 2,
+    "total_screens": 6,
+    "unique_movies": 2,
+    "non_friday_rate": 0.5,
     "top_movies": [
-      {
-        "movie_title": "Middlesex County",
-        "screen_count": 982
-      },
       {
         "movie_title": "Project Hail Mary",
         "screen_count": 4
@@ -19225,15 +18685,11 @@
     "theater_city_state": "North Brunswick, NJ",
     "demographics_status": "no-match",
     "demographics": null,
-    "total_rows": 19,
-    "total_screens": 108,
-    "unique_movies": 19,
-    "non_friday_rate": 0.3684,
+    "total_rows": 18,
+    "total_screens": 35,
+    "unique_movies": 18,
+    "non_friday_rate": 0.3889,
     "top_movies": [
-      {
-        "movie_title": "Secaucus, NJ",
-        "screen_count": 73
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -19330,15 +18786,11 @@
       "pct_bachelors_degree": 34.34,
       "pct_below_poverty": 5.99
     },
-    "total_rows": 13,
-    "total_screens": 42,
-    "unique_movies": 13,
-    "non_friday_rate": 0.4615,
+    "total_rows": 12,
+    "total_screens": 25,
+    "unique_movies": 12,
+    "non_friday_rate": 0.5,
     "top_movies": [
-      {
-        "movie_title": "Morris County",
-        "screen_count": 17
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -19619,15 +19071,11 @@
       "pct_bachelors_degree": 23.23,
       "pct_below_poverty": 7.84
     },
-    "total_rows": 12,
-    "total_screens": 63,
-    "unique_movies": 12,
-    "non_friday_rate": 0.1667,
+    "total_rows": 11,
+    "total_screens": 36,
+    "unique_movies": 11,
+    "non_friday_rate": 0.1818,
     "top_movies": [
-      {
-        "movie_title": "Monmouth County",
-        "screen_count": 27
-      },
       {
         "movie_title": "Scream 7",
         "screen_count": 7
@@ -19733,15 +19181,11 @@
       "pct_bachelors_degree": 36.39,
       "pct_below_poverty": 4.26
     },
-    "total_rows": 5,
-    "total_screens": 938,
-    "unique_movies": 5,
-    "non_friday_rate": 0.2,
+    "total_rows": 4,
+    "total_screens": 14,
+    "unique_movies": 4,
+    "non_friday_rate": 0.25,
     "top_movies": [
-      {
-        "movie_title": "Middlesex County",
-        "screen_count": 924
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -19782,15 +19226,11 @@
       "pct_bachelors_degree": 24.7,
       "pct_below_poverty": 3.55
     },
-    "total_rows": 17,
-    "total_screens": 134,
-    "unique_movies": 17,
-    "non_friday_rate": 0.3529,
+    "total_rows": 16,
+    "total_screens": 32,
+    "unique_movies": 16,
+    "non_friday_rate": 0.375,
     "top_movies": [
-      {
-        "movie_title": "Danbury, CT",
-        "screen_count": 102
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -19879,18 +19319,14 @@
       "pct_bachelors_degree": 23,
       "pct_below_poverty": 5.86
     },
-    "total_rows": 7,
-    "total_screens": 1592,
-    "unique_movies": 6,
-    "non_friday_rate": 0.2857,
+    "total_rows": 6,
+    "total_screens": 886,
+    "unique_movies": 5,
+    "non_friday_rate": 0.3333,
     "top_movies": [
       {
         "movie_title": "CW",
         "screen_count": 878
-      },
-      {
-        "movie_title": "Union County",
-        "screen_count": 706
       },
       {
         "movie_title": "Project Hail Mary",
@@ -19932,15 +19368,11 @@
       "pct_bachelors_degree": 15.98,
       "pct_below_poverty": 8.96
     },
-    "total_rows": 12,
-    "total_screens": 396,
-    "unique_movies": 12,
-    "non_friday_rate": 0.1667,
+    "total_rows": 11,
+    "total_screens": 26,
+    "unique_movies": 11,
+    "non_friday_rate": 0.1818,
     "top_movies": [
-      {
-        "movie_title": "Stamford, CT",
-        "screen_count": 370
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -20009,15 +19441,11 @@
       "pct_bachelors_degree": 28.93,
       "pct_below_poverty": 9.53
     },
-    "total_rows": 5,
-    "total_screens": 748,
-    "unique_movies": 5,
-    "non_friday_rate": 0.2,
+    "total_rows": 4,
+    "total_screens": 9,
+    "unique_movies": 4,
+    "non_friday_rate": 0.25,
     "top_movies": [
-      {
-        "movie_title": "Westport, CT",
-        "screen_count": 739
-      },
       {
         "movie_title": "Project Hail Mary",
         "screen_count": 4
@@ -20058,15 +19486,11 @@
       "pct_bachelors_degree": 25.93,
       "pct_below_poverty": 10.12
     },
-    "total_rows": 9,
-    "total_screens": 102,
-    "unique_movies": 9,
-    "non_friday_rate": 0.1111,
+    "total_rows": 8,
+    "total_screens": 18,
+    "unique_movies": 8,
+    "non_friday_rate": 0.125,
     "top_movies": [
-      {
-        "movie_title": "Ocean County",
-        "screen_count": 84
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -20108,15 +19532,11 @@
     "theater_city_state": "Brick Township, NJ",
     "demographics_status": "no-match",
     "demographics": null,
-    "total_rows": 11,
-    "total_screens": 242,
-    "unique_movies": 11,
-    "non_friday_rate": 0.1818,
+    "total_rows": 10,
+    "total_screens": 24,
+    "unique_movies": 10,
+    "non_friday_rate": 0.2,
     "top_movies": [
-      {
-        "movie_title": "Westport, CT",
-        "screen_count": 218
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -20181,15 +19601,11 @@
       "pct_bachelors_degree": 25.93,
       "pct_below_poverty": 10.12
     },
-    "total_rows": 5,
-    "total_screens": 754,
-    "unique_movies": 5,
-    "non_friday_rate": 0.2,
+    "total_rows": 4,
+    "total_screens": 13,
+    "unique_movies": 4,
+    "non_friday_rate": 0.25,
     "top_movies": [
-      {
-        "movie_title": "Middlesex County",
-        "screen_count": 741
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -20230,15 +19646,11 @@
       "pct_bachelors_degree": 12.79,
       "pct_below_poverty": 31.58
     },
-    "total_rows": 24,
-    "total_screens": 65,
-    "unique_movies": 24,
-    "non_friday_rate": 0.375,
+    "total_rows": 23,
+    "total_screens": 42,
+    "unique_movies": 23,
+    "non_friday_rate": 0.3913,
     "top_movies": [
-      {
-        "movie_title": "Monmouth County",
-        "screen_count": 23
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -20314,6 +19726,10 @@
       {
         "movie_title": "Royal Ballet: Giselle (2026",
         "screen_count": 1
+      },
+      {
+        "movie_title": "Jerry Maguire",
+        "screen_count": 1
       }
     ]
   },
@@ -20339,15 +19755,11 @@
       "pct_bachelors_degree": 23.07,
       "pct_below_poverty": 6.28
     },
-    "total_rows": 11,
-    "total_screens": 95,
-    "unique_movies": 11,
-    "non_friday_rate": 0.1818,
+    "total_rows": 10,
+    "total_screens": 24,
+    "unique_movies": 10,
+    "non_friday_rate": 0.2,
     "top_movies": [
-      {
-        "movie_title": "Stamford, CT",
-        "screen_count": 71
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -20412,15 +19824,11 @@
       "pct_bachelors_degree": 28.93,
       "pct_below_poverty": 9.53
     },
-    "total_rows": 10,
-    "total_screens": 105,
-    "unique_movies": 10,
-    "non_friday_rate": 0.2,
+    "total_rows": 9,
+    "total_screens": 21,
+    "unique_movies": 9,
+    "non_friday_rate": 0.2222,
     "top_movies": [
-      {
-        "movie_title": "Watchung, NJ",
-        "screen_count": 84
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -20481,15 +19889,11 @@
       "pct_bachelors_degree": 37.32,
       "pct_below_poverty": 2.1
     },
-    "total_rows": 9,
-    "total_screens": 395,
-    "unique_movies": 9,
-    "non_friday_rate": 0.3333,
+    "total_rows": 8,
+    "total_screens": 18,
+    "unique_movies": 8,
+    "non_friday_rate": 0.375,
     "top_movies": [
-      {
-        "movie_title": "Rockaway, NJ",
-        "screen_count": 377
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -20546,18 +19950,14 @@
       "pct_bachelors_degree": 28.38,
       "pct_below_poverty": 6.25
     },
-    "total_rows": 21,
-    "total_screens": 1293,
-    "unique_movies": 21,
-    "non_friday_rate": 0.2381,
+    "total_rows": 20,
+    "total_screens": 994,
+    "unique_movies": 20,
+    "non_friday_rate": 0.25,
     "top_movies": [
       {
         "movie_title": "Copyright 2026 comScore Inc.",
         "screen_count": 957
-      },
-      {
-        "movie_title": "Danbury, CT",
-        "screen_count": 299
       },
       {
         "movie_title": "Hoppers",
@@ -20630,6 +20030,10 @@
       {
         "movie_title": "Jerry Maguire",
         "screen_count": 1
+      },
+      {
+        "movie_title": "Space Station 3D",
+        "screen_count": 1
       }
     ]
   },
@@ -20655,15 +20059,11 @@
       "pct_bachelors_degree": 19.71,
       "pct_below_poverty": 11.13
     },
-    "total_rows": 20,
-    "total_screens": 65,
-    "unique_movies": 20,
-    "non_friday_rate": 0.25,
+    "total_rows": 19,
+    "total_screens": 39,
+    "unique_movies": 19,
+    "non_friday_rate": 0.2632,
     "top_movies": [
-      {
-        "movie_title": "New Canaan, CT",
-        "screen_count": 26
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -20764,15 +20164,11 @@
       "pct_bachelors_degree": 39.58,
       "pct_below_poverty": 4.19
     },
-    "total_rows": 3,
-    "total_screens": 866,
-    "unique_movies": 3,
-    "non_friday_rate": 0.3333,
+    "total_rows": 2,
+    "total_screens": 6,
+    "unique_movies": 2,
+    "non_friday_rate": 0.5,
     "top_movies": [
-      {
-        "movie_title": "Trumbull, CT",
-        "screen_count": 860
-      },
       {
         "movie_title": "Project Hail Mary",
         "screen_count": 4
@@ -20955,15 +20351,11 @@
       "pct_bachelors_degree": 18.31,
       "pct_below_poverty": 8.11
     },
-    "total_rows": 4,
-    "total_screens": 961,
-    "unique_movies": 4,
-    "non_friday_rate": 0.25,
+    "total_rows": 3,
+    "total_screens": 163,
+    "unique_movies": 3,
+    "non_friday_rate": 0.3333,
     "top_movies": [
-      {
-        "movie_title": "Rockland County",
-        "screen_count": 798
-      },
       {
         "movie_title": "CW",
         "screen_count": 160
@@ -21000,15 +20392,11 @@
       "pct_bachelors_degree": 25.33,
       "pct_below_poverty": 7.48
     },
-    "total_rows": 10,
-    "total_screens": 908,
-    "unique_movies": 10,
-    "non_friday_rate": 0.1,
+    "total_rows": 9,
+    "total_screens": 28,
+    "unique_movies": 9,
+    "non_friday_rate": 0.1111,
     "top_movies": [
-      {
-        "movie_title": "Dutchess County",
-        "screen_count": 880
-      },
       {
         "movie_title": "GOAT",
         "screen_count": 9
@@ -21268,15 +20656,11 @@
       "pct_bachelors_degree": 23.64,
       "pct_below_poverty": 17.36
     },
-    "total_rows": 5,
-    "total_screens": 927,
-    "unique_movies": 5,
-    "non_friday_rate": 0.2,
+    "total_rows": 4,
+    "total_screens": 395,
+    "unique_movies": 4,
+    "non_friday_rate": 0.25,
     "top_movies": [
-      {
-        "movie_title": "Hurleyville, NY",
-        "screen_count": 532
-      },
       {
         "movie_title": "CW",
         "screen_count": 361
@@ -21354,15 +20738,11 @@
       "pct_bachelors_degree": 42.14,
       "pct_below_poverty": 2.51
     },
-    "total_rows": 3,
-    "total_screens": 756,
-    "unique_movies": 3,
-    "non_friday_rate": 0.6667,
+    "total_rows": 2,
+    "total_screens": 3,
+    "unique_movies": 2,
+    "non_friday_rate": 1,
     "top_movies": [
-      {
-        "movie_title": "Manhattan, NY",
-        "screen_count": 753
-      },
       {
         "movie_title": "Super Mario Galaxy Movie, T",
         "screen_count": 2
@@ -21395,15 +20775,11 @@
       "pct_bachelors_degree": 23.64,
       "pct_below_poverty": 17.36
     },
-    "total_rows": 2,
-    "total_screens": 579,
-    "unique_movies": 2,
+    "total_rows": 1,
+    "total_screens": 3,
+    "unique_movies": 1,
     "non_friday_rate": 0,
     "top_movies": [
-      {
-        "movie_title": "Fort Lee, NJ",
-        "screen_count": 576
-      },
       {
         "movie_title": "John Lilly And The Earth Co",
         "screen_count": 3
@@ -21432,15 +20808,11 @@
       "pct_bachelors_degree": 35.21,
       "pct_below_poverty": 8.41
     },
-    "total_rows": 7,
-    "total_screens": 249,
-    "unique_movies": 7,
-    "non_friday_rate": 0.5714,
+    "total_rows": 6,
+    "total_screens": 6,
+    "unique_movies": 6,
+    "non_friday_rate": 0.6667,
     "top_movies": [
-      {
-        "movie_title": "Rutherford, NJ",
-        "screen_count": 243
-      },
       {
         "movie_title": "Out Of The Past (re: 1996)",
         "screen_count": 1
@@ -21489,15 +20861,11 @@
       "pct_bachelors_degree": 43.73,
       "pct_below_poverty": 3.35
     },
-    "total_rows": 2,
-    "total_screens": 697,
-    "unique_movies": 2,
-    "non_friday_rate": 0.5,
+    "total_rows": 1,
+    "total_screens": 2,
+    "unique_movies": 1,
+    "non_friday_rate": 1,
     "top_movies": [
-      {
-        "movie_title": "Kingston, NY",
-        "screen_count": 695
-      },
       {
         "movie_title": "Super Mario Galaxy Movie, T",
         "screen_count": 2
@@ -23141,15 +22509,11 @@
     "theater_city_state": "Porter Ranch, CA",
     "demographics_status": "no-match",
     "demographics": null,
-    "total_rows": 8,
-    "total_screens": 633,
-    "unique_movies": 8,
-    "non_friday_rate": 0.125,
+    "total_rows": 7,
+    "total_screens": 17,
+    "unique_movies": 7,
+    "non_friday_rate": 0.1429,
     "top_movies": [
-      {
-        "movie_title": "Santa Clarita Valley, CA",
-        "screen_count": 616
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -23348,15 +22712,11 @@
       "pct_bachelors_degree": 28.8,
       "pct_below_poverty": 11.11
     },
-    "total_rows": 7,
-    "total_screens": 406,
-    "unique_movies": 7,
-    "non_friday_rate": 0.2857,
+    "total_rows": 6,
+    "total_screens": 16,
+    "unique_movies": 6,
+    "non_friday_rate": 0.3333,
     "top_movies": [
-      {
-        "movie_title": "Long Beach, CA",
-        "screen_count": 390
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -23405,15 +22765,11 @@
       "pct_bachelors_degree": 35.35,
       "pct_below_poverty": 5.87
     },
-    "total_rows": 17,
-    "total_screens": 702,
-    "unique_movies": 17,
-    "non_friday_rate": 0.2353,
+    "total_rows": 16,
+    "total_screens": 31,
+    "unique_movies": 16,
+    "non_friday_rate": 0.25,
     "top_movies": [
-      {
-        "movie_title": "Ventura County, CA",
-        "screen_count": 671
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -23830,18 +23186,14 @@
       "pct_bachelors_degree": 22.71,
       "pct_below_poverty": 8.11
     },
-    "total_rows": 13,
-    "total_screens": 793,
-    "unique_movies": 13,
-    "non_friday_rate": 0.1538,
+    "total_rows": 12,
+    "total_screens": 605,
+    "unique_movies": 12,
+    "non_friday_rate": 0.1667,
     "top_movies": [
       {
         "movie_title": "Copyright 2026 comScore Inc.",
         "screen_count": 578
-      },
-      {
-        "movie_title": "Ventura County, CA",
-        "screen_count": 188
       },
       {
         "movie_title": "Hoppers",
@@ -23911,15 +23263,11 @@
       "pct_bachelors_degree": 9.87,
       "pct_below_poverty": 15.32
     },
-    "total_rows": 5,
-    "total_screens": 637,
-    "unique_movies": 5,
-    "non_friday_rate": 0.2,
+    "total_rows": 4,
+    "total_screens": 8,
+    "unique_movies": 4,
+    "non_friday_rate": 0.25,
     "top_movies": [
-      {
-        "movie_title": "Redlands, CA",
-        "screen_count": 629
-      },
       {
         "movie_title": "Project Hail Mary",
         "screen_count": 4
@@ -23960,15 +23308,11 @@
       "pct_bachelors_degree": 20.23,
       "pct_below_poverty": 7.37
     },
-    "total_rows": 17,
-    "total_screens": 769,
-    "unique_movies": 17,
-    "non_friday_rate": 0.2353,
+    "total_rows": 16,
+    "total_screens": 34,
+    "unique_movies": 16,
+    "non_friday_rate": 0.25,
     "top_movies": [
-      {
-        "movie_title": "Ventura County, CA",
-        "screen_count": 735
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -24142,15 +23486,11 @@
       "pct_bachelors_degree": 26.37,
       "pct_below_poverty": 7.53
     },
-    "total_rows": 13,
-    "total_screens": 143,
-    "unique_movies": 13,
-    "non_friday_rate": 0.3077,
+    "total_rows": 12,
+    "total_screens": 23,
+    "unique_movies": 12,
+    "non_friday_rate": 0.3333,
     "top_movies": [
-      {
-        "movie_title": "Antelope Valley, CA",
-        "screen_count": 120
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -24389,15 +23729,11 @@
       "pct_bachelors_degree": 11.38,
       "pct_below_poverty": 14.58
     },
-    "total_rows": 14,
-    "total_screens": 415,
-    "unique_movies": 14,
-    "non_friday_rate": 0.1429,
+    "total_rows": 13,
+    "total_screens": 38,
+    "unique_movies": 13,
+    "non_friday_rate": 0.1538,
     "top_movies": [
-      {
-        "movie_title": "Window Rock, AZ",
-        "screen_count": 377
-      },
       {
         "movie_title": "Scream 7",
         "screen_count": 7
@@ -24654,15 +23990,11 @@
       "pct_bachelors_degree": 30.01,
       "pct_below_poverty": 13.21
     },
-    "total_rows": 7,
-    "total_screens": 422,
-    "unique_movies": 7,
-    "non_friday_rate": 0.4286,
+    "total_rows": 6,
+    "total_screens": 11,
+    "unique_movies": 6,
+    "non_friday_rate": 0.5,
     "top_movies": [
-      {
-        "movie_title": "Antelope Valley, CA",
-        "screen_count": 411
-      },
       {
         "movie_title": "Project Hail Mary",
         "screen_count": 4
@@ -25563,18 +24895,14 @@
       "pct_bachelors_degree": 8.45,
       "pct_below_poverty": 16.81
     },
-    "total_rows": 23,
-    "total_screens": 351,
-    "unique_movies": 23,
-    "non_friday_rate": 0.2174,
+    "total_rows": 22,
+    "total_screens": 331,
+    "unique_movies": 22,
+    "non_friday_rate": 0.2273,
     "top_movies": [
       {
         "movie_title": "Copyright 2026 comScore Inc.",
         "screen_count": 290
-      },
-      {
-        "movie_title": "Montclair, CA",
-        "screen_count": 20
       },
       {
         "movie_title": "Hoppers",
@@ -25646,6 +24974,10 @@
       },
       {
         "movie_title": "Golden Boy",
+        "screen_count": 1
+      },
+      {
+        "movie_title": "Jerry Maguire",
         "screen_count": 1
       }
     ]
@@ -26151,15 +25483,11 @@
       "pct_bachelors_degree": 25.87,
       "pct_below_poverty": 6.53
     },
-    "total_rows": 8,
-    "total_screens": 284,
-    "unique_movies": 8,
-    "non_friday_rate": 0.125,
+    "total_rows": 7,
+    "total_screens": 17,
+    "unique_movies": 7,
+    "non_friday_rate": 0.1429,
     "top_movies": [
-      {
-        "movie_title": "South Bay, CA",
-        "screen_count": 267
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -26301,15 +25629,11 @@
       "pct_bachelors_degree": 28.8,
       "pct_below_poverty": 11.11
     },
-    "total_rows": 2,
-    "total_screens": 549,
-    "unique_movies": 2,
+    "total_rows": 1,
+    "total_screens": 2,
+    "unique_movies": 1,
     "non_friday_rate": 0,
     "top_movies": [
-      {
-        "movie_title": "South Bay, CA",
-        "screen_count": 547
-      },
       {
         "movie_title": "Drama, The",
         "screen_count": 2
@@ -26338,22 +25662,14 @@
       "pct_bachelors_degree": 41.83,
       "pct_below_poverty": 5
     },
-    "total_rows": 24,
-    "total_screens": 1026,
-    "unique_movies": 19,
-    "non_friday_rate": 0.2083,
+    "total_rows": 22,
+    "total_screens": 609,
+    "unique_movies": 17,
+    "non_friday_rate": 0.2273,
     "top_movies": [
       {
         "movie_title": "Copyright 2026 comScore Inc.",
         "screen_count": 567
-      },
-      {
-        "movie_title": "South Bay, CA",
-        "screen_count": 335
-      },
-      {
-        "movie_title": "WESTRN - Milagro Cinemas - Norwalk, CA",
-        "screen_count": 82
       },
       {
         "movie_title": "Project Hail Mary",
@@ -26443,15 +25759,11 @@
       "pct_bachelors_degree": 34.19,
       "pct_below_poverty": 6.9
     },
-    "total_rows": 21,
-    "total_screens": 91,
-    "unique_movies": 21,
-    "non_friday_rate": 0.2381,
+    "total_rows": 20,
+    "total_screens": 50,
+    "unique_movies": 20,
+    "non_friday_rate": 0.25,
     "top_movies": [
-      {
-        "movie_title": "Ventura County, CA",
-        "screen_count": 41
-      },
       {
         "movie_title": "GOAT",
         "screen_count": 9
@@ -26527,6 +25839,10 @@
       {
         "movie_title": "Royal Ballet: Giselle (2026",
         "screen_count": 1
+      },
+      {
+        "movie_title": "Jerry Maguire",
+        "screen_count": 1
       }
     ]
   },
@@ -26552,15 +25868,11 @@
       "pct_bachelors_degree": 24.89,
       "pct_below_poverty": 6.69
     },
-    "total_rows": 8,
-    "total_screens": 1307,
-    "unique_movies": 8,
-    "non_friday_rate": 0.125,
+    "total_rows": 7,
+    "total_screens": 315,
+    "unique_movies": 7,
+    "non_friday_rate": 0.1429,
     "top_movies": [
-      {
-        "movie_title": "Long Beach, CA",
-        "screen_count": 992
-      },
       {
         "movie_title": "Copyright 2026 comScore Inc.",
         "screen_count": 296
@@ -26864,15 +26176,11 @@
       "pct_bachelors_degree": 18.87,
       "pct_below_poverty": 12.2
     },
-    "total_rows": 4,
-    "total_screens": 413,
-    "unique_movies": 4,
-    "non_friday_rate": 0.25,
+    "total_rows": 3,
+    "total_screens": 7,
+    "unique_movies": 3,
+    "non_friday_rate": 0.3333,
     "top_movies": [
-      {
-        "movie_title": "Long Beach, CA",
-        "screen_count": 406
-      },
       {
         "movie_title": "Project Hail Mary",
         "screen_count": 4
@@ -27189,15 +26497,11 @@
       "pct_bachelors_degree": 19.98,
       "pct_below_poverty": 9.68
     },
-    "total_rows": 18,
-    "total_screens": 55,
-    "unique_movies": 18,
-    "non_friday_rate": 0.2778,
+    "total_rows": 17,
+    "total_screens": 35,
+    "unique_movies": 17,
+    "non_friday_rate": 0.2941,
     "top_movies": [
-      {
-        "movie_title": "Long Beach, CA",
-        "screen_count": 20
-      },
       {
         "movie_title": "King's Warden, The",
         "screen_count": 8
@@ -27379,15 +26683,11 @@
       "pct_bachelors_degree": 12.78,
       "pct_below_poverty": 11.09
     },
-    "total_rows": 4,
-    "total_screens": 783,
-    "unique_movies": 4,
-    "non_friday_rate": 0.25,
+    "total_rows": 3,
+    "total_screens": 7,
+    "unique_movies": 3,
+    "non_friday_rate": 0.3333,
     "top_movies": [
-      {
-        "movie_title": "South Bay, CA",
-        "screen_count": 776
-      },
       {
         "movie_title": "Project Hail Mary",
         "screen_count": 4
@@ -27469,15 +26769,11 @@
       "pct_bachelors_degree": 27.44,
       "pct_below_poverty": 12.2
     },
-    "total_rows": 22,
-    "total_screens": 86,
-    "unique_movies": 22,
-    "non_friday_rate": 0.2273,
+    "total_rows": 21,
+    "total_screens": 48,
+    "unique_movies": 21,
+    "non_friday_rate": 0.2381,
     "top_movies": [
-      {
-        "movie_title": "Long Beach, CA",
-        "screen_count": 38
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -27552,6 +26848,10 @@
       },
       {
         "movie_title": "ChaO",
+        "screen_count": 1
+      },
+      {
+        "movie_title": "Jerry Maguire",
         "screen_count": 1
       }
     ]
@@ -27769,15 +27069,11 @@
       "pct_bachelors_degree": 39.36,
       "pct_below_poverty": 11.68
     },
-    "total_rows": 10,
-    "total_screens": 110,
-    "unique_movies": 10,
-    "non_friday_rate": 0.2,
+    "total_rows": 9,
+    "total_screens": 19,
+    "unique_movies": 9,
+    "non_friday_rate": 0.2222,
     "top_movies": [
-      {
-        "movie_title": "Queen Creek, AZ",
-        "screen_count": 91
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -27838,15 +27134,11 @@
       "pct_bachelors_degree": 30.02,
       "pct_below_poverty": 3.56
     },
-    "total_rows": 12,
-    "total_screens": 131,
-    "unique_movies": 12,
-    "non_friday_rate": 0.1667,
+    "total_rows": 11,
+    "total_screens": 26,
+    "unique_movies": 11,
+    "non_friday_rate": 0.1818,
     "top_movies": [
-      {
-        "movie_title": "Lemoore, CA",
-        "screen_count": 105
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -27915,15 +27207,11 @@
       "pct_bachelors_degree": 13.47,
       "pct_below_poverty": 14.94
     },
-    "total_rows": 7,
-    "total_screens": 639,
-    "unique_movies": 7,
-    "non_friday_rate": 0.1429,
+    "total_rows": 6,
+    "total_screens": 11,
+    "unique_movies": 6,
+    "non_friday_rate": 0.1667,
     "top_movies": [
-      {
-        "movie_title": "Orange County, CA",
-        "screen_count": 628
-      },
       {
         "movie_title": "Project Hail Mary",
         "screen_count": 4
@@ -28216,15 +27504,11 @@
       "pct_bachelors_degree": 41.1,
       "pct_below_poverty": 7.3
     },
-    "total_rows": 6,
-    "total_screens": 58,
-    "unique_movies": 6,
-    "non_friday_rate": 0.1667,
+    "total_rows": 5,
+    "total_screens": 10,
+    "unique_movies": 5,
+    "non_friday_rate": 0.2,
     "top_movies": [
-      {
-        "movie_title": "South Bay, CA",
-        "screen_count": 48
-      },
       {
         "movie_title": "Project Hail Mary",
         "screen_count": 4
@@ -28269,15 +27553,11 @@
       "pct_bachelors_degree": 34.19,
       "pct_below_poverty": 6.9
     },
-    "total_rows": 17,
-    "total_screens": 178,
-    "unique_movies": 17,
-    "non_friday_rate": 0.1765,
+    "total_rows": 16,
+    "total_screens": 30,
+    "unique_movies": 16,
+    "non_friday_rate": 0.1875,
     "top_movies": [
-      {
-        "movie_title": "Upland/Montclair/Ontario, CA",
-        "screen_count": 148
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -28622,15 +27902,11 @@
       "pct_bachelors_degree": 41.1,
       "pct_below_poverty": 7.3
     },
-    "total_rows": 8,
-    "total_screens": 233,
-    "unique_movies": 8,
-    "non_friday_rate": 0.25,
+    "total_rows": 7,
+    "total_screens": 17,
+    "unique_movies": 7,
+    "non_friday_rate": 0.2857,
     "top_movies": [
-      {
-        "movie_title": "Ventura County, CA",
-        "screen_count": 216
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -28951,15 +28227,11 @@
       "pct_bachelors_degree": 39.36,
       "pct_below_poverty": 11.68
     },
-    "total_rows": 22,
-    "total_screens": 80,
-    "unique_movies": 22,
-    "non_friday_rate": 0.3636,
+    "total_rows": 21,
+    "total_screens": 38,
+    "unique_movies": 21,
+    "non_friday_rate": 0.381,
     "top_movies": [
-      {
-        "movie_title": "San Bernardino, CA",
-        "screen_count": 42
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -29034,6 +28306,10 @@
       },
       {
         "movie_title": "Jerry Maguire",
+        "screen_count": 1
+      },
+      {
+        "movie_title": "National Lampoon's Vacation",
         "screen_count": 1
       }
     ]
@@ -29312,15 +28588,11 @@
       "pct_bachelors_degree": 32.08,
       "pct_below_poverty": 5.03
     },
-    "total_rows": 9,
-    "total_screens": 102,
-    "unique_movies": 9,
-    "non_friday_rate": 0.2222,
+    "total_rows": 8,
+    "total_screens": 18,
+    "unique_movies": 8,
+    "non_friday_rate": 0.25,
     "top_movies": [
-      {
-        "movie_title": "Upland/Montclair/Ontario, CA",
-        "screen_count": 84
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -29430,15 +28702,11 @@
       "pct_bachelors_degree": 36.19,
       "pct_below_poverty": 5.19
     },
-    "total_rows": 25,
-    "total_screens": 219,
-    "unique_movies": 25,
-    "non_friday_rate": 0.28,
+    "total_rows": 24,
+    "total_screens": 48,
+    "unique_movies": 24,
+    "non_friday_rate": 0.2917,
     "top_movies": [
-      {
-        "movie_title": "Yucca Valley, CA",
-        "screen_count": 171
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -29514,6 +28782,10 @@
       {
         "movie_title": "Jerry Maguire",
         "screen_count": 1
+      },
+      {
+        "movie_title": "ChaO",
+        "screen_count": 1
       }
     ]
   },
@@ -29539,15 +28811,11 @@
       "pct_bachelors_degree": 13.95,
       "pct_below_poverty": 19.17
     },
-    "total_rows": 5,
-    "total_screens": 322,
-    "unique_movies": 5,
-    "non_friday_rate": 0.2,
+    "total_rows": 4,
+    "total_screens": 8,
+    "unique_movies": 4,
+    "non_friday_rate": 0.25,
     "top_movies": [
-      {
-        "movie_title": "Upland/Montclair/Ontario, CA",
-        "screen_count": 314
-      },
       {
         "movie_title": "Project Hail Mary",
         "screen_count": 4
@@ -29697,15 +28965,11 @@
       "pct_bachelors_degree": 17.27,
       "pct_below_poverty": 14.22
     },
-    "total_rows": 5,
-    "total_screens": 259,
-    "unique_movies": 5,
-    "non_friday_rate": 0.2,
+    "total_rows": 4,
+    "total_screens": 8,
+    "unique_movies": 4,
+    "non_friday_rate": 0.25,
     "top_movies": [
-      {
-        "movie_title": "San Bernardino, CA",
-        "screen_count": 251
-      },
       {
         "movie_title": "Project Hail Mary",
         "screen_count": 4
@@ -29746,15 +29010,11 @@
       "pct_bachelors_degree": 31.3,
       "pct_below_poverty": 6.88
     },
-    "total_rows": 18,
-    "total_screens": 108,
-    "unique_movies": 18,
-    "non_friday_rate": 0.1667,
+    "total_rows": 17,
+    "total_screens": 33,
+    "unique_movies": 17,
+    "non_friday_rate": 0.1765,
     "top_movies": [
-      {
-        "movie_title": "Banning, CA",
-        "screen_count": 75
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -30193,15 +29453,11 @@
       "pct_bachelors_degree": 15.25,
       "pct_below_poverty": 12.52
     },
-    "total_rows": 20,
-    "total_screens": 99,
-    "unique_movies": 20,
-    "non_friday_rate": 0.25,
+    "total_rows": 19,
+    "total_screens": 49,
+    "unique_movies": 19,
+    "non_friday_rate": 0.2632,
     "top_movies": [
-      {
-        "movie_title": "San Bernardino, CA",
-        "screen_count": 50
-      },
       {
         "movie_title": "Scream 7",
         "screen_count": 7
@@ -30347,18 +29603,14 @@
       "pct_bachelors_degree": 15.25,
       "pct_below_poverty": 12.52
     },
-    "total_rows": 23,
-    "total_screens": 417,
-    "unique_movies": 23,
-    "non_friday_rate": 0.3043,
+    "total_rows": 22,
+    "total_screens": 357,
+    "unique_movies": 22,
+    "non_friday_rate": 0.3182,
     "top_movies": [
       {
         "movie_title": "Copyright 2026 comScore Inc.",
         "screen_count": 312
-      },
-      {
-        "movie_title": "Palm Springs, CA",
-        "screen_count": 60
       },
       {
         "movie_title": "Scream 7",
@@ -30430,6 +29682,10 @@
       },
       {
         "movie_title": "Jerry Maguire",
+        "screen_count": 1
+      },
+      {
+        "movie_title": "Royal Ballet: Giselle (2026",
         "screen_count": 1
       }
     ]
@@ -30801,18 +30057,14 @@
       "pct_bachelors_degree": 15.25,
       "pct_below_poverty": 12.52
     },
-    "total_rows": 20,
-    "total_screens": 577,
-    "unique_movies": 20,
-    "non_friday_rate": 0.25,
+    "total_rows": 19,
+    "total_screens": 484,
+    "unique_movies": 19,
+    "non_friday_rate": 0.2632,
     "top_movies": [
       {
         "movie_title": "Copyright 2026 comScore Inc.",
         "screen_count": 448
-      },
-      {
-        "movie_title": "Upland/Montclair/Ontario, CA",
-        "screen_count": 93
       },
       {
         "movie_title": "Hoppers",
@@ -30910,15 +30162,11 @@
       "pct_bachelors_degree": 15.14,
       "pct_below_poverty": 12.68
     },
-    "total_rows": 29,
-    "total_screens": 107,
-    "unique_movies": 29,
-    "non_friday_rate": 0.2069,
+    "total_rows": 28,
+    "total_screens": 72,
+    "unique_movies": 28,
+    "non_friday_rate": 0.2143,
     "top_movies": [
-      {
-        "movie_title": "Palm Springs, CA",
-        "screen_count": 35
-      },
       {
         "movie_title": "GOAT",
         "screen_count": 9
@@ -30994,6 +30242,10 @@
       {
         "movie_title": "Beast",
         "screen_count": 1
+      },
+      {
+        "movie_title": "Hunting Matthew Nichols",
+        "screen_count": 1
       }
     ]
   },
@@ -31004,15 +30256,11 @@
     "theater_city_state": "Mira Loma, CA",
     "demographics_status": "no-match",
     "demographics": null,
-    "total_rows": 17,
-    "total_screens": 51,
-    "unique_movies": 17,
-    "non_friday_rate": 0.2941,
+    "total_rows": 16,
+    "total_screens": 40,
+    "unique_movies": 16,
+    "non_friday_rate": 0.3125,
     "top_movies": [
-      {
-        "movie_title": "Big Bear, CA",
-        "screen_count": 11
-      },
       {
         "movie_title": "GOAT",
         "screen_count": 9
@@ -31101,15 +30349,11 @@
       "pct_bachelors_degree": 21.67,
       "pct_below_poverty": 9.38
     },
-    "total_rows": 4,
-    "total_screens": 882,
-    "unique_movies": 4,
-    "non_friday_rate": 0.25,
+    "total_rows": 3,
+    "total_screens": 8,
+    "unique_movies": 3,
+    "non_friday_rate": 0.3333,
     "top_movies": [
-      {
-        "movie_title": "Palm Springs, CA",
-        "screen_count": 874
-      },
       {
         "movie_title": "Project Hail Mary",
         "screen_count": 4
@@ -31256,18 +30500,14 @@
       "pct_bachelors_degree": 8.86,
       "pct_below_poverty": 16.45
     },
-    "total_rows": 15,
-    "total_screens": 125,
-    "unique_movies": 15,
-    "non_friday_rate": 0.2667,
+    "total_rows": 14,
+    "total_screens": 88,
+    "unique_movies": 14,
+    "non_friday_rate": 0.2857,
     "top_movies": [
       {
         "movie_title": "Copyright 2026 comScore Inc.",
         "screen_count": 59
-      },
-      {
-        "movie_title": "Santa Maria/San Luis Obispo, CA",
-        "screen_count": 37
       },
       {
         "movie_title": "Scream 7",
@@ -31390,15 +30630,11 @@
       "pct_bachelors_degree": 12.08,
       "pct_below_poverty": 11.85
     },
-    "total_rows": 15,
-    "total_screens": 126,
-    "unique_movies": 15,
-    "non_friday_rate": 0.1333,
+    "total_rows": 14,
+    "total_screens": 37,
+    "unique_movies": 14,
+    "non_friday_rate": 0.1429,
     "top_movies": [
-      {
-        "movie_title": "Santa Barbara, CA",
-        "screen_count": 89
-      },
       {
         "movie_title": "Scream 7",
         "screen_count": 7
@@ -31536,18 +30772,14 @@
       "pct_bachelors_degree": 20.76,
       "pct_below_poverty": 9.06
     },
-    "total_rows": 22,
-    "total_screens": 308,
-    "unique_movies": 22,
-    "non_friday_rate": 0.4091,
+    "total_rows": 21,
+    "total_screens": 298,
+    "unique_movies": 21,
+    "non_friday_rate": 0.4286,
     "top_movies": [
       {
         "movie_title": "Copyright 2026 comScore Inc.",
         "screen_count": 260
-      },
-      {
-        "movie_title": "Rialto, CA",
-        "screen_count": 10
       },
       {
         "movie_title": "Hoppers",
@@ -31620,6 +30852,10 @@
       {
         "movie_title": "Jerry Maguire",
         "screen_count": 1
+      },
+      {
+        "movie_title": "Royal Ballet: Giselle (2026",
+        "screen_count": 1
       }
     ]
   },
@@ -31645,15 +30881,11 @@
       "pct_bachelors_degree": 9.17,
       "pct_below_poverty": 12.61
     },
-    "total_rows": 9,
-    "total_screens": 424,
-    "unique_movies": 9,
-    "non_friday_rate": 0.2222,
+    "total_rows": 8,
+    "total_screens": 21,
+    "unique_movies": 8,
+    "non_friday_rate": 0.25,
     "top_movies": [
-      {
-        "movie_title": "Santa Barbara, CA",
-        "screen_count": 403
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -31710,15 +30942,11 @@
       "pct_bachelors_degree": 9.23,
       "pct_below_poverty": 16.82
     },
-    "total_rows": 4,
-    "total_screens": 856,
-    "unique_movies": 4,
-    "non_friday_rate": 0.25,
+    "total_rows": 3,
+    "total_screens": 7,
+    "unique_movies": 3,
+    "non_friday_rate": 0.3333,
     "top_movies": [
-      {
-        "movie_title": "Palm Springs, CA",
-        "screen_count": 849
-      },
       {
         "movie_title": "Project Hail Mary",
         "screen_count": 4
@@ -31897,15 +31125,11 @@
       "pct_bachelors_degree": 29.5,
       "pct_below_poverty": 7.45
     },
-    "total_rows": 17,
-    "total_screens": 544,
-    "unique_movies": 17,
-    "non_friday_rate": 0.2941,
+    "total_rows": 16,
+    "total_screens": 29,
+    "unique_movies": 16,
+    "non_friday_rate": 0.3125,
     "top_movies": [
-      {
-        "movie_title": "Santa Maria/San Luis Obispo, CA",
-        "screen_count": 515
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -31994,15 +31218,11 @@
       "pct_bachelors_degree": 18.91,
       "pct_below_poverty": 12.76
     },
-    "total_rows": 8,
-    "total_screens": 345,
-    "unique_movies": 8,
-    "non_friday_rate": 0.125,
+    "total_rows": 7,
+    "total_screens": 13,
+    "unique_movies": 7,
+    "non_friday_rate": 0.1429,
     "top_movies": [
-      {
-        "movie_title": "Palm Springs, CA",
-        "screen_count": 332
-      },
       {
         "movie_title": "Project Hail Mary",
         "screen_count": 4
@@ -32181,15 +31401,11 @@
       "pct_bachelors_degree": 25.69,
       "pct_below_poverty": 7.4
     },
-    "total_rows": 15,
-    "total_screens": 65,
-    "unique_movies": 15,
-    "non_friday_rate": 0.2667,
+    "total_rows": 14,
+    "total_screens": 33,
+    "unique_movies": 14,
+    "non_friday_rate": 0.2857,
     "top_movies": [
-      {
-        "movie_title": "Santa Maria/San Luis Obispo, CA",
-        "screen_count": 32
-      },
       {
         "movie_title": "Scream 7",
         "screen_count": 7
@@ -32461,15 +31677,11 @@
       "pct_bachelors_degree": 9.4,
       "pct_below_poverty": 13.23
     },
-    "total_rows": 19,
-    "total_screens": 118,
-    "unique_movies": 19,
-    "non_friday_rate": 0.2105,
+    "total_rows": 18,
+    "total_screens": 40,
+    "unique_movies": 18,
+    "non_friday_rate": 0.2222,
     "top_movies": [
-      {
-        "movie_title": "Bakersfield, CA",
-        "screen_count": 78
-      },
       {
         "movie_title": "Scream 7",
         "screen_count": 7
@@ -32760,18 +31972,14 @@
       "pct_bachelors_degree": 35.05,
       "pct_below_poverty": 7.4
     },
-    "total_rows": 21,
-    "total_screens": 423,
-    "unique_movies": 21,
-    "non_friday_rate": 0.2857,
+    "total_rows": 20,
+    "total_screens": 261,
+    "unique_movies": 20,
+    "non_friday_rate": 0.3,
     "top_movies": [
       {
         "movie_title": "Copyright 2026 comScore Inc.",
         "screen_count": 228
-      },
-      {
-        "movie_title": "Bakersfield, CA",
-        "screen_count": 162
       },
       {
         "movie_title": "Hoppers",
@@ -32843,6 +32051,10 @@
       },
       {
         "movie_title": "Royal Ballet: Giselle (2026",
+        "screen_count": 1
+      },
+      {
+        "movie_title": "Jerry Maguire",
         "screen_count": 1
       }
     ]
@@ -32954,22 +32166,14 @@
       "pct_bachelors_degree": 25.94,
       "pct_below_poverty": 9.15
     },
-    "total_rows": 36,
-    "total_screens": 1741,
-    "unique_movies": 33,
-    "non_friday_rate": 0.25,
+    "total_rows": 34,
+    "total_screens": 797,
+    "unique_movies": 31,
+    "non_friday_rate": 0.2647,
     "top_movies": [
-      {
-        "movie_title": "Barstow, CA",
-        "screen_count": 926
-      },
       {
         "movie_title": "Copyright 2026 comScore Inc.",
         "screen_count": 715
-      },
-      {
-        "movie_title": "Tehachapi, CA",
-        "screen_count": 18
       },
       {
         "movie_title": "GOAT",
@@ -33037,6 +32241,14 @@
       },
       {
         "movie_title": "You, Me & Tuscany",
+        "screen_count": 1
+      },
+      {
+        "movie_title": "Faces of Death",
+        "screen_count": 1
+      },
+      {
+        "movie_title": "BTS WORLD TOUR 'ARIRANG' IN",
         "screen_count": 1
       }
     ]
@@ -33108,19 +32320,11 @@
       "pct_bachelors_degree": 7.3,
       "pct_below_poverty": 23.23
     },
-    "total_rows": 15,
-    "total_screens": 2027,
-    "unique_movies": 9,
-    "non_friday_rate": 0.2,
+    "total_rows": 13,
+    "total_screens": 230,
+    "unique_movies": 7,
+    "non_friday_rate": 0.2308,
     "top_movies": [
-      {
-        "movie_title": "Santa Barbara, CA",
-        "screen_count": 969
-      },
-      {
-        "movie_title": "Santa Maria/San Luis Obispo, CA",
-        "screen_count": 828
-      },
       {
         "movie_title": "CW",
         "screen_count": 199
@@ -33304,15 +32508,11 @@
     "theater_city_state": "Sherman Oaks, CA",
     "demographics_status": "no-match",
     "demographics": null,
-    "total_rows": 18,
-    "total_screens": 195,
-    "unique_movies": 18,
-    "non_friday_rate": 0.2222,
+    "total_rows": 17,
+    "total_screens": 30,
+    "unique_movies": 17,
+    "non_friday_rate": 0.2353,
     "top_movies": [
-      {
-        "movie_title": "Santa Maria/San Luis Obispo, CA",
-        "screen_count": 165
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -33405,15 +32605,11 @@
       "pct_bachelors_degree": 26.94,
       "pct_below_poverty": 9.93
     },
-    "total_rows": 2,
-    "total_screens": 772,
-    "unique_movies": 2,
+    "total_rows": 1,
+    "total_screens": 2,
+    "unique_movies": 1,
     "non_friday_rate": 0,
     "top_movies": [
-      {
-        "movie_title": "Bakersfield, CA",
-        "screen_count": 770
-      },
       {
         "movie_title": "Super Mario Galaxy Movie, T",
         "screen_count": 2
@@ -33479,15 +32675,11 @@
       "pct_bachelors_degree": 32.21,
       "pct_below_poverty": 15.36
     },
-    "total_rows": 4,
-    "total_screens": 364,
-    "unique_movies": 4,
-    "non_friday_rate": 0.25,
+    "total_rows": 3,
+    "total_screens": 12,
+    "unique_movies": 3,
+    "non_friday_rate": 0.3333,
     "top_movies": [
-      {
-        "movie_title": "Bishop, CA",
-        "screen_count": 352
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -33524,15 +32716,11 @@
       "pct_bachelors_degree": 25.37,
       "pct_below_poverty": 6.04
     },
-    "total_rows": 3,
-    "total_screens": 846,
-    "unique_movies": 3,
-    "non_friday_rate": 0.3333,
+    "total_rows": 2,
+    "total_screens": 3,
+    "unique_movies": 2,
+    "non_friday_rate": 0.5,
     "top_movies": [
-      {
-        "movie_title": "Bakersfield, CA",
-        "screen_count": 843
-      },
       {
         "movie_title": "Super Mario Galaxy Movie, T",
         "screen_count": 2
@@ -33565,15 +32753,11 @@
       "pct_bachelors_degree": 15.11,
       "pct_below_poverty": 15.99
     },
-    "total_rows": 5,
-    "total_screens": 950,
-    "unique_movies": 5,
-    "non_friday_rate": 0.2,
+    "total_rows": 4,
+    "total_screens": 9,
+    "unique_movies": 4,
+    "non_friday_rate": 0.25,
     "top_movies": [
-      {
-        "movie_title": "Mammoth, CA",
-        "screen_count": 941
-      },
       {
         "movie_title": "Project Hail Mary",
         "screen_count": 4
@@ -33752,15 +32936,11 @@
       "pct_bachelors_degree": 28.8,
       "pct_below_poverty": 11.11
     },
-    "total_rows": 10,
-    "total_screens": 341,
-    "unique_movies": 10,
-    "non_friday_rate": 0.2,
+    "total_rows": 9,
+    "total_screens": 26,
+    "unique_movies": 9,
+    "non_friday_rate": 0.2222,
     "top_movies": [
-      {
-        "movie_title": "Santa Maria/San Luis Obispo, CA",
-        "screen_count": 315
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -34032,15 +33212,11 @@
       "pct_bachelors_degree": 36.82,
       "pct_below_poverty": 6.94
     },
-    "total_rows": 6,
-    "total_screens": 554,
-    "unique_movies": 6,
-    "non_friday_rate": 0.1667,
+    "total_rows": 5,
+    "total_screens": 15,
+    "unique_movies": 5,
+    "non_friday_rate": 0.2,
     "top_movies": [
-      {
-        "movie_title": "Palm Springs, CA",
-        "screen_count": 539
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -34085,15 +33261,11 @@
       "pct_bachelors_degree": 24.7,
       "pct_below_poverty": 9.06
     },
-    "total_rows": 9,
-    "total_screens": 240,
-    "unique_movies": 9,
-    "non_friday_rate": 0.2222,
+    "total_rows": 8,
+    "total_screens": 22,
+    "unique_movies": 8,
+    "non_friday_rate": 0.25,
     "top_movies": [
-      {
-        "movie_title": "Long Beach, CA",
-        "screen_count": 218
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -34259,15 +33431,11 @@
       "pct_bachelors_degree": 22.12,
       "pct_below_poverty": 8.14
     },
-    "total_rows": 18,
-    "total_screens": 55,
-    "unique_movies": 18,
-    "non_friday_rate": 0.2778,
+    "total_rows": 17,
+    "total_screens": 44,
+    "unique_movies": 17,
+    "non_friday_rate": 0.2941,
     "top_movies": [
-      {
-        "movie_title": "Ridgecrest, CA",
-        "screen_count": 11
-      },
       {
         "movie_title": "Scream 7",
         "screen_count": 7
@@ -34417,15 +33585,11 @@
       "pct_bachelors_degree": 15.29,
       "pct_below_poverty": 20.01
     },
-    "total_rows": 21,
-    "total_screens": 76,
-    "unique_movies": 21,
-    "non_friday_rate": 0.2857,
+    "total_rows": 20,
+    "total_screens": 39,
+    "unique_movies": 20,
+    "non_friday_rate": 0.3,
     "top_movies": [
-      {
-        "movie_title": "Imperial, CA",
-        "screen_count": 37
-      },
       {
         "movie_title": "Scream 7",
         "screen_count": 7
@@ -34501,6 +33665,10 @@
       {
         "movie_title": "Spy Kids (2001) (re)",
         "screen_count": 1
+      },
+      {
+        "movie_title": "National Lampoon's Vacation",
+        "screen_count": 1
       }
     ]
   },
@@ -34575,15 +33743,11 @@
       "pct_bachelors_degree": 28.8,
       "pct_below_poverty": 11.11
     },
-    "total_rows": 12,
-    "total_screens": 116,
-    "unique_movies": 12,
-    "non_friday_rate": 0.3333,
+    "total_rows": 11,
+    "total_screens": 21,
+    "unique_movies": 11,
+    "non_friday_rate": 0.3636,
     "top_movies": [
-      {
-        "movie_title": "Bakersfield, CA",
-        "screen_count": 95
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -35151,15 +34315,11 @@
       "pct_bachelors_degree": 28.8,
       "pct_below_poverty": 11.11
     },
-    "total_rows": 19,
-    "total_screens": 254,
-    "unique_movies": 19,
-    "non_friday_rate": 0.1053,
+    "total_rows": 18,
+    "total_screens": 40,
+    "unique_movies": 18,
+    "non_friday_rate": 0.1111,
     "top_movies": [
-      {
-        "movie_title": "Bakersfield, CA",
-        "screen_count": 214
-      },
       {
         "movie_title": "Scream 7",
         "screen_count": 7
@@ -36197,15 +35357,11 @@
       "pct_bachelors_degree": 28.36,
       "pct_below_poverty": 10.17
     },
-    "total_rows": 23,
-    "total_screens": 58,
-    "unique_movies": 23,
-    "non_friday_rate": 0.3913,
+    "total_rows": 22,
+    "total_screens": 37,
+    "unique_movies": 22,
+    "non_friday_rate": 0.4091,
     "top_movies": [
-      {
-        "movie_title": "Imperial, CA",
-        "screen_count": 21
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -36280,6 +35436,10 @@
       },
       {
         "movie_title": "ChaO",
+        "screen_count": 1
+      },
+      {
+        "movie_title": "Jerry Maguire",
         "screen_count": 1
       }
     ]
@@ -38131,18 +37291,14 @@
       "pct_bachelors_degree": 15.41,
       "pct_below_poverty": 16.19
     },
-    "total_rows": 23,
-    "total_screens": 140,
-    "unique_movies": 23,
-    "non_friday_rate": 0.3043,
+    "total_rows": 22,
+    "total_screens": 116,
+    "unique_movies": 22,
+    "non_friday_rate": 0.3182,
     "top_movies": [
       {
         "movie_title": "Copyright 2026 comScore Inc.",
         "screen_count": 57
-      },
-      {
-        "movie_title": "Santa Maria/San Luis Obispo, CA",
-        "screen_count": 24
       },
       {
         "movie_title": "Avatar: Fire and Ash",
@@ -38214,6 +37370,10 @@
       },
       {
         "movie_title": "Legends of the Lost Ark",
+        "screen_count": 1
+      },
+      {
+        "movie_title": "ChaO",
         "screen_count": 1
       }
     ]
@@ -38779,15 +37939,11 @@
       "pct_bachelors_degree": 28.93,
       "pct_below_poverty": 16.18
     },
-    "total_rows": 16,
-    "total_screens": 539,
-    "unique_movies": 16,
-    "non_friday_rate": 0.25,
+    "total_rows": 15,
+    "total_screens": 32,
+    "unique_movies": 15,
+    "non_friday_rate": 0.2667,
     "top_movies": [
-      {
-        "movie_title": "Sierra Vista, AZ",
-        "screen_count": 507
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -38929,18 +38085,14 @@
       "pct_bachelors_degree": 28.59,
       "pct_below_poverty": 7.67
     },
-    "total_rows": 14,
-    "total_screens": 1149,
-    "unique_movies": 14,
-    "non_friday_rate": 0.2857,
+    "total_rows": 13,
+    "total_screens": 924,
+    "unique_movies": 13,
+    "non_friday_rate": 0.3077,
     "top_movies": [
       {
         "movie_title": "Copyright 2026 comScore Inc.",
         "screen_count": 884
-      },
-      {
-        "movie_title": "Sedona, AZ",
-        "screen_count": 225
       },
       {
         "movie_title": "GOAT",
@@ -39014,15 +38166,11 @@
       "pct_bachelors_degree": 25.43,
       "pct_below_poverty": 13.69
     },
-    "total_rows": 5,
-    "total_screens": 589,
-    "unique_movies": 5,
-    "non_friday_rate": 0.2,
+    "total_rows": 4,
+    "total_screens": 9,
+    "unique_movies": 4,
+    "non_friday_rate": 0.25,
     "top_movies": [
-      {
-        "movie_title": "Prescott, AZ",
-        "screen_count": 580
-      },
       {
         "movie_title": "Project Hail Mary",
         "screen_count": 4
@@ -39140,15 +38288,11 @@
       "pct_bachelors_degree": 28.93,
       "pct_below_poverty": 16.18
     },
-    "total_rows": 10,
-    "total_screens": 624,
-    "unique_movies": 10,
-    "non_friday_rate": 0.1,
+    "total_rows": 9,
+    "total_screens": 24,
+    "unique_movies": 9,
+    "non_friday_rate": 0.1111,
     "top_movies": [
-      {
-        "movie_title": "Mesa, AZ",
-        "screen_count": 600
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -39319,15 +38463,11 @@
       "pct_bachelors_degree": 37.12,
       "pct_below_poverty": 7.13
     },
-    "total_rows": 16,
-    "total_screens": 527,
-    "unique_movies": 14,
-    "non_friday_rate": 0.125,
+    "total_rows": 15,
+    "total_screens": 38,
+    "unique_movies": 13,
+    "non_friday_rate": 0.1333,
     "top_movies": [
-      {
-        "movie_title": "Wilcox, AZ",
-        "screen_count": 489
-      },
       {
         "movie_title": "Project Hail Mary",
         "screen_count": 8
@@ -39546,15 +38686,11 @@
       "pct_bachelors_degree": 17.71,
       "pct_below_poverty": 18.83
     },
-    "total_rows": 17,
-    "total_screens": 97,
-    "unique_movies": 17,
-    "non_friday_rate": 0.2353,
+    "total_rows": 16,
+    "total_screens": 33,
+    "unique_movies": 16,
+    "non_friday_rate": 0.25,
     "top_movies": [
-      {
-        "movie_title": "Mesa, AZ",
-        "screen_count": 64
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -39643,15 +38779,11 @@
       "pct_bachelors_degree": 20.94,
       "pct_below_poverty": 10.5
     },
-    "total_rows": 15,
-    "total_screens": 266,
-    "unique_movies": 15,
-    "non_friday_rate": 0.1333,
+    "total_rows": 14,
+    "total_screens": 34,
+    "unique_movies": 14,
+    "non_friday_rate": 0.1429,
     "top_movies": [
-      {
-        "movie_title": "St. Johns, AZ",
-        "screen_count": 232
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -39717,15 +38849,11 @@
     "theater_city_state": "Saint Johns, AZ",
     "demographics_status": "no-match",
     "demographics": null,
-    "total_rows": 3,
-    "total_screens": 776,
-    "unique_movies": 3,
+    "total_rows": 2,
+    "total_screens": 230,
+    "unique_movies": 2,
     "non_friday_rate": 0,
     "top_movies": [
-      {
-        "movie_title": "Lake Havasu, AZ",
-        "screen_count": 546
-      },
       {
         "movie_title": "CW",
         "screen_count": 228
@@ -39937,18 +39065,14 @@
       "pct_bachelors_degree": 17.71,
       "pct_below_poverty": 18.83
     },
-    "total_rows": 18,
-    "total_screens": 688,
-    "unique_movies": 18,
-    "non_friday_rate": 0.2778,
+    "total_rows": 17,
+    "total_screens": 528,
+    "unique_movies": 17,
+    "non_friday_rate": 0.2941,
     "top_movies": [
       {
         "movie_title": "Copyright 2026 comScore Inc.",
         "screen_count": 498
-      },
-      {
-        "movie_title": "Flagstaff, AZ",
-        "screen_count": 160
       },
       {
         "movie_title": "Hoppers",
@@ -40196,15 +39320,11 @@
       "pct_bachelors_degree": 22.21,
       "pct_below_poverty": 5.78
     },
-    "total_rows": 14,
-    "total_screens": 615,
-    "unique_movies": 14,
-    "non_friday_rate": 0.2143,
+    "total_rows": 13,
+    "total_screens": 30,
+    "unique_movies": 13,
+    "non_friday_rate": 0.2308,
     "top_movies": [
-      {
-        "movie_title": "Tuba City, AZ",
-        "screen_count": 585
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -40281,15 +39401,11 @@
       "pct_bachelors_degree": 9.03,
       "pct_below_poverty": 27.54
     },
-    "total_rows": 3,
-    "total_screens": 982,
-    "unique_movies": 3,
-    "non_friday_rate": 0.3333,
+    "total_rows": 2,
+    "total_screens": 4,
+    "unique_movies": 2,
+    "non_friday_rate": 0.5,
     "top_movies": [
-      {
-        "movie_title": "Gilbert, AZ",
-        "screen_count": 978
-      },
       {
         "movie_title": "Super Mario Galaxy Movie, T",
         "screen_count": 2
@@ -40371,15 +39487,11 @@
       "pct_bachelors_degree": 17.27,
       "pct_below_poverty": 14.22
     },
-    "total_rows": 12,
-    "total_screens": 356,
-    "unique_movies": 12,
-    "non_friday_rate": 0.1667,
+    "total_rows": 11,
+    "total_screens": 26,
+    "unique_movies": 11,
+    "non_friday_rate": 0.1818,
     "top_movies": [
-      {
-        "movie_title": "Springerville, AZ",
-        "screen_count": 330
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -40448,15 +39560,11 @@
       "pct_bachelors_degree": 17.07,
       "pct_below_poverty": 7.63
     },
-    "total_rows": 2,
-    "total_screens": 442,
-    "unique_movies": 2,
+    "total_rows": 1,
+    "total_screens": 2,
+    "unique_movies": 1,
     "non_friday_rate": 0,
     "top_movies": [
-      {
-        "movie_title": "Casa Grande, AZ",
-        "screen_count": 440
-      },
       {
         "movie_title": "Super Mario Galaxy Movie, T",
         "screen_count": 2
@@ -40566,15 +39674,11 @@
       "pct_bachelors_degree": 23.19,
       "pct_below_poverty": 8.41
     },
-    "total_rows": 7,
-    "total_screens": 361,
-    "unique_movies": 7,
-    "non_friday_rate": 0.1429,
+    "total_rows": 6,
+    "total_screens": 16,
+    "unique_movies": 6,
+    "non_friday_rate": 0.1667,
     "top_movies": [
-      {
-        "movie_title": "Safford, AZ",
-        "screen_count": 345
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -40664,15 +39768,11 @@
       "pct_bachelors_degree": 17.27,
       "pct_below_poverty": 14.22
     },
-    "total_rows": 13,
-    "total_screens": 154,
-    "unique_movies": 13,
-    "non_friday_rate": 0.1538,
+    "total_rows": 12,
+    "total_screens": 33,
+    "unique_movies": 12,
+    "non_friday_rate": 0.1667,
     "top_movies": [
-      {
-        "movie_title": "Page, AZ",
-        "screen_count": 121
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -40826,15 +39926,11 @@
       "pct_bachelors_degree": 12.36,
       "pct_below_poverty": 12.21
     },
-    "total_rows": 19,
-    "total_screens": 49,
-    "unique_movies": 19,
-    "non_friday_rate": 0.3684,
+    "total_rows": 18,
+    "total_screens": 34,
+    "unique_movies": 18,
+    "non_friday_rate": 0.3889,
     "top_movies": [
-      {
-        "movie_title": "Maricopa, AZ",
-        "screen_count": 15
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -40996,15 +40092,11 @@
       "pct_bachelors_degree": 33.77,
       "pct_below_poverty": 4.13
     },
-    "total_rows": 8,
-    "total_screens": 570,
-    "unique_movies": 8,
-    "non_friday_rate": 0.375,
+    "total_rows": 7,
+    "total_screens": 12,
+    "unique_movies": 7,
+    "non_friday_rate": 0.4286,
     "top_movies": [
-      {
-        "movie_title": "Prescott, AZ",
-        "screen_count": 558
-      },
       {
         "movie_title": "Project Hail Mary",
         "screen_count": 4
@@ -41118,15 +40210,11 @@
       "pct_bachelors_degree": 28.59,
       "pct_below_poverty": 7.67
     },
-    "total_rows": 8,
-    "total_screens": 814,
-    "unique_movies": 8,
-    "non_friday_rate": 0.25,
+    "total_rows": 7,
+    "total_screens": 17,
+    "unique_movies": 7,
+    "non_friday_rate": 0.2857,
     "top_movies": [
-      {
-        "movie_title": "Yuma, AZ",
-        "screen_count": 797
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -41179,15 +40267,11 @@
       "pct_bachelors_degree": 12.67,
       "pct_below_poverty": 15.33
     },
-    "total_rows": 7,
-    "total_screens": 909,
-    "unique_movies": 7,
-    "non_friday_rate": 0.1429,
+    "total_rows": 6,
+    "total_screens": 15,
+    "unique_movies": 6,
+    "non_friday_rate": 0.1667,
     "top_movies": [
-      {
-        "movie_title": "Kayenta, AZ",
-        "screen_count": 894
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -41273,15 +40357,11 @@
       "pct_bachelors_degree": 12.36,
       "pct_below_poverty": 12.21
     },
-    "total_rows": 8,
-    "total_screens": 579,
-    "unique_movies": 8,
-    "non_friday_rate": 0.125,
+    "total_rows": 7,
+    "total_screens": 23,
+    "unique_movies": 7,
+    "non_friday_rate": 0.1429,
     "top_movies": [
-      {
-        "movie_title": "Yuma, AZ",
-        "screen_count": 556
-      },
       {
         "movie_title": "Scream 7",
         "screen_count": 7
@@ -41334,15 +40414,11 @@
       "pct_bachelors_degree": 12.67,
       "pct_below_poverty": 15.33
     },
-    "total_rows": 12,
-    "total_screens": 237,
-    "unique_movies": 12,
-    "non_friday_rate": 0.25,
+    "total_rows": 11,
+    "total_screens": 25,
+    "unique_movies": 11,
+    "non_friday_rate": 0.2727,
     "top_movies": [
-      {
-        "movie_title": "Nogales, AZ",
-        "screen_count": 212
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -41411,18 +40487,14 @@
       "pct_bachelors_degree": 11.93,
       "pct_below_poverty": 26.14
     },
-    "total_rows": 20,
-    "total_screens": 1777,
-    "unique_movies": 11,
-    "non_friday_rate": 0.1,
+    "total_rows": 19,
+    "total_screens": 1192,
+    "unique_movies": 10,
+    "non_friday_rate": 0.1053,
     "top_movies": [
       {
         "movie_title": "Copyright 2026 comScore Inc.",
         "screen_count": 947
-      },
-      {
-        "movie_title": "Lake Havasu, AZ",
-        "screen_count": 585
       },
       {
         "movie_title": "CW",
@@ -41484,15 +40556,11 @@
       "pct_bachelors_degree": 22.71,
       "pct_below_poverty": 8.11
     },
-    "total_rows": 10,
-    "total_screens": 707,
-    "unique_movies": 10,
-    "non_friday_rate": 0.3,
+    "total_rows": 9,
+    "total_screens": 14,
+    "unique_movies": 9,
+    "non_friday_rate": 0.3333,
     "top_movies": [
-      {
-        "movie_title": "Big Island, HI",
-        "screen_count": 693
-      },
       {
         "movie_title": "Project Hail Mary",
         "screen_count": 4
@@ -41553,15 +40621,11 @@
       "pct_bachelors_degree": 21.14,
       "pct_below_poverty": 14.07
     },
-    "total_rows": 9,
-    "total_screens": 966,
-    "unique_movies": 9,
-    "non_friday_rate": 0.1111,
+    "total_rows": 8,
+    "total_screens": 18,
+    "unique_movies": 8,
+    "non_friday_rate": 0.125,
     "top_movies": [
-      {
-        "movie_title": "Maui, HI",
-        "screen_count": 948
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -41618,15 +40682,11 @@
       "pct_bachelors_degree": 21.91,
       "pct_below_poverty": 9.33
     },
-    "total_rows": 4,
-    "total_screens": 387,
-    "unique_movies": 4,
-    "non_friday_rate": 0.25,
+    "total_rows": 3,
+    "total_screens": 7,
+    "unique_movies": 3,
+    "non_friday_rate": 0.3333,
     "top_movies": [
-      {
-        "movie_title": "Parker, AZ",
-        "screen_count": 380
-      },
       {
         "movie_title": "Project Hail Mary",
         "screen_count": 4
@@ -41704,18 +40764,14 @@
       "pct_bachelors_degree": 27.6,
       "pct_below_poverty": 3.56
     },
-    "total_rows": 13,
-    "total_screens": 453,
-    "unique_movies": 13,
-    "non_friday_rate": 0.2308,
+    "total_rows": 12,
+    "total_screens": 421,
+    "unique_movies": 12,
+    "non_friday_rate": 0.25,
     "top_movies": [
       {
         "movie_title": "Copyright 2026 comScore Inc.",
         "screen_count": 400
-      },
-      {
-        "movie_title": "Lakeside/Showlow,AZ",
-        "screen_count": 32
       },
       {
         "movie_title": "Hoppers",
@@ -41785,15 +40841,11 @@
       "pct_bachelors_degree": 16.98,
       "pct_below_poverty": 10.57
     },
-    "total_rows": 9,
-    "total_screens": 639,
-    "unique_movies": 9,
-    "non_friday_rate": 0.1111,
+    "total_rows": 8,
+    "total_screens": 19,
+    "unique_movies": 8,
+    "non_friday_rate": 0.125,
     "top_movies": [
-      {
-        "movie_title": "Kingman, AZ",
-        "screen_count": 620
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -41891,15 +40943,11 @@
       "pct_bachelors_degree": 23.19,
       "pct_below_poverty": 8.41
     },
-    "total_rows": 9,
-    "total_screens": 85,
-    "unique_movies": 9,
-    "non_friday_rate": 0.2222,
+    "total_rows": 8,
+    "total_screens": 22,
+    "unique_movies": 8,
+    "non_friday_rate": 0.25,
     "top_movies": [
-      {
-        "movie_title": "Grand Canyon Valley, AZ",
-        "screen_count": 63
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -41956,15 +41004,11 @@
       "pct_bachelors_degree": 6.1,
       "pct_below_poverty": 21.44
     },
-    "total_rows": 2,
-    "total_screens": 458,
-    "unique_movies": 2,
-    "non_friday_rate": 0.5,
+    "total_rows": 1,
+    "total_screens": 2,
+    "unique_movies": 1,
+    "non_friday_rate": 1,
     "top_movies": [
-      {
-        "movie_title": "Big Island, HI",
-        "screen_count": 456
-      },
       {
         "movie_title": "Super Mario Galaxy Movie, T",
         "screen_count": 2
@@ -42302,15 +41346,11 @@
       "pct_bachelors_degree": 12.36,
       "pct_below_poverty": 12.21
     },
-    "total_rows": 13,
-    "total_screens": 77,
-    "unique_movies": 13,
-    "non_friday_rate": 0.2308,
+    "total_rows": 12,
+    "total_screens": 27,
+    "unique_movies": 12,
+    "non_friday_rate": 0.25,
     "top_movies": [
-      {
-        "movie_title": "Laughlin, NV",
-        "screen_count": 50
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -42541,15 +41581,11 @@
       "pct_bachelors_degree": 17.27,
       "pct_below_poverty": 14.22
     },
-    "total_rows": 12,
-    "total_screens": 583,
-    "unique_movies": 12,
-    "non_friday_rate": 0.25,
+    "total_rows": 11,
+    "total_screens": 24,
+    "unique_movies": 11,
+    "non_friday_rate": 0.2727,
     "top_movies": [
-      {
-        "movie_title": "Maui, HI",
-        "screen_count": 559
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -42821,15 +41857,11 @@
       "pct_bachelors_degree": 17.71,
       "pct_below_poverty": 18.83
     },
-    "total_rows": 8,
-    "total_screens": 237,
-    "unique_movies": 8,
-    "non_friday_rate": 0.375,
+    "total_rows": 7,
+    "total_screens": 17,
+    "unique_movies": 7,
+    "non_friday_rate": 0.4286,
     "top_movies": [
-      {
-        "movie_title": "Flagstaff, AZ",
-        "screen_count": 220
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -43554,15 +42586,11 @@
       "pct_bachelors_degree": 17.27,
       "pct_below_poverty": 14.22
     },
-    "total_rows": 9,
-    "total_screens": 522,
-    "unique_movies": 7,
-    "non_friday_rate": 0.2222,
+    "total_rows": 8,
+    "total_screens": 14,
+    "unique_movies": 6,
+    "non_friday_rate": 0.25,
     "top_movies": [
-      {
-        "movie_title": "Lanai, HI",
-        "screen_count": 508
-      },
       {
         "movie_title": "Super Mario Galaxy Movie, T",
         "screen_count": 4
@@ -43689,15 +42717,11 @@
     "theater_city_state": "Eagle Rock, CA",
     "demographics_status": "no-match",
     "demographics": null,
-    "total_rows": 10,
-    "total_screens": 378,
-    "unique_movies": 10,
-    "non_friday_rate": 0.6,
+    "total_rows": 9,
+    "total_screens": 10,
+    "unique_movies": 9,
+    "non_friday_rate": 0.6667,
     "top_movies": [
-      {
-        "movie_title": "Waikoloa, HI",
-        "screen_count": 368
-      },
       {
         "movie_title": "RRR Fan CelebRRRation",
         "screen_count": 2
@@ -43908,15 +42932,11 @@
       "pct_bachelors_degree": 32,
       "pct_below_poverty": 5.08
     },
-    "total_rows": 6,
-    "total_screens": 821,
-    "unique_movies": 6,
-    "non_friday_rate": 0.1667,
+    "total_rows": 5,
+    "total_screens": 15,
+    "unique_movies": 5,
+    "non_friday_rate": 0.2,
     "top_movies": [
-      {
-        "movie_title": "Ventura County, CA",
-        "screen_count": 806
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -44136,15 +43156,11 @@
       "pct_bachelors_degree": 28.8,
       "pct_below_poverty": 11.11
     },
-    "total_rows": 15,
-    "total_screens": 194,
-    "unique_movies": 15,
-    "non_friday_rate": 0.2667,
+    "total_rows": 14,
+    "total_screens": 25,
+    "unique_movies": 14,
+    "non_friday_rate": 0.2857,
     "top_movies": [
-      {
-        "movie_title": "Ventura County, CA",
-        "screen_count": 169
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -44225,15 +43241,11 @@
       "pct_bachelors_degree": 13.35,
       "pct_below_poverty": 10.82
     },
-    "total_rows": 15,
-    "total_screens": 152,
-    "unique_movies": 15,
-    "non_friday_rate": 0.2667,
+    "total_rows": 14,
+    "total_screens": 28,
+    "unique_movies": 14,
+    "non_friday_rate": 0.2857,
     "top_movies": [
-      {
-        "movie_title": "Antelope Valley, CA",
-        "screen_count": 124
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -44314,15 +43326,11 @@
       "pct_bachelors_degree": 8.22,
       "pct_below_poverty": 17.45
     },
-    "total_rows": 9,
-    "total_screens": 830,
-    "unique_movies": 9,
-    "non_friday_rate": 0.1111,
+    "total_rows": 8,
+    "total_screens": 22,
+    "unique_movies": 8,
+    "non_friday_rate": 0.125,
     "top_movies": [
-      {
-        "movie_title": "San Bernardino, CA",
-        "screen_count": 808
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -44379,18 +43387,14 @@
       "pct_bachelors_degree": 8.96,
       "pct_below_poverty": 19.53
     },
-    "total_rows": 18,
-    "total_screens": 379,
-    "unique_movies": 18,
-    "non_friday_rate": 0.2778,
+    "total_rows": 17,
+    "total_screens": 332,
+    "unique_movies": 17,
+    "non_friday_rate": 0.2941,
     "top_movies": [
       {
         "movie_title": "Copyright 2026 comScore Inc.",
         "screen_count": 295
-      },
-      {
-        "movie_title": "Sedona, AZ",
-        "screen_count": 47
       },
       {
         "movie_title": "GOAT",
@@ -44574,15 +43578,11 @@
       "pct_bachelors_degree": 37.12,
       "pct_below_poverty": 7.13
     },
-    "total_rows": 6,
-    "total_screens": 534,
-    "unique_movies": 6,
-    "non_friday_rate": 0.1667,
+    "total_rows": 5,
+    "total_screens": 15,
+    "unique_movies": 5,
+    "non_friday_rate": 0.2,
     "top_movies": [
-      {
-        "movie_title": "Antelope Valley, CA",
-        "screen_count": 519
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -44705,18 +43705,14 @@
       "pct_bachelors_degree": 24.95,
       "pct_below_poverty": 13.18
     },
-    "total_rows": 29,
-    "total_screens": 2416,
-    "unique_movies": 20,
-    "non_friday_rate": 0.1379,
+    "total_rows": 28,
+    "total_screens": 2175,
+    "unique_movies": 19,
+    "non_friday_rate": 0.1429,
     "top_movies": [
       {
         "movie_title": "CW",
         "screen_count": 1938
-      },
-      {
-        "movie_title": "Santa Maria/San Luis Obispo, CA",
-        "screen_count": 241
       },
       {
         "movie_title": "Hollywood/Beverly Hills, CA - Beverly",
@@ -44891,15 +43887,11 @@
       "pct_bachelors_degree": 17.27,
       "pct_below_poverty": 14.22
     },
-    "total_rows": 11,
-    "total_screens": 49,
-    "unique_movies": 11,
-    "non_friday_rate": 0.1818,
+    "total_rows": 10,
+    "total_screens": 22,
+    "unique_movies": 10,
+    "non_friday_rate": 0.2,
     "top_movies": [
-      {
-        "movie_title": "Yorba Linda, CA",
-        "screen_count": 27
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -45163,15 +44155,11 @@
       "pct_bachelors_degree": 30.02,
       "pct_below_poverty": 3.56
     },
-    "total_rows": 7,
-    "total_screens": 253,
-    "unique_movies": 7,
-    "non_friday_rate": 0.1429,
+    "total_rows": 6,
+    "total_screens": 20,
+    "unique_movies": 6,
+    "non_friday_rate": 0.1667,
     "top_movies": [
-      {
-        "movie_title": "Santa Clarita Valley, CA",
-        "screen_count": 233
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -45281,15 +44269,11 @@
       "pct_bachelors_degree": 17.13,
       "pct_below_poverty": 9.22
     },
-    "total_rows": 11,
-    "total_screens": 70,
-    "unique_movies": 11,
-    "non_friday_rate": 0.2727,
+    "total_rows": 10,
+    "total_screens": 26,
+    "unique_movies": 10,
+    "non_friday_rate": 0.3,
     "top_movies": [
-      {
-        "movie_title": "Los Angeles, CA",
-        "screen_count": 44
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -45514,15 +44498,11 @@
       "pct_bachelors_degree": 30.01,
       "pct_below_poverty": 13.21
     },
-    "total_rows": 16,
-    "total_screens": 123,
-    "unique_movies": 16,
-    "non_friday_rate": 0.25,
+    "total_rows": 15,
+    "total_screens": 30,
+    "unique_movies": 15,
+    "non_friday_rate": 0.2667,
     "top_movies": [
-      {
-        "movie_title": "Moloka'i, HI",
-        "screen_count": 93
-      },
       {
         "movie_title": "Hoppers",
         "screen_count": 6
@@ -45607,15 +44587,11 @@
       "pct_bachelors_degree": 11.14,
       "pct_below_poverty": 18.77
     },
-    "total_rows": 2,
-    "total_screens": 566,
-    "unique_movies": 2,
+    "total_rows": 1,
+    "total_screens": 2,
+    "unique_movies": 1,
     "non_friday_rate": 0,
     "top_movies": [
-      {
-        "movie_title": "Los Angeles, CA",
-        "screen_count": 564
-      },
       {
         "movie_title": "Super Mario Galaxy Movie, T",
         "screen_count": 2

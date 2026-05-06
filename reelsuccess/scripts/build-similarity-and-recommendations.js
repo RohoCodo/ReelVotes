@@ -114,7 +114,8 @@ function normalizeOp(x, min, max) {
 function isLikelyBadMovieTitle(title) {
   const t = String(title || "").trim();
   if (!t) return true;
-  if (/^[A-Za-z .'-]+,\s*[A-Z]{2}$/.test(t)) return true; // city/state-like rows
+  if (/^[A-Za-z .'/&-]+,\s*[A-Z]{2}$/.test(t)) return true; // city/state-like rows
+  if (/^[A-Za-z .'/&-]+\/[A-Za-z .'/&-]+,\s*[A-Z]{2}$/.test(t)) return true; // market rows like Monterey/Salinas, CA
   if (/\bCounty\b/i.test(t)) return true;
   if (/^[A-Za-z .'-]+\s+-\s+[A-Za-z .'-]+$/.test(t)) return true;
   return false;

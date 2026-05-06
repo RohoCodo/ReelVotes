@@ -244,32 +244,64 @@ if (eventSelector) {
   });
 }
 
+function promptLoginModal(validateFn) {
+  return new Promise((resolve) => {
+    const modal = document.getElementById("loginModal");
+    const input = document.getElementById("loginEmailInput");
+    const errorEl = document.getElementById("loginEmailError");
+    const submitBtn = document.getElementById("loginSubmitBtn");
+    if (!modal || !input || !submitBtn) {
+      // Fallback if modal elements are missing
+      const raw = window.prompt("Enter your theater email to continue:");
+      resolve(normalizeEmail(raw || ""));
+      return;
+    }
+
+    modal.classList.remove("hidden");
+    input.value = "";
+    if (errorEl) errorEl.textContent = "";
+    setTimeout(() => input.focus(), 50);
+
+    function attempt() {
+      const email = normalizeEmail(input.value);
+      if (!email || !email.includes("@")) {
+        if (errorEl) errorEl.textContent = "Please enter a valid email address.";
+        input.focus();
+        return;
+      }
+      if (!validateFn(email)) {
+        if (errorEl) errorEl.textContent = "That email isn't authorized. Try a different one.";
+        input.select();
+        return;
+      }
+      modal.classList.add("hidden");
+      submitBtn.removeEventListener("click", attempt);
+      input.removeEventListener("keydown", keyHandler);
+      resolve(email);
+    }
+
+    function keyHandler(e) {
+      if (e.key === "Enter") attempt();
+    }
+
+    submitBtn.addEventListener("click", attempt);
+    input.addEventListener("keydown", keyHandler);
+  });
+}
+
 async function ensureAdminAccess() {
   const STORAGE_KEY = "reelvotes_admin_email";
+  const LEGACY_REELSUCCESS_STORAGE_KEY = "reelsuccess_admin_email";
 
-  const stored = window.localStorage.getItem(STORAGE_KEY);
+  const stored = window.localStorage.getItem(STORAGE_KEY)
+    || window.localStorage.getItem(LEGACY_REELSUCCESS_STORAGE_KEY);
   if (stored && isAdminEmail(stored)) {
-    return stored;
+    window.localStorage.setItem(STORAGE_KEY, normalizeEmail(stored));
+    window.localStorage.removeItem(LEGACY_REELSUCCESS_STORAGE_KEY);
+    return normalizeEmail(stored);
   }
 
-  // Simple prompt-based gate; production users won't see this link.
-  const input = window.prompt("Admin access only. Enter your theater email to continue:");
-  const email = normalizeEmail(input);
-
-  if (!email || !isAdminEmail(email)) {
-    if (adminList) {
-      adminList.innerHTML = "";
-      const denied = document.createElement("div");
-      denied.className = "chosen-movie";
-      denied.textContent = "Access denied. This view is only for authorized staff.";
-      adminList.appendChild(denied);
-    }
-    if (updatedAtEl) {
-      updatedAtEl.textContent = "";
-    }
-    throw new Error("Unauthorized admin email");
-  }
-
+  const email = await promptLoginModal(isAdminEmail);
   window.localStorage.setItem(STORAGE_KEY, email);
   return email;
 }

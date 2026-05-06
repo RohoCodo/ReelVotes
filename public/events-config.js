@@ -40,12 +40,16 @@ window.REELVOTES_EVENTS = [
     eliminationsPerNight: 3,
     voteWindowLabel: "Voting now",
     allowedMovies: [
-      "RomComs",
-      "Sci-fi",
-      "Coming of Age",
-      "Thrillers/Mystery",
-      "Comedy (or Satire/Black Comedy)",
-      "Action/Adventure"
+      "Donnie Darko",
+      "Brazil",
+      "Soylent Green",
+      "A Clockwork Orange",
+      "THX1138",
+      "The Man Who Fell to Earth",
+      "12 Monkeys",
+      "Invasion of the Body Snatchers",
+      "Videodrome",
+      "Nausicaa of the Valley of the Wind"
     ]
   },
   {
