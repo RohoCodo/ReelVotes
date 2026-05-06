@@ -401,27 +401,39 @@ function normalizeMovieTitle(movieTitle) {
     .replace(/\s+/g, " ");
 }
 
-const ALLOWED_MOVIES = new Set([
-  "Back to the Future",
-  "Jurassic Park",
-  "Blade Runner",
-  "In The Mood For Love",
-  "Mean Girls",
-  "Bring It On",
-  "The Notebook",
-  "Blade",
-  "Battle Royale",
-  "Mad Max: Fury Road",
-  "RomComs",
-  "Sci-fi",
-  "Coming of Age",
-  "Thrillers/Mystery",
-  "Comedy (or Satire/Black Comedy)",
-  "Action/Adventure",
+const EVENT_ALLOWED_MOVIES = new Map([
+  ["np-2026-05-26-1830", [
+    "Back to the Future",
+    "Jurassic Park",
+    "Blade Runner",
+    "In The Mood For Love",
+    "Mean Girls",
+    "Bring It On",
+    "The Notebook",
+    "Blade",
+    "Battle Royale",
+    "Mad Max: Fury Road",
+  ]],
+  ["np-2026-06-01-1830", [
+    "Donnie Darko",
+    "Brazil",
+    "Soylent Green",
+    "A Clockwork Orange",
+    "THX1138",
+    "The Man Who Fell to Earth",
+    "12 Monkeys",
+    "Invasion of the Body Snatchers",
+    "Videodrome",
+    "Nausicaa of the Valley of the Wind",
+  ]],
 ]);
-const ALLOWED_MOVIE_LOOKUP = new Map(
-  Array.from(ALLOWED_MOVIES).map((title) => [normalizeMovieTitle(title), title]),
-);
+
+function getAllowedMovieLookupForEvent(eventId) {
+  return new Map(
+    (EVENT_ALLOWED_MOVIES.get(eventId) || [])
+      .map((title) => [normalizeMovieTitle(title), title]),
+  );
+}
 
 // Cache for attendees
 let attendeesCache = null;
@@ -936,6 +948,7 @@ exports.submitVote = onCall(async (request) => {
   const rateLimitRef = eventRef.collection("rate_limits").doc(ipHash);
   const emailKeyRef = email ? eventRef.collection("email_keys").doc(email) : null;
   const legacyEmailKeyRef = emailHash ? eventRef.collection("email_keys").doc(emailHash) : null;
+  const allowedMovieLookup = getAllowedMovieLookupForEvent(eventId);
   const requestedMovieRefs = requestedMovieTitles.map((requestedMovieTitle) => ({
     requestedMovieTitle,
     movieRef: eventRef.collection("movies").doc(movieDocId(requestedMovieTitle)),
@@ -1049,7 +1062,7 @@ exports.submitVote = onCall(async (request) => {
           ? String(requested.legacyMovieDoc.data()?.movie_title || "").trim()
           : "";
 
-      const canonicalMovieTitleFromAllowList = ALLOWED_MOVIE_LOOKUP.get(normalizeMovieTitle(requested.requestedMovieTitle)) || "";
+      const canonicalMovieTitleFromAllowList = allowedMovieLookup.get(normalizeMovieTitle(requested.requestedMovieTitle)) || "";
       const movieTitle = canonicalMovieTitleFromEvent || canonicalMovieTitleFromAllowList;
 
       if (!movieTitle) {

@@ -35,7 +35,7 @@ window.REELVOTES_EVENTS = [
     screeningDateTime: "2026-06-01T18:30:00",
     voteStatus: "live",
     requireEmail: false,
-    showLiveVoteCounts: true,
+    showLiveVoteCounts: false,
     eliminationEnabled: true,
     eliminationsPerNight: 3,
     voteWindowLabel: "Voting now",
