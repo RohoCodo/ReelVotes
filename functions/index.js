@@ -44,9 +44,7 @@ const ELIMINATION_ENABLED_EVENT_IDS = new Set([
 ]);
 const DEFAULT_ELIMINATIONS_PER_NIGHT = 3;
 const LEGACY_ANON_EMAIL_SUFFIX = "@reelvotes.local";
-const EMAIL_OPTIONAL_EVENT_IDS = new Set([
-  "np-2026-06-01-1830",
-]);
+const EMAIL_OPTIONAL_EVENT_IDS = new Set([]);
 const ADMIN_EMAILS = new Set([
   "rt332@cornell.edu",
   "moses@thenewparkway.com",
