@@ -36,8 +36,6 @@ window.REELVOTES_EVENTS = [
     voteStatus: "live",
     requireEmail: true,
     showLiveVoteCounts: false,
-    eliminationEnabled: true,
-    eliminationsPerNight: 3,
     voteWindowLabel: "Voting now",
     allowedMovies: [
       "Donnie Darko",

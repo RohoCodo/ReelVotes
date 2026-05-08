@@ -39,9 +39,7 @@ const TURNSTILE_VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/sit
 const TURNSTILE_SECRET_KEY = process.env.TURNSTILE_SECRET_KEY || "";
 const ELIMINATION_SCHEDULE = "0 2 * * *";
 const ELIMINATION_TIMEZONE = "America/Los_Angeles";
-const ELIMINATION_ENABLED_EVENT_IDS = new Set([
-  "np-2026-06-01-1830",
-]);
+const ELIMINATION_ENABLED_EVENT_IDS = new Set([]);
 const DEFAULT_ELIMINATIONS_PER_NIGHT = 3;
 const LEGACY_ANON_EMAIL_SUFFIX = "@reelvotes.local";
 const EMAIL_OPTIONAL_EVENT_IDS = new Set([]);
@@ -687,14 +685,22 @@ async function queueEliminationEmails(eventId, eliminatedTitles, emailSet) {
   await batch.commit();
 }
 
-async function runNightlyEliminationForEvent(eventId) {
+async function runNightlyEliminationForEvent(eventId, {manual = false} = {}) {
   const eventRef = db.collection("events").doc(eventId);
 
   const eliminationResult = await db.runTransaction(async (transaction) => {
     // 1. All reads first
     const eventDoc = await transaction.get(eventRef);
     const eventData = eventDoc.exists ? (eventDoc.data() || {}) : {};
-    if (!isEliminationEnabledForEvent(eventId, eventData)) {
+    // Auto/nightly eliminations are disabled. Only manual button-triggered rounds should run.
+    if (!manual) {
+      return {
+        status: "auto-disabled",
+        eventId,
+      };
+    }
+
+    if (!manual && !isEliminationEnabledForEvent(eventId, eventData)) {
       return {
         status: "disabled",
         eventId,
@@ -861,26 +867,20 @@ async function runNightlyEliminationForEvent(eventId) {
   return eliminationResult;
 }
 
-// Nightly elimination is currently disabled. To re-enable, uncomment the code below.
-// exports.runNightlyElimination = onSchedule({
-//   schedule: ELIMINATION_SCHEDULE,
-//   timeZone: ELIMINATION_TIMEZONE,
-// }, async () => {
-//   const eventIds = Array.from(ELIMINATION_ENABLED_EVENT_IDS);
-//   for (const eventId of eventIds) {
-//     try {
-//       await runNightlyEliminationForEvent(eventId);
-//     } catch (error) {
-//       logger.error("Nightly elimination failed for event", {eventId, error});
-//     }
-//   }
-// });
+// Keep this export so an older deployed scheduled function with the same name is overwritten.
+// It intentionally performs no eliminations.
+exports.runNightlyElimination = onSchedule({
+  schedule: ELIMINATION_SCHEDULE,
+  timeZone: ELIMINATION_TIMEZONE,
+}, async () => {
+  logger.info("runNightlyElimination skipped: automatic eliminations are disabled.");
+});
 
 exports.runEliminationRound = onCall(async (request) => {
   const eventId = sanitizeEventId(request.data?.eventId);
   const adminEmail = assertAdminEmail(request.data?.adminEmail);
 
-  const result = await runNightlyEliminationForEvent(eventId);
+  const result = await runNightlyEliminationForEvent(eventId, {manual: true});
 
   logger.info("Manual elimination round requested", {
     eventId,
