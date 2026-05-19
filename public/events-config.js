@@ -55,6 +55,9 @@ window.REELVOTES_EVENTS = [
     firestoreEventId: "np-2026-06-08-1830",
     screeningLabel: "6/8 @ 6:30pm",
     screeningDateTime: "2026-06-08T18:30:00",
+    voteStatus: "live",
+    requireEmail: true,
+    showLiveVoteCounts: false,
     voteWindowLabel: "Voting now",
     allowedMovies: [
       "Hereditary",
