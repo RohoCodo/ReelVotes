@@ -55,7 +55,19 @@ window.REELVOTES_EVENTS = [
     firestoreEventId: "np-2026-06-08-1830",
     screeningLabel: "6/8 @ 6:30pm",
     screeningDateTime: "2026-06-08T18:30:00",
-    voteWindowLabel: "Voting now"
+    voteWindowLabel: "Voting now",
+    allowedMovies: [
+      "Hereditary",
+      "The Lighthouse",
+      "Climax",
+      "Under the Skin",
+      "The Green Knight",
+      "Pearl",
+      "Bodies Bodies Bodies",
+      "Love Lies Bleeding",
+      "Ex Machina",
+      "Good Time"
+    ]
   },
   {
     id: "2026-06-15",

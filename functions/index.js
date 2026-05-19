@@ -422,6 +422,18 @@ const EVENT_ALLOWED_MOVIES = new Map([
     "Videodrome",
     "Nausicaa of the Valley of the Wind",
   ]],
+  ["np-2026-06-08-1830", [
+    "Hereditary",
+    "The Lighthouse",
+    "Climax",
+    "Under the Skin",
+    "The Green Knight",
+    "Pearl",
+    "Bodies Bodies Bodies",
+    "Love Lies Bleeding",
+    "Ex Machina",
+    "Good Time",
+  ]],
 ]);
 
 function getAllowedMovieLookupForEvent(eventId) {
