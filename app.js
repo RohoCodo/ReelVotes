@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
-import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, getDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-functions.js";
 
 // Firebase Config
@@ -69,12 +69,24 @@ const selectedEvent = window.REELVOTES_EVENT || configuredEvents.find(
 ) || null;
 const EVENT_ID = selectedEvent?.firestoreEventId || requestedEventDataId || "newparkway1";
 const EVENT_STATUS = selectedEvent?.voteStatus || null;
-const EVENT_REQUIRES_EMAIL = selectedEvent?.requireEmail !== false;
+let EVENT_REQUIRES_EMAIL = selectedEvent?.requireEmail !== false;
 const EVENT_SHOW_LIVE_VOTE_COUNTS = selectedEvent?.showLiveVoteCounts === true;
 const EVENT_ALLOWED_MOVIES = Array.isArray(selectedEvent?.allowedMovies)
   ? selectedEvent.allowedMovies.filter((title) => typeof title === "string" && title.trim().length > 0)
   : [];
 const ACTIVE_ALLOWED_MOVIES = EVENT_ALLOWED_MOVIES.length > 0 ? EVENT_ALLOWED_MOVIES : DEFAULT_ALLOWED_MOVIES;
+
+async function loadEventRuntimeSettings() {
+  try {
+    const eventDoc = await getDoc(doc(db, "events", EVENT_ID));
+    const eventData = eventDoc.exists() ? (eventDoc.data() || {}) : {};
+    if (typeof eventData.requireEmail === "boolean") {
+      EVENT_REQUIRES_EMAIL = eventData.requireEmail;
+    }
+  } catch (error) {
+    console.warn("[app] Could not load runtime event settings, using config defaults", error);
+  }
+}
 
 console.log("[app] Bootstrap", {
   href: window.location.href,
@@ -972,9 +984,6 @@ async function recordVote(email = null) {
 
     if (EVENT_REQUIRES_EMAIL && email) {
       payload.email = email;
-    } else if (!EVENT_REQUIRES_EMAIL) {
-      // Backward-compatible fallback while some deployed backends still require an email field.
-      payload.email = buildAnonymousVoteEmail();
     }
 
     const response = await submitVoteCallable(payload);
@@ -1404,6 +1413,7 @@ async function updateAppLink() {
 async function init() {
   hideVotingInterface();
   voterClientId = getOrCreateClientId();
+  await loadEventRuntimeSettings();
   await routeCurrentVoter();
 
   await updateAppLink();

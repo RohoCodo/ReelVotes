@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
-import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, getDoc, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-functions.js";
 
 // Firebase Config (same as main app)
@@ -16,6 +16,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const functions = getFunctions(app);
 const runEliminationRoundCallable = httpsCallable(functions, "runEliminationRound");
+const saveEventAdminSettingsCallable = httpsCallable(functions, "saveEventAdminSettings");
 
 // Hardcoded total votes needed to reach goal (same as main app)
 const VOTES_NEEDED = 50;
@@ -41,12 +42,17 @@ let currentEventId = urlEventId
 
 const eventLabel = document.getElementById("eventLabel");
 const updatedAtEl = document.getElementById("updatedAt");
+const adminIdentityEl = document.getElementById("adminIdentity");
 const adminList = document.getElementById("adminList");
 const ballotListEl = document.getElementById("ballotList");
 const eventSelector = document.getElementById("eventSelector");
-const backLink = document.querySelector("a[href='index.html']");
+const publicPreviewLink = document.getElementById("publicPreviewLink");
 const runEliminationBtn = document.getElementById("runEliminationBtn");
 const eliminationStatusEl = document.getElementById("eliminationStatus");
+const adminRequireEmailCheckbox = document.getElementById("adminRequireEmailCheckbox");
+const adminMoviesInput = document.getElementById("adminMoviesInput");
+const adminSaveBtn = document.getElementById("adminSaveBtn");
+const adminSaveStatus = document.getElementById("adminSaveStatus");
 let currentAdminEmail = null;
 
 // Populate event selector dropdown
@@ -71,9 +77,39 @@ function populateSelector() {
 }
 populateSelector();
 
-// Update event label
+// Tab switching
+const tabResultsBtn = document.getElementById("tabResultsBtn");
+const tabEditBtn = document.getElementById("tabEditBtn");
+const tabResultsPanel = document.getElementById("tabResults");
+const tabEditPanel = document.getElementById("tabEdit");
+
+function showTab(tab) {
+  const onResults = tab === "results";
+  if (tabResultsPanel) tabResultsPanel.style.display = onResults ? "" : "none";
+  if (tabEditPanel) tabEditPanel.style.display = onResults ? "none" : "";
+  if (tabResultsBtn) {
+    tabResultsBtn.style.background = onResults ? "#ff4757" : "#222";
+    tabResultsBtn.style.color = onResults ? "#fff" : "#aaa";
+  }
+  if (tabEditBtn) {
+    tabEditBtn.style.background = onResults ? "#222" : "#ff4757";
+    tabEditBtn.style.color = onResults ? "#aaa" : "#fff";
+  }
+}
+
+if (tabResultsBtn) tabResultsBtn.addEventListener("click", () => showTab("results"));
+if (tabEditBtn) tabEditBtn.addEventListener("click", () => showTab("edit"));
+
+// Start on results tab
+showTab("results");
 function updateEventLabel(firestoreId) {
-  if (eventLabel) eventLabel.textContent = `Firestore event: ${firestoreId}`;
+  const event = resolveEvent(firestoreId);
+  const label = event?.screeningLabel || event?.id || firestoreId;
+  if (eventLabel) eventLabel.textContent = `Event: ${label}`;
+  if (publicPreviewLink) {
+    const queryEventId = event?.id || firestoreId;
+    publicPreviewLink.href = `index.html?event=${encodeURIComponent(queryEventId)}`;
+  }
 }
 updateEventLabel(currentEventId);
 
@@ -99,6 +135,23 @@ function renderBallot(allowedMovies) {
 
 function normalizeEmail(email) {
   return (email || "").trim().toLowerCase();
+}
+
+function setAdminIdentity(email) {
+  if (!adminIdentityEl) return;
+  adminIdentityEl.textContent = `Signed in as: ${email}`;
+}
+
+function setSaveStatus(message, isError = false) {
+  if (!adminSaveStatus) return;
+  adminSaveStatus.textContent = message;
+  adminSaveStatus.style.color = isError ? "#ff6b6b" : "#bbb";
+}
+
+function resolveEvent(firestoreId) {
+  return configuredEvents.find((event) =>
+    (EVENT_ID_ALIASES[event.id] || event.firestoreEventId || event.id) === firestoreId,
+  ) || null;
 }
 
 function isAdminEmail(email) {
@@ -189,22 +242,90 @@ function renderMovies(movies) {
   });
 }
 
-let unsubscribeLive = null;
+async function loadAdminControlsForEvent(firestoreId) {
+  const configuredEvent = resolveEvent(firestoreId);
+  const configuredRequireEmail = configuredEvent?.requireEmail !== false;
+  setSaveStatus("Loading settings…");
 
-function fetchBallotForEvent(firestoreId) {
-  // Look up the event in events-config.js by firestoreEventId
-  const ev = configuredEvents.find(e =>
-    (EVENT_ID_ALIASES[e.id] || e.firestoreEventId || e.id) === firestoreId
-  );
-  // Return the event's allowedMovies if defined; undefined/null means "not configured"
-  return ev && Array.isArray(ev.allowedMovies) ? ev.allowedMovies : null;
+  try {
+    const [eventDoc, moviesSnapshot] = await Promise.all([
+      getDoc(doc(db, "events", firestoreId)),
+      getDocs(collection(db, "events", firestoreId, "movies")),
+    ]);
+
+    const eventData = eventDoc.exists() ? (eventDoc.data() || {}) : {};
+    if (adminRequireEmailCheckbox) {
+      adminRequireEmailCheckbox.checked = typeof eventData.requireEmail === "boolean"
+        ? eventData.requireEmail
+        : configuredRequireEmail;
+    }
+
+    const titles = moviesSnapshot.docs
+      .map((movieDoc) => String(movieDoc.data()?.movie_title || movieDoc.id).trim())
+      .filter(Boolean)
+      .sort((a, b) => a.localeCompare(b));
+
+    if (adminMoviesInput) {
+      adminMoviesInput.value = titles.join("\n");
+    }
+
+    renderBallot(titles);
+    setSaveStatus(`Loaded ${titles.length} movie${titles.length === 1 ? "" : "s"}.`);
+  } catch (error) {
+    console.error("Failed loading admin controls:", error);
+    setSaveStatus("Could not load settings.", true);
+  }
 }
+
+async function saveAdminControls() {
+  if (!currentEventId) {
+    setSaveStatus("No event selected.", true);
+    return;
+  }
+
+  const rawTitles = String(adminMoviesInput?.value || "")
+    .split("\n")
+    .map((title) => title.trim())
+    .filter(Boolean);
+  const dedupedTitles = Array.from(new Map(rawTitles.map((title) => [title.toLowerCase(), title])).values());
+
+  if (dedupedTitles.length === 0) {
+    setSaveStatus("Enter at least one movie.", true);
+    return;
+  }
+
+  if (adminSaveBtn) adminSaveBtn.disabled = true;
+  setSaveStatus("Saving…");
+
+  try {
+    if (!currentAdminEmail) {
+      throw new Error("Admin session missing. Refresh and sign in again.");
+    }
+
+    await saveEventAdminSettingsCallable({
+      eventId: currentEventId,
+      adminEmail: currentAdminEmail,
+      requireEmail: adminRequireEmailCheckbox?.checked === true,
+      movieTitles: dedupedTitles,
+    });
+
+    renderBallot(dedupedTitles);
+    await loadAdminControlsForEvent(currentEventId);
+    setSaveStatus(`Saved ${dedupedTitles.length} movies. Email required: ${adminRequireEmailCheckbox?.checked ? "on" : "off"}.`);
+  } catch (error) {
+    console.error("Failed saving admin controls:", error);
+    setSaveStatus(`Save failed: ${error?.message || "unknown error"}`, true);
+  } finally {
+    if (adminSaveBtn) adminSaveBtn.disabled = false;
+  }
+}
+
+let unsubscribeLive = null;
 
 function startLiveListener(firestoreId) {
   firestoreId = firestoreId || currentEventId;
   if (unsubscribeLive) { unsubscribeLive(); unsubscribeLive = null; }
   updateEventLabel(firestoreId);
-  renderBallot(fetchBallotForEvent(firestoreId));
   const moviesRef = collection(db, "events", firestoreId, "movies");
 
   unsubscribeLive = onSnapshot(moviesRef, (snapshot) => {
@@ -218,11 +339,17 @@ function startLiveListener(firestoreId) {
     // Sort by votes desc
     movies.sort((a, b) => (b.vote_count || 0) - (a.vote_count || 0));
 
+    const ballotTitles = movies
+      .map((movie) => String(movie.movie_title || movie.id || "").trim())
+      .filter(Boolean)
+      .sort((a, b) => a.localeCompare(b));
+    renderBallot(ballotTitles);
+
     renderMovies(movies);
 
     if (updatedAtEl) {
       const now = new Date();
-      updatedAtEl.textContent = `Last updated: ${now.toLocaleTimeString()}`;
+      updatedAtEl.textContent = `Live updated: ${now.toLocaleTimeString()}`;
     }
   }, (error) => {
     console.error("Error listening for votes:", error);
@@ -241,7 +368,12 @@ if (eventSelector) {
       || selectedId;
     currentEventId = resolved;
     startLiveListener(resolved);
+    loadAdminControlsForEvent(resolved);
   });
+}
+
+if (adminSaveBtn) {
+  adminSaveBtn.addEventListener("click", saveAdminControls);
 }
 
 function promptLoginModal(validateFn) {
@@ -308,7 +440,9 @@ async function ensureAdminAccess() {
 ensureAdminAccess()
   .then((adminEmail) => {
     currentAdminEmail = adminEmail;
+    setAdminIdentity(adminEmail);
     startLiveListener(currentEventId);
+    loadAdminControlsForEvent(currentEventId);
     if (runEliminationBtn) {
       runEliminationBtn.disabled = false;
       runEliminationBtn.addEventListener("click", runEliminationRoundNow);
@@ -320,10 +454,3 @@ ensureAdminAccess()
       runEliminationBtn.disabled = true;
     }
   });
-
-if (backLink) {
-	backLink.addEventListener("click", (event) => {
-		event.preventDefault();
-		window.location.href = "index.html";
-	});
-}

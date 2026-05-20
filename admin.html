@@ -12,38 +12,68 @@
 
 <div class="container">
   <div class="card">
+    <div class="top-right-links" aria-label="Top links">
+      <a href="reelsuccess.html" class="app-link">ReelSuccess</a>
+      <span aria-hidden="true">•</span>
+      <a href="select-event.html" class="app-link">Showtimes</a>
+    </div>
+
     <img src="icon.png" class="logo" />
-    <h1>Live Vote Dashboard</h1>
-    <p class="subtitle">For theater staff – updates in real time.</p>
+    <h1>Admin Hub</h1>
 
-    <div style="margin: 12px 0;">
-      <select id="eventSelector" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #ccc;font-size:14px;background:#fff;cursor:pointer;">
-        <option value="">Loading events…</option>
-      </select>
-    </div>
+    <!-- Identity + event context -->
+    <p id="adminIdentity" class="subtitle" style="margin:2px 0 0;">Checking admin access…</p>
+    <p id="eventLabel" class="subtitle" style="margin:4px 0 8px;"></p>
 
-    <p id="eventLabel" class="subtitle"></p>
-    <p id="updatedAt" class="subtitle"></p>
+    <!-- Event selector -->
+    <select id="eventSelector" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #ccc;font-size:14px;background:#fff;cursor:pointer;margin-bottom:16px;">
+      <option value="">Loading events…</option>
+    </select>
 
-    <div style="margin: 8px 0 14px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-      <button id="runEliminationBtn" type="button" style="background:#ff4757;border:none;color:#fff;padding:10px 14px;border-radius:10px;font-weight:700;cursor:pointer;">Run elimination round now</button>
-      <span id="eliminationStatus" class="subtitle" style="margin:0;"></span>
-    </div>
-
-    <div id="adminMovies" class="chosen-section">
-      <div class="ballot-section">
-        <p class="chosen-label">Movies on the ballot:</p>
-        <div id="ballotList" class="chosen-list" style="margin-bottom:16px;"></div>
-      </div>
-      <p class="chosen-label" style="margin-top:8px;">Live vote counts:</p>
-      <div id="adminList" class="chosen-list"></div>
-    </div>
-
-    <p class="track-results">
-      <a href="index.html" class="app-link">Back to voting →</a>
-      <span aria-hidden="true"> • </span>
-      <a href="reelsuccess.html" class="app-link">Open ReelSuccess →</a>
+    <p style="margin:0 0 14px;">
+      <a id="publicPreviewLink" href="index.html" class="app-link">Open public voting view</a>
     </p>
+
+    <!-- Tab switcher -->
+    <div style="display:flex;gap:0;border-radius:10px;overflow:hidden;border:1px solid #333;margin-bottom:18px;">
+      <button id="tabResultsBtn" type="button" style="flex:1;padding:10px;background:#ff4757;color:#fff;border:none;font-size:14px;font-weight:700;cursor:pointer;">📊 Results</button>
+      <button id="tabEditBtn" type="button" style="flex:1;padding:10px;background:#222;color:#aaa;border:none;border-left:1px solid #333;font-size:14px;font-weight:600;cursor:pointer;">✏️ Edit Event</button>
+    </div>
+
+    <!-- RESULTS TAB -->
+    <div id="tabResults">
+      <p id="updatedAt" class="subtitle" style="margin:0 0 10px;"></p>
+      <div id="adminMovies" class="chosen-section">
+        <p class="chosen-label">Live vote counts:</p>
+        <div id="adminList" class="chosen-list"></div>
+      </div>
+      <div style="margin-top:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <button id="runEliminationBtn" type="button" style="background:#ff4757;border:none;color:#fff;padding:10px 14px;border-radius:10px;font-weight:700;cursor:pointer;">Run elimination round</button>
+      </div>
+      <span id="eliminationStatus" class="subtitle" style="display:block;margin-top:8px;"></span>
+    </div>
+
+    <!-- EDIT TAB -->
+    <div id="tabEdit" style="display:none;">
+      <div class="info-box" style="text-align:left;margin-bottom:12px;">
+        <label style="display:flex;align-items:center;gap:8px;margin:0 0 14px;color:#ddd;font-size:14px;">
+          <input id="adminRequireEmailCheckbox" type="checkbox" checked />
+          Require a valid email to vote
+        </label>
+
+        <label style="font-size:13px;color:#aaa;display:block;margin-bottom:6px;">Movies on ballot (one per line)</label>
+        <textarea id="adminMoviesInput" rows="12" style="width:100%;padding:10px;border-radius:8px;border:1px solid #444;background:#111;color:#fff;font-size:14px;resize:vertical;box-sizing:border-box;font-family:inherit;"></textarea>
+
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px;">
+          <button id="adminSaveBtn" type="button" style="background:#ff4757;border:none;color:#fff;padding:10px 18px;border-radius:10px;font-weight:700;cursor:pointer;">Save changes</button>
+          <span id="adminSaveStatus" class="subtitle" style="margin:0;"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hidden ballot list kept for JS compat -->
+    <div id="ballotList" style="display:none;"></div>
+
   </div>
 </div>
 

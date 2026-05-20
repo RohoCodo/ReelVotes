@@ -33,10 +33,10 @@ window.REELVOTES_EVENTS = [
     firestoreEventId: "np-2026-06-01-1830",
     screeningLabel: "6/1 @ 6:30pm",
     screeningDateTime: "2026-06-01T18:30:00",
-    voteStatus: "live",
+    voteStatus: "ended",
     requireEmail: true,
     showLiveVoteCounts: false,
-    voteWindowLabel: "Voting now",
+    voteWindowLabel: "Voting ended",
     allowedMovies: [
       "Donnie Darko",
       "Brazil",

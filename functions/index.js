@@ -311,7 +311,10 @@ function sanitizeTheaterKey(value) {
   return theaterKey;
 }
 
-function requiresEmailForEvent(eventId) {
+function requiresEmailForEvent(eventId, eventData = {}) {
+  if (typeof eventData.requireEmail === "boolean") {
+    return eventData.requireEmail;
+  }
   return !EMAIL_OPTIONAL_EVENT_IDS.has(eventId);
 }
 
@@ -907,6 +910,76 @@ exports.runEliminationRound = onCall(async (request) => {
   };
 });
 
+exports.saveEventAdminSettings = onCall(async (request) => {
+  const eventId = sanitizeEventId(request.data?.eventId);
+  const adminEmail = assertAdminEmail(request.data?.adminEmail);
+  const movieTitles = sanitizeMovieTitles(request.data?.movieTitles);
+
+  if (typeof request.data?.requireEmail !== "boolean") {
+    throw new HttpsError("invalid-argument", "requireEmail must be a boolean.");
+  }
+  const requireEmail = request.data.requireEmail;
+
+  const eventRef = db.collection("events").doc(eventId);
+  const moviesRef = eventRef.collection("movies");
+  const snapshot = await moviesRef.get();
+
+  const existingById = new Map();
+  snapshot.forEach((movieDoc) => {
+    existingById.set(movieDoc.id, movieDoc.data() || {});
+  });
+
+  const batch = db.batch();
+  const now = admin.firestore.FieldValue.serverTimestamp();
+
+  batch.set(eventRef, {
+    requireEmail,
+    updated_at: now,
+    updated_by: adminEmail,
+  }, {merge: true});
+
+  const newIds = new Set();
+  movieTitles.forEach((title) => {
+    const docId = movieDocId(title);
+    newIds.add(docId);
+    const existing = existingById.get(docId) || {};
+
+    batch.set(moviesRef.doc(docId), {
+      event_id: eventId,
+      movie_title: title,
+      vote_count: Number(existing.vote_count || 0),
+      created_at: existing.created_at || now,
+      updated_at: now,
+    });
+  });
+
+  let deletedMovieCount = 0;
+  existingById.forEach((_, oldId) => {
+    if (!newIds.has(oldId)) {
+      deletedMovieCount += 1;
+      batch.delete(moviesRef.doc(oldId));
+    }
+  });
+
+  await batch.commit();
+
+  logger.info("Admin event settings saved", {
+    eventId,
+    adminEmail,
+    movieCount: movieTitles.length,
+    deletedMovieCount,
+    requireEmail,
+  });
+
+  return {
+    ok: true,
+    eventId,
+    movieCount: movieTitles.length,
+    deletedMovieCount,
+    requireEmail,
+  };
+});
+
 exports.getVoteStatus = onCall(async (request) => {
   const eventId = sanitizeEventId(request.data?.eventId);
   const clientId = sanitizeClientId(request.data?.clientId);
@@ -947,8 +1020,7 @@ exports.submitVote = onCall(async (request) => {
       ? request.data.movieTitles
       : request.data?.movieTitle,
   );
-  const requiresEmail = requiresEmailForEvent(eventId);
-  const email = requiresEmail ? sanitizeEmail(request.data?.email) : sanitizeOptionalEmail(request.data?.email);
+  const email = sanitizeOptionalEmail(request.data?.email);
   await verifyCaptchaToken(request, request.data?.captchaToken);
   const {clientIdHash, voteKeyRef} = buildVoteLookup(eventId, clientId);
   const emailHash = email ? hashValue(email) : null;
@@ -966,6 +1038,13 @@ exports.submitVote = onCall(async (request) => {
   }));
 
   return db.runTransaction(async (transaction) => {
+    const eventDoc = await transaction.get(eventRef);
+    const eventData = eventDoc.exists ? (eventDoc.data() || {}) : {};
+    const requiresEmail = requiresEmailForEvent(eventId, eventData);
+    if (requiresEmail && !email) {
+      throw new HttpsError("invalid-argument", "A valid email is required.");
+    }
+
     const rateLimitDoc = await transaction.get(rateLimitRef);
     const voteKeyDoc = await transaction.get(voteKeyRef);
     const emailKeyDoc = emailKeyRef ? await transaction.get(emailKeyRef) : null;

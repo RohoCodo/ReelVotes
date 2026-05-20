@@ -12,6 +12,10 @@
 
 <div class="container">
   <div class="card">
+    <div class="top-right-links" aria-label="Top links">
+      <a href="admin.html" class="app-link">Admin View</a>
+    </div>
+
     <img src="icon.png" class="logo" />
 
     <h1>Choose a Showtime</h1>
@@ -39,6 +43,12 @@
     <label style="font-size:13px;color:#aaa;display:block;margin-bottom:6px;">Showtime</label>
     <select id="adminEventSelect" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #444;background:#111;color:#fff;font-size:14px;margin-bottom:16px;"></select>
 
+    <label style="font-size:13px;color:#aaa;display:block;margin-bottom:6px;">Vote requires email</label>
+    <label style="display:flex;align-items:center;gap:8px;margin:0 0 14px;color:#ddd;font-size:14px;">
+      <input id="adminRequireEmailCheckbox" type="checkbox" checked />
+      Require a valid email to submit a vote
+    </label>
+
     <label style="font-size:13px;color:#aaa;display:block;margin-bottom:6px;">Movies (one per line)</label>
     <textarea id="adminMoviesInput" rows="12" style="width:100%;padding:10px;border-radius:8px;border:1px solid #444;background:#111;color:#fff;font-size:14px;resize:vertical;box-sizing:border-box;font-family:inherit;"></textarea>
     <p style="font-size:12px;color:#666;margin:6px 0 16px;">Each line becomes a movie doc. Existing docs are updated; missing ones are removed.</p>
@@ -55,8 +65,8 @@
 <script src="events-config.js?v=20260519-1"></script>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
-  import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc, Timestamp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
-  import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
+  import { getFirestore, collection, getDocs, getDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
+  import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-functions.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyDMa_twNQAZVrnLHUNNNsxk6aTa-9FrnSc",
@@ -69,7 +79,8 @@
 
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
-  const auth = getAuth(app);
+  const functions = getFunctions(app);
+  const saveEventAdminSettingsCallable = httpsCallable(functions, "saveEventAdminSettings");
 
   const events = window.REELVOTES_EVENTS || [];
   const dateList = document.getElementById("dateList");
@@ -202,6 +213,7 @@
 
   const adminModal       = document.getElementById("adminModal");
   const adminEventSelect = document.getElementById("adminEventSelect");
+  const adminRequireEmailCheckbox = document.getElementById("adminRequireEmailCheckbox");
   const adminMoviesInput = document.getElementById("adminMoviesInput");
   const adminSaveStatus  = document.getElementById("adminSaveStatus");
   const adminSaveBtn     = document.getElementById("adminSaveBtn");
@@ -235,17 +247,24 @@
     const firestoreId = EVENT_ID_ALIASES[eventId]
       || events.find(e => e.id === eventId)?.firestoreEventId
       || eventId;
+    const configuredRequireEmail = events.find(e => e.id === eventId)?.requireEmail !== false;
     adminSaveStatus.textContent = "Loading…";
     try {
       const snap = await getDocs(collection(db, "events", firestoreId, "movies"));
+      const eventDoc = await getDoc(doc(db, "events", firestoreId));
       const titles = [];
       snap.forEach(d => titles.push(d.data().movie_title || d.id));
       titles.sort();
       adminMoviesInput.value = titles.join("\n");
+      const eventData = eventDoc.exists() ? (eventDoc.data() || {}) : {};
+      adminRequireEmailCheckbox.checked = typeof eventData.requireEmail === "boolean"
+        ? eventData.requireEmail
+        : configuredRequireEmail;
       adminSaveStatus.textContent = snap.empty ? "No movies yet — add some below." : `Loaded ${titles.length} movies.`;
     } catch (e) {
       adminSaveStatus.textContent = "Could not load existing movies.";
       adminMoviesInput.value = "";
+      adminRequireEmailCheckbox.checked = configuredRequireEmail;
     }
   }
 
@@ -269,40 +288,16 @@
     adminSaveBtn.disabled = true;
     adminSaveStatus.textContent = "Saving…";
 
+    const adminEmail = localStorage.getItem(ADMIN_STORAGE_KEY);
     try {
-      // Ensure signed in so Firestore rules (signedIn()) are satisfied
-      if (!auth.currentUser) {
-        await signInAnonymously(auth);
-      }
-      // Get existing docs to detect removals
-      const snap = await getDocs(collection(db, "events", firestoreId, "movies"));
-      const existingIds = new Set();
-      snap.forEach(d => existingIds.add(d.id));
-
-      const newIds = new Set();
-      const now = Timestamp.now();
-
-      for (const title of titles) {
-        const docId = title.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
-        newIds.add(docId);
-        const existingDoc = snap.docs.find(d => d.id === docId);
-        await setDoc(doc(db, "events", firestoreId, "movies", docId), {
-          event_id: firestoreId,
-          movie_title: title,
-          vote_count: existingDoc?.data().vote_count ?? 0,
-          created_at: existingDoc?.data().created_at ?? now,
-          updated_at: now
-        });
-      }
-
-      // Remove docs no longer in list
-      for (const oldId of existingIds) {
-        if (!newIds.has(oldId)) {
-          await deleteDoc(doc(db, "events", firestoreId, "movies", oldId));
-        }
-      }
-
-      adminSaveStatus.textContent = `✓ Saved ${titles.length} movies to "${firestoreId}".`;
+      await saveEventAdminSettingsCallable({
+        eventId: firestoreId,
+        adminEmail,
+        requireEmail: adminRequireEmailCheckbox.checked,
+        movieTitles: titles,
+      });
+      await loadMoviesForEvent(eventId);
+      adminSaveStatus.textContent = `✓ Saved ${titles.length} movies. Email required: ${adminRequireEmailCheckbox.checked ? "on" : "off"}.`;
     } catch (err) {
       console.error("Save failed:", err);
       adminSaveStatus.textContent = `✗ Error: ${err.message}`;
