@@ -222,6 +222,12 @@ function renderMovies(movies) {
     return;
   }
 
+  const totalVotes = movies.reduce((sum, m) => sum + (m.vote_count || 0), 0);
+  const totalEl = document.createElement("div");
+  totalEl.style.cssText = "color:#aaa;font-size:13px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid #333;";
+  totalEl.textContent = `Total votes cast: ${totalVotes}`;
+  adminList.appendChild(totalEl);
+
   movies.forEach((movie) => {
     const voteCount = movie.vote_count || 0;
     const percentage = Math.round((voteCount / VOTES_NEEDED) * 100);

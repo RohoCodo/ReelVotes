@@ -18,7 +18,7 @@ const functions = getFunctions(app);
 const runEliminationRoundCallable = httpsCallable(functions, "runEliminationRound");
 const saveEventAdminSettingsCallable = httpsCallable(functions, "saveEventAdminSettings");
 
-// Hardcoded total votes needed to reach goal (same as main app)
+// Hardcoded total votes  needed to reach goal (same as main app)
 const VOTES_NEEDED = 50;
 
 // Admin whitelist (normalized to lowercase)
@@ -221,6 +221,12 @@ function renderMovies(movies) {
     adminList.appendChild(empty);
     return;
   }
+
+  const totalVotes = movies.reduce((sum, m) => sum + (m.vote_count || 0), 0);
+  const totalEl = document.createElement("div");
+  totalEl.style.cssText = "color:#aaa;font-size:13px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid #333;";
+  totalEl.textContent = `Total votes cast: ${totalVotes}`;
+  adminList.appendChild(totalEl);
 
   movies.forEach((movie) => {
     const voteCount = movie.vote_count || 0;
