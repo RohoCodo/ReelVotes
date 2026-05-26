@@ -118,18 +118,28 @@
   const eventsWithStatus = await Promise.all(
     events.map(async (event) => {
       console.log("[select-event] Resolving event status", event);
-      if (event.voteStatus === "live") {
-        return { ...event, status: "live" };
-      }
-      if (event.voteStatus === "ended") {
-        return { ...event, status: "ended" };
-      }
-      if (event.voteStatus === "not-started") {
-        return { ...event, status: "not-started" };
-      }
-
       const firestoreEventId = event.firestoreEventId || event.id;
       try {
+        const eventDoc = await getDoc(doc(db, "events", firestoreEventId));
+        const eventData = eventDoc.exists() ? (eventDoc.data() || {}) : {};
+        const runtimeVoteStatus = String(eventData.voteStatus || "").trim().toLowerCase();
+        if (runtimeVoteStatus === "live") {
+          return { ...event, status: "live" };
+        }
+        if (runtimeVoteStatus === "ended") {
+          return { ...event, status: "ended" };
+        }
+
+        if (event.voteStatus === "live") {
+          return { ...event, status: "live" };
+        }
+        if (event.voteStatus === "ended") {
+          return { ...event, status: "ended" };
+        }
+        if (event.voteStatus === "not-started") {
+          return { ...event, status: "not-started" };
+        }
+
         const moviesRef = collection(db, "events", firestoreEventId, "movies");
         const snapshot = await getDocs(moviesRef);
         console.log("[select-event] Firestore status loaded", {
