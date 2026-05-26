@@ -342,6 +342,113 @@ function normalizeEmail(email) {
   return String(email || "").trim().toLowerCase();
 }
 
+function sanitizeBusinessDate(value) {
+  const businessDate = String(value || "").trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(businessDate)) {
+    throw new HttpsError("invalid-argument", "businessDate must be YYYY-MM-DD.");
+  }
+  return businessDate;
+}
+
+function sanitizePdfFileName(fileName) {
+  const raw = String(fileName || "").trim();
+  if (!raw) {
+    throw new HttpsError("invalid-argument", "fileName is required.");
+  }
+  if (!raw.toLowerCase().endsWith(".pdf")) {
+    throw new HttpsError("invalid-argument", "Only PDF uploads are supported.");
+  }
+
+  const cleaned = raw
+    .replace(/[^a-zA-Z0-9._-]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 120);
+
+  if (!cleaned || !cleaned.toLowerCase().endsWith(".pdf")) {
+    throw new HttpsError("invalid-argument", "Invalid PDF file name.");
+  }
+
+  return cleaned;
+}
+
+function toTheaterId(value) {
+  const theaterId = String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80);
+
+  if (!theaterId) {
+    throw new HttpsError("invalid-argument", "A valid theater identifier is required.");
+  }
+
+  return theaterId;
+}
+
+function isAdminToken(token = {}) {
+  return token.admin === true || token.role === "admin";
+}
+
+function getRequestIdentity(request) {
+  const token = request.auth?.token || {};
+  const uid = request.auth?.uid || null;
+  const authEmail = normalizeEmail(token.email);
+  const providedEmail = normalizeEmail(request.data?.adminEmail || request.data?.email);
+  const email = authEmail || providedEmail;
+  return {uid, token, email};
+}
+
+async function assertReelSuccessRequester(request, {requireAuth = true} = {}) {
+  const identity = getRequestIdentity(request);
+  if (requireAuth && !identity.uid) {
+    throw new HttpsError("unauthenticated", "Sign in is required.");
+  }
+
+  const accessData = identity.email ? await getReelSuccessAccessData(identity.email) : null;
+  const hasExplicitAccess = identity.email
+    ? (ADMIN_EMAILS.has(identity.email) || (accessData && accessData.enabled !== false))
+    : false;
+
+  if (!hasExplicitAccess && !isAdminToken(identity.token)) {
+    throw new HttpsError("permission-denied", "ReelSuccess access denied.");
+  }
+
+  const tokenTheaterKey = String(identity.token?.theaterKey || identity.token?.theater_key || "").trim();
+  const accessTheaterKey = String(accessData?.theater_key || accessData?.theaterKey || "").trim();
+  const theaterKey = tokenTheaterKey || accessTheaterKey;
+
+  const tokenTheaterId = String(identity.token?.theaterId || "").trim();
+  const accessTheaterId = String(accessData?.theater_id || "").trim();
+  const theaterId = tokenTheaterId || accessTheaterId || (theaterKey ? toTheaterId(theaterKey) : "");
+
+  const isAdmin = isAdminToken(identity.token)
+    || ADMIN_EMAILS.has(identity.email)
+    || String(accessData?.role || "").toLowerCase() === "admin";
+
+  return {
+    uid: identity.uid,
+    email: identity.email,
+    token: identity.token,
+    accessData,
+    isAdmin,
+    theaterKey,
+    theaterId,
+  };
+}
+
+function assertTheaterScope(ctx, requestedTheaterKey) {
+  const theaterKey = sanitizeTheaterKey(requestedTheaterKey);
+  const theaterId = toTheaterId(theaterKey);
+
+  if (!ctx.isAdmin && ctx.theaterId !== theaterId) {
+    throw new HttpsError("permission-denied", "You are not allowed to access this theater.");
+  }
+
+  return {theaterKey, theaterId};
+}
+
 function assertAdminEmail(email) {
   const normalizedEmail = normalizeEmail(email);
   if (!ADMIN_EMAILS.has(normalizedEmail)) {
@@ -436,6 +543,18 @@ const EVENT_ALLOWED_MOVIES = new Map([
     "Love Lies Bleeding",
     "Ex Machina",
     "Good Time",
+  ]],
+  ["np-2026-06-15-1830", [
+    "Children of Men",
+    "War of the Worlds",
+    "Serenity",
+    "Vanilla Sky",
+    "Star Trek (2009)",
+    "V For Vendetta",
+    "Slither",
+    "Zombieland",
+    "28 Days Later",
+    "Cloverfield",
   ]],
 ]);
 
@@ -980,6 +1099,37 @@ exports.saveEventAdminSettings = onCall(async (request) => {
   };
 });
 
+exports.setEventVoteStatus = onCall(async (request) => {
+  const eventId = sanitizeEventId(request.data?.eventId);
+  const adminEmail = assertAdminEmail(request.data?.adminEmail);
+  const voteStatus = String(request.data?.voteStatus || "").trim().toLowerCase();
+
+  if (!["live", "ended"].includes(voteStatus)) {
+    throw new HttpsError("invalid-argument", "voteStatus must be 'live' or 'ended'.");
+  }
+
+  const eventRef = db.collection("events").doc(eventId);
+  const now = admin.firestore.FieldValue.serverTimestamp();
+
+  await eventRef.set({
+    voteStatus,
+    updated_at: now,
+    updated_by: adminEmail,
+  }, {merge: true});
+
+  logger.info("Admin updated vote status", {
+    eventId,
+    adminEmail,
+    voteStatus,
+  });
+
+  return {
+    ok: true,
+    eventId,
+    voteStatus,
+  };
+});
+
 exports.getVoteStatus = onCall(async (request) => {
   const eventId = sanitizeEventId(request.data?.eventId);
   const clientId = sanitizeClientId(request.data?.clientId);
@@ -1040,6 +1190,12 @@ exports.submitVote = onCall(async (request) => {
   return db.runTransaction(async (transaction) => {
     const eventDoc = await transaction.get(eventRef);
     const eventData = eventDoc.exists ? (eventDoc.data() || {}) : {};
+    const eventVoteStatus = String(eventData.voteStatus || "").trim().toLowerCase();
+
+    if (eventVoteStatus === "ended") {
+      throw new HttpsError("failed-precondition", "Voting has ended for this event.");
+    }
+
     const requiresEmail = requiresEmailForEvent(eventId, eventData);
     if (requiresEmail && !email) {
       throw new HttpsError("invalid-argument", "A valid email is required.");
@@ -1299,7 +1455,7 @@ exports.submitVote = onCall(async (request) => {
   });
 });
 
-exports.addEmailSignup = onCall(async (request) => {
+async function handleEmailSignup(request) {
   const email = sanitizeEmail(request.data?.email);
 
   let eventId = "unknown";
@@ -1326,10 +1482,15 @@ exports.addEmailSignup = onCall(async (request) => {
   return {
     status: "ok",
   };
-});
+}
+
+exports.addEmailSignup = onCall(async (request) => handleEmailSignup(request));
+
+// Backward-compatible alias for older clients.
+exports.submitEmailSignup = onCall(async (request) => handleEmailSignup(request));
 
 exports.reelSuccessListTheaters = onCall(async (request) => {
-  await assertReelSuccessAccess(request.data?.adminEmail);
+  await assertReelSuccessRequester(request);
   const {theaterIndex, metadata} = loadReelSuccessData();
 
   const query = normalizeSearchQuery(request.data?.query);
@@ -1359,7 +1520,7 @@ exports.reelSuccessListTheaters = onCall(async (request) => {
 });
 
 exports.reelSuccessGetTheaterInsights = onCall(async (request) => {
-  await assertReelSuccessAccess(request.data?.adminEmail);
+  await assertReelSuccessRequester(request);
   const {theaterInsightsByKey, metadata} = loadReelSuccessData();
   const theaterKey = sanitizeTheaterKey(request.data?.theaterKey);
 
@@ -1376,8 +1537,9 @@ exports.reelSuccessGetTheaterInsights = onCall(async (request) => {
 });
 
 exports.reelSuccessGetMyTheater = onCall(async (request) => {
-  const adminEmail = await assertReelSuccessAccess(request.data?.adminEmail);
-  const accessData = await getReelSuccessAccessData(adminEmail);
+  const requester = await assertReelSuccessRequester(request);
+  const adminEmail = requester.email;
+  const accessData = requester.accessData || await getReelSuccessAccessData(adminEmail);
   const {theaterIndex, metadata} = loadReelSuccessData();
 
   let theater = null;
@@ -1457,6 +1619,126 @@ exports.reelSuccessSetAccess = onCall(async (request) => {
   };
 });
 
+exports.reelSuccessSetUserClaims = onCall(async (request) => {
+  const actor = await assertReelSuccessRequester(request);
+  if (!actor.isAdmin) {
+    throw new HttpsError("permission-denied", "Only admins can set user claims.");
+  }
+
+  const targetEmail = normalizeEmail(request.data?.targetEmail);
+  if (!targetEmail || !targetEmail.includes("@")) {
+    throw new HttpsError("invalid-argument", "Valid targetEmail is required.");
+  }
+
+  const roleInput = String(request.data?.role || "theater").trim().toLowerCase();
+  const role = roleInput === "admin" ? "admin" : "theater";
+  const theaterKeyInput = String(request.data?.theaterKey || "").trim();
+  const theaterIdInput = String(request.data?.theaterId || "").trim();
+  const theaterId = role === "theater"
+    ? (theaterIdInput || (theaterKeyInput ? toTheaterId(theaterKeyInput) : ""))
+    : "";
+
+  if (role === "theater" && !theaterId) {
+    throw new HttpsError("invalid-argument", "theaterId or theaterKey is required for theater users.");
+  }
+
+  const userRecord = await admin.auth().getUserByEmail(targetEmail);
+  const existingClaims = userRecord.customClaims || {};
+  const updatedClaims = {
+    ...existingClaims,
+    role,
+    admin: role === "admin",
+  };
+
+  if (role === "theater") {
+    updatedClaims.theaterId = theaterId;
+    if (theaterKeyInput) {
+      updatedClaims.theaterKey = theaterKeyInput;
+    }
+  } else {
+    delete updatedClaims.theaterId;
+    delete updatedClaims.theaterKey;
+  }
+
+  await admin.auth().setCustomUserClaims(userRecord.uid, updatedClaims);
+
+  return {
+    ok: true,
+    uid: userRecord.uid,
+    email: targetEmail,
+    claims: updatedClaims,
+  };
+});
+
+exports.reelSuccessProvisionMyClaims = onCall(async (request) => {
+  const uid = request.auth?.uid || null;
+  const email = normalizeEmail(request.auth?.token?.email);
+
+  if (!uid || !email) {
+    throw new HttpsError("unauthenticated", "Sign in is required.");
+  }
+
+  const userRecord = await admin.auth().getUser(uid);
+  const existingClaims = userRecord.customClaims || {};
+
+  const isAdmin = ADMIN_EMAILS.has(email);
+  if (isAdmin) {
+    const nextClaims = {
+      ...existingClaims,
+      role: "admin",
+      admin: true,
+    };
+    delete nextClaims.theaterId;
+    delete nextClaims.theaterKey;
+    await admin.auth().setCustomUserClaims(uid, nextClaims);
+    return {ok: true, email, claims: nextClaims};
+  }
+
+  const accessData = await getReelSuccessAccessData(email);
+  if (!accessData || accessData.enabled === false) {
+    throw new HttpsError(
+      "permission-denied",
+      "This account is not enabled for ReelSuccess yet. Ask an admin to grant access and assign theater claims.",
+    );
+  }
+
+  const {theaterIndex} = loadReelSuccessData();
+  const configuredTheaterKey = String(accessData.theater_key || accessData.theaterKey || "").trim();
+  const inferredTheater = configuredTheaterKey
+    ? theaterIndex.find((row) => row.theater_key === configuredTheaterKey) || null
+    : inferTheaterFromEmail(email, theaterIndex);
+
+  const theaterKey = configuredTheaterKey || String(inferredTheater?.theater_key || "").trim();
+  const theaterId = String(accessData.theater_id || "").trim() || (theaterKey ? toTheaterId(theaterKey) : "");
+
+  if (!theaterId) {
+    throw new HttpsError(
+      "failed-precondition",
+      "No theater mapping found for this account. Add theater_key/theater_id in ReelSuccess access.",
+    );
+  }
+
+  const nextClaims = {
+    ...existingClaims,
+    role: "theater",
+    admin: false,
+    theaterId,
+  };
+  if (theaterKey) {
+    nextClaims.theaterKey = theaterKey;
+  } else {
+    delete nextClaims.theaterKey;
+  }
+
+  await admin.auth().setCustomUserClaims(uid, nextClaims);
+
+  return {
+    ok: true,
+    email,
+    claims: nextClaims,
+  };
+});
+
 exports.reelSuccessListAccess = onCall(async (request) => {
   assertAdminEmail(request.data?.adminEmail);
 
@@ -1478,6 +1760,148 @@ exports.reelSuccessListAccess = onCall(async (request) => {
     ok: true,
     count: users.length,
     users,
+  };
+});
+
+exports.reelSuccessCreateGrossUploadSession = onCall(async (request) => {
+  const requester = await assertReelSuccessRequester(request);
+  const {theaterKey, theaterId} = assertTheaterScope(requester, request.data?.theaterKey);
+  const {theaterIndex} = loadReelSuccessData();
+  const theater = theaterIndex.find((row) => row.theater_key === theaterKey) || null;
+  if (!theater) {
+    throw new HttpsError("not-found", "Selected theater was not found in ReelSuccess index.");
+  }
+  const businessDate = sanitizeBusinessDate(request.data?.businessDate);
+  const fileName = sanitizePdfFileName(request.data?.fileName);
+  const contentType = String(request.data?.contentType || "").trim().toLowerCase();
+  const size = Number(request.data?.size || 0);
+
+  if (contentType && contentType !== "application/pdf") {
+    throw new HttpsError("invalid-argument", "Only PDF content type is allowed.");
+  }
+
+  const MAX_SIZE_BYTES = 15 * 1024 * 1024;
+  if (!Number.isFinite(size) || size <= 0 || size > MAX_SIZE_BYTES) {
+    throw new HttpsError("invalid-argument", "File size must be between 1 byte and 15 MB.");
+  }
+
+  const timestamp = Date.now();
+  const storagePath = `box-office-grosses/${theaterId}/${businessDate}/${timestamp}_${fileName}`;
+
+  return {
+    ok: true,
+    theaterKey,
+    theaterId,
+    theaterName: theater.theater_name || null,
+    theaterCityState: theater.theater_city_state || null,
+    businessDate,
+    storagePath,
+    maxSizeBytes: MAX_SIZE_BYTES,
+  };
+});
+
+exports.reelSuccessFinalizeGrossUpload = onCall(async (request) => {
+  const requester = await assertReelSuccessRequester(request);
+  const {theaterKey, theaterId} = assertTheaterScope(requester, request.data?.theaterKey);
+  const {theaterIndex} = loadReelSuccessData();
+  const theater = theaterIndex.find((row) => row.theater_key === theaterKey) || null;
+  if (!theater) {
+    throw new HttpsError("not-found", "Selected theater was not found in ReelSuccess index.");
+  }
+  const businessDate = sanitizeBusinessDate(request.data?.businessDate);
+  const fileName = sanitizePdfFileName(request.data?.fileName);
+  const storagePath = String(request.data?.storagePath || "").trim();
+
+  if (!storagePath.startsWith(`box-office-grosses/${theaterId}/${businessDate}/`)) {
+    throw new HttpsError("permission-denied", "storagePath does not match theater/date scope.");
+  }
+  if (!storagePath.toLowerCase().endsWith(".pdf")) {
+    throw new HttpsError("invalid-argument", "storagePath must point to a PDF.");
+  }
+
+  const bucket = admin.storage().bucket();
+  const file = bucket.file(storagePath);
+  const [exists] = await file.exists();
+  if (!exists) {
+    throw new HttpsError("not-found", "Uploaded file not found in Storage.");
+  }
+
+  const [metadata] = await file.getMetadata();
+  const contentType = String(metadata?.contentType || "").toLowerCase();
+  if (contentType && contentType !== "application/pdf") {
+    throw new HttpsError("failed-precondition", "Stored object is not a PDF.");
+  }
+
+  const uploadRef = db.collection("theaters").doc(theaterId).collection("grossUploads").doc();
+  await uploadRef.set({
+    theaterId,
+    theaterKey,
+    theaterName: theater.theater_name || null,
+    theaterCityState: theater.theater_city_state || null,
+    theaterCode: theater.theater_code || null,
+    businessDate,
+    fileName,
+    storagePath,
+    uploadedByUid: requester.uid || null,
+    uploadedByEmail: requester.email || null,
+    uploadedAt: admin.firestore.FieldValue.serverTimestamp(),
+    status: "uploaded",
+  }, {merge: true});
+
+  return {
+    ok: true,
+    uploadId: uploadRef.id,
+    theaterId,
+    storagePath,
+  };
+});
+
+exports.reelSuccessDeleteGrossUpload = onCall(async (request) => {
+  const requester = await assertReelSuccessRequester(request);
+  const {theaterId} = assertTheaterScope(requester, request.data?.theaterKey);
+  const uploadId = String(request.data?.uploadId || "").trim();
+
+  if (!uploadId) {
+    throw new HttpsError("invalid-argument", "uploadId is required.");
+  }
+
+  const uploadRef = db.collection("theaters").doc(theaterId).collection("grossUploads").doc(uploadId);
+  const uploadDoc = await uploadRef.get();
+  if (!uploadDoc.exists) {
+    throw new HttpsError("not-found", "Upload not found.");
+  }
+
+  const data = uploadDoc.data() || {};
+  const storagePath = String(data.storagePath || "").trim();
+  if (!storagePath.startsWith(`box-office-grosses/${theaterId}/`)) {
+    throw new HttpsError("permission-denied", "Upload path scope mismatch.");
+  }
+
+  const bucket = admin.storage().bucket();
+  const file = bucket.file(storagePath);
+  try {
+    await file.delete({ignoreNotFound: true});
+  } catch (error) {
+    logger.warn("Failed deleting gross PDF from storage", {
+      uploadId,
+      theaterId,
+      storagePath,
+      error: error?.message || String(error),
+    });
+  }
+
+  await uploadRef.set({
+    status: "deleted",
+    deletedAt: admin.firestore.FieldValue.serverTimestamp(),
+    deletedByUid: requester.uid || null,
+    deletedByEmail: requester.email || null,
+  }, {merge: true});
+
+  await uploadRef.delete();
+
+  return {
+    ok: true,
+    uploadId,
   };
 });
 

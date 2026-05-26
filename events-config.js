@@ -77,7 +77,22 @@ window.REELVOTES_EVENTS = [
     firestoreEventId: "np-2026-06-15-1830",
     screeningLabel: "6/15 @ 6:30pm",
     screeningDateTime: "2026-06-15T18:30:00",
-    voteWindowLabel: "Voting now"
+    voteStatus: "live",
+    requireEmail: true,
+    showLiveVoteCounts: false,
+    voteWindowLabel: "Voting now",
+    allowedMovies: [
+      "Children of Men",
+      "War of the Worlds",
+      "Serenity",
+      "Vanilla Sky",
+      "Star Trek (2009)",
+      "V For Vendetta",
+      "Slither",
+      "Zombieland",
+      "28 Days Later",
+      "Cloverfield"
+    ]
   },
   {
     id: "2026-06-24",

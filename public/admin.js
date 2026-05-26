@@ -17,6 +17,7 @@ const db = getFirestore(app);
 const functions = getFunctions(app);
 const runEliminationRoundCallable = httpsCallable(functions, "runEliminationRound");
 const saveEventAdminSettingsCallable = httpsCallable(functions, "saveEventAdminSettings");
+const setEventVoteStatusCallable = httpsCallable(functions, "setEventVoteStatus");
 
 // Hardcoded total votes needed to reach goal (same as main app)
 const VOTES_NEEDED = 50;
@@ -36,9 +37,13 @@ const EVENT_ID_ALIASES = { "2026-04-27": "newparkway1" };
 const urlParams = new URLSearchParams(window.location.search);
 const configuredEvents = (typeof window.REELVOTES_EVENTS !== 'undefined' ? window.REELVOTES_EVENTS : null) || [];
 const urlEventId = urlParams.get("event");
+const defaultConfiguredEvent = configuredEvents.find((event) => event.voteStatus === "live")
+  || configuredEvents.find((event) => event.voteStatus !== "ended")
+  || configuredEvents[0]
+  || null;
 let currentEventId = urlEventId
   ? (EVENT_ID_ALIASES[urlEventId] || configuredEvents.find(e => e.id === urlEventId)?.firestoreEventId || urlEventId)
-  : (configuredEvents[0]?.firestoreEventId || "newparkway1");
+  : (defaultConfiguredEvent?.firestoreEventId || defaultConfiguredEvent?.id || "newparkway1");
 
 const eventLabel = document.getElementById("eventLabel");
 const updatedAtEl = document.getElementById("updatedAt");
@@ -47,13 +52,16 @@ const adminList = document.getElementById("adminList");
 const ballotListEl = document.getElementById("ballotList");
 const eventSelector = document.getElementById("eventSelector");
 const publicPreviewLink = document.getElementById("publicPreviewLink");
+const endVoteBtn = document.getElementById("endVoteBtn");
 const runEliminationBtn = document.getElementById("runEliminationBtn");
+const voteControlStatusEl = document.getElementById("voteControlStatus");
 const eliminationStatusEl = document.getElementById("eliminationStatus");
 const adminRequireEmailCheckbox = document.getElementById("adminRequireEmailCheckbox");
 const adminMoviesInput = document.getElementById("adminMoviesInput");
 const adminSaveBtn = document.getElementById("adminSaveBtn");
 const adminSaveStatus = document.getElementById("adminSaveStatus");
 let currentAdminEmail = null;
+let currentVoteStatus = "live";
 
 // Populate event selector dropdown
 function populateSelector() {
@@ -164,6 +172,70 @@ function setEliminationStatus(message, isError = false) {
   eliminationStatusEl.style.color = isError ? "#ff6b6b" : "#bbb";
 }
 
+function setVoteControlStatus(message, isError = false) {
+  if (!voteControlStatusEl) return;
+  voteControlStatusEl.textContent = message;
+  voteControlStatusEl.style.color = isError ? "#ff6b6b" : "#bbb";
+}
+
+function updateEndVoteButton() {
+  if (!endVoteBtn) return;
+  const isEnded = currentVoteStatus === "ended";
+  endVoteBtn.disabled = isEnded;
+  endVoteBtn.textContent = isEnded ? "Vote ended" : "End vote";
+  endVoteBtn.style.opacity = isEnded ? "0.6" : "1";
+  endVoteBtn.style.cursor = isEnded ? "not-allowed" : "pointer";
+}
+
+async function endVoteNow() {
+  if (!currentAdminEmail) {
+    setVoteControlStatus("Admin session missing. Refresh and sign in again.", true);
+    return;
+  }
+
+  if (!currentEventId) {
+    setVoteControlStatus("No event selected.", true);
+    return;
+  }
+
+  if (currentVoteStatus === "ended") {
+    setVoteControlStatus("This vote is already ended.");
+    return;
+  }
+
+  const confirmed = window.confirm("End voting for this event now? This will block new votes.");
+  if (!confirmed) {
+    return;
+  }
+
+  try {
+    if (endVoteBtn) {
+      endVoteBtn.disabled = true;
+      endVoteBtn.textContent = "Ending…";
+    }
+    setVoteControlStatus("Ending vote...");
+
+    await setEventVoteStatusCallable({
+      eventId: currentEventId,
+      adminEmail: currentAdminEmail,
+      voteStatus: "ended",
+    });
+
+    currentVoteStatus = "ended";
+    const configuredEvent = resolveEvent(currentEventId);
+    if (configuredEvent) {
+      configuredEvent.voteStatus = "ended";
+    }
+    populateSelector();
+    updateEndVoteButton();
+    setVoteControlStatus("Vote ended. New vote submissions are now blocked.");
+  } catch (error) {
+    console.error("Failed ending vote:", error);
+    setVoteControlStatus(error?.message || "Failed to end vote.", true);
+    updateEndVoteButton();
+  }
+}
+
 async function runEliminationRoundNow() {
   if (!currentAdminEmail) {
     setEliminationStatus("Admin session missing. Refresh and sign in again.", true);
@@ -251,7 +323,10 @@ function renderMovies(movies) {
 async function loadAdminControlsForEvent(firestoreId) {
   const configuredEvent = resolveEvent(firestoreId);
   const configuredRequireEmail = configuredEvent?.requireEmail !== false;
+  currentVoteStatus = configuredEvent?.voteStatus === "ended" ? "ended" : "live";
+  updateEndVoteButton();
   setSaveStatus("Loading settings…");
+  setVoteControlStatus("");
 
   try {
     const [eventDoc, moviesSnapshot] = await Promise.all([
@@ -260,6 +335,14 @@ async function loadAdminControlsForEvent(firestoreId) {
     ]);
 
     const eventData = eventDoc.exists() ? (eventDoc.data() || {}) : {};
+    const runtimeVoteStatus = String(eventData.voteStatus || "").trim().toLowerCase();
+    currentVoteStatus = runtimeVoteStatus === "ended" ? "ended" : (configuredEvent?.voteStatus === "ended" ? "ended" : "live");
+    if (configuredEvent) {
+      configuredEvent.voteStatus = currentVoteStatus;
+      populateSelector();
+    }
+    updateEndVoteButton();
+
     if (adminRequireEmailCheckbox) {
       adminRequireEmailCheckbox.checked = typeof eventData.requireEmail === "boolean"
         ? eventData.requireEmail
@@ -373,6 +456,9 @@ if (eventSelector) {
       || configuredEvents.find(e => e.id === selectedId)?.firestoreEventId
       || selectedId;
     currentEventId = resolved;
+    currentVoteStatus = "live";
+    updateEndVoteButton();
+    setVoteControlStatus("");
     startLiveListener(resolved);
     loadAdminControlsForEvent(resolved);
   });
@@ -454,10 +540,18 @@ ensureAdminAccess()
       runEliminationBtn.disabled = false;
       runEliminationBtn.addEventListener("click", runEliminationRoundNow);
     }
+    if (endVoteBtn) {
+      endVoteBtn.disabled = false;
+      endVoteBtn.addEventListener("click", endVoteNow);
+      updateEndVoteButton();
+    }
   })
   .catch((err) => {
     console.warn("Admin access blocked:", err.message);
     if (runEliminationBtn) {
       runEliminationBtn.disabled = true;
+    }
+    if (endVoteBtn) {
+      endVoteBtn.disabled = true;
     }
   });
