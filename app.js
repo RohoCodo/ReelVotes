@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
-import { getFirestore, collection, getDocs, getDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, getDoc, doc, query, where, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-functions.js";
 
 // Firebase Config
@@ -64,11 +64,22 @@ const EVENT_ID_ALIASES = {
 };
 const requestedEventDataId = EVENT_ID_ALIASES[requestedEventId] || requestedEventId;
 const configuredEvents = window.REELVOTES_EVENTS || [];
-const selectedEvent = window.REELVOTES_EVENT || configuredEvents.find(
-  (event) => event.id === requestedEventId || event.firestoreEventId === requestedEventId || event.firestoreEventId === requestedEventDataId
+const defaultConfiguredEvent = configuredEvents.find((event) => event.voteStatus === "live")
+  || configuredEvents.find((event) => event.voteStatus !== "ended")
+  || configuredEvents[0]
+  || null;
+const selectedEvent = window.REELVOTES_EVENT || (requestedEventId
+  ? configuredEvents.find(
+    (event) => event.id === requestedEventId || event.firestoreEventId === requestedEventId || event.firestoreEventId === requestedEventDataId,
+  )
+  : defaultConfiguredEvent
 ) || null;
-const EVENT_ID = selectedEvent?.firestoreEventId || requestedEventDataId || "newparkway1";
-const EVENT_STATUS = selectedEvent?.voteStatus || null;
+const EVENT_ID = selectedEvent?.firestoreEventId
+  || requestedEventDataId
+  || defaultConfiguredEvent?.firestoreEventId
+  || defaultConfiguredEvent?.id
+  || "newparkway1";
+let EVENT_STATUS = selectedEvent?.voteStatus || null;
 let EVENT_REQUIRES_EMAIL = selectedEvent?.requireEmail !== false;
 const EVENT_SHOW_LIVE_VOTE_COUNTS = selectedEvent?.showLiveVoteCounts === true;
 const EVENT_ALLOWED_MOVIES = Array.isArray(selectedEvent?.allowedMovies)
@@ -80,6 +91,9 @@ async function loadEventRuntimeSettings() {
   try {
     const eventDoc = await getDoc(doc(db, "events", EVENT_ID));
     const eventData = eventDoc.exists() ? (eventDoc.data() || {}) : {};
+    if (typeof eventData.voteStatus === "string" && eventData.voteStatus.trim()) {
+      EVENT_STATUS = eventData.voteStatus.trim().toLowerCase();
+    }
     if (typeof eventData.requireEmail === "boolean") {
       EVENT_REQUIRES_EMAIL = eventData.requireEmail;
     }
@@ -112,15 +126,387 @@ const captchaContainer = document.getElementById("captchaContainer");
 const captchaNotice = document.getElementById("captchaNotice");
 const emailVoteModal = document.getElementById("emailVoteModal");
 const singleVoteReminderModal = document.getElementById("singleVoteReminderModal");
+const reelVotesMissionModal = document.getElementById("reelVotesMissionModal");
 const voteEmailInput = document.getElementById("voteEmailInput");
 const voteEmailStatus = document.getElementById("voteEmailStatus");
 const confirmEmailVoteBtn = document.getElementById("confirmEmailVoteBtn");
 const cancelEmailVoteBtn = document.getElementById("cancelEmailVoteBtn");
 const singleVoteReminderAddMoreBtn = document.getElementById("singleVoteReminderAddMoreBtn");
 const singleVoteReminderOkBtn = document.getElementById("singleVoteReminderOkBtn");
+const reelVotesMissionContinueBtn = document.getElementById("reelVotesMissionContinueBtn");
+const mainTabList = document.getElementById("mainTabList");
+const tabVoteBtn = document.getElementById("tabVoteBtn");
+const tabMomentsBtn = document.getElementById("tabMomentsBtn");
+const tabAccountBtn = document.getElementById("tabAccountBtn");
+const tabVotePanel = document.getElementById("tabVotePanel");
+const tabMomentsPanel = document.getElementById("tabMomentsPanel");
+const tabAccountPanel = document.getElementById("tabAccountPanel");
+const momentsFeed = document.getElementById("momentsFeed");
+const momentsStatus = document.getElementById("momentsStatus");
+const momentsRefreshBtn = document.getElementById("momentsRefreshBtn");
+const accountStatus = document.getElementById("accountStatus");
+const accountGuestState = document.getElementById("accountGuestState");
+const accountSignedInState = document.getElementById("accountSignedInState");
+const accountEmail = document.getElementById("accountEmail");
+const accountSignOutBtn = document.getElementById("accountSignOutBtn");
+const accountSignInBtn = document.getElementById("accountSignInBtn");
+const accountAdminLink = document.getElementById("accountAdminLink");
+
+const MAIN_TABS = ["vote", "moments", "account"];
+const MAIN_TAB_BUTTONS = {
+  vote: tabVoteBtn,
+  moments: tabMomentsBtn,
+  account: tabAccountBtn
+};
+const MAIN_TAB_PANELS = {
+  vote: tabVotePanel,
+  moments: tabMomentsPanel,
+  account: tabAccountPanel
+};
+const TAB_STORAGE_KEY = `reelvotesTab_${EVENT_ID}`;
+const ADMIN_EMAIL_STORAGE_KEY = "reelvotes_admin_email";
 
 let captchaToken = null;
 let captchaWidgetId = null;
+let momentsLoaded = false;
+let momentsLoading = false;
+
+function escapeHtml(value) {
+  return String(value || "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+function formatMomentDate(value) {
+  if (!value) {
+    return "";
+  }
+
+  let date = null;
+  if (typeof value?.toDate === "function") {
+    date = value.toDate();
+  } else if (value instanceof Date) {
+    date = value;
+  } else if (typeof value === "number") {
+    date = new Date(value);
+  } else if (typeof value === "string") {
+    date = new Date(value);
+  }
+
+  if (!date || Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return date.toLocaleString();
+}
+
+function setMomentsStatus(message, isError = false) {
+  if (!momentsStatus) {
+    return;
+  }
+
+  momentsStatus.textContent = message || "";
+  momentsStatus.style.color = isError ? "#ff8e8e" : "#aaa";
+}
+
+function normalizeAccountEmail(email) {
+  const normalized = String(email || "").trim().toLowerCase();
+  return normalized.includes("@") ? normalized : "";
+}
+
+function getStoredAccountEmail() {
+  try {
+    return normalizeAccountEmail(window.localStorage.getItem(ADMIN_EMAIL_STORAGE_KEY));
+  } catch {
+    return "";
+  }
+}
+
+function setAccountStatus(message, isError = false) {
+  if (!accountStatus) {
+    return;
+  }
+
+  accountStatus.textContent = message || "";
+  accountStatus.style.color = isError ? "#ff8e8e" : "#aaa";
+}
+
+function updateAccountLinks() {
+  const eventParam = selectedEvent?.id || requestedEventId || EVENT_ID;
+  const adminHref = `admin.html?event=${encodeURIComponent(eventParam)}`;
+  if (accountSignInBtn) {
+    accountSignInBtn.href = adminHref;
+  }
+  if (accountAdminLink) {
+    accountAdminLink.href = adminHref;
+  }
+}
+
+function renderAccountState() {
+  updateAccountLinks();
+
+  const storedEmail = getStoredAccountEmail();
+  const hasSession = Boolean(storedEmail);
+
+  if (accountGuestState) {
+    accountGuestState.classList.toggle("hidden", hasSession);
+  }
+  if (accountSignedInState) {
+    accountSignedInState.classList.toggle("hidden", !hasSession);
+  }
+
+  if (hasSession) {
+    if (accountEmail) {
+      accountEmail.textContent = storedEmail;
+    }
+    setAccountStatus("Active admin session found on this browser.");
+  } else {
+    if (accountEmail) {
+      accountEmail.textContent = "";
+    }
+    setAccountStatus("You are browsing as a guest.");
+  }
+}
+
+function clearAccountSession() {
+  try {
+    window.localStorage.removeItem(ADMIN_EMAIL_STORAGE_KEY);
+  } catch {
+    // ignore storage failures
+  }
+  renderAccountState();
+  setAccountStatus("Signed out of local admin session.");
+}
+
+function renderMomentItems(items) {
+  if (!momentsFeed) {
+    return;
+  }
+
+  if (!items.length) {
+    momentsFeed.innerHTML = `<div class="moment-item"><div class="moment-item-body">No moments yet for this event.</div></div>`;
+    return;
+  }
+
+  momentsFeed.innerHTML = items.map((item) => {
+    const movieTitle = escapeHtml(item.movieTitle || item.title || "Untitled movie");
+    const text = escapeHtml(item.text || item.take || item.content || "No text provided.");
+    const author = escapeHtml(item.author || item.authorName || "Anonymous");
+    const stamp = escapeHtml(formatMomentDate(item.createdAt || item.timestamp || item.created_at || item.updatedAt));
+
+    return `
+      <article class="moment-item">
+        <div class="moment-item-title">${movieTitle}</div>
+        <div class="moment-item-body">${text}</div>
+        <div class="moment-item-meta">${author}${stamp ? ` • ${stamp}` : ""}</div>
+      </article>
+    `;
+  }).join("");
+}
+
+async function loadMomentsFeed({ force = false } = {}) {
+  if (momentsLoading || (!force && momentsLoaded)) {
+    return;
+  }
+
+  momentsLoading = true;
+  if (momentsRefreshBtn) {
+    momentsRefreshBtn.disabled = true;
+  }
+
+  setMomentsStatus("Loading moments...");
+
+  try {
+    const takeQuery = query(
+      collection(db, "takes"),
+      where("eventId", "==", EVENT_ID),
+      orderBy("createdAt", "desc"),
+      limit(20)
+    );
+
+    const snapshot = await getDocs(takeQuery);
+    const items = snapshot.docs.map((entry) => entry.data() || {});
+
+    momentsLoaded = true;
+    renderMomentItems(items);
+
+    if (items.length) {
+      setMomentsStatus(`Showing ${items.length} moment${items.length === 1 ? "" : "s"}.`);
+    } else {
+      setMomentsStatus("No moments found for this event yet.");
+    }
+  } catch (error) {
+    console.warn("[moments] Unable to load takes feed", error);
+
+    try {
+      const moviesSnapshot = await getDocs(collection(db, "events", EVENT_ID, "movies"));
+      const fallback = moviesSnapshot.docs
+        .map((entry) => ({
+          movieTitle: entry.id,
+          text: "Audience voting is active for this title.",
+          author: "ReelVotes",
+          createdAt: null,
+          voteCount: Number(entry.data()?.voteCount || 0)
+        }))
+        .sort((a, b) => b.voteCount - a.voteCount)
+        .slice(0, 12);
+
+      momentsLoaded = true;
+      renderMomentItems(fallback);
+      setMomentsStatus("Live takes are unavailable in this view. Showing event movie pulse instead.");
+    } catch (fallbackError) {
+      console.warn("[moments] Fallback feed also failed", fallbackError);
+      renderMomentItems([]);
+      setMomentsStatus("Could not load moments right now.", true);
+    }
+  } finally {
+    momentsLoading = false;
+    if (momentsRefreshBtn) {
+      momentsRefreshBtn.disabled = false;
+    }
+  }
+}
+
+function normalizeMainTab(tab) {
+  const value = String(tab || "").toLowerCase();
+  return MAIN_TABS.includes(value) ? value : null;
+}
+
+function getMainTabFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  return normalizeMainTab(params.get("tab"));
+}
+
+function getStoredMainTab() {
+  try {
+    return normalizeMainTab(window.sessionStorage.getItem(TAB_STORAGE_KEY));
+  } catch {
+    return null;
+  }
+}
+
+function persistMainTab(tab) {
+  try {
+    window.sessionStorage.setItem(TAB_STORAGE_KEY, tab);
+  } catch {
+    // ignore session storage failures
+  }
+}
+
+function updateMainTabUrl(tab) {
+  const normalized = normalizeMainTab(tab);
+  if (!normalized) {
+    return;
+  }
+
+  const nextUrl = new URL(window.location.href);
+  nextUrl.searchParams.set("tab", normalized);
+  window.history.replaceState({}, "", nextUrl.toString());
+}
+
+function onVoteTabEnter() {
+  updateVoteActionState();
+}
+
+function onMomentsTabEnter() {
+  loadMomentsFeed();
+}
+
+function onAccountTabEnter() {
+  renderAccountState();
+}
+
+function switchMainTab(tab, { persist = true, updateUrl = true } = {}) {
+  const normalized = normalizeMainTab(tab) || "vote";
+
+  MAIN_TABS.forEach((name) => {
+    const isActive = name === normalized;
+    const button = MAIN_TAB_BUTTONS[name];
+    const panel = MAIN_TAB_PANELS[name];
+
+    if (button) {
+      button.classList.toggle("active", isActive);
+      button.setAttribute("aria-selected", isActive ? "true" : "false");
+      button.tabIndex = isActive ? 0 : -1;
+    }
+
+    if (panel) {
+      panel.hidden = !isActive;
+    }
+  });
+
+  if (persist) {
+    persistMainTab(normalized);
+  }
+
+  if (updateUrl) {
+    updateMainTabUrl(normalized);
+  }
+
+  if (normalized === "vote") {
+    onVoteTabEnter();
+  } else if (normalized === "moments") {
+    onMomentsTabEnter();
+  } else {
+    onAccountTabEnter();
+  }
+}
+
+function restoreMainTabFromUrlOrSession() {
+  return getMainTabFromUrl() || getStoredMainTab() || "vote";
+}
+
+function initMainTabs() {
+  if (!mainTabList || !tabVoteBtn || !tabMomentsBtn || !tabAccountBtn) {
+    return;
+  }
+
+  tabVoteBtn.addEventListener("click", () => switchMainTab("vote"));
+  tabMomentsBtn.addEventListener("click", () => switchMainTab("moments"));
+  tabAccountBtn.addEventListener("click", () => switchMainTab("account"));
+  momentsRefreshBtn?.addEventListener("click", () => {
+    momentsLoaded = false;
+    loadMomentsFeed({ force: true });
+  });
+  accountSignOutBtn?.addEventListener("click", clearAccountSession);
+
+  mainTabList.addEventListener("keydown", (event) => {
+    if (!event.target || !(event.target instanceof HTMLElement)) {
+      return;
+    }
+
+    const currentIndex = MAIN_TABS.findIndex((name) => MAIN_TAB_BUTTONS[name] === event.target);
+    if (currentIndex === -1) {
+      return;
+    }
+
+    let nextIndex = currentIndex;
+    if (event.key === "ArrowRight") {
+      nextIndex = (currentIndex + 1) % MAIN_TABS.length;
+    } else if (event.key === "ArrowLeft") {
+      nextIndex = (currentIndex - 1 + MAIN_TABS.length) % MAIN_TABS.length;
+    } else if (event.key === "Home") {
+      nextIndex = 0;
+    } else if (event.key === "End") {
+      nextIndex = MAIN_TABS.length - 1;
+    } else {
+      return;
+    }
+
+    event.preventDefault();
+    const nextTab = MAIN_TABS[nextIndex];
+    const nextButton = MAIN_TAB_BUTTONS[nextTab];
+    if (nextButton) {
+      switchMainTab(nextTab);
+      nextButton.focus();
+    }
+  });
+
+  switchMainTab(restoreMainTabFromUrlOrSession(), { persist: true, updateUrl: true });
+}
 
 function getCaptchaErrorMessage(errorCode) {
   if (errorCode === "invalid-sitekey") {
@@ -219,6 +605,42 @@ function hideSingleVoteReminderModal() {
 function continueAddingMovies() {
   hideSingleVoteReminderModal();
   searchInput?.focus();
+}
+
+function showReelVotesMissionModal() {
+  return new Promise((resolve) => {
+    if (!reelVotesMissionModal || !reelVotesMissionContinueBtn) {
+      resolve();
+      return;
+    }
+
+    reelVotesMissionModal.classList.remove("hidden");
+
+    const closeModal = () => {
+      reelVotesMissionModal.classList.add("hidden");
+      reelVotesMissionContinueBtn.removeEventListener("click", onContinue);
+      reelVotesMissionModal.removeEventListener("click", onBackdropClick);
+      document.removeEventListener("keydown", onKeyDown);
+      resolve();
+    };
+
+    const onContinue = () => closeModal();
+    const onBackdropClick = (event) => {
+      if (event.target === reelVotesMissionModal) {
+        closeModal();
+      }
+    };
+    const onKeyDown = (event) => {
+      if (event.key === "Enter" || event.key === "Escape") {
+        closeModal();
+      }
+    };
+
+    reelVotesMissionContinueBtn.addEventListener("click", onContinue);
+    reelVotesMissionModal.addEventListener("click", onBackdropClick);
+    document.addEventListener("keydown", onKeyDown);
+    reelVotesMissionContinueBtn.focus();
+  });
 }
 
 async function waitForTurnstile() {
@@ -619,8 +1041,15 @@ async function displayAllowedMovies() {
   
   searchResults.innerHTML = "";
 
+  const runtimeMovieTitles = chosenMovies
+    .map((movie) => String(movie?.title || "").trim())
+    .filter((title) => title.length > 0);
+  const movieTitlesForDisplay = runtimeMovieTitles.length > 0
+    ? runtimeMovieTitles
+    : ACTIVE_ALLOWED_MOVIES;
+
   const allowedMovieData = await Promise.all(
-    ACTIVE_ALLOWED_MOVIES.map(async (movieTitle) => {
+    movieTitlesForDisplay.map(async (movieTitle) => {
       const metadata = await getMovieMetadataByTitle(movieTitle);
       return { title: movieTitle, ...metadata };
     })
@@ -1006,6 +1435,8 @@ async function recordVote(email = null) {
     const lowerErrorMessage = errorMessage.toLowerCase();
     if (error.code === "functions/resource-exhausted") {
       alert("You are moving too fast. Please wait a few seconds and try again.");
+    } else if (error.code === "functions/failed-precondition") {
+      alert("Voting has ended for this event.");
     } else if (error.code === "functions/permission-denied") {
       resetCaptcha({ keepVisible: true });
       alert("Please complete the CAPTCHA challenge and try again.");
@@ -1094,6 +1525,8 @@ async function submitSelectedVote(email = null) {
   // Hide the movies list
   searchResults.classList.add("hidden");
   searchResults.setAttribute('style', '');
+
+  await showReelVotesMissionModal();
 
   resultsDiv.classList.remove("hidden");
   resultsDiv.innerHTML = `
@@ -1411,6 +1844,8 @@ async function updateAppLink() {
 
 // Initialize
 async function init() {
+  initMainTabs();
+  renderAccountState();
   hideVotingInterface();
   voterClientId = getOrCreateClientId();
   await loadEventRuntimeSettings();
