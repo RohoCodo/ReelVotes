@@ -181,10 +181,10 @@ function setVoteControlStatus(message, isError = false) {
 function updateEndVoteButton() {
   if (!endVoteBtn) return;
   const isEnded = currentVoteStatus === "ended";
-  endVoteBtn.disabled = isEnded;
-  endVoteBtn.textContent = isEnded ? "Vote ended" : "End vote";
-  endVoteBtn.style.opacity = isEnded ? "0.6" : "1";
-  endVoteBtn.style.cursor = isEnded ? "not-allowed" : "pointer";
+  endVoteBtn.disabled = !currentAdminEmail;
+  endVoteBtn.textContent = isEnded ? "Reopen vote" : "End vote";
+  endVoteBtn.style.opacity = endVoteBtn.disabled ? "0.6" : "1";
+  endVoteBtn.style.cursor = endVoteBtn.disabled ? "not-allowed" : "pointer";
 }
 
 async function endVoteNow() {
@@ -198,12 +198,12 @@ async function endVoteNow() {
     return;
   }
 
-  if (currentVoteStatus === "ended") {
-    setVoteControlStatus("This vote is already ended.");
-    return;
-  }
-
-  const confirmed = window.confirm("End voting for this event now? This will block new votes.");
+  const nextVoteStatus = currentVoteStatus === "ended" ? "live" : "ended";
+  const confirmed = window.confirm(
+    nextVoteStatus === "ended"
+      ? "End voting for this event now? This will block new votes."
+      : "Reopen voting for this event now? This will allow new votes.",
+  );
   if (!confirmed) {
     return;
   }
@@ -211,27 +211,31 @@ async function endVoteNow() {
   try {
     if (endVoteBtn) {
       endVoteBtn.disabled = true;
-      endVoteBtn.textContent = "Ending…";
+      endVoteBtn.textContent = nextVoteStatus === "ended" ? "Ending…" : "Reopening…";
     }
-    setVoteControlStatus("Ending vote...");
+    setVoteControlStatus(nextVoteStatus === "ended" ? "Ending vote..." : "Reopening vote...");
 
     await setEventVoteStatusCallable({
       eventId: currentEventId,
       adminEmail: currentAdminEmail,
-      voteStatus: "ended",
+      voteStatus: nextVoteStatus,
     });
 
-    currentVoteStatus = "ended";
+    currentVoteStatus = nextVoteStatus;
     const configuredEvent = resolveEvent(currentEventId);
     if (configuredEvent) {
-      configuredEvent.voteStatus = "ended";
+      configuredEvent.voteStatus = nextVoteStatus;
     }
     populateSelector();
     updateEndVoteButton();
-    setVoteControlStatus("Vote ended. New vote submissions are now blocked.");
+    setVoteControlStatus(
+      nextVoteStatus === "ended"
+        ? "Vote ended. New vote submissions are now blocked."
+        : "Vote reopened. New vote submissions are now allowed.",
+    );
   } catch (error) {
     console.error("Failed ending vote:", error);
-    setVoteControlStatus(error?.message || "Failed to end vote.", true);
+    setVoteControlStatus(error?.message || "Failed to update vote status.", true);
     updateEndVoteButton();
   }
 }
