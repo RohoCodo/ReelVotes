@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
-import { getFirestore, collection, getDocs, getDoc, doc, query, where, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, getDoc, doc, query, where, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-functions.js";
 
 // Firebase Config
@@ -64,8 +64,27 @@ const EVENT_ID_ALIASES = {
 };
 const requestedEventDataId = EVENT_ID_ALIASES[requestedEventId] || requestedEventId;
 const configuredEvents = window.REELVOTES_EVENTS || [];
-const defaultConfiguredEvent = configuredEvents.find((event) => event.voteStatus === "live")
-  || configuredEvents.find((event) => event.voteStatus !== "ended")
+
+function getEventSortTime(event) {
+  const rawDateTime = String(event?.screeningDateTime || "").trim();
+  const parsedDateTime = rawDateTime ? Date.parse(rawDateTime) : Number.NaN;
+  if (Number.isFinite(parsedDateTime)) {
+    return parsedDateTime;
+  }
+
+  const rawId = String(event?.id || "").trim();
+  const parsedId = rawId ? Date.parse(rawId) : Number.NaN;
+  return Number.isFinite(parsedId) ? parsedId : Number.NEGATIVE_INFINITY;
+}
+
+function getLatestConfiguredEvent(predicate) {
+  return configuredEvents
+    .filter((event) => predicate(event))
+    .sort((left, right) => getEventSortTime(right) - getEventSortTime(left))[0] || null;
+}
+
+const defaultConfiguredEvent = getLatestConfiguredEvent((event) => event.voteStatus === "live")
+  || getLatestConfiguredEvent((event) => event.voteStatus !== "ended")
   || configuredEvents[0]
   || null;
 const selectedEvent = window.REELVOTES_EVENT || (requestedEventId
@@ -87,19 +106,53 @@ const EVENT_ALLOWED_MOVIES = Array.isArray(selectedEvent?.allowedMovies)
   : [];
 const ACTIVE_ALLOWED_MOVIES = EVENT_ALLOWED_MOVIES.length > 0 ? EVENT_ALLOWED_MOVIES : DEFAULT_ALLOWED_MOVIES;
 
+let _eventStatusInitialized = false;
+let _unsubscribeEventStatus = null;
+
 async function loadEventRuntimeSettings() {
-  try {
-    const eventDoc = await getDoc(doc(db, "events", EVENT_ID));
-    const eventData = eventDoc.exists() ? (eventDoc.data() || {}) : {};
-    if (typeof eventData.voteStatus === "string" && eventData.voteStatus.trim()) {
-      EVENT_STATUS = eventData.voteStatus.trim().toLowerCase();
+  return new Promise((resolve) => {
+    if (_unsubscribeEventStatus) {
+      _unsubscribeEventStatus();
     }
-    if (typeof eventData.requireEmail === "boolean") {
-      EVENT_REQUIRES_EMAIL = eventData.requireEmail;
-    }
-  } catch (error) {
-    console.warn("[app] Could not load runtime event settings, using config defaults", error);
-  }
+
+    _unsubscribeEventStatus = onSnapshot(
+      doc(db, "events", EVENT_ID),
+      (eventDoc) => {
+        const eventData = eventDoc.exists() ? (eventDoc.data() || {}) : {};
+        const newStatus = typeof eventData.voteStatus === "string" && eventData.voteStatus.trim()
+          ? eventData.voteStatus.trim().toLowerCase()
+          : EVENT_STATUS;
+        const prevStatus = EVENT_STATUS;
+
+        EVENT_STATUS = newStatus;
+
+        if (typeof eventData.requireEmail === "boolean") {
+          EVENT_REQUIRES_EMAIL = eventData.requireEmail;
+        }
+
+        if (!_eventStatusInitialized) {
+          _eventStatusInitialized = true;
+          resolve();
+          return;
+        }
+
+        // Status changed to ended while voter is on the page — switch UI immediately
+        if (prevStatus !== "ended" && newStatus === "ended") {
+          console.log("[app] Vote status changed to ended — redirecting to results view");
+          fetchChosenMovies().then(() => {
+            showEndedResultsInterface();
+          });
+        }
+      },
+      (error) => {
+        console.warn("[app] Could not load runtime event settings, using config defaults", error);
+        if (!_eventStatusInitialized) {
+          _eventStatusInitialized = true;
+          resolve();
+        }
+      }
+    );
+  });
 }
 
 console.log("[app] Bootstrap", {
@@ -109,6 +162,12 @@ console.log("[app] Bootstrap", {
   EVENT_ID,
   EVENT_STATUS
 });
+
+if (!requestedEventId && selectedEvent?.id) {
+  const nextUrl = new URL(window.location.href);
+  nextUrl.searchParams.set("event", selectedEvent.id);
+  window.history.replaceState({}, "", nextUrl.toString());
+}
 
 const VOTER_CLIENT_ID_KEY = (eventId) => `voterClientId_${eventId}`;
 const CAST_VOTE_KEY = (eventId) => `castVote_${eventId}`;
@@ -1842,6 +1901,47 @@ async function updateAppLink() {
   }
 }
 
+// Check Firestore voteStatus for a given firestoreEventId
+async function getFirestoreVoteStatus(firestoreEventId) {
+  try {
+    const eventDoc = await getDoc(doc(db, "events", firestoreEventId));
+    const eventData = eventDoc.exists() ? (eventDoc.data() || {}) : {};
+    return String(eventData.voteStatus || "").trim().toLowerCase() || null;
+  } catch {
+    return null;
+  }
+}
+
+// If no explicit event was requested and the current event is ended in
+// Firestore, find the latest event that is actually live in Firestore and
+// redirect there so the homepage always lands on the live vote.
+async function redirectIfEndedWithoutExplicitRequest() {
+  if (requestedEventId) {
+    // User explicitly picked this event; respect that choice.
+    return;
+  }
+
+  if (EVENT_STATUS !== "ended") {
+    return;
+  }
+
+  // Current event is ended — find the latest live event in Firestore.
+  const otherLiveCandidates = configuredEvents
+    .filter((event) => event.id !== selectedEvent?.id)
+    .sort((a, b) => getEventSortTime(b) - getEventSortTime(a));
+
+  for (const candidate of otherLiveCandidates) {
+    const firestoreId = candidate.firestoreEventId || candidate.id;
+    const status = await getFirestoreVoteStatus(firestoreId);
+    if (status === "live") {
+      const nextUrl = new URL(window.location.href);
+      nextUrl.searchParams.set("event", candidate.id);
+      window.location.replace(nextUrl.toString());
+      return;
+    }
+  }
+}
+
 // Initialize
 async function init() {
   initMainTabs();
@@ -1849,6 +1949,7 @@ async function init() {
   hideVotingInterface();
   voterClientId = getOrCreateClientId();
   await loadEventRuntimeSettings();
+  await redirectIfEndedWithoutExplicitRequest();
   await routeCurrentVoter();
 
   await updateAppLink();
