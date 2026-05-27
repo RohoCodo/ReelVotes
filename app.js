@@ -466,6 +466,38 @@ function updateMainTabUrl(tab) {
   window.history.replaceState({}, "", nextUrl.toString());
 }
 
+function removeLegacyTabsUi() {
+  // Remove stale tab query param from old links/bookmarks.
+  try {
+    const nextUrl = new URL(window.location.href);
+    if (nextUrl.searchParams.has("tab")) {
+      nextUrl.searchParams.delete("tab");
+      window.history.replaceState({}, "", nextUrl.toString());
+    }
+  } catch {
+    // ignore URL parsing failures
+  }
+
+  // Remove legacy tab button row if present in cached HTML.
+  if (mainTabList?.parentElement) {
+    mainTabList.parentElement.removeChild(mainTabList);
+  }
+
+  // Keep only vote panel visible.
+  if (tabVotePanel) {
+    tabVotePanel.hidden = false;
+    tabVotePanel.style.display = "";
+  }
+  if (tabMomentsPanel) {
+    tabMomentsPanel.hidden = true;
+    tabMomentsPanel.style.display = "none";
+  }
+  if (tabAccountPanel) {
+    tabAccountPanel.hidden = true;
+    tabAccountPanel.style.display = "none";
+  }
+}
+
 function onVoteTabEnter() {
   updateVoteActionState();
 }
@@ -1944,7 +1976,7 @@ async function redirectIfEndedWithoutExplicitRequest() {
 
 // Initialize
 async function init() {
-  initMainTabs();
+  removeLegacyTabsUi();
   renderAccountState();
   hideVotingInterface();
   voterClientId = getOrCreateClientId();
