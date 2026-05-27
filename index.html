@@ -31,40 +31,7 @@
 
     <p class="subtitle" id="eventSubtitle"></p>
 
-    <div id="mainTabList" class="main-tabs" role="tablist" aria-label="Main navigation tabs">
-      <button
-        id="tabVoteBtn"
-        class="main-tab-btn active"
-        type="button"
-        role="tab"
-        aria-selected="true"
-        aria-controls="tabVotePanel"
-      >
-        Vote
-      </button>
-      <button
-        id="tabMomentsBtn"
-        class="main-tab-btn"
-        type="button"
-        role="tab"
-        aria-selected="false"
-        aria-controls="tabMomentsPanel"
-      >
-        Moments
-      </button>
-      <button
-        id="tabAccountBtn"
-        class="main-tab-btn"
-        type="button"
-        role="tab"
-        aria-selected="false"
-        aria-controls="tabAccountPanel"
-      >
-        Account
-      </button>
-    </div>
-
-    <section id="tabVotePanel" class="main-tab-panel" role="tabpanel" aria-labelledby="tabVoteBtn">
+    <section id="tabVotePanel" class="main-tab-panel" role="region" aria-label="Vote">
     <p class="vote-mode-note">Public poll. One vote per person. You may vote for as many movies as you want on that single ballot.</p>
 
     <section class="info-box mission-box" aria-label="How ReelVotes works">
