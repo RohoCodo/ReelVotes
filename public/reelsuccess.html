@@ -45,6 +45,7 @@
       </div>
 
       <p id="reelsuccessStatus" class="subtitle" style="margin-top:10px;"></p>
+      <p id="reelsuccessDemographicsStatus" class="subtitle" style="margin-top:-6px;margin-bottom:10px;"></p>
 
       <section id="reelsuccessProfile" class="info-box hidden"></section>
 
@@ -66,6 +67,13 @@
 
       <section id="reelsuccessRecsSection" class="info-box hidden">
         <h2>Recommended Movies</h2>
+        <div id="reelsuccessScoreTabs" class="reelsuccess-score-tabs">
+          <button id="scoreTabRobustBlend" type="button" class="reelsuccess-score-tab-btn active" data-score-key="robust_blend">Robust Blend</button>
+          <button id="scoreTabBaseline" type="button" class="reelsuccess-score-tab-btn" data-score-key="baseline">Baseline</button>
+          <button id="scoreTabSupportBoosted" type="button" class="reelsuccess-score-tab-btn" data-score-key="support_boosted">Support Boosted</button>
+          <button id="scoreTabLiftAdjusted" type="button" class="reelsuccess-score-tab-btn" data-score-key="lift_adjusted">Lift Adjusted</button>
+        </div>
+        <p id="reelsuccessScoreExplainer" class="subtitle" style="margin:2px 0 10px;"></p>
         <div class="reelsuccess-table-wrap">
           <table class="reelsuccess-table">
             <thead>

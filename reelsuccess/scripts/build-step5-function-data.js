@@ -88,6 +88,7 @@ function main() {
       profile: t,
       similar_theaters: similarityRows,
       recommendations: recBlock.recommendations || [],
+      recommendations_by_score: recBlock.recommendations_by_score || null,
       based_on_similar_theaters: recBlock.based_on_similar_theaters || similarityRows.length || 0,
     };
   }

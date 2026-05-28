@@ -264,6 +264,45 @@ function isLikelyBadMovieTitle(title) {
   return false;
 }
 
+function normalizeLift(localRate, globalRate, eps = 1e-6) {
+  return (localRate + eps) / (globalRate + eps);
+}
+
+function scoreRecommendationVariants({
+  baseScore,
+  supportCount,
+  localPresenceRate,
+  globalPresenceRate,
+  globalPlayCount,
+  totalTheaters,
+}) {
+  const supportBoost = Math.log1p(Math.max(0, supportCount));
+  const lift = normalizeLift(localPresenceRate, globalPresenceRate);
+  const liftAdjusted = Math.pow(Math.max(0.01, lift), 0.55);
+  const popularityPenalty = 1 / (1 + 0.35 * Math.log1p(Math.max(0, globalPlayCount)));
+  const confidence = supportCount / (supportCount + 3);
+
+  const scoreBaseline = baseScore;
+  const scoreSupportBoosted = baseScore * supportBoost;
+  const scoreLiftAdjusted = baseScore * liftAdjusted;
+  const scoreRobustBlend = baseScore * supportBoost * liftAdjusted * popularityPenalty * (0.6 + 0.4 * confidence);
+
+  return {
+    score_baseline: Number(scoreBaseline.toFixed(6)),
+    score_support_boosted: Number(scoreSupportBoosted.toFixed(6)),
+    score_lift_adjusted: Number(scoreLiftAdjusted.toFixed(6)),
+    score_robust_blend: Number(scoreRobustBlend.toFixed(6)),
+    support_boost: Number(supportBoost.toFixed(6)),
+    lift: Number(lift.toFixed(6)),
+    confidence: Number(confidence.toFixed(6)),
+    popularity_penalty: Number(popularityPenalty.toFixed(6)),
+    global_play_count: globalPlayCount,
+    global_presence_rate: Number(globalPresenceRate.toFixed(6)),
+    local_presence_rate: Number(localPresenceRate.toFixed(6)),
+    total_theaters: totalTheaters,
+  };
+}
+
 function main() {
   const args = parseArgs(process.argv.slice(2));
 
@@ -397,6 +436,14 @@ function main() {
   const recsByTheater = {};
   let recRowCount = 0;
 
+  const movieGlobalPlayCounts = new Map();
+  for (const movieSet of playedMoviesByTheater.values()) {
+    for (const movieTitle of movieSet) {
+      movieGlobalPlayCounts.set(movieTitle, (movieGlobalPlayCounts.get(movieTitle) || 0) + 1);
+    }
+  }
+  const totalTheaterCount = Math.max(1, keys.length);
+
   for (const aKey of keys) {
     const neighbors = (similarityByTheater[aKey] || []).slice(0, args.neighborPool);
     const played = playedMoviesByTheater.get(aKey) || new Set();
@@ -441,13 +488,44 @@ function main() {
       }
     }
 
-    const ranked = Array.from(candidate.values())
-      .map((r) => ({
-        ...r,
-        recommendation_score: Number(r.recommendation_score.toFixed(6)),
-        weighted_movie_signal: Number(r.weighted_movie_signal.toFixed(6)),
-      }))
-      .sort((x, y) => y.recommendation_score - x.recommendation_score)
+    const candidateScored = Array.from(candidate.values())
+      .map((r) => {
+        const globalPlayCount = Number(movieGlobalPlayCounts.get(r.movie_title) || 0);
+        const localPresenceRate = neighbors.length > 0 ? (r.support_theater_count / neighbors.length) : 0;
+        const globalPresenceRate = globalPlayCount / totalTheaterCount;
+        const variants = scoreRecommendationVariants({
+          baseScore: r.recommendation_score,
+          supportCount: r.support_theater_count,
+          localPresenceRate,
+          globalPresenceRate,
+          globalPlayCount,
+          totalTheaters: totalTheaterCount,
+        });
+
+        return {
+          ...r,
+          recommendation_score: Number(r.recommendation_score.toFixed(6)),
+          weighted_movie_signal: Number(r.weighted_movie_signal.toFixed(6)),
+          ...variants,
+        };
+      })
+      .filter((r) => r.support_theater_count >= 2);
+
+    const rankedBaseline = candidateScored
+      .slice()
+      .sort((x, y) => y.score_baseline - x.score_baseline)
+      .slice(0, args.topKRecMovies);
+    const rankedSupportBoosted = candidateScored
+      .slice()
+      .sort((x, y) => y.score_support_boosted - x.score_support_boosted)
+      .slice(0, args.topKRecMovies);
+    const rankedLiftAdjusted = candidateScored
+      .slice()
+      .sort((x, y) => y.score_lift_adjusted - x.score_lift_adjusted)
+      .slice(0, args.topKRecMovies);
+    const rankedRobustBlend = candidateScored
+      .slice()
+      .sort((x, y) => y.score_robust_blend - x.score_robust_blend)
       .slice(0, args.topKRecMovies);
 
     recsByTheater[aKey] = {
@@ -455,17 +533,23 @@ function main() {
       theater_name: theaterByKey.get(aKey)?.theater_name || "",
       theater_city_state: theaterByKey.get(aKey)?.theater_city_state || "",
       based_on_similar_theaters: neighbors.length,
-      recommendations: ranked,
+      recommendations: rankedRobustBlend,
+      recommendations_by_score: {
+        robust_blend: rankedRobustBlend,
+        baseline: rankedBaseline,
+        support_boosted: rankedSupportBoosted,
+        lift_adjusted: rankedLiftAdjusted,
+      },
     };
 
-    recRowCount += ranked.length;
+    recRowCount += rankedRobustBlend.length;
   }
 
   const similarityOutput = {
     created_at: new Date().toISOString(),
     params: {
       topKSimilar: args.topKSimilar,
-      weights: { history: 0.65, movie: 0.20, demographics: 0.10, operations: 0.05 },
+      weights: { history: args.wHistory, movie: args.wMovie, demographics: args.wDemo, operations: args.wOps },
       confidence: {
         common_movie_k: 8,
         overlap_weight_target: 26,
@@ -485,6 +569,13 @@ function main() {
       topKRecMovies: args.topKRecMovies,
       neighborPool: args.neighborPool,
       similarityWeights: { history: args.wHistory, movie: args.wMovie, demographics: args.wDemo, operations: args.wOps },
+      recommendationScoring: {
+        default: "robust_blend",
+        variants: ["robust_blend", "baseline", "support_boosted", "lift_adjusted"],
+        filters: {
+          min_support_theater_count: 2,
+        },
+      },
     },
     theaters: recsByTheater,
   };

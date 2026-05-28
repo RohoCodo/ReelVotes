@@ -63,6 +63,9 @@ const similarSectionEl = document.getElementById("reelsuccessSimilarSection");
 const similarBodyEl = document.getElementById("similarTheatersBody");
 const recsSectionEl = document.getElementById("reelsuccessRecsSection");
 const recsBodyEl = document.getElementById("recommendationsBody");
+const demographicsStatusEl = document.getElementById("reelsuccessDemographicsStatus");
+const recScoreTabsWrapEl = document.getElementById("reelsuccessScoreTabs");
+const recScoreExplainerEl = document.getElementById("reelsuccessScoreExplainer");
 
 const grossBusinessDateInput = document.getElementById("grossBusinessDateInput");
 const grossPdfInput = document.getElementById("grossPdfInput");
@@ -75,6 +78,31 @@ let searchTimer = null;
 let grossSearchTimer = null;
 let findAutoSelectTimer = null;
 let grossAutoSelectTimer = null;
+let recommendationSets = null;
+let activeRecommendationScoreKey = "robust_blend";
+
+const RECOMMENDATION_SCORE_META = {
+  robust_blend: {
+    label: "Robust Blend",
+    field: "score_robust_blend",
+    explainer: "Best overall: combines base signal, support, lift, and popularity penalty.",
+  },
+  baseline: {
+    label: "Baseline",
+    field: "score_baseline",
+    explainer: "Original similarity × neighbor movie-signal score.",
+  },
+  support_boosted: {
+    label: "Support Boosted",
+    field: "score_support_boosted",
+    explainer: "Prioritizes titles supported by more similar theaters.",
+  },
+  lift_adjusted: {
+    label: "Lift Adjusted",
+    field: "score_lift_adjusted",
+    explainer: "Rewards titles unusually strong among similar theaters vs global rate.",
+  },
+};
 
 const canUploadForTheater = (theaterId) => {
   if (!theaterId) return false;
@@ -414,7 +442,47 @@ function clearInsights() {
   recsSectionEl?.classList.add("hidden");
   if (similarBodyEl) similarBodyEl.innerHTML = "";
   if (recsBodyEl) recsBodyEl.innerHTML = "";
+  if (demographicsStatusEl) demographicsStatusEl.textContent = "";
+  recommendationSets = null;
   lastLoadedTheaterKey = "";
+}
+
+function updateDemographicsStatus(profile) {
+  if (!demographicsStatusEl) return;
+  const status = String(profile?.demographics_status || "").trim().toLowerCase();
+  if (status === "matched") {
+    demographicsStatusEl.textContent = "Demographics: available and included in scoring.";
+    demographicsStatusEl.style.color = "#8fe388";
+    return;
+  }
+  if (status) {
+    demographicsStatusEl.textContent = `Demographics: missing (${status}). Similarity currently relies on historical and operational features.`;
+    demographicsStatusEl.style.color = "#ffb36b";
+    return;
+  }
+  demographicsStatusEl.textContent = "";
+}
+
+function getRecommendationsForScoreKey(scoreKey) {
+  if (!recommendationSets) return [];
+  const byScore = recommendationSets?.recommendations_by_score || null;
+  if (byScore && Array.isArray(byScore[scoreKey]) && byScore[scoreKey].length) {
+    return byScore[scoreKey];
+  }
+  return recommendationSets?.recommendations || [];
+}
+
+function updateRecommendationScoreTabsUI() {
+  if (!recScoreTabsWrapEl) return;
+  const buttons = recScoreTabsWrapEl.querySelectorAll(".reelsuccess-score-tab-btn");
+  buttons.forEach((btn) => {
+    const scoreKey = btn.dataset?.scoreKey || "";
+    btn.classList.toggle("active", scoreKey === activeRecommendationScoreKey);
+  });
+
+  if (recScoreExplainerEl) {
+    recScoreExplainerEl.textContent = RECOMMENDATION_SCORE_META[activeRecommendationScoreKey]?.explainer || "";
+  }
 }
 
 async function selectAndLoadTheater(theaterKey) {
@@ -442,6 +510,7 @@ function renderProfile(profile) {
   if (!profileEl) return;
   if (!profile) {
     profileEl.classList.add("hidden");
+    updateDemographicsStatus(null);
     return;
   }
 
@@ -456,6 +525,7 @@ function renderProfile(profile) {
       <div><strong>${Number(profile.unique_movies || 0)}</strong><span>Unique movies</span></div>
     </div>
   `;
+  updateDemographicsStatus(profile);
 }
 
 function renderSimilarTheaters(rows) {
@@ -478,9 +548,10 @@ function renderSimilarTheaters(rows) {
   });
 }
 
-function renderRecommendations(rows) {
+function renderRecommendations(rows, scoreKey = activeRecommendationScoreKey) {
   if (!recsBodyEl || !recsSectionEl) return;
   recsBodyEl.innerHTML = "";
+  const scoreField = RECOMMENDATION_SCORE_META[scoreKey]?.field || "recommendation_score";
   if (!rows || !rows.length) {
     recsSectionEl.classList.add("hidden");
     return;
@@ -488,14 +559,17 @@ function renderRecommendations(rows) {
 
   recsSectionEl.classList.remove("hidden");
   rows.forEach((row) => {
+    const displayScore = Number(row?.[scoreField] ?? row?.recommendation_score ?? 0);
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${escapeHtml(row.movie_title)}</td>
-      <td>${Number(row.recommendation_score || 0).toFixed(3)}</td>
+      <td>${displayScore.toFixed(3)}</td>
       <td>${Number(row.support_theater_count || 0)}</td>
     `;
     recsBodyEl.appendChild(tr);
   });
+
+  updateRecommendationScoreTabsUI();
 }
 
 async function loadTheaters(query = "") {
@@ -525,11 +599,30 @@ async function loadInsights(theaterKey) {
   });
 
   const data = result?.data || {};
+  recommendationSets = {
+    recommendations: data.recommendations || [],
+    recommendations_by_score: data.recommendations_by_score || null,
+  };
   renderProfile(data.profile || null);
   renderSimilarTheaters(data.similar_theaters || []);
-  renderRecommendations(data.recommendations || []);
+  renderRecommendations(getRecommendationsForScoreKey(activeRecommendationScoreKey), activeRecommendationScoreKey);
   lastLoadedTheaterKey = theaterKey;
   setStatus(`Insights loaded for ${data?.profile?.theater_name || "theater"}.`);
+}
+
+function bindRecommendationScoreTabs() {
+  if (!recScoreTabsWrapEl) return;
+  const buttons = recScoreTabsWrapEl.querySelectorAll(".reelsuccess-score-tab-btn");
+  buttons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const scoreKey = String(btn.dataset?.scoreKey || "").trim();
+      if (!RECOMMENDATION_SCORE_META[scoreKey]) return;
+      activeRecommendationScoreKey = scoreKey;
+      const rows = getRecommendationsForScoreKey(scoreKey);
+      renderRecommendations(rows, scoreKey);
+    });
+  });
+  updateRecommendationScoreTabsUI();
 }
 
 async function searchAndAutoSelect(query = "") {
@@ -1016,6 +1109,7 @@ async function bootstrap() {
   try {
     bindAuth();
     bindGrossUploadsActions();
+    bindRecommendationScoreTabs();
 
     findMovieTabBtn?.addEventListener("click", () => showTab("find"));
     grossUploadTabBtn?.addEventListener("click", () => showTab("upload"));

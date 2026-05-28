@@ -161,6 +161,18 @@ body {
     .reelsuccess-any-button {
       width: 100%;
     }
+
+    .reelsuccess-topbar {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .reelsuccess-auth-actions {
+      width: 100%;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
   }
 
   .reelsuccess-select {
@@ -265,6 +277,35 @@ body {
   .reelsuccess-table th {
     color: #ff8e8e;
     font-weight: 700;
+  }
+
+  .reelsuccess-score-tabs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 0 0 8px;
+  }
+
+  .reelsuccess-score-tab-btn {
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.06);
+    color: #ddd;
+    border-radius: 999px;
+    padding: 6px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .reelsuccess-score-tab-btn:hover {
+    border-color: rgba(255, 71, 87, 0.55);
+    background: rgba(255, 71, 87, 0.16);
+  }
+
+  .reelsuccess-score-tab-btn.active {
+    border-color: rgba(255, 71, 87, 0.85);
+    background: rgba(255, 71, 87, 0.32);
+    color: #fff;
   }
 
   
