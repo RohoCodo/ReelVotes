@@ -8,7 +8,11 @@
  *   node reelsuccess/scripts/enrich-theaters-with-demographics.js \
  *     --input ./reelsuccess/output/screenings.json \
  *     --outDir ./reelsuccess/output \
- *     --year 2023
+ *     --year 2023 \
+ *     --censusApiKey YOUR_CENSUS_KEY
+ *
+ * Or set environment variable:
+ *   CENSUS_API_KEY=YOUR_CENSUS_KEY node reelsuccess/scripts/enrich-theaters-with-demographics.js
  */
 
 const fs = require("fs");
@@ -72,6 +76,7 @@ function parseArgs(argv) {
     input: path.resolve(process.cwd(), "reelsuccess/output/screenings.json"),
     outDir: path.resolve(process.cwd(), "reelsuccess/output"),
     year: "2023",
+    censusApiKey: process.env.CENSUS_API_KEY || "",
   };
 
   for (let i = 0; i < argv.length; i += 1) {
@@ -84,6 +89,9 @@ function parseArgs(argv) {
       i += 1;
     } else if (token === "--year") {
       args.year = String(argv[i + 1]);
+      i += 1;
+    } else if (token === "--censusApiKey") {
+      args.censusApiKey = String(argv[i + 1] || "").trim();
       i += 1;
     }
   }
@@ -145,14 +153,46 @@ function pct(part, whole) {
 }
 
 async function fetchJson(url) {
-  const res = await fetch(url);
+  const res = await fetch(url, {
+    redirect: "manual",
+    headers: {
+      "accept": "application/json",
+      "user-agent": "ReelSuccess-Demographics/1.0",
+    },
+  });
+
+  if (res.status >= 300 && res.status < 400) {
+    const location = res.headers.get("location") || "";
+    const keyErrorHeader = res.headers.get("x-datawebapi-keyerror");
+    if (location.includes("missing_key") || keyErrorHeader) {
+      throw new Error(
+        "Census API key missing or invalid. Provide --censusApiKey or set CENSUS_API_KEY environment variable.",
+      );
+    }
+    throw new Error(`HTTP ${res.status} redirect for ${url} -> ${location || "(no location)"}`);
+  }
+
   if (!res.ok) {
     throw new Error(`HTTP ${res.status} for ${url}`);
   }
-  return res.json();
+
+  const contentType = String(res.headers.get("content-type") || "").toLowerCase();
+  const raw = await res.text();
+
+  if (!contentType.includes("json") && raw.trim().startsWith("<")) {
+    throw new Error("Census API returned HTML instead of JSON (likely missing/invalid API key).", {
+      cause: raw.slice(0, 160),
+    });
+  }
+
+  try {
+    return JSON.parse(raw);
+  } catch (error) {
+    throw new Error(`Unable to parse Census API response as JSON: ${error?.message || error}`);
+  }
 }
 
-async function getPlacesForState(stateAbbr, year, cache) {
+async function getPlacesForState(stateAbbr, year, censusApiKey, cache) {
   if (cache[stateAbbr]) return cache[stateAbbr];
 
   const meta = STATE_META[stateAbbr];
@@ -162,7 +202,8 @@ async function getPlacesForState(stateAbbr, year, cache) {
   }
 
   const getFields = ACS_VARIABLES.join(",");
-  const url = `https://api.census.gov/data/${year}/acs/acs5?get=${encodeURIComponent(getFields)}&for=place:*&in=state:${meta.fips}`;
+  const keyParam = censusApiKey ? `&key=${encodeURIComponent(censusApiKey)}` : "";
+  const url = `https://api.census.gov/data/${year}/acs/acs5?get=${encodeURIComponent(getFields)}&for=place:*&in=state:${meta.fips}${keyParam}`;
 
   const data = await fetchJson(url);
   const [header, ...rows] = data;
@@ -262,6 +303,11 @@ function writeCsv(filePath, rows, headers) {
 async function main() {
   const args = parseArgs(process.argv.slice(2));
 
+  if (!args.censusApiKey) {
+    console.error("Missing Census API key. Use --censusApiKey or set CENSUS_API_KEY.");
+    process.exit(1);
+  }
+
   if (!fs.existsSync(args.input)) {
     console.error(`Input not found: ${args.input}`);
     process.exit(1);
@@ -303,7 +349,7 @@ async function main() {
 
     if (!cityDemoCache.has(cityStateKey)) {
       try {
-        const places = await getPlacesForState(parsed.stateAbbr, args.year, stateCache);
+        const places = await getPlacesForState(parsed.stateAbbr, args.year, args.censusApiKey, stateCache);
         const match = pickBestPlaceMatch(parsed.city, parsed.stateAbbr, places);
         if (!match) {
           cityDemoCache.set(cityStateKey, null);
