@@ -226,14 +226,27 @@
 
   const events = window.REELVOTES_EVENTS || [];
   const queryEventId = new URLSearchParams(window.location.search).get("event");
-  const storedEventId = window.sessionStorage.getItem("reelvotesSelectedEventId");
-  const eventId = queryEventId || storedEventId;
+  const eventId = queryEventId;
   const EVENT_ID_ALIASES = {
     "2026-04-27": "newparkway1"
   };
   const eventDataId = EVENT_ID_ALIASES[eventId] || eventId;
   const resolvedEvent = events.find((item) => item.id === eventId || item.firestoreEventId === eventId);
-  const defaultEvent = events.find((item) => item.voteStatus === "live") || events[0] || null;
+  const getEventSortTime = (item) => {
+    const rawDateTime = String(item?.screeningDateTime || "").trim();
+    const parsedDateTime = rawDateTime ? Date.parse(rawDateTime) : Number.NaN;
+    if (Number.isFinite(parsedDateTime)) return parsedDateTime;
+    const rawId = String(item?.id || "").trim();
+    const parsedId = rawId ? Date.parse(rawId) : Number.NaN;
+    return Number.isFinite(parsedId) ? parsedId : Number.NEGATIVE_INFINITY;
+  };
+  const getLatestConfiguredEvent = (predicate) => events
+    .filter((item) => predicate(item))
+    .sort((left, right) => getEventSortTime(right) - getEventSortTime(left))[0] || null;
+  const defaultEvent = getLatestConfiguredEvent((item) => item.voteStatus === "live")
+    || getLatestConfiguredEvent((item) => item.voteStatus !== "ended")
+    || events[0]
+    || null;
   const event = resolvedEvent || (eventId ? {
     id: eventId,
     firestoreEventId: eventDataId,
@@ -244,7 +257,6 @@
   console.log("[index] Resolving page event", {
     href: window.location.href,
     queryEventId,
-    storedEventId,
     eventId,
     events,
     resolvedEvent: event
@@ -254,7 +266,7 @@
     console.error("[index] No events available in configuration; cannot render voting page");
   } else {
     if (!eventId) {
-      console.warn("[index] No event query param present; defaulting to first live event", event);
+      console.warn("[index] No event query param present; defaulting to latest live event", event);
       const normalizedUrl = new URL(window.location.href);
       normalizedUrl.searchParams.set("event", event.id);
       window.history.replaceState({}, "", normalizedUrl.toString());
