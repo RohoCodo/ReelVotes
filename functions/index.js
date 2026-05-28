@@ -58,7 +58,15 @@ const ADMIN_EMAIL_THEATER_KEY_MAP = new Map([
   ["nikki@thenewparkwaytheater.com", "PFR|The New Parkway Theater|Oakland, CA"],
 ]);
 const REELSUCCESS_DATA_DIR = path.join(__dirname, "reelsuccess-data");
-let reelSuccessCache = null;
+const REELSUCCESS_CALL_OPTIONS = {
+  memory: "1GiB",
+  timeoutSeconds: 120,
+};
+let reelSuccessCache = {
+  theaterIndex: null,
+  theaterInsightsByKey: null,
+  metadata: null,
+};
 
 function readJsonFileSafe(filePath) {
   if (!fs.existsSync(filePath)) {
@@ -69,26 +77,44 @@ function readJsonFileSafe(filePath) {
   return JSON.parse(raw);
 }
 
-function loadReelSuccessData() {
-  if (reelSuccessCache) {
-    return reelSuccessCache;
-  }
-
+function loadReelSuccessIndexData() {
   const theaterIndexPath = path.join(REELSUCCESS_DATA_DIR, "theater_index.json");
-  const theaterInsightsPath = path.join(REELSUCCESS_DATA_DIR, "theater_insights_by_key.json");
   const metadataPath = path.join(REELSUCCESS_DATA_DIR, "metadata.json");
 
-  const theaterIndex = readJsonFileSafe(theaterIndexPath);
-  const theaterInsightsByKey = readJsonFileSafe(theaterInsightsPath);
-  const metadata = readJsonFileSafe(metadataPath);
+  if (!reelSuccessCache.theaterIndex) {
+    reelSuccessCache.theaterIndex = readJsonFileSafe(theaterIndexPath);
+  }
+  if (!reelSuccessCache.metadata) {
+    reelSuccessCache.metadata = readJsonFileSafe(metadataPath);
+  }
 
-  reelSuccessCache = {
-    theaterIndex,
-    theaterInsightsByKey,
-    metadata,
+  return {
+    theaterIndex: reelSuccessCache.theaterIndex,
+    metadata: reelSuccessCache.metadata,
   };
+}
 
-  return reelSuccessCache;
+function loadReelSuccessInsightsData() {
+  const theaterInsightsPath = path.join(REELSUCCESS_DATA_DIR, "theater_insights_by_key.json");
+
+  if (!reelSuccessCache.theaterInsightsByKey) {
+    reelSuccessCache.theaterInsightsByKey = readJsonFileSafe(theaterInsightsPath);
+  }
+
+  return {
+    theaterInsightsByKey: reelSuccessCache.theaterInsightsByKey,
+  };
+}
+
+function loadReelSuccessData() {
+  const indexData = loadReelSuccessIndexData();
+  const insightsData = loadReelSuccessInsightsData();
+
+  return {
+    theaterIndex: indexData.theaterIndex,
+    metadata: indexData.metadata,
+    theaterInsightsByKey: insightsData.theaterInsightsByKey,
+  };
 }
 
 function sanitizePositiveInt(value, fallback, maxValue) {
@@ -547,7 +573,7 @@ function buildReelSuccessClaims({email, accessData, existingClaims = {}}) {
   let theaterIdFromAccess = String(accessData?.theater_id || accessData?.theaterId || "").trim();
 
   if (!theaterKey && !theaterIdFromAccess) {
-    const {theaterIndex} = loadReelSuccessData();
+    const {theaterIndex} = loadReelSuccessIndexData();
     const inferredTheater = inferTheaterFromEmail(email, theaterIndex);
     theaterKey = String(inferredTheater?.theater_key || "").trim();
   }
@@ -1611,9 +1637,9 @@ exports.addEmailSignup = onCall(async (request) => handleEmailSignup(request));
 // Backward-compatible alias for older clients.
 exports.submitEmailSignup = onCall(async (request) => handleEmailSignup(request));
 
-exports.reelSuccessListTheaters = onCall(async (request) => {
+exports.reelSuccessListTheaters = onCall(REELSUCCESS_CALL_OPTIONS, async (request) => {
   await assertReelSuccessRequester(request);
-  const {theaterIndex, metadata} = loadReelSuccessData();
+  const {theaterIndex, metadata} = loadReelSuccessIndexData();
 
   const query = normalizeSearchQuery(request.data?.query);
   const limit = sanitizePositiveInt(request.data?.limit, 25, 100);
@@ -1641,9 +1667,10 @@ exports.reelSuccessListTheaters = onCall(async (request) => {
   };
 });
 
-exports.reelSuccessGetTheaterInsights = onCall(async (request) => {
+exports.reelSuccessGetTheaterInsights = onCall(REELSUCCESS_CALL_OPTIONS, async (request) => {
   await assertReelSuccessRequester(request);
-  const {theaterInsightsByKey, metadata} = loadReelSuccessData();
+  const {metadata} = loadReelSuccessIndexData();
+  const {theaterInsightsByKey} = loadReelSuccessInsightsData();
   const theaterKey = sanitizeTheaterKey(request.data?.theaterKey);
 
   const insights = theaterInsightsByKey[theaterKey] || null;
@@ -1658,11 +1685,11 @@ exports.reelSuccessGetTheaterInsights = onCall(async (request) => {
   };
 });
 
-exports.reelSuccessGetMyTheater = onCall(async (request) => {
+exports.reelSuccessGetMyTheater = onCall(REELSUCCESS_CALL_OPTIONS, async (request) => {
   const requester = await assertReelSuccessRequester(request);
   const adminEmail = requester.email;
   const accessData = requester.accessData || await getReelSuccessAccessData(adminEmail);
-  const {theaterIndex, metadata} = loadReelSuccessData();
+  const {theaterIndex, metadata} = loadReelSuccessIndexData();
 
   let theater = null;
 
@@ -1920,10 +1947,10 @@ exports.reelSuccessListAccess = onCall(async (request) => {
   };
 });
 
-exports.reelSuccessCreateGrossUploadSession = onCall(async (request) => {
+exports.reelSuccessCreateGrossUploadSession = onCall(REELSUCCESS_CALL_OPTIONS, async (request) => {
   const requester = await assertReelSuccessRequester(request);
   const {theaterKey, theaterId} = assertTheaterScope(requester, request.data?.theaterKey);
-  const {theaterIndex} = loadReelSuccessData();
+  const {theaterIndex} = loadReelSuccessIndexData();
   const theater = theaterIndex.find((row) => row.theater_key === theaterKey) || null;
   if (!theater) {
     throw new HttpsError("not-found", "Selected theater was not found in ReelSuccess index.");
@@ -1957,10 +1984,10 @@ exports.reelSuccessCreateGrossUploadSession = onCall(async (request) => {
   };
 });
 
-exports.reelSuccessFinalizeGrossUpload = onCall(async (request) => {
+exports.reelSuccessFinalizeGrossUpload = onCall(REELSUCCESS_CALL_OPTIONS, async (request) => {
   const requester = await assertReelSuccessRequester(request);
   const {theaterKey, theaterId} = assertTheaterScope(requester, request.data?.theaterKey);
-  const {theaterIndex} = loadReelSuccessData();
+  const {theaterIndex} = loadReelSuccessIndexData();
   const theater = theaterIndex.find((row) => row.theater_key === theaterKey) || null;
   if (!theater) {
     throw new HttpsError("not-found", "Selected theater was not found in ReelSuccess index.");
@@ -2013,7 +2040,7 @@ exports.reelSuccessFinalizeGrossUpload = onCall(async (request) => {
   };
 });
 
-exports.reelSuccessDeleteGrossUpload = onCall(async (request) => {
+exports.reelSuccessDeleteGrossUpload = onCall(REELSUCCESS_CALL_OPTIONS, async (request) => {
   const requester = await assertReelSuccessRequester(request);
   const {theaterId} = assertTheaterScope(requester, request.data?.theaterKey);
   const uploadId = String(request.data?.uploadId || "").trim();
