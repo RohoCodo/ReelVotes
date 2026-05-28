@@ -1,5 +1,8 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
+import { getFirestore, collection, onSnapshot, orderBy, query, limit } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-functions.js";
+import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-storage.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDMa_twNQAZVrnLHUNNNsxk6aTa-9FrnSc",
@@ -10,28 +13,73 @@ const firebaseConfig = {
   appId: "1:913820455359:web:1c75954a231b921b55510a"
 };
 
-const STORAGE_KEY = "reelvotes_admin_email";
-const LEGACY_REELSUCCESS_STORAGE_KEY = "reelsuccess_admin_email";
 let currentAdminEmail = null;
 let theatersCache = [];
+let currentUser = null;
+let currentClaims = {};
+let unsubscribeGrossUploads = null;
+let currentTheaterKey = "";
+let currentTheaterId = "";
+let isSuperAdmin = false;
+const SUPER_ADMIN_EMAIL = "rt332@cornell.edu";
 
 const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 const functions = getFunctions(app);
+const storage = getStorage(app);
 const listTheatersCallable = httpsCallable(functions, "reelSuccessListTheaters");
 const getInsightsCallable = httpsCallable(functions, "reelSuccessGetTheaterInsights");
 const getMyTheaterCallable = httpsCallable(functions, "reelSuccessGetMyTheater");
+const createGrossUploadSessionCallable = httpsCallable(functions, "reelSuccessCreateGrossUploadSession");
+const finalizeGrossUploadCallable = httpsCallable(functions, "reelSuccessFinalizeGrossUpload");
+const deleteGrossUploadCallable = httpsCallable(functions, "reelSuccessDeleteGrossUpload");
+const provisionMyClaimsCallable = httpsCallable(functions, "reelSuccessProvisionMyClaims");
+const authProvider = new GoogleAuthProvider();
 
 const theaterSearchInput = document.getElementById("theaterSearchInput");
 const myTheaterButton = document.getElementById("myTheaterButton");
 const theaterSelect = document.getElementById("theaterSelect");
+const theaterSearchResults = document.getElementById("theaterSearchResults");
 const statusEl = document.getElementById("reelsuccessStatus");
+const identityEl = document.getElementById("reelsuccessIdentity");
+const signInBtn = document.getElementById("reelsuccessSignInBtn");
+const signOutBtn = document.getElementById("reelsuccessSignOutBtn");
+
+const grossTheaterSearchInput = document.getElementById("grossTheaterSearchInput");
+const grossMyTheaterButton = document.getElementById("grossMyTheaterButton");
+const grossTheaterSelect = document.getElementById("grossTheaterSelect");
+const grossTheaterSearchResults = document.getElementById("grossTheaterSearchResults");
+const grossTheaterStatus = document.getElementById("grossTheaterStatus");
+
+const findMovieTabBtn = document.getElementById("findMovieTabBtn");
+const grossUploadTabBtn = document.getElementById("grossUploadTabBtn");
+const findMovieTabPanel = document.getElementById("findMovieTabPanel");
+const grossUploadTabPanel = document.getElementById("grossUploadTabPanel");
+
 const profileEl = document.getElementById("reelsuccessProfile");
 const similarSectionEl = document.getElementById("reelsuccessSimilarSection");
 const similarBodyEl = document.getElementById("similarTheatersBody");
 const recsSectionEl = document.getElementById("reelsuccessRecsSection");
 const recsBodyEl = document.getElementById("recommendationsBody");
+
+const grossBusinessDateInput = document.getElementById("grossBusinessDateInput");
+const grossPdfInput = document.getElementById("grossPdfInput");
+const grossUploadBtn = document.getElementById("grossUploadBtn");
+const grossUploadProgress = document.getElementById("grossUploadProgress");
+const grossUploadsBody = document.getElementById("grossUploadsBody");
+
 let lastLoadedTheaterKey = "";
 let searchTimer = null;
+let grossSearchTimer = null;
+let findAutoSelectTimer = null;
+let grossAutoSelectTimer = null;
+
+const canUploadForTheater = (theaterId) => {
+  if (!theaterId) return false;
+  if (currentClaims?.admin === true || currentClaims?.role === "admin") return true;
+  return String(currentClaims?.theaterId || "") === theaterId;
+};
 
 function normalizeEmail(email) {
   return String(email || "").trim().toLowerCase();
@@ -43,6 +91,34 @@ function setStatus(message, isError = false) {
   statusEl.style.color = isError ? "#ff6b6b" : "#bbb";
 }
 
+function setUploadStatus(message, isError = false) {
+  if (!grossUploadProgress) return;
+  grossUploadProgress.textContent = message || "";
+  grossUploadProgress.style.color = isError ? "#ff6b6b" : "#bbb";
+}
+
+function setIdentity(text) {
+  if (!identityEl) return;
+  identityEl.textContent = text;
+}
+
+function formatUploadError(error, theaterId = "") {
+  const code = String(error?.code || "").toLowerCase();
+  const message = String(error?.message || "").toLowerCase();
+  const looksLikePermissionError =
+    code.includes("permission-denied") ||
+    message.includes("permission") ||
+    message.includes("insufficient permissions") ||
+    message.includes("unauthorized");
+
+  if (looksLikePermissionError) {
+    const expected = theaterId ? ` Expected theaterId claim: ${theaterId}.` : "";
+    return `Missing or insufficient permissions. Your account needs Firebase custom claims (admin=true or matching theaterId).${expected}`;
+  }
+
+  return error?.message || "Upload failed.";
+}
+
 function escapeHtml(value) {
   return String(value || "")
     .replace(/&/g, "&amp;")
@@ -52,63 +128,117 @@ function escapeHtml(value) {
     .replace(/'/g, "&#39;");
 }
 
-function promptLoginModal() {
-  return new Promise((resolve) => {
-    const modal = document.getElementById("loginModal");
-    const input = document.getElementById("loginEmailInput");
-    const errorEl = document.getElementById("loginEmailError");
-    const submitBtn = document.getElementById("loginSubmitBtn");
-    if (!modal || !input || !submitBtn) {
-      const raw = window.prompt("Enter your theater email to continue:");
-      resolve(normalizeEmail(raw || ""));
-      return;
-    }
-
-    modal.classList.remove("hidden");
-    input.value = "";
-    if (errorEl) errorEl.textContent = "";
-    setTimeout(() => input.focus(), 50);
-
-    function attempt() {
-      const email = normalizeEmail(input.value);
-      if (!email || !email.includes("@")) {
-        if (errorEl) errorEl.textContent = "Please enter a valid email address.";
-        input.focus();
-        return;
-      }
-      modal.classList.add("hidden");
-      submitBtn.removeEventListener("click", attempt);
-      input.removeEventListener("keydown", keyHandler);
-      resolve(email);
-    }
-
-    function keyHandler(e) {
-      if (e.key === "Enter") attempt();
-    }
-
-    submitBtn.addEventListener("click", attempt);
-    input.addEventListener("keydown", keyHandler);
-  });
+function toTheaterId(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80);
 }
 
-async function ensureAccess() {
-  const stored = window.localStorage.getItem(STORAGE_KEY)
-    || window.localStorage.getItem(LEGACY_REELSUCCESS_STORAGE_KEY);
-  if (stored && stored.includes("@")) {
-    currentAdminEmail = normalizeEmail(stored);
-    window.localStorage.setItem(STORAGE_KEY, currentAdminEmail);
-    window.localStorage.removeItem(LEGACY_REELSUCCESS_STORAGE_KEY);
+function requireSignedIn() {
+  if (!currentUser?.uid) {
+    throw new Error("Please sign in first.");
+  }
+}
+
+async function signInNow() {
+  await signInWithPopup(auth, authProvider);
+}
+
+async function signOutNow() {
+  await signOut(auth);
+}
+
+function showTab(tab) {
+  const showFind = tab === "find";
+  if (findMovieTabPanel) findMovieTabPanel.hidden = !showFind;
+  if (grossUploadTabPanel) grossUploadTabPanel.hidden = showFind;
+  if (findMovieTabBtn) findMovieTabBtn.classList.toggle("active", showFind);
+  if (grossUploadTabBtn) grossUploadTabBtn.classList.toggle("active", !showFind);
+}
+
+async function ensureClaimsReady(user, tokenClaims = {}) {
+  const hasClaims = tokenClaims?.admin === true || tokenClaims?.role === "admin" || Boolean(tokenClaims?.theaterId);
+  if (hasClaims) {
+    return tokenClaims;
+  }
+
+  await provisionMyClaimsCallable({});
+  const refreshedToken = await user.getIdTokenResult(true);
+  return refreshedToken?.claims || {};
+}
+
+function getVisibleTheaters(theaters = []) {
+  if (isSuperAdmin || !currentClaims?.theaterId) {
+    return theaters;
+  }
+  return theaters.filter((t) => toTheaterId(t.theater_key) === currentClaims.theaterId);
+}
+
+function theaterMatchesQuery(theater, query = "") {
+  const q = String(query || "").trim().toLowerCase();
+  if (!q) return true;
+
+  const haystack = [
+    theater?.theater_name,
+    theater?.theater_city_state,
+    theater?.theater_code,
+    theater?.theater_key,
+  ].map((v) => String(v || "").toLowerCase());
+
+  return haystack.some((text) => text.includes(q));
+}
+
+function getFilteredVisibleTheaters(theaters = [], query = "") {
+  const visible = getVisibleTheaters(theaters);
+  return visible.filter((t) => theaterMatchesQuery(t, query));
+}
+
+function clearInlineResults(container) {
+  if (!container) return;
+  container.innerHTML = "";
+  container.classList.add("hidden");
+}
+
+function renderInlineResults(container, theaters = [], selectedKey = "", onPick = null) {
+  if (!container) return;
+
+  container.innerHTML = "";
+  if (!theaters.length) {
+    container.classList.add("hidden");
     return;
   }
 
-  const email = await promptLoginModal();
-  if (!email || !email.includes("@")) {
-    document.body.innerHTML = "<div style='padding:40px;color:#fff;font-family:-apple-system,BlinkMacSystemFont,sans-serif;'>Access denied.</div>";
-    throw new Error("Access denied");
-  }
+  theaters.slice(0, 8).forEach((theater) => {
+    const row = document.createElement("button");
+    row.type = "button";
+    row.className = "reelsuccess-search-result-item";
+    if (theater.theater_key === selectedKey) {
+      row.classList.add("active");
+    }
+    row.innerHTML = `
+      <span class="title">${escapeHtml(theater.theater_name || "Unknown Theater")}</span>
+      <span class="meta">${escapeHtml(theater.theater_city_state || theater.theater_code || "")}</span>
+    `;
+    row.addEventListener("click", async () => {
+      if (typeof onPick === "function") {
+        await onPick(theater.theater_key);
+      }
+    });
+    container.appendChild(row);
+  });
 
-  currentAdminEmail = email;
-  window.localStorage.setItem(STORAGE_KEY, email);
+  container.classList.remove("hidden");
+}
+
+function setSearchInputsToSelected(theaterKey) {
+  const theater = theatersCache.find((t) => t.theater_key === theaterKey);
+  if (!theater) return;
+  const label = theater.theater_name || theater.theater_code || theater.theater_key;
+  if (theaterSearchInput) theaterSearchInput.value = label;
+  if (grossTheaterSearchInput) grossTheaterSearchInput.value = label;
 }
 
 function renderTheaterOptions(theaters) {
@@ -116,22 +246,138 @@ function renderTheaterOptions(theaters) {
   if (!theaterSelect) return;
 
   theaterSelect.innerHTML = "";
-  if (!theatersCache.length) {
+  
+  // Filter theaters based on user role
+  let visibleTheaters = theatersCache;
+  let isDisabled = false;
+  
+  if (!isSuperAdmin && currentClaims?.theaterId) {
+    // Regular user: only show their assigned theater
+    visibleTheaters = theatersCache.filter(t => toTheaterId(t.theater_key) === currentClaims.theaterId);
+    if (!visibleTheaters.length) {
+      theaterSelect.innerHTML = "<option value=''>Your theater not found</option>";
+      theaterSelect.disabled = true;
+      isDisabled = true;
+    }
+  }
+  
+  if (isDisabled) {
+    return;
+  }
+  
+  if (!visibleTheaters.length) {
     theaterSelect.innerHTML = "<option value=''>No theaters found</option>";
     return;
   }
 
   const defaultOption = document.createElement("option");
   defaultOption.value = "";
-  defaultOption.textContent = "Select a theater...";
+  defaultOption.textContent = isSuperAdmin ? "Select a theater..." : "Select your theater...";
   theaterSelect.appendChild(defaultOption);
 
-  theatersCache.forEach((theater) => {
+  visibleTheaters.forEach((theater) => {
     const opt = document.createElement("option");
     opt.value = theater.theater_key;
     opt.textContent = `${theater.theater_name} — ${theater.theater_city_state}`;
     theaterSelect.appendChild(opt);
   });
+  
+  theaterSelect.disabled = false;
+}
+
+function renderGrossTheaterOptions(theaters) {
+  theatersCache = theaters || [];
+  if (!grossTheaterSelect) return;
+
+  grossTheaterSelect.innerHTML = "";
+  
+  // Filter theaters based on user role
+  let visibleTheaters = theatersCache;
+  let isDisabled = false;
+  
+  if (!isSuperAdmin && currentClaims?.theaterId) {
+    // Regular user: only show their assigned theater
+    visibleTheaters = theatersCache.filter(t => toTheaterId(t.theater_key) === currentClaims.theaterId);
+    if (!visibleTheaters.length) {
+      grossTheaterSelect.innerHTML = "<option value=''>Your theater not found</option>";
+      grossTheaterSelect.disabled = true;
+      isDisabled = true;
+    }
+  }
+  
+  if (isDisabled) {
+    return;
+  }
+  
+  if (!visibleTheaters.length) {
+    grossTheaterSelect.innerHTML = "<option value=''>No theaters found</option>";
+    return;
+  }
+
+  const defaultOption = document.createElement("option");
+  defaultOption.value = "";
+  defaultOption.textContent = isSuperAdmin ? "Select a theater..." : "Select your theater...";
+  grossTheaterSelect.appendChild(defaultOption);
+
+  visibleTheaters.forEach((theater) => {
+    const opt = document.createElement("option");
+    opt.value = theater.theater_key;
+    opt.textContent = `${theater.theater_name} — ${theater.theater_city_state}`;
+    grossTheaterSelect.appendChild(opt);
+  });
+  
+  grossTheaterSelect.disabled = false;
+}
+
+function setCurrentTheater(theaterKey) {
+  currentTheaterKey = String(theaterKey || "").trim();
+  currentTheaterId = toTheaterId(currentTheaterKey);
+  
+  // Get theater info for display
+  const selectedTheater = theatersCache.find(t => t.theater_key === theaterKey);
+  const theaterDisplay = selectedTheater 
+    ? `${selectedTheater.theater_name} (${selectedTheater.theater_city_state})`
+    : "No theater selected";
+  
+  if (!canUploadForTheater(currentTheaterId)) {
+    if (grossUploadBtn) grossUploadBtn.disabled = true;
+    setUploadStatus(currentTheaterId ? `Read-only access to ${theaterDisplay}` : "Select a theater.");
+  } else {
+    if (grossUploadBtn) grossUploadBtn.disabled = false;
+    setUploadStatus(currentTheaterId ? `Ready to upload to: ${theaterDisplay}` : "Select a theater.");
+  }
+  startGrossUploadsListener();
+}
+
+function setCurrentGrossTheater(theaterKey) {
+  currentTheaterKey = String(theaterKey || "").trim();
+  currentTheaterId = toTheaterId(currentTheaterKey);
+  if (theaterSelect) theaterSelect.value = currentTheaterKey;
+  if (grossTheaterSelect) grossTheaterSelect.value = currentTheaterKey;
+  if (currentTheaterKey) {
+    setSearchInputsToSelected(currentTheaterKey);
+  }
+  
+  // Get theater info for display
+  const selectedTheater = theatersCache.find(t => t.theater_key === theaterKey);
+  const theaterDisplay = selectedTheater 
+    ? `${selectedTheater.theater_name} (${selectedTheater.theater_city_state})`
+    : "No theater selected";
+  
+  if (!canUploadForTheater(currentTheaterId)) {
+    if (grossUploadBtn) grossUploadBtn.disabled = true;
+    if (grossTheaterStatus) {
+      grossTheaterStatus.textContent = currentTheaterId ? `Read-only access to ${theaterDisplay}` : "Select a theater.";
+      grossTheaterStatus.style.color = currentTheaterId ? "#ff6b6b" : "#bbb";
+    }
+  } else {
+    if (grossUploadBtn) grossUploadBtn.disabled = false;
+    if (grossTheaterStatus) {
+      grossTheaterStatus.textContent = currentTheaterId ? `Ready to upload to: ${theaterDisplay}` : "Select a theater.";
+      grossTheaterStatus.style.color = "#bbb";
+    }
+  }
+  startGrossUploadsListener();
 }
 
 function clearInsights() {
@@ -146,11 +392,16 @@ function clearInsights() {
 async function selectAndLoadTheater(theaterKey) {
   if (!theaterKey) {
     if (theaterSelect) theaterSelect.value = "";
+    if (grossTheaterSelect) grossTheaterSelect.value = "";
+    setCurrentTheater("");
     clearInsights();
     return;
   }
 
   if (theaterSelect) theaterSelect.value = theaterKey;
+  if (grossTheaterSelect) grossTheaterSelect.value = theaterKey;
+  setSearchInputsToSelected(theaterKey);
+  setCurrentTheater(theaterKey);
   if (lastLoadedTheaterKey === theaterKey) {
     setStatus(`Insights loaded for ${theaterSelect?.selectedOptions?.[0]?.textContent || "theater"}.`);
     return;
@@ -220,6 +471,7 @@ function renderRecommendations(rows) {
 }
 
 async function loadTheaters(query = "") {
+  requireSignedIn();
   setStatus("Loading theaters...");
   const result = await listTheatersCallable({
     adminEmail: currentAdminEmail,
@@ -229,12 +481,14 @@ async function loadTheaters(query = "") {
 
   const theaters = result?.data?.theaters || [];
   renderTheaterOptions(theaters);
+  renderGrossTheaterOptions(theaters);
   setStatus(`Loaded ${result?.data?.total || theaters.length} theaters.`);
   return theaters;
 }
 
 async function loadInsights(theaterKey) {
   if (!theaterKey) return;
+  requireSignedIn();
 
   setStatus("Loading insights...");
   const result = await getInsightsCallable({
@@ -252,15 +506,81 @@ async function loadInsights(theaterKey) {
 
 async function searchAndAutoSelect(query = "") {
   const theaters = await loadTheaters(query);
-  const firstTheaterKey = theaters?.[0]?.theater_key || "";
+  const visibleTheaters = getFilteredVisibleTheaters(theaters, query);
+  
+  const firstTheaterKey = visibleTheaters?.[0]?.theater_key || "";
 
   if (!firstTheaterKey) {
+    clearInlineResults(theaterSearchResults);
+    clearInlineResults(grossTheaterSearchResults);
+    clearInsights();
+    const msg = !isSuperAdmin && currentClaims?.theaterId 
+      ? "Your theater is not in the database." 
+      : query ? "No theaters found for that search." : "No theaters found.";
+    setStatus(msg, true);
+    return;
+  }
+
+  await selectAndLoadTheater(firstTheaterKey);
+  renderInlineResults(theaterSearchResults, visibleTheaters, firstTheaterKey, async (theaterKey) => {
+    await selectAndLoadTheater(theaterKey);
+    clearInlineResults(theaterSearchResults);
+  });
+  renderInlineResults(grossTheaterSearchResults, visibleTheaters, firstTheaterKey, async (theaterKey) => {
+    setCurrentGrossTheater(theaterKey);
+    clearInlineResults(grossTheaterSearchResults);
+  });
+}
+
+async function searchWithoutChangingSelection(query = "") {
+  const previousTheaterKey = String(currentTheaterKey || "").trim();
+  const theaters = await loadTheaters(query);
+  const visibleTheaters = getFilteredVisibleTheaters(theaters, query);
+
+  renderInlineResults(theaterSearchResults, visibleTheaters, previousTheaterKey, async (theaterKey) => {
+    cancelPendingSearch();
+    await selectAndLoadTheater(theaterKey);
+    clearInlineResults(theaterSearchResults);
+  });
+
+  if (!visibleTheaters.length) {
+    clearInlineResults(theaterSearchResults);
+    setCurrentTheater("");
     clearInsights();
     setStatus(query ? "No theaters found for that search." : "No theaters found.", true);
     return;
   }
 
-  await selectAndLoadTheater(firstTheaterKey);
+  if (findAutoSelectTimer) {
+    window.clearTimeout(findAutoSelectTimer);
+    findAutoSelectTimer = null;
+  }
+
+  if (visibleTheaters.length === 1) {
+    const only = visibleTheaters[0];
+    findAutoSelectTimer = window.setTimeout(async () => {
+      if (String(theaterSearchInput?.value || "") !== String(query || "")) return;
+      await selectAndLoadTheater(only.theater_key);
+      clearInlineResults(theaterSearchResults);
+    }, 220);
+    setStatus("1 theater match found. Auto-selecting...", false);
+    return;
+  }
+
+  if (previousTheaterKey && visibleTheaters.some((t) => t.theater_key === previousTheaterKey)) {
+    if (theaterSelect) {
+      theaterSelect.value = previousTheaterKey;
+    }
+    setStatus(`Found ${visibleTheaters.length} theater${visibleTheaters.length === 1 ? "" : "s"}.`);
+    return;
+  }
+
+  if (theaterSelect) {
+    theaterSelect.value = "";
+  }
+  setCurrentTheater("");
+  clearInsights();
+  setStatus(`Found ${visibleTheaters.length} theater${visibleTheaters.length === 1 ? "" : "s"}. Pick one from the list below.`);
 }
 
 function cancelPendingSearch() {
@@ -275,7 +595,7 @@ function scheduleSearch() {
   searchTimer = window.setTimeout(async () => {
     searchTimer = null;
     try {
-      await searchAndAutoSelect(theaterSearchInput?.value || "");
+      await searchWithoutChangingSelection(theaterSearchInput?.value || "");
     } catch (error) {
       console.error(error);
       setStatus(error?.message || "Search failed.", true);
@@ -285,10 +605,122 @@ function scheduleSearch() {
 
 async function runSearchNow() {
   cancelPendingSearch();
-  await searchAndAutoSelect(theaterSearchInput?.value || "");
+  await searchWithoutChangingSelection(theaterSearchInput?.value || "");
+}
+
+function cancelGrossSearch() {
+  if (grossSearchTimer) {
+    window.clearTimeout(grossSearchTimer);
+    grossSearchTimer = null;
+  }
+}
+
+function scheduleGrossSearch() {
+  cancelGrossSearch();
+  grossSearchTimer = window.setTimeout(async () => {
+    grossSearchTimer = null;
+    try {
+      await searchGrossWithoutChangingSelection(grossTheaterSearchInput?.value || "");
+    } catch (error) {
+      console.error(error);
+      if (grossTheaterStatus) grossTheaterStatus.textContent = error?.message || "Search failed.";
+      if (grossTheaterStatus) grossTheaterStatus.style.color = "#ff6b6b";
+    }
+  }, 250);
+}
+
+async function runGrossSearchNow() {
+  cancelGrossSearch();
+  await searchGrossWithoutChangingSelection(grossTheaterSearchInput?.value || "");
+}
+
+async function searchGrossWithoutChangingSelection(query = "") {
+  const previousTheaterKey = String(currentTheaterKey || "").trim();
+  const theaters = await loadTheaters(query);
+  const visibleTheaters = getFilteredVisibleTheaters(theaters, query);
+
+  renderInlineResults(grossTheaterSearchResults, visibleTheaters, previousTheaterKey, async (theaterKey) => {
+    cancelGrossSearch();
+    setCurrentGrossTheater(theaterKey);
+    clearInlineResults(grossTheaterSearchResults);
+  });
+
+  if (!visibleTheaters.length) {
+    clearInlineResults(grossTheaterSearchResults);
+    setCurrentTheater("");
+    if (grossTheaterStatus) {
+      grossTheaterStatus.textContent = query ? "No theaters found for that search." : "No theaters found.";
+      grossTheaterStatus.style.color = "#ff6b6b";
+    }
+    return;
+  }
+
+  if (grossAutoSelectTimer) {
+    window.clearTimeout(grossAutoSelectTimer);
+    grossAutoSelectTimer = null;
+  }
+
+  if (visibleTheaters.length === 1) {
+    const only = visibleTheaters[0];
+    grossAutoSelectTimer = window.setTimeout(() => {
+      if (String(grossTheaterSearchInput?.value || "") !== String(query || "")) return;
+      setCurrentGrossTheater(only.theater_key);
+      clearInlineResults(grossTheaterSearchResults);
+    }, 220);
+    if (grossTheaterStatus) {
+      grossTheaterStatus.textContent = "1 theater match found. Auto-selecting...";
+      grossTheaterStatus.style.color = "#bbb";
+    }
+    return;
+  }
+
+  if (previousTheaterKey && visibleTheaters.some((t) => t.theater_key === previousTheaterKey)) {
+    if (grossTheaterSelect) {
+      grossTheaterSelect.value = previousTheaterKey;
+    }
+    if (grossTheaterStatus) {
+      grossTheaterStatus.textContent = `Found ${visibleTheaters.length} theater${visibleTheaters.length === 1 ? "" : "s"}.`;
+      grossTheaterStatus.style.color = "#bbb";
+    }
+    return;
+  }
+
+  if (grossTheaterSelect) {
+    grossTheaterSelect.value = "";
+  }
+  setCurrentTheater("");
+  if (grossTheaterStatus) {
+    grossTheaterStatus.textContent = `Found ${visibleTheaters.length} theater${visibleTheaters.length === 1 ? "" : "s"}. Pick one from the list below.`;
+    grossTheaterStatus.style.color = "#bbb";
+  }
+}
+
+async function loadGrossMyTheater() {
+  requireSignedIn();
+  if (grossTheaterStatus) {
+    grossTheaterStatus.textContent = "Finding your theater...";
+    grossTheaterStatus.style.color = "#bbb";
+  }
+  const result = await getMyTheaterCallable({
+    adminEmail: currentAdminEmail,
+  });
+
+  const theater = result?.data?.theater || null;
+  if (!theater?.theater_key) {
+    throw new Error("No theater is linked to this ReelSuccess account yet.");
+  }
+
+  if (grossTheaterSearchInput) {
+    grossTheaterSearchInput.value = theater.theater_name || theater.theater_code || "";
+  }
+
+  renderGrossTheaterOptions([theater]);
+  setCurrentGrossTheater(theater.theater_key);
+  clearInlineResults(grossTheaterSearchResults);
 }
 
 async function loadMyTheater() {
+  requireSignedIn();
   setStatus("Finding your theater...");
   const result = await getMyTheaterCallable({
     adminEmail: currentAdminEmail,
@@ -305,19 +737,287 @@ async function loadMyTheater() {
 
   renderTheaterOptions([theater]);
   await selectAndLoadTheater(theater.theater_key);
+  clearInlineResults(theaterSearchResults);
+}
+
+function renderGrossUploads(rows) {
+  if (!grossUploadsBody) return;
+
+  if (!rows.length) {
+    grossUploadsBody.innerHTML = "<tr><td colspan='4' style='text-align:center;color:#aaa;'>No uploads yet.</td></tr>";
+    return;
+  }
+
+  grossUploadsBody.innerHTML = "";
+  rows.forEach((row) => {
+    const tr = document.createElement("tr");
+    const uploadedAt = row.uploadedAt?.toDate ? row.uploadedAt.toDate().toLocaleString() : "—";
+    tr.innerHTML = `
+      <td>${escapeHtml(row.businessDate || "—")}</td>
+      <td>${escapeHtml(row.fileName || "—")}</td>
+      <td>${escapeHtml(uploadedAt)}</td>
+      <td>
+        <button type="button" class="reelsuccess-any-button" data-action="open" data-path="${escapeHtml(row.storagePath || "")}" style="padding:6px 10px;">Open</button>
+        <button type="button" class="reelsuccess-any-button" data-action="delete" data-id="${escapeHtml(row.id || "")}" style="padding:6px 10px;">Delete</button>
+      </td>
+    `;
+    grossUploadsBody.appendChild(tr);
+  });
+}
+
+function stopGrossUploadsListener() {
+  if (unsubscribeGrossUploads) {
+    unsubscribeGrossUploads();
+    unsubscribeGrossUploads = null;
+  }
+}
+
+function startGrossUploadsListener() {
+  stopGrossUploadsListener();
+  if (!currentTheaterId || !currentUser?.uid) {
+    renderGrossUploads([]);
+    return;
+  }
+
+  const uploadsRef = collection(db, "theaters", currentTheaterId, "grossUploads");
+  const uploadsQuery = query(uploadsRef, orderBy("businessDate", "desc"), orderBy("uploadedAt", "desc"), limit(100));
+  unsubscribeGrossUploads = onSnapshot(uploadsQuery, (snapshot) => {
+    const rows = snapshot.docs.map((d) => ({id: d.id, ...(d.data() || {})}));
+    renderGrossUploads(rows);
+  }, (error) => {
+    console.error(error);
+    setUploadStatus(formatUploadError(error, currentTheaterId) || "Failed to load uploads.", true);
+  });
+}
+
+async function uploadGrossPdf() {
+  requireSignedIn();
+
+  if (!currentTheaterKey || !currentTheaterId) {
+    throw new Error("Select a theater first.");
+  }
+  if (!canUploadForTheater(currentTheaterId)) {
+    throw new Error("You do not have upload access for this theater.");
+  }
+  
+  // Non-super-admin users can only upload to their assigned theater
+  if (!isSuperAdmin && currentClaims?.theaterId && currentTheaterId !== currentClaims.theaterId) {
+    throw new Error(`You can only upload to your assigned theater. Your theater ID: ${currentClaims.theaterId}`);
+  }
+
+  const businessDate = String(grossBusinessDateInput?.value || "").trim();
+  const files = Array.from(grossPdfInput?.files || []);
+  if (!businessDate) {
+    throw new Error("Choose a business date.");
+  }
+  if (files.length === 0) {
+    throw new Error("Choose at least one PDF file.");
+  }
+
+  for (let i = 0; i < files.length; i += 1) {
+    const file = files[i];
+    const isPdf = file.type === "application/pdf" || String(file.name || "").toLowerCase().endsWith(".pdf");
+    if (!isPdf) {
+      throw new Error(`Only PDF files are allowed: ${file.name || "unknown file"}`);
+    }
+
+    setUploadStatus(`Creating upload session (${i + 1}/${files.length})...`);
+    const sessionResponse = await createGrossUploadSessionCallable({
+      theaterKey: currentTheaterKey,
+      businessDate,
+      fileName: file.name,
+      contentType: file.type || "application/pdf",
+      size: file.size,
+    });
+
+    const storagePath = sessionResponse?.data?.storagePath;
+    if (!storagePath) {
+      throw new Error("Upload session failed.");
+    }
+
+    const uploadRef = storageRef(storage, storagePath);
+    const task = uploadBytesResumable(uploadRef, file, {
+      contentType: "application/pdf",
+      customMetadata: {
+        theaterKey: currentTheaterKey,
+        businessDate,
+      },
+    });
+
+    await new Promise((resolve, reject) => {
+      task.on("state_changed", (snapshot) => {
+        const pct = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+        setUploadStatus(`Uploading ${i + 1}/${files.length}... ${pct}%`);
+      }, reject, resolve);
+    });
+
+    setUploadStatus(`Finalizing ${i + 1}/${files.length}...`);
+    await finalizeGrossUploadCallable({
+      theaterKey: currentTheaterKey,
+      businessDate,
+      fileName: file.name,
+      storagePath,
+    });
+  }
+
+  if (grossPdfInput) grossPdfInput.value = "";
+  setUploadStatus(`Upload complete. ${files.length} file${files.length === 1 ? "" : "s"} saved.`);
+}
+
+async function openGrossUpload(storagePath) {
+  if (!storagePath) return;
+  const url = await getDownloadURL(storageRef(storage, storagePath));
+  window.open(url, "_blank", "noopener,noreferrer");
+}
+
+async function deleteGrossUpload(uploadId) {
+  requireSignedIn();
+  if (!uploadId) {
+    throw new Error("Missing upload id.");
+  }
+  if (!window.confirm("Delete this upload?")) {
+    return;
+  }
+
+  setUploadStatus("Deleting upload...");
+  await deleteGrossUploadCallable({
+    theaterKey: currentTheaterKey,
+    uploadId,
+  });
+  setUploadStatus("Upload deleted.");
+}
+
+function bindGrossUploadsActions() {
+  grossUploadsBody?.addEventListener("click", async (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) {
+      return;
+    }
+    const action = target.dataset?.action;
+    if (!action) {
+      return;
+    }
+
+    try {
+      if (action === "open") {
+        await openGrossUpload(target.dataset?.path || "");
+        return;
+      }
+      if (action === "delete") {
+        await deleteGrossUpload(target.dataset?.id || "");
+      }
+    } catch (error) {
+      console.error(error);
+      setUploadStatus(error?.message || "Action failed.", true);
+    }
+  });
+}
+
+function bindAuth() {
+  signInBtn?.addEventListener("click", async () => {
+    try {
+      await signInNow();
+    } catch (error) {
+      console.error(error);
+      setStatus(error?.message || "Sign in failed.", true);
+    }
+  });
+
+  signOutBtn?.addEventListener("click", async () => {
+    try {
+      await signOutNow();
+    } catch (error) {
+      console.error(error);
+      setStatus(error?.message || "Sign out failed.", true);
+    }
+  });
+
+  onAuthStateChanged(auth, async (user) => {
+    currentUser = user || null;
+    currentAdminEmail = normalizeEmail(user?.email || "");
+    isSuperAdmin = normalizeEmail(user?.email || "") === SUPER_ADMIN_EMAIL;
+
+    if (!user) {
+      currentClaims = {};
+      isSuperAdmin = false;
+      setIdentity("Not signed in.");
+      if (signInBtn) signInBtn.style.display = "";
+      if (signOutBtn) signOutBtn.style.display = "none";
+      renderTheaterOptions([]);
+      renderGrossTheaterOptions([]);
+      clearInlineResults(theaterSearchResults);
+      clearInlineResults(grossTheaterSearchResults);
+      clearInsights();
+      setCurrentTheater("");
+      setStatus("Sign in with an authorized account.");
+      return;
+    }
+
+    try {
+      const tokenResult = await user.getIdTokenResult();
+      currentClaims = await ensureClaimsReady(user, tokenResult?.claims || {});
+    } catch (error) {
+      console.error(error);
+      currentClaims = {};
+      setIdentity(`Signed in as ${user.email || user.uid}`);
+      setStatus(error?.message || "This account is not provisioned for ReelSuccess yet.", true);
+      setCurrentTheater("");
+      return;
+    }
+    
+    const roleText = isSuperAdmin ? " (Super Admin)" : currentClaims?.admin ? " (Admin)" : "";
+    setIdentity(`Signed in as ${user.email || user.uid}${roleText}`);
+    if (signInBtn) signInBtn.style.display = "none";
+    if (signOutBtn) signOutBtn.style.display = "";
+
+    try {
+      await searchAndAutoSelect("");
+    } catch (error) {
+      console.error(error);
+      setStatus(error?.message || "Unable to load ReelSuccess.", true);
+    }
+  });
 }
 
 async function bootstrap() {
   try {
-    await ensureAccess();
-    await searchAndAutoSelect("");
+    bindAuth();
+    bindGrossUploadsActions();
+
+    findMovieTabBtn?.addEventListener("click", () => showTab("find"));
+    grossUploadTabBtn?.addEventListener("click", () => showTab("upload"));
+    showTab("find");
 
     theaterSelect?.addEventListener("change", async () => {
       try {
+        cancelPendingSearch();
         await selectAndLoadTheater(theaterSelect.value);
+        clearInlineResults(theaterSearchResults);
+        // Sync gross upload dropdown
+        if (grossTheaterSelect) {
+          grossTheaterSelect.value = theaterSelect.value;
+        }
       } catch (error) {
         console.error(error);
         setStatus(error?.message || "Failed to load insights.", true);
+      }
+    });
+
+    grossTheaterSelect?.addEventListener("change", async () => {
+      try {
+        cancelGrossSearch();
+        setCurrentGrossTheater(grossTheaterSelect.value);
+        clearInlineResults(grossTheaterSearchResults);
+        // Sync find movie dropdown
+        if (theaterSelect) {
+          theaterSelect.value = grossTheaterSelect.value;
+        }
+      } catch (error) {
+        console.error(error);
+        if (grossTheaterStatus) {
+          grossTheaterStatus.textContent = error?.message || "Failed to select theater.";
+          grossTheaterStatus.style.color = "#ff6b6b";
+        }
       }
     });
 
@@ -328,6 +1028,36 @@ async function bootstrap() {
         console.error(error);
         setStatus(error?.message || "Search failed.", true);
       }
+    });
+
+    theaterSearchInput?.addEventListener("focus", () => {
+      const query = theaterSearchInput.value || "";
+      const visibleTheaters = getFilteredVisibleTheaters(theatersCache, query);
+      renderInlineResults(theaterSearchResults, visibleTheaters, currentTheaterKey, async (theaterKey) => {
+        await selectAndLoadTheater(theaterKey);
+        clearInlineResults(theaterSearchResults);
+      });
+    });
+
+    grossTheaterSearchInput?.addEventListener("input", () => {
+      try {
+        scheduleGrossSearch();
+      } catch (error) {
+        console.error(error);
+        if (grossTheaterStatus) {
+          grossTheaterStatus.textContent = error?.message || "Search failed.";
+          grossTheaterStatus.style.color = "#ff6b6b";
+        }
+      }
+    });
+
+    grossTheaterSearchInput?.addEventListener("focus", () => {
+      const query = grossTheaterSearchInput.value || "";
+      const visibleTheaters = getFilteredVisibleTheaters(theatersCache, query);
+      renderInlineResults(grossTheaterSearchResults, visibleTheaters, currentTheaterKey, async (theaterKey) => {
+        setCurrentGrossTheater(theaterKey);
+        clearInlineResults(grossTheaterSearchResults);
+      });
     });
 
     theaterSearchInput?.addEventListener("keydown", async (event) => {
@@ -344,6 +1074,23 @@ async function bootstrap() {
       }
     });
 
+    grossTheaterSearchInput?.addEventListener("keydown", async (event) => {
+      if (event.key !== "Enter") {
+        return;
+      }
+
+      event.preventDefault();
+      try {
+        await runGrossSearchNow();
+      } catch (error) {
+        console.error(error);
+        if (grossTheaterStatus) {
+          grossTheaterStatus.textContent = error?.message || "Search failed.";
+          grossTheaterStatus.style.color = "#ff6b6b";
+        }
+      }
+    });
+
     myTheaterButton?.addEventListener("click", async () => {
       try {
         cancelPendingSearch();
@@ -351,6 +1098,43 @@ async function bootstrap() {
       } catch (error) {
         console.error(error);
         setStatus(error?.message || "Unable to load your theater.", true);
+      }
+    });
+
+    grossMyTheaterButton?.addEventListener("click", async () => {
+      try {
+        cancelGrossSearch();
+        await loadGrossMyTheater();
+      } catch (error) {
+        console.error(error);
+        if (grossTheaterStatus) {
+          grossTheaterStatus.textContent = error?.message || "Unable to load your theater.";
+          grossTheaterStatus.style.color = "#ff6b6b";
+        }
+      }
+    });
+
+    grossUploadBtn?.addEventListener("click", async () => {
+      try {
+        if (grossUploadBtn) grossUploadBtn.disabled = true;
+        await uploadGrossPdf();
+      } catch (error) {
+        console.error(error);
+        setUploadStatus(formatUploadError(error, currentTheaterId), true);
+      } finally {
+        if (grossUploadBtn) grossUploadBtn.disabled = !canUploadForTheater(currentTheaterId);
+      }
+    });
+
+    document.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+
+      if (!target.closest("#theaterSearchInput") && !target.closest("#theaterSearchResults")) {
+        clearInlineResults(theaterSearchResults);
+      }
+      if (!target.closest("#grossTheaterSearchInput") && !target.closest("#grossTheaterSearchResults")) {
+        clearInlineResults(grossTheaterSearchResults);
       }
     });
   } catch (error) {

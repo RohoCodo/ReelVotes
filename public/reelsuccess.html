@@ -19,11 +19,27 @@
         <a href="index.html" class="app-link">← Back to ReelVotes</a>
       </p>
 
+      <div class="reelsuccess-auth-row">
+        <p id="reelsuccessIdentity" class="subtitle" style="margin:0;">Not signed in.</p>
+        <div class="reelsuccess-auth-actions">
+          <button id="reelsuccessSignInBtn" class="reelsuccess-any-button" type="button">Sign in</button>
+          <button id="reelsuccessSignOutBtn" class="reelsuccess-any-button" type="button" style="display:none;">Sign out</button>
+        </div>
+      </div>
+
+      <div class="main-tabs" style="margin-top:14px;">
+        <button id="findMovieTabBtn" type="button" class="main-tab-btn active">Find Your Next Movie</button>
+        <button id="grossUploadTabBtn" type="button" class="main-tab-btn">Upload and Manage Grosses</button>
+      </div>
+
+      <section id="findMovieTabPanel" class="main-tab-panel">
+
       <div class="reelsuccess-controls">
         <div class="reelsuccess-search-row">
           <input id="theaterSearchInput" class="search-input" type="text" placeholder="Search theater, city, or code..." autocomplete="off" />
           <button id="myTheaterButton" class="reelsuccess-any-button" type="button">My Theater</button>
         </div>
+        <div id="theaterSearchResults" class="reelsuccess-search-results hidden" aria-live="polite"></div>
         <select id="theaterSelect" class="reelsuccess-select">
           <option value="">Loading theaters...</option>
         </select>
@@ -64,23 +80,62 @@
           </table>
         </div>
       </section>
+      </section>
+
+      <section id="grossUploadTabPanel" class="main-tab-panel" hidden>
+        <section class="info-box">
+          <h2>Select Theater</h2>
+          <div class="reelsuccess-controls">
+            <div class="reelsuccess-search-row">
+              <input id="grossTheaterSearchInput" class="search-input" type="text" placeholder="Search theater, city, or code..." autocomplete="off" />
+              <button id="grossMyTheaterButton" class="reelsuccess-any-button" type="button">My Theater</button>
+            </div>
+            <div id="grossTheaterSearchResults" class="reelsuccess-search-results hidden" aria-live="polite"></div>
+            <select id="grossTheaterSelect" class="reelsuccess-select">
+              <option value="">Loading theaters...</option>
+            </select>
+          </div>
+          <p id="grossTheaterStatus" class="subtitle" style="margin-top:10px;"></p>
+        </section>
+
+        <section class="info-box">
+          <h2>Upload Box Office Grosses</h2>
+          <p class="subtitle" style="margin-top:0;">Storage path: Box Office Grosses → Date → PDF.</p>
+
+          <label for="grossBusinessDateInput" style="display:block;margin-bottom:6px;color:#ddd;">Business date</label>
+          <input id="grossBusinessDateInput" type="date" class="reelsuccess-select" style="margin-bottom:10px;" />
+
+          <label for="grossPdfInput" style="display:block;margin-bottom:6px;color:#ddd;">PDF file(s)</label>
+          <input id="grossPdfInput" type="file" accept="application/pdf" multiple class="reelsuccess-select" />
+
+          <div style="margin-top:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <button id="grossUploadBtn" class="reelsuccess-any-button" type="button">Upload PDF</button>
+            <span id="grossUploadProgress" class="subtitle" style="margin:0;"></span>
+          </div>
+        </section>
+
+        <section class="info-box" style="margin-top:12px;">
+          <h2>Uploads for this theater</h2>
+          <div class="reelsuccess-table-wrap">
+            <table class="reelsuccess-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>File</th>
+                  <th>Uploaded</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="grossUploadsBody">
+                <tr><td colspan="4" style="text-align:center;color:#aaa;">No uploads yet.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </section>
     </div>
   </div>
 
-  <div id="loginModal" class="vote-email-modal hidden" role="dialog" aria-modal="true" aria-labelledby="loginModalTitle">
-    <div class="vote-email-modal-card email-step">
-      <img src="icon.png" style="width:48px;display:block;margin:0 auto 12px;" />
-      <h2 id="loginModalTitle" style="text-align:center;margin-bottom:4px;">ReelSuccess Login</h2>
-      <p class="subtitle vote-email-disclaimer">Enter your authorized theater email to continue.</p>
-      <label for="loginEmailInput">Email address</label>
-      <input id="loginEmailInput" type="email" placeholder="you@yourtheater.com" autocomplete="email" />
-      <p id="loginEmailError" class="email-help" style="color:#ff6b6b;margin-top:6px;min-height:18px;"></p>
-      <div style="margin-top:10px;">
-        <button id="loginSubmitBtn" type="button" class="submit-btn" style="width:100%;margin-top:0;">Continue</button>
-      </div>
-    </div>
-  </div>
-
-  <script type="module" src="reelsuccess.js"></script>
+  <script type="module" src="reelsuccess.js?v=20260525-5"></script>
 </body>
 </html>
