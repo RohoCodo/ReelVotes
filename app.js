@@ -1958,8 +1958,9 @@ async function redirectIfEndedWithoutExplicitRequest() {
   }
 
   // Current event is ended — find the latest live event in Firestore.
+  // Exclude events already known to be ended in the static config.
   const otherLiveCandidates = configuredEvents
-    .filter((event) => event.id !== selectedEvent?.id)
+    .filter((event) => event.id !== selectedEvent?.id && event.voteStatus !== "ended")
     .sort((a, b) => getEventSortTime(b) - getEventSortTime(a));
 
   for (const candidate of otherLiveCandidates) {
