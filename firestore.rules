@@ -3,6 +3,18 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     function signedIn() { return request.auth != null; }
+    function isAdmin() {
+      return signedIn() && (
+        request.auth.token.admin == true ||
+        request.auth.token.role == "admin" ||
+        request.auth.token.role == "super_admin"
+      );
+    }
+    function sameTheater(theaterId) {
+      return signedIn() &&
+        (request.auth.token.role == "theater" || request.auth.token.role == "theater_user") &&
+        request.auth.token.theaterId == theaterId;
+    }
 
     // Events collection with subcollections for votes and movie summaries
     match /events/{eventId} {
@@ -52,6 +64,20 @@ service cloud.firestore {
       match /messages/{msgId} {
         allow read, write: if signedIn();
       }
+    }
+
+    match /theaters/{theaterId} {
+      allow read: if isAdmin() || sameTheater(theaterId);
+      allow create, update, delete: if false;
+
+      match /grossUploads/{uploadId} {
+        allow read: if isAdmin() || sameTheater(theaterId);
+        allow create, update, delete: if false;
+      }
+    }
+
+    match /theaterUsers/{email} {
+      allow read, write: if false;
     }
   }
 }

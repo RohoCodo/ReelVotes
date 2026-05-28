@@ -342,6 +342,13 @@ function normalizeEmail(email) {
   return String(email || "").trim().toLowerCase();
 }
 
+function normalizeAccessRole(value) {
+  const role = String(value || "").trim().toLowerCase();
+  if (role === "super_admin" || role === "admin") return "super_admin";
+  if (role === "theater_user" || role === "theater") return "theater_user";
+  return "none";
+}
+
 function sanitizeBusinessDate(value) {
   const businessDate = String(value || "").trim();
   if (!/^\d{4}-\d{2}-\d{2}$/.test(businessDate)) {
@@ -388,7 +395,8 @@ function toTheaterId(value) {
 }
 
 function isAdminToken(token = {}) {
-  return token.admin === true || token.role === "admin";
+  const role = normalizeAccessRole(token.role);
+  return token.admin === true || role === "super_admin";
 }
 
 function getRequestIdentity(request) {
@@ -407,8 +415,9 @@ async function assertReelSuccessRequester(request, {requireAuth = true} = {}) {
   }
 
   const accessData = identity.email ? await getReelSuccessAccessData(identity.email) : null;
+  const normalizedRole = normalizeAccessRole(accessData?.role);
   const hasExplicitAccess = identity.email
-    ? (ADMIN_EMAILS.has(identity.email) || (accessData && accessData.enabled !== false))
+    ? (ADMIN_EMAILS.has(identity.email) || (accessData && accessData.enabled !== false && normalizedRole !== "none"))
     : false;
 
   if (!hasExplicitAccess && !isAdminToken(identity.token)) {
@@ -425,7 +434,7 @@ async function assertReelSuccessRequester(request, {requireAuth = true} = {}) {
 
   const isAdmin = isAdminToken(identity.token)
     || ADMIN_EMAILS.has(identity.email)
-    || String(accessData?.role || "").toLowerCase() === "admin";
+    || normalizeAccessRole(accessData?.role) === "super_admin";
 
   return {
     uid: identity.uid,
@@ -467,12 +476,8 @@ async function hasReelSuccessAccess(email) {
     return true;
   }
 
-  const accessDoc = await db.collection("reelsuccess_access").doc("users").collection("allowed").doc(normalizedEmail).get();
-  if (!accessDoc.exists) {
-    return false;
-  }
-
-  const accessData = accessDoc.data() || {};
+  const accessData = await getReelSuccessAccessData(normalizedEmail);
+  if (!accessData) return false;
   return accessData.enabled !== false;
 }
 
@@ -482,12 +487,89 @@ async function getReelSuccessAccessData(email) {
     return null;
   }
 
+  const theaterUserDoc = await db.collection("theaterUsers").doc(normalizedEmail).get();
+  if (theaterUserDoc.exists) {
+    const row = theaterUserDoc.data() || {};
+    const normalizedRole = normalizeAccessRole(row.role);
+    const inferredRole = normalizedRole !== "none"
+      ? normalizedRole
+      : ((row.theater_key || row.theaterKey || row.theater_id || row.theaterId) ? "theater_user" : "none");
+    return {
+      ...row,
+      email: row.email || normalizedEmail,
+      role: inferredRole,
+      theater_key: row.theater_key || row.theaterKey || "",
+      theater_id: row.theater_id || row.theaterId || "",
+      enabled: row.active !== false && row.enabled !== false,
+      source: "theaterUsers",
+    };
+  }
+
   const accessDoc = await db.collection("reelsuccess_access").doc("users").collection("allowed").doc(normalizedEmail).get();
   if (!accessDoc.exists) {
     return null;
   }
 
-  return accessDoc.data() || {};
+  const row = accessDoc.data() || {};
+  const normalizedRole = normalizeAccessRole(row.role);
+  const inferredRole = normalizedRole !== "none"
+    ? normalizedRole
+    : ((row.theater_key || row.theaterKey || row.theater_id || row.theaterId) ? "theater_user" : "none");
+  return {
+    ...row,
+    email: row.email || normalizedEmail,
+    role: inferredRole,
+    theater_key: row.theater_key || row.theaterKey || "",
+    theater_id: row.theater_id || row.theaterId || "",
+    enabled: row.enabled !== false,
+    source: "reelsuccess_access",
+  };
+}
+
+function buildReelSuccessClaims({email, accessData, existingClaims = {}}) {
+  const role = ADMIN_EMAILS.has(email)
+    ? "super_admin"
+    : normalizeAccessRole(accessData?.role);
+
+  const nextClaims = {
+    ...existingClaims,
+  };
+
+  if (role === "super_admin") {
+    nextClaims.role = "super_admin";
+    nextClaims.admin = true;
+    delete nextClaims.theaterId;
+    delete nextClaims.theaterKey;
+    return nextClaims;
+  }
+
+  let theaterKey = String(accessData?.theater_key || accessData?.theaterKey || "").trim();
+  let theaterIdFromAccess = String(accessData?.theater_id || accessData?.theaterId || "").trim();
+
+  if (!theaterKey && !theaterIdFromAccess) {
+    const {theaterIndex} = loadReelSuccessData();
+    const inferredTheater = inferTheaterFromEmail(email, theaterIndex);
+    theaterKey = String(inferredTheater?.theater_key || "").trim();
+  }
+
+  const theaterId = theaterIdFromAccess || (theaterKey ? toTheaterId(theaterKey) : "");
+
+  if (!theaterId) {
+    throw new HttpsError(
+      "failed-precondition",
+      "No theater mapping found for this account. Add theaterKey/theaterId in theaterUsers.",
+    );
+  }
+
+  nextClaims.role = "theater_user";
+  nextClaims.admin = false;
+  nextClaims.theaterId = theaterId;
+  if (theaterKey) {
+    nextClaims.theaterKey = theaterKey;
+  } else {
+    delete nextClaims.theaterKey;
+  }
+  return nextClaims;
 }
 
 async function assertReelSuccessAccess(email) {
@@ -1130,6 +1212,46 @@ exports.setEventVoteStatus = onCall(async (request) => {
   };
 });
 
+exports.getEventVoteStats = onCall(async (request) => {
+  const eventId = sanitizeEventId(request.data?.eventId);
+  const adminEmail = assertAdminEmail(request.data?.adminEmail);
+
+  const votesSnapshot = await db.collection("events").doc(eventId).collection("votes").get();
+  let totalVotes = 0;
+  const uniquePeople = new Set();
+
+  votesSnapshot.forEach((voteDoc) => {
+    const voteData = voteDoc.data() || {};
+    if (voteData.is_active === false) {
+      return;
+    }
+
+    totalVotes += 1;
+
+    const normalizedEmail = normalizeEmail(voteData.email || "");
+    const clientHash = String(voteData.client_id_hash || "").trim();
+    const ipHash = String(voteData.ip_hash || "").trim();
+    const ballotId = String(voteData.ballot_id || "").trim();
+    const personKey = normalizedEmail || clientHash || ipHash || ballotId || voteDoc.id;
+
+    uniquePeople.add(personKey);
+  });
+
+  logger.info("Admin requested event vote stats", {
+    eventId,
+    adminEmail,
+    totalVotes,
+    totalPeople: uniquePeople.size,
+  });
+
+  return {
+    ok: true,
+    eventId,
+    totalVotes,
+    totalPeople: uniquePeople.size,
+  };
+});
+
 exports.getVoteStatus = onCall(async (request) => {
   const eventId = sanitizeEventId(request.data?.eventId);
   const clientId = sanitizeClientId(request.data?.clientId);
@@ -1592,30 +1714,61 @@ exports.reelSuccessSetAccess = onCall(async (request) => {
   const targetEmail = normalizeEmail(request.data?.targetEmail);
   const enabled = request.data?.enabled !== false;
   const theaterKeyInput = request.data?.theaterKey;
+  const role = normalizeAccessRole(request.data?.role || "theater_user");
 
   if (!targetEmail || !targetEmail.includes("@")) {
     throw new HttpsError("invalid-argument", "Valid targetEmail is required.");
+  }
+
+  if (role === "none") {
+    throw new HttpsError("invalid-argument", "role must be super_admin or theater_user.");
+  }
+
+  const theaterKey = theaterKeyInput ? sanitizeTheaterKey(theaterKeyInput) : "";
+  const theaterId = theaterKey ? toTheaterId(theaterKey) : "";
+  if (role === "theater_user" && !theaterId) {
+    throw new HttpsError("invalid-argument", "theaterKey is required for theater_user.");
   }
 
   const accessRef = db.collection("reelsuccess_access").doc("users").collection("allowed").doc(targetEmail);
   const payload = {
     email: targetEmail,
     enabled,
+    active: enabled,
+    role,
+    theater_id: role === "theater_user" ? theaterId : admin.firestore.FieldValue.delete(),
     updated_by: adminEmail,
     updated_at: admin.firestore.FieldValue.serverTimestamp(),
   };
 
   if (theaterKeyInput !== undefined) {
-    payload.theater_key = theaterKeyInput ? sanitizeTheaterKey(theaterKeyInput) : admin.firestore.FieldValue.delete();
+    payload.theater_key = theaterKey || admin.firestore.FieldValue.delete();
   }
 
   await accessRef.set(payload, {merge: true});
+
+  const theaterUsersPayload = {
+    email: targetEmail,
+    role,
+    active: enabled,
+    updated_by: adminEmail,
+    updated_at: admin.firestore.FieldValue.serverTimestamp(),
+  };
+
+  if (role === "theater_user") {
+    theaterUsersPayload.theaterKey = theaterKey;
+    theaterUsersPayload.theaterId = theaterId;
+  }
+
+  await db.collection("theaterUsers").doc(targetEmail).set(theaterUsersPayload, {merge: true});
 
   return {
     ok: true,
     targetEmail,
     enabled,
-    theaterKey: payload.theater_key && typeof payload.theater_key === "string" ? payload.theater_key : null,
+    role,
+    theaterKey: role === "theater_user" ? theaterKey : null,
+    theaterId: role === "theater_user" ? theaterId : null,
   };
 });
 
@@ -1630,15 +1783,18 @@ exports.reelSuccessSetUserClaims = onCall(async (request) => {
     throw new HttpsError("invalid-argument", "Valid targetEmail is required.");
   }
 
-  const roleInput = String(request.data?.role || "theater").trim().toLowerCase();
-  const role = roleInput === "admin" ? "admin" : "theater";
+  const role = normalizeAccessRole(request.data?.role || "theater_user");
+  if (role === "none") {
+    throw new HttpsError("invalid-argument", "role must be super_admin or theater_user.");
+  }
+
   const theaterKeyInput = String(request.data?.theaterKey || "").trim();
   const theaterIdInput = String(request.data?.theaterId || "").trim();
-  const theaterId = role === "theater"
+  const theaterId = role === "theater_user"
     ? (theaterIdInput || (theaterKeyInput ? toTheaterId(theaterKeyInput) : ""))
     : "";
 
-  if (role === "theater" && !theaterId) {
+  if (role === "theater_user" && !theaterId) {
     throw new HttpsError("invalid-argument", "theaterId or theaterKey is required for theater users.");
   }
 
@@ -1647,10 +1803,10 @@ exports.reelSuccessSetUserClaims = onCall(async (request) => {
   const updatedClaims = {
     ...existingClaims,
     role,
-    admin: role === "admin",
+    admin: role === "super_admin",
   };
 
-  if (role === "theater") {
+  if (role === "theater_user") {
     updatedClaims.theaterId = theaterId;
     if (theaterKeyInput) {
       updatedClaims.theaterKey = theaterKeyInput;
@@ -1670,6 +1826,43 @@ exports.reelSuccessSetUserClaims = onCall(async (request) => {
   };
 });
 
+exports.reelSuccessSyncAccess = onCall(async (request) => {
+  const uid = request.auth?.uid || null;
+  const email = normalizeEmail(request.auth?.token?.email);
+
+  if (!uid || !email) {
+    throw new HttpsError("unauthenticated", "Sign in is required.");
+  }
+
+  const userRecord = await admin.auth().getUser(uid);
+  const existingClaims = userRecord.customClaims || {};
+  const accessData = await getReelSuccessAccessData(email);
+
+  if (!ADMIN_EMAILS.has(email) && (!accessData || accessData.enabled === false)) {
+    throw new HttpsError(
+      "permission-denied",
+      "This account is not enabled for ReelSuccess yet. Ask an admin to grant access.",
+    );
+  }
+
+  const nextClaims = buildReelSuccessClaims({
+    email,
+    accessData,
+    existingClaims,
+  });
+
+  await admin.auth().setCustomUserClaims(uid, nextClaims);
+
+  return {
+    ok: true,
+    email,
+    role: nextClaims.role,
+    theaterId: nextClaims.theaterId || null,
+    theaterKey: nextClaims.theaterKey || null,
+    claims: nextClaims,
+  };
+});
+
 exports.reelSuccessProvisionMyClaims = onCall(async (request) => {
   const uid = request.auth?.uid || null;
   const email = normalizeEmail(request.auth?.token?.email);
@@ -1680,55 +1873,19 @@ exports.reelSuccessProvisionMyClaims = onCall(async (request) => {
 
   const userRecord = await admin.auth().getUser(uid);
   const existingClaims = userRecord.customClaims || {};
-
-  const isAdmin = ADMIN_EMAILS.has(email);
-  if (isAdmin) {
-    const nextClaims = {
-      ...existingClaims,
-      role: "admin",
-      admin: true,
-    };
-    delete nextClaims.theaterId;
-    delete nextClaims.theaterKey;
-    await admin.auth().setCustomUserClaims(uid, nextClaims);
-    return {ok: true, email, claims: nextClaims};
-  }
-
   const accessData = await getReelSuccessAccessData(email);
-  if (!accessData || accessData.enabled === false) {
+  if (!ADMIN_EMAILS.has(email) && (!accessData || accessData.enabled === false)) {
     throw new HttpsError(
       "permission-denied",
-      "This account is not enabled for ReelSuccess yet. Ask an admin to grant access and assign theater claims.",
+      "This account is not enabled for ReelSuccess yet. Ask an admin to grant access.",
     );
   }
 
-  const {theaterIndex} = loadReelSuccessData();
-  const configuredTheaterKey = String(accessData.theater_key || accessData.theaterKey || "").trim();
-  const inferredTheater = configuredTheaterKey
-    ? theaterIndex.find((row) => row.theater_key === configuredTheaterKey) || null
-    : inferTheaterFromEmail(email, theaterIndex);
-
-  const theaterKey = configuredTheaterKey || String(inferredTheater?.theater_key || "").trim();
-  const theaterId = String(accessData.theater_id || "").trim() || (theaterKey ? toTheaterId(theaterKey) : "");
-
-  if (!theaterId) {
-    throw new HttpsError(
-      "failed-precondition",
-      "No theater mapping found for this account. Add theater_key/theater_id in ReelSuccess access.",
-    );
-  }
-
-  const nextClaims = {
-    ...existingClaims,
-    role: "theater",
-    admin: false,
-    theaterId,
-  };
-  if (theaterKey) {
-    nextClaims.theaterKey = theaterKey;
-  } else {
-    delete nextClaims.theaterKey;
-  }
+  const nextClaims = buildReelSuccessClaims({
+    email,
+    accessData,
+    existingClaims,
+  });
 
   await admin.auth().setCustomUserClaims(uid, nextClaims);
 

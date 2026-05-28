@@ -35,6 +35,7 @@ const createGrossUploadSessionCallable = httpsCallable(functions, "reelSuccessCr
 const finalizeGrossUploadCallable = httpsCallable(functions, "reelSuccessFinalizeGrossUpload");
 const deleteGrossUploadCallable = httpsCallable(functions, "reelSuccessDeleteGrossUpload");
 const provisionMyClaimsCallable = httpsCallable(functions, "reelSuccessProvisionMyClaims");
+const syncAccessCallable = httpsCallable(functions, "reelSuccessSyncAccess");
 const authProvider = new GoogleAuthProvider();
 
 const theaterSearchInput = document.getElementById("theaterSearchInput");
@@ -77,7 +78,8 @@ let grossAutoSelectTimer = null;
 
 const canUploadForTheater = (theaterId) => {
   if (!theaterId) return false;
-  if (currentClaims?.admin === true || currentClaims?.role === "admin") return true;
+  if (currentClaims?.admin === true) return true;
+  if (currentClaims?.role === "super_admin" || currentClaims?.role === "admin") return true;
   return String(currentClaims?.theaterId || "") === theaterId;
 };
 
@@ -147,6 +149,17 @@ async function signInNow() {
   await signInWithPopup(auth, authProvider);
 }
 
+function formatAuthError(error) {
+  const code = String(error?.code || "").toLowerCase();
+  if (code.includes("auth/unauthorized-domain")) {
+    return "Sign-in is blocked because this domain is not yet authorized in Firebase Auth.";
+  }
+  if (code.includes("auth/popup-closed-by-user")) {
+    return "Sign-in popup was closed before completing sign-in.";
+  }
+  return error?.message || "Sign in failed.";
+}
+
 async function signOutNow() {
   await signOut(auth);
 }
@@ -160,19 +173,34 @@ function showTab(tab) {
 }
 
 async function ensureClaimsReady(user, tokenClaims = {}) {
-  const hasClaims = tokenClaims?.admin === true || tokenClaims?.role === "admin" || Boolean(tokenClaims?.theaterId);
+  const role = String(tokenClaims?.role || "").trim().toLowerCase();
+  const hasClaims = tokenClaims?.admin === true
+    || role === "super_admin"
+    || role === "admin"
+    || (role === "theater_user" && Boolean(tokenClaims?.theaterId))
+    || (role === "theater" && Boolean(tokenClaims?.theaterId));
+
   if (hasClaims) {
     return tokenClaims;
   }
 
-  await provisionMyClaimsCallable({});
+  try {
+    await syncAccessCallable({});
+  } catch (error) {
+    // Backward-compatible fallback while rolling out updated function set.
+    await provisionMyClaimsCallable({});
+  }
+
   const refreshedToken = await user.getIdTokenResult(true);
   return refreshedToken?.claims || {};
 }
 
 function getVisibleTheaters(theaters = []) {
-  if (isSuperAdmin || !currentClaims?.theaterId) {
+  if (isSuperAdmin) {
     return theaters;
+  }
+  if (!currentClaims?.theaterId) {
+    return [];
   }
   return theaters.filter((t) => toTheaterId(t.theater_key) === currentClaims.theaterId);
 }
@@ -919,7 +947,7 @@ function bindAuth() {
       await signInNow();
     } catch (error) {
       console.error(error);
-      setStatus(error?.message || "Sign in failed.", true);
+      setStatus(formatAuthError(error), true);
     }
   });
 
@@ -935,7 +963,7 @@ function bindAuth() {
   onAuthStateChanged(auth, async (user) => {
     currentUser = user || null;
     currentAdminEmail = normalizeEmail(user?.email || "");
-    isSuperAdmin = normalizeEmail(user?.email || "") === SUPER_ADMIN_EMAIL;
+    isSuperAdmin = false;
 
     if (!user) {
       currentClaims = {};
@@ -956,16 +984,21 @@ function bindAuth() {
     try {
       const tokenResult = await user.getIdTokenResult();
       currentClaims = await ensureClaimsReady(user, tokenResult?.claims || {});
+      isSuperAdmin = currentClaims?.admin === true
+        || String(currentClaims?.role || "").toLowerCase() === "super_admin"
+        || normalizeEmail(user?.email || "") === SUPER_ADMIN_EMAIL;
     } catch (error) {
       console.error(error);
       currentClaims = {};
+      isSuperAdmin = false;
       setIdentity(`Signed in as ${user.email || user.uid}`);
       setStatus(error?.message || "This account is not provisioned for ReelSuccess yet.", true);
       setCurrentTheater("");
       return;
     }
     
-    const roleText = isSuperAdmin ? " (Super Admin)" : currentClaims?.admin ? " (Admin)" : "";
+    const role = String(currentClaims?.role || "").toLowerCase();
+    const roleText = isSuperAdmin ? " (Super Admin)" : role === "theater_user" || role === "theater" ? " (Theater User)" : "";
     setIdentity(`Signed in as ${user.email || user.uid}${roleText}`);
     if (signInBtn) signInBtn.style.display = "none";
     if (signOutBtn) signOutBtn.style.display = "";
