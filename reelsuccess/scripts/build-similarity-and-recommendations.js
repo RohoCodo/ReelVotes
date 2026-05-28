@@ -29,9 +29,10 @@ function parseArgs(argv) {
     topKSimilar: 15,
     topKRecMovies: 15,
     neighborPool: 30,
-    wMovie: 0.6,
-    wDemo: 0.25,
-    wOps: 0.15,
+    wHistory: 0.7,
+    wMovie: 0.2,
+    wDemo: 0.07,
+    wOps: 0.03,
   };
 
   for (let i = 0; i < argv.length; i += 1) {
@@ -44,6 +45,7 @@ function parseArgs(argv) {
     else if (t === "--topKSimilar") { args.topKSimilar = Number(argv[++i]); }
     else if (t === "--topKRecMovies") { args.topKRecMovies = Number(argv[++i]); }
     else if (t === "--neighborPool") { args.neighborPool = Number(argv[++i]); }
+    else if (t === "--wHistory") { args.wHistory = Number(argv[++i]); }
     else if (t === "--wMovie") { args.wMovie = Number(argv[++i]); }
     else if (t === "--wDemo") { args.wDemo = Number(argv[++i]); }
     else if (t === "--wOps") { args.wOps = Number(argv[++i]); }
@@ -106,9 +108,144 @@ function clamp(v, lo, hi) {
   return Math.max(lo, Math.min(hi, v));
 }
 
+function toUnitIntervalFromCosine(v) {
+  if (!Number.isFinite(v)) return 0.5;
+  return clamp((v + 1) / 2, 0, 1);
+}
+
+function similarityConfidence(commonMovieCount, overlapWeight) {
+  const common = Math.max(0, Number(commonMovieCount || 0));
+  const overlap = Math.max(0, Number(overlapWeight || 0));
+
+  const commonTerm = common / (common + 8);
+  const overlapTerm = Math.min(1, Math.sqrt(overlap) / Math.sqrt(26));
+
+  return clamp(Math.sqrt(commonTerm * overlapTerm), 0, 1);
+}
+
 function normalizeOp(x, min, max) {
   if (!Number.isFinite(x) || !Number.isFinite(min) || !Number.isFinite(max) || max <= min) return 0;
   return (x - min) / (max - min);
+}
+
+function performanceCloseness(a, b) {
+  const x = Number(a || 0);
+  const y = Number(b || 0);
+  const denom = Math.max(1, x, y);
+  return clamp(1 - (Math.abs(x - y) / denom), 0, 1);
+}
+
+function buildMovieHistoryByTheater(screenings) {
+  const perTheaterMovie = new Map();
+
+  for (const row of screenings) {
+    const theaterKey = row.theater_key;
+    const movie = row.movie_title;
+    const screens = Number(row.screen_count || 0);
+
+    if (!theaterKey || !movie) continue;
+
+    if (!perTheaterMovie.has(theaterKey)) {
+      perTheaterMovie.set(theaterKey, new Map());
+    }
+    const byMovie = perTheaterMovie.get(theaterKey);
+
+    if (!byMovie.has(movie)) {
+      byMovie.set(movie, {
+        total_screens: 0,
+        week_keys: new Set(),
+        non_friday_openings: 0,
+      });
+    }
+
+    const agg = byMovie.get(movie);
+    agg.total_screens += screens;
+    agg.week_keys.add(String(row.week_end || row.week_start || ""));
+    if (row.non_friday_opening === true) {
+      agg.non_friday_openings += 1;
+    }
+  }
+
+  const finalized = new Map();
+  for (const [theaterKey, movieMap] of perTheaterMovie.entries()) {
+    const out = new Map();
+    for (const [movie, agg] of movieMap.entries()) {
+      const weeks = agg.week_keys.size;
+      const avgScreensPerWeek = weeks > 0 ? agg.total_screens / weeks : 0;
+      out.set(movie, {
+        total_screens: agg.total_screens,
+        weeks,
+        avg_screens_per_week: avgScreensPerWeek,
+        non_friday_openings: agg.non_friday_openings,
+      });
+    }
+    finalized.set(theaterKey, out);
+  }
+
+  return finalized;
+}
+
+function movieHistorySimilarity(aHistory, bHistory) {
+  if (!aHistory || !bHistory || aHistory.size === 0 || bHistory.size === 0) {
+    return {
+      score: 0,
+      overlap_score: 0,
+      overlap_weight: 0,
+      common_movie_count: 0,
+      weighted_closeness: 0,
+    };
+  }
+
+  let weightedSum = 0;
+  let weightTotal = 0;
+  let common = 0;
+
+  for (const [movie, a] of aHistory.entries()) {
+    const b = bHistory.get(movie);
+    if (!b) continue;
+
+    common += 1;
+
+    const totalCloseness = performanceCloseness(a.total_screens, b.total_screens);
+    const weeklyCloseness = performanceCloseness(a.avg_screens_per_week, b.avg_screens_per_week);
+    const runLengthCloseness = performanceCloseness(a.weeks, b.weeks);
+    const nonFridayCloseness = performanceCloseness(a.non_friday_openings, b.non_friday_openings);
+
+    const closeness =
+      (0.5 * totalCloseness) +
+      (0.3 * weeklyCloseness) +
+      (0.15 * runLengthCloseness) +
+      (0.05 * nonFridayCloseness);
+
+    const importance = Math.log1p(Math.max(1, a.total_screens) + Math.max(1, b.total_screens));
+    weightedSum += closeness * importance;
+    weightTotal += importance;
+  }
+
+  if (common === 0 || weightTotal === 0) {
+    return {
+      score: 0,
+      overlap_score: 0,
+      overlap_weight: 0,
+      common_movie_count: 0,
+      weighted_closeness: 0,
+    };
+  }
+
+  const weightedCloseness = weightedSum / weightTotal;
+  const overlap = common / Math.sqrt(aHistory.size * bHistory.size);
+  const overlapScore = clamp(overlap, 0, 1);
+
+  // Strongly favor theater pairs where the same movies historically perform similarly.
+  const score = (0.75 * weightedCloseness) + (0.25 * overlapScore);
+
+  return {
+    score: clamp(score, 0, 1),
+    overlap_score: overlapScore,
+    overlap_weight: weightTotal,
+    common_movie_count: common,
+    weighted_closeness: weightedCloseness,
+  };
 }
 
 function isLikelyBadMovieTitle(title) {
@@ -142,6 +279,8 @@ function main() {
   const theaterByKey = new Map(theaters.map((t) => [t.theater_key, t]));
 
   const moviesByIdx = new Map(movieIndex.map((m) => [m.feature_index, m.movie_title]));
+
+  const movieHistoryByTheater = buildMovieHistoryByTheater(screenings);
 
   const playedMoviesByTheater = new Map();
   for (const s of screenings) {
@@ -201,17 +340,42 @@ function main() {
       const demoSim = cosineDense(a.demoVector, b.demoVector);
       const opSim = cosineDense(a.opVector, b.opVector);
 
-      const combined =
-        args.wMovie * movieSim +
-        args.wDemo * demoSim +
-        args.wOps * opSim;
+      const movieSim01 = toUnitIntervalFromCosine(movieSim);
+      const demoSim01 = toUnitIntervalFromCosine(demoSim);
+      const opSim01 = toUnitIntervalFromCosine(opSim);
+
+      const historyStats = movieHistorySimilarity(movieHistoryByTheater.get(aKey), movieHistoryByTheater.get(bKey));
+
+      // Weights: 75% movie history (primary driver), 15% demographics, 5% feature, 5% ops
+      const rawCombined =
+        0.75 * historyStats.score +
+        0.15 * demoSim01 +
+        0.05 * movieSim01 +
+        0.05 * opSim01;
+
+      const confidence = similarityConfidence(
+        historyStats.common_movie_count,
+        historyStats.overlap_weight,
+      );
+
+      const combined = (confidence * rawCombined) + ((1 - confidence) * 0.5);
+
+      if (historyStats.common_movie_count < 5) continue;
+      if (historyStats.overlap_score < 0.08) continue;
 
       sims.push({
         theater_key: bKey,
         score: Number(combined.toFixed(6)),
-        movie_similarity: Number(movieSim.toFixed(6)),
-        demographic_similarity: Number(demoSim.toFixed(6)),
-        operational_similarity: Number(opSim.toFixed(6)),
+        raw_score: Number(rawCombined.toFixed(6)),
+        confidence: Number(confidence.toFixed(6)),
+        historical_similarity: Number(historyStats.score.toFixed(6)),
+        historical_overlap_score: Number(historyStats.overlap_score.toFixed(6)),
+        historical_overlap_weight: Number(historyStats.overlap_weight.toFixed(6)),
+        historical_common_movies: historyStats.common_movie_count,
+        historical_weighted_closeness: Number(historyStats.weighted_closeness.toFixed(6)),
+        movie_similarity: Number(movieSim01.toFixed(6)),
+        demographic_similarity: Number(demoSim01.toFixed(6)),
+        operational_similarity: Number(opSim01.toFixed(6)),
       });
     }
 
@@ -295,7 +459,16 @@ function main() {
     created_at: new Date().toISOString(),
     params: {
       topKSimilar: args.topKSimilar,
-      weights: { movie: args.wMovie, demographics: args.wDemo, operations: args.wOps },
+      weights: { history: 0.65, movie: 0.20, demographics: 0.10, operations: 0.05 },
+      confidence: {
+        common_movie_k: 8,
+        overlap_weight_target: 26,
+        prior_similarity: 0.5,
+      },
+      neighbor_floor: {
+        min_common_movies: 5,
+        min_overlap_score: 0.08,
+      },
     },
     theaters: similarityByTheater,
   };
@@ -305,7 +478,7 @@ function main() {
     params: {
       topKRecMovies: args.topKRecMovies,
       neighborPool: args.neighborPool,
-      similarityWeights: { movie: args.wMovie, demographics: args.wDemo, operations: args.wOps },
+      similarityWeights: { history: args.wHistory, movie: args.wMovie, demographics: args.wDemo, operations: args.wOps },
     },
     theaters: recsByTheater,
   };
@@ -328,7 +501,7 @@ function main() {
       topKSimilar: args.topKSimilar,
       topKRecMovies: args.topKRecMovies,
       neighborPool: args.neighborPool,
-      weights: { movie: args.wMovie, demographics: args.wDemo, operations: args.wOps },
+      weights: { history: args.wHistory, movie: args.wMovie, demographics: args.wDemo, operations: args.wOps },
     },
     counts: {
       theaters: keys.length,
