@@ -69,48 +69,38 @@ body {
   /* ReelSuccess */
   .reelsuccess-card {
     max-width: 860px;
-    text-align: left;
+    text-align: center;
   }
 
-  .reelsuccess-header {
+  .reelsuccess-card h1,
+  .reelsuccess-card .subtitle {
+    text-align: center;
+  }
+
+  .reelsuccess-topbar {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
-    gap: 20px;
-    margin-bottom: 10px;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #333;
   }
 
-  .reelsuccess-header-left {
+  .reelsuccess-topbar .app-link {
+    color: #ff4757;
+    text-decoration: none;
+    font-weight: 600;
+  }
+
+  .reelsuccess-topbar .app-link:hover {
+    text-decoration: underline;
+  }
+
+  .reelsuccess-auth-actions {
     display: flex;
+    align-items: center;
     gap: 12px;
-    align-items: flex-start;
-    flex: 1;
-  }
-
-  .reelsuccess-logo {
-    width: 48px;
-    height: 48px;
-    flex-shrink: 0;
-    margin-top: 2px;
-  }
-
-  .reelsuccess-header-text h1 {
-    margin: 0;
-    text-align: left;
-    font-size: 28px;
-  }
-
-  .reelsuccess-header-text .subtitle {
-    text-align: left;
-    margin: 4px 0 0;
-  }
-
-  .reelsuccess-header-right {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 6px;
-    white-space: nowrap;
+    justify-content: flex-end;
   }
 
   .reelsuccess-sign-btn {
@@ -123,32 +113,11 @@ body {
     cursor: pointer;
     font-size: 14px;
     transition: background 0.2s ease;
+    white-space: nowrap;
   }
 
   .reelsuccess-sign-btn:hover {
     background: #ff3838;
-  }
-
-  @media (max-width: 768px) {
-    .reelsuccess-header {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 12px;
-    }
-
-    .reelsuccess-header-right {
-      align-items: flex-start;
-      width: 100%;
-    }
-
-    .reelsuccess-sign-btn {
-      width: 100%;
-    }
-  }
-
-  .reelsuccess-card h1,
-  .reelsuccess-card .subtitle {
-    text-align: left;
   }
 
   .reelsuccess-controls {
@@ -358,31 +327,31 @@ body {
   .main-tabs {
     display: flex;
     gap: 8px;
-    margin: 20px 0 14px 0;
+    margin: 24px 0 20px 0;
+    justify-content: center;
   }
 
   .main-tab-btn {
-    flex: 1;
-    padding: 12px 20px;
-    background: #333;
+    flex: 0 1 auto;
+    padding: 12px 24px;
+    background: #222;
     color: #aaa;
     border: none;
     font-size: 15px;
     font-weight: 600;
     cursor: pointer;
-    transition: background 0.2s ease, color 0.2s ease;
+    transition: all 0.2s ease;
     border-radius: 8px;
   }
 
   .main-tab-btn:hover {
-    background: #444;
+    background: #333;
     color: #ddd;
   }
 
   .main-tab-btn.active {
     background: #ff4757;
     color: #fff;
-    font-weight: 700;
   }
 
   .main-tab-panel[hidden] {

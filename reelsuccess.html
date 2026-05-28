@@ -3,7 +3,7 @@
 <head>
   <title>ReelSuccess</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles.css?v=20260528-1" />
   <link rel="icon" type="image/png" href="icon.png" />
 </head>
 <body>
@@ -11,27 +11,20 @@
 
   <div class="container">
     <div class="card reelsuccess-card">
-      <!-- Header with logo/title on left, auth on right -->
-      <div class="reelsuccess-header">
-        <div class="reelsuccess-header-left">
-          <img src="icon.png" class="logo reelsuccess-logo" />
-          <div class="reelsuccess-header-text">
-            <h1>ReelSuccess</h1>
-            <p class="subtitle">Find similar theaters and proven movie recommendations.</p>
-          </div>
-        </div>
-        <div class="reelsuccess-header-right">
+      <!-- Top bar with back link and sign-in -->
+      <div class="reelsuccess-topbar">
+        <a href="index.html" class="app-link">← Back to ReelVotes</a>
+        <div class="reelsuccess-auth-actions">
           <p id="reelsuccessIdentity" class="subtitle" style="margin:0;font-size:12px;">Not signed in.</p>
-          <div class="reelsuccess-auth-actions">
-            <button id="reelsuccessSignInBtn" class="reelsuccess-sign-btn" type="button">Sign in</button>
-            <button id="reelsuccessSignOutBtn" class="reelsuccess-sign-btn" type="button" style="display:none;">Sign out</button>
-          </div>
+          <button id="reelsuccessSignInBtn" class="reelsuccess-sign-btn" type="button">Sign in</button>
+          <button id="reelsuccessSignOutBtn" class="reelsuccess-sign-btn" type="button" style="display:none;">Sign out</button>
         </div>
       </div>
 
-      <p style="margin: 8px 0 0; text-align: left;">
-        <a href="index.html" class="app-link">← Back to ReelVotes</a>
-      </p>
+      <!-- Logo and title centered -->
+      <img src="icon.png" class="logo" />
+      <h1>ReelSuccess</h1>
+      <p class="subtitle">Find similar theaters and proven movie recommendations.</p>
 
       <div class="main-tabs">
         <button id="findMovieTabBtn" type="button" class="main-tab-btn active">Find Your Next Movie</button>
@@ -142,6 +135,6 @@
     </div>
   </div>
 
-  <script type="module" src="reelsuccess.js?v=20260525-5"></script>
+  <script type="module" src="reelsuccess.js?v=20260528-1"></script>
 </body>
 </html>
