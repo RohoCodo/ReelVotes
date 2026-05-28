@@ -38,6 +38,7 @@
     <div style="display:flex;gap:0;border-radius:10px;overflow:hidden;border:1px solid #333;margin-bottom:18px;">
       <button id="tabResultsBtn" type="button" style="flex:1;padding:10px;background:#ff4757;color:#fff;border:none;font-size:14px;font-weight:700;cursor:pointer;">📊 Results</button>
       <button id="tabEditBtn" type="button" style="flex:1;padding:10px;background:#222;color:#aaa;border:none;border-left:1px solid #333;font-size:14px;font-weight:600;cursor:pointer;">✏️ Edit Event</button>
+      <button id="tabAccessBtn" type="button" style="flex:1;padding:10px;background:#222;color:#aaa;border:none;border-left:1px solid #333;font-size:14px;font-weight:600;cursor:pointer;">🔐 ReelSuccess Access</button>
     </div>
 
     <!-- RESULTS TAB -->
@@ -69,6 +70,65 @@
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px;">
           <button id="adminSaveBtn" type="button" style="background:#ff4757;border:none;color:#fff;padding:10px 18px;border-radius:10px;font-weight:700;cursor:pointer;">Save changes</button>
           <span id="adminSaveStatus" class="subtitle" style="margin:0;"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ACCESS TAB -->
+    <div id="tabAccess" style="display:none;">
+      <div class="info-box" style="text-align:left;margin-bottom:12px;">
+        <h2 style="margin:0 0 10px;">Manage ReelSuccess Access</h2>
+        <p class="subtitle" style="margin:0 0 12px;">Grant theater-scoped access without opening Firebase Console.</p>
+
+        <label style="font-size:13px;color:#aaa;display:block;margin-bottom:6px;">User email</label>
+        <input id="accessTargetEmail" type="email" placeholder="manager@theater.com" style="width:100%;padding:10px;border-radius:8px;border:1px solid #444;background:#111;color:#fff;font-size:14px;box-sizing:border-box;margin-bottom:10px;" />
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div>
+            <label style="font-size:13px;color:#aaa;display:block;margin-bottom:6px;">Role</label>
+            <select id="accessRoleSelect" style="width:100%;padding:10px;border-radius:8px;border:1px solid #444;background:#111;color:#fff;font-size:14px;box-sizing:border-box;">
+              <option value="theater_user">Theater user (restricted)</option>
+              <option value="super_admin">Super admin (all theaters)</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:13px;color:#aaa;display:block;margin-bottom:6px;">Active</label>
+            <label style="display:flex;align-items:center;gap:8px;margin-top:10px;color:#ddd;font-size:14px;">
+              <input id="accessActiveCheckbox" type="checkbox" checked />
+              Enabled
+            </label>
+          </div>
+        </div>
+
+        <div id="accessTheaterKeyWrap" style="margin-top:10px;">
+          <label style="font-size:13px;color:#aaa;display:block;margin-bottom:6px;">Theater key (required for theater users)</label>
+          <input id="accessTheaterKeyInput" type="text" placeholder="PFR|The New Parkway Theater|Oakland, CA" style="width:100%;padding:10px;border-radius:8px;border:1px solid #444;background:#111;color:#fff;font-size:14px;box-sizing:border-box;" />
+        </div>
+
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px;">
+          <button id="accessSaveBtn" type="button" style="background:#ff4757;border:none;color:#fff;padding:10px 18px;border-radius:10px;font-weight:700;cursor:pointer;">Save access</button>
+          <button id="accessRefreshBtn" type="button" style="background:#222;border:1px solid #444;color:#fff;padding:10px 18px;border-radius:10px;font-weight:600;cursor:pointer;">Refresh list</button>
+          <span id="accessStatus" class="subtitle" style="margin:0;"></span>
+        </div>
+      </div>
+
+      <div class="info-box" style="text-align:left;">
+        <h2 style="margin:0 0 10px;">Current access</h2>
+        <div style="overflow:auto;">
+          <table class="reelsuccess-table" style="width:100%;min-width:640px;">
+            <thead>
+              <tr>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Theater Key</th>
+                <th>Enabled</th>
+                <th>Updated By</th>
+              </tr>
+            </thead>
+            <tbody id="accessListBody">
+              <tr><td colspan="5" style="text-align:center;color:#aaa;">No access records loaded yet.</td></tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

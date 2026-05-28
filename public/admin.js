@@ -18,6 +18,9 @@ const functions = getFunctions(app);
 const runEliminationRoundCallable = httpsCallable(functions, "runEliminationRound");
 const saveEventAdminSettingsCallable = httpsCallable(functions, "saveEventAdminSettings");
 const setEventVoteStatusCallable = httpsCallable(functions, "setEventVoteStatus");
+const getEventVoteStatsCallable = httpsCallable(functions, "getEventVoteStats");
+const reelSuccessSetAccessCallable = httpsCallable(functions, "reelSuccessSetAccess");
+const reelSuccessListAccessCallable = httpsCallable(functions, "reelSuccessListAccess");
 
 // Hardcoded total votes needed to reach goal (same as main app)
 const VOTES_NEEDED = 50;
@@ -62,6 +65,8 @@ const adminSaveBtn = document.getElementById("adminSaveBtn");
 const adminSaveStatus = document.getElementById("adminSaveStatus");
 let currentAdminEmail = null;
 let currentVoteStatus = "live";
+let currentUniqueVoterCount = null;
+let currentActiveVoteCount = null;
 
 // Populate event selector dropdown
 function populateSelector() {
@@ -88,25 +93,45 @@ populateSelector();
 // Tab switching
 const tabResultsBtn = document.getElementById("tabResultsBtn");
 const tabEditBtn = document.getElementById("tabEditBtn");
+const tabAccessBtn = document.getElementById("tabAccessBtn");
 const tabResultsPanel = document.getElementById("tabResults");
 const tabEditPanel = document.getElementById("tabEdit");
+const tabAccessPanel = document.getElementById("tabAccess");
+
+const accessTargetEmailInput = document.getElementById("accessTargetEmail");
+const accessRoleSelect = document.getElementById("accessRoleSelect");
+const accessActiveCheckbox = document.getElementById("accessActiveCheckbox");
+const accessTheaterKeyWrap = document.getElementById("accessTheaterKeyWrap");
+const accessTheaterKeyInput = document.getElementById("accessTheaterKeyInput");
+const accessSaveBtn = document.getElementById("accessSaveBtn");
+const accessRefreshBtn = document.getElementById("accessRefreshBtn");
+const accessStatus = document.getElementById("accessStatus");
+const accessListBody = document.getElementById("accessListBody");
 
 function showTab(tab) {
   const onResults = tab === "results";
+  const onEdit = tab === "edit";
+  const onAccess = tab === "access";
   if (tabResultsPanel) tabResultsPanel.style.display = onResults ? "" : "none";
-  if (tabEditPanel) tabEditPanel.style.display = onResults ? "none" : "";
+  if (tabEditPanel) tabEditPanel.style.display = onEdit ? "" : "none";
+  if (tabAccessPanel) tabAccessPanel.style.display = onAccess ? "" : "none";
   if (tabResultsBtn) {
     tabResultsBtn.style.background = onResults ? "#ff4757" : "#222";
     tabResultsBtn.style.color = onResults ? "#fff" : "#aaa";
   }
   if (tabEditBtn) {
-    tabEditBtn.style.background = onResults ? "#222" : "#ff4757";
-    tabEditBtn.style.color = onResults ? "#aaa" : "#fff";
+    tabEditBtn.style.background = onEdit ? "#ff4757" : "#222";
+    tabEditBtn.style.color = onEdit ? "#fff" : "#aaa";
+  }
+  if (tabAccessBtn) {
+    tabAccessBtn.style.background = onAccess ? "#ff4757" : "#222";
+    tabAccessBtn.style.color = onAccess ? "#fff" : "#aaa";
   }
 }
 
 if (tabResultsBtn) tabResultsBtn.addEventListener("click", () => showTab("results"));
 if (tabEditBtn) tabEditBtn.addEventListener("click", () => showTab("edit"));
+if (tabAccessBtn) tabAccessBtn.addEventListener("click", () => showTab("access"));
 
 // Start on results tab
 showTab("results");
@@ -154,6 +179,110 @@ function setSaveStatus(message, isError = false) {
   if (!adminSaveStatus) return;
   adminSaveStatus.textContent = message;
   adminSaveStatus.style.color = isError ? "#ff6b6b" : "#bbb";
+}
+
+function setAccessStatus(message, isError = false) {
+  if (!accessStatus) return;
+  accessStatus.textContent = message;
+  accessStatus.style.color = isError ? "#ff6b6b" : "#bbb";
+}
+
+function updateAccessRoleUI() {
+  const role = String(accessRoleSelect?.value || "theater_user");
+  if (!accessTheaterKeyWrap) return;
+  accessTheaterKeyWrap.style.display = role === "theater_user" ? "" : "none";
+}
+
+function renderAccessRows(users = []) {
+  if (!accessListBody) return;
+  accessListBody.innerHTML = "";
+  if (!users.length) {
+    accessListBody.innerHTML = "<tr><td colspan='5' style='text-align:center;color:#aaa;'>No records found.</td></tr>";
+    return;
+  }
+
+  users.forEach((user) => {
+    const tr = document.createElement("tr");
+    const role = String(user.role || "theater_user");
+    const enabled = user.enabled !== false;
+    tr.innerHTML = `
+      <td>${user.email || ""}</td>
+      <td>${role}</td>
+      <td>${user.theater_key || "—"}</td>
+      <td>${enabled ? "Yes" : "No"}</td>
+      <td>${user.updated_by || "—"}</td>
+    `;
+    tr.style.cursor = "pointer";
+    tr.title = "Click to load into form";
+    tr.addEventListener("click", () => {
+      if (accessTargetEmailInput) accessTargetEmailInput.value = String(user.email || "");
+      if (accessRoleSelect) accessRoleSelect.value = role;
+      if (accessActiveCheckbox) accessActiveCheckbox.checked = enabled;
+      if (accessTheaterKeyInput) accessTheaterKeyInput.value = String(user.theater_key || "");
+      updateAccessRoleUI();
+      setAccessStatus(`Loaded ${user.email || "record"} into form.`);
+    });
+    accessListBody.appendChild(tr);
+  });
+}
+
+async function refreshAccessList() {
+  if (!currentAdminEmail) {
+    setAccessStatus("Admin session missing.", true);
+    return;
+  }
+  setAccessStatus("Loading access list...");
+  try {
+    const response = await reelSuccessListAccessCallable({
+      adminEmail: currentAdminEmail,
+    });
+    const users = response?.data?.users || [];
+    renderAccessRows(users);
+    setAccessStatus(`Loaded ${users.length} access record${users.length === 1 ? "" : "s"}.`);
+  } catch (error) {
+    console.error(error);
+    setAccessStatus(error?.message || "Failed loading access list.", true);
+  }
+}
+
+async function saveAccessRecord() {
+  if (!currentAdminEmail) {
+    setAccessStatus("Admin session missing.", true);
+    return;
+  }
+
+  const targetEmail = normalizeEmail(accessTargetEmailInput?.value || "");
+  const role = String(accessRoleSelect?.value || "theater_user");
+  const enabled = accessActiveCheckbox?.checked !== false;
+  const theaterKey = String(accessTheaterKeyInput?.value || "").trim();
+
+  if (!targetEmail || !targetEmail.includes("@")) {
+    setAccessStatus("Enter a valid target email.", true);
+    return;
+  }
+  if (role === "theater_user" && !theaterKey) {
+    setAccessStatus("Theater key is required for theater_user.", true);
+    return;
+  }
+
+  if (accessSaveBtn) accessSaveBtn.disabled = true;
+  setAccessStatus("Saving access...");
+  try {
+    await reelSuccessSetAccessCallable({
+      adminEmail: currentAdminEmail,
+      targetEmail,
+      enabled,
+      role,
+      theaterKey: role === "theater_user" ? theaterKey : "",
+    });
+    setAccessStatus(`Saved access for ${targetEmail}.`);
+    await refreshAccessList();
+  } catch (error) {
+    console.error(error);
+    setAccessStatus(error?.message || "Failed saving access.", true);
+  } finally {
+    if (accessSaveBtn) accessSaveBtn.disabled = false;
+  }
 }
 
 function resolveEvent(firestoreId) {
@@ -298,10 +427,15 @@ function renderMovies(movies) {
     return;
   }
 
-  const totalVotes = movies.reduce((sum, m) => sum + (m.vote_count || 0), 0);
+  const totalVotes = typeof currentActiveVoteCount === "number"
+    ? currentActiveVoteCount
+    : movies.reduce((sum, m) => sum + (m.vote_count || 0), 0);
+  const totalPeople = typeof currentUniqueVoterCount === "number"
+    ? currentUniqueVoterCount
+    : totalVotes;
   const totalEl = document.createElement("div");
-  totalEl.style.cssText = "color:#aaa;font-size:13px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid #333;";
-  totalEl.textContent = `Total votes cast: ${totalVotes}`;
+  totalEl.style.cssText = "color:#aaa;font-size:13px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid #333;display:flex;justify-content:center;align-items:center;gap:16px;flex-wrap:wrap;text-align:center;width:100%;";
+  totalEl.innerHTML = `<span>Total votes: ${totalVotes}</span><span>Total people: ${totalPeople}</span>`;
   adminList.appendChild(totalEl);
 
   movies.forEach((movie) => {
@@ -414,12 +548,53 @@ async function saveAdminControls() {
 }
 
 let unsubscribeLive = null;
+let unsubscribeVoterCount = null;
+let latestMoviesForRender = [];
+let voteStatsPollTimer = null;
+
+async function refreshVoteStats(firestoreId) {
+  if (!firestoreId || !currentAdminEmail) {
+    return;
+  }
+
+  try {
+    const response = await getEventVoteStatsCallable({
+      eventId: firestoreId,
+      adminEmail: currentAdminEmail,
+    });
+
+    const totalVotes = Number(response?.data?.totalVotes);
+    const totalPeople = Number(response?.data?.totalPeople);
+
+    currentActiveVoteCount = Number.isFinite(totalVotes) ? totalVotes : null;
+    currentUniqueVoterCount = Number.isFinite(totalPeople) ? totalPeople : null;
+
+    if (latestMoviesForRender.length > 0 || currentUniqueVoterCount === 0) {
+      renderMovies(latestMoviesForRender);
+    }
+  } catch (error) {
+    console.error("Error loading voter totals:", error);
+  }
+}
 
 function startLiveListener(firestoreId) {
   firestoreId = firestoreId || currentEventId;
   if (unsubscribeLive) { unsubscribeLive(); unsubscribeLive = null; }
+  if (unsubscribeVoterCount) { unsubscribeVoterCount(); unsubscribeVoterCount = null; }
+  if (voteStatsPollTimer) {
+    window.clearInterval(voteStatsPollTimer);
+    voteStatsPollTimer = null;
+  }
+  currentUniqueVoterCount = null;
+  currentActiveVoteCount = null;
+  latestMoviesForRender = [];
   updateEventLabel(firestoreId);
   const moviesRef = collection(db, "events", firestoreId, "movies");
+
+  refreshVoteStats(firestoreId);
+  voteStatsPollTimer = window.setInterval(() => {
+    refreshVoteStats(firestoreId);
+  }, 5000);
 
   unsubscribeLive = onSnapshot(moviesRef, (snapshot) => {
     const movies = [];
@@ -431,6 +606,7 @@ function startLiveListener(firestoreId) {
 
     // Sort by votes desc
     movies.sort((a, b) => (b.vote_count || 0) - (a.vote_count || 0));
+    latestMoviesForRender = movies;
 
     const ballotTitles = movies
       .map((movie) => String(movie.movie_title || movie.id || "").trim())
@@ -450,6 +626,7 @@ function startLiveListener(firestoreId) {
       updatedAtEl.textContent = "Error loading votes (check console)";
     }
   });
+
 }
 
 // Handle event selector changes
@@ -549,6 +726,17 @@ ensureAdminAccess()
       endVoteBtn.addEventListener("click", endVoteNow);
       updateEndVoteButton();
     }
+    if (accessRoleSelect) {
+      accessRoleSelect.addEventListener("change", updateAccessRoleUI);
+      updateAccessRoleUI();
+    }
+    if (accessSaveBtn) {
+      accessSaveBtn.addEventListener("click", saveAccessRecord);
+    }
+    if (accessRefreshBtn) {
+      accessRefreshBtn.addEventListener("click", refreshAccessList);
+    }
+    refreshAccessList();
   })
   .catch((err) => {
     console.warn("Admin access blocked:", err.message);
