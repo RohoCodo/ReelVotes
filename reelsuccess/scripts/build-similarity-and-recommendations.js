@@ -250,7 +250,13 @@ function movieHistorySimilarity(aHistory, bHistory) {
 
 function isLikelyBadMovieTitle(title) {
   const t = String(title || "").trim();
+  const tUpper = t.toUpperCase();
+  const knownNonMovie = new Set(["W", "CW", "TR", "ND", "NE", "NP", "TC", "N/A", "NA"]);
   if (!t) return true;
+  if (knownNonMovie.has(tUpper)) return true;
+  if (/^[A-Z]{1,2}$/.test(t)) return true;
+  if (/^[A-Z]{1,3}\s*-\s*/.test(t)) return true;
+  if (/\b(theatre rented|theater rented|weather|no engagement|not engaged)\b/i.test(t)) return true;
   if (/^[A-Za-z .'/&-]+,\s*[A-Z]{2}$/.test(t)) return true; // city/state-like rows
   if (/^[A-Za-z .'/&-]+\/[A-Za-z .'/&-]+,\s*[A-Z]{2}$/.test(t)) return true; // market rows like Monterey/Salinas, CA
   if (/\bCounty\b/i.test(t)) return true;

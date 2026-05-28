@@ -10,15 +10,16 @@
     "topKRecMovies": 15,
     "neighborPool": 30,
     "weights": {
-      "movie": 0.6,
-      "demographics": 0.25,
-      "operations": 0.15
+      "history": 0.75,
+      "movie": 0.05,
+      "demographics": 0.15,
+      "operations": 0.05
     }
   },
   "counts": {
-    "theaters": 668,
-    "recommendation_rows_total": 8420,
-    "avg_recommendations_per_theater": 12.6
+    "theaters": 724,
+    "recommendation_rows_total": 10545,
+    "avg_recommendations_per_theater": 14.56
   },
   "outputs": {
     "similarity": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/output/theater_similarity_topk_step4.json",

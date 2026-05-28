@@ -55,8 +55,8 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 13470,
-    "unique_movies": 11,
+    "total_screens": 22,
+    "unique_movies": 10,
     "non_friday_rate": 0
   },
   {
@@ -85,9 +85,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 15957,
-    "unique_movies": 47,
-    "non_friday_rate": 0.0886
+    "total_screens": 569,
+    "unique_movies": 46,
+    "non_friday_rate": 0.1138
   },
   {
     "theater_key": "CNMK|Cinemark Apple Valley 12|Apple Valley, CA",
@@ -115,9 +115,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 2966,
-    "unique_movies": 189,
-    "non_friday_rate": 0.2392
+    "total_screens": 2965,
+    "unique_movies": 188,
+    "non_friday_rate": 0.2398
   },
   {
     "theater_key": "ACTA|Arcata|Arcata, CA",
@@ -130,9 +130,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 10903,
-    "unique_movies": 24,
-    "non_friday_rate": 0.4545
+    "total_screens": 1535,
+    "unique_movies": 23,
+    "non_friday_rate": 0.8
   },
   {
     "theater_key": "INDRP|Minor 3|Arcata, CA",
@@ -145,9 +145,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 8074,
-    "unique_movies": 26,
-    "non_friday_rate": 0.1757
+    "total_screens": 158,
+    "unique_movies": 25,
+    "non_friday_rate": 0.2097
   },
   {
     "theater_key": "CGT|Fair Oaks|Arroyo Grande, CA",
@@ -160,9 +160,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 636,
-    "unique_movies": 11,
-    "non_friday_rate": 0.0417
+    "total_screens": 50,
+    "unique_movies": 10,
+    "non_friday_rate": 0.0435
   },
   {
     "theater_key": "REG|Regal Arroyo Grande|Arroyo Grande, CA",
@@ -190,9 +190,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 1451,
-    "unique_movies": 5,
-    "non_friday_rate": 0.5714
+    "total_screens": 5,
+    "unique_movies": 4,
+    "non_friday_rate": 1
   },
   {
     "theater_key": "CTRN|Varsity Theatre|Ashland, OR",
@@ -220,9 +220,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 3227,
-    "unique_movies": 9,
-    "non_friday_rate": 0.5714
+    "total_screens": 697,
+    "unique_movies": 8,
+    "non_friday_rate": 0.8889
   },
   {
     "theater_key": "REG|Regal UA Kaufman Astoria|Astoria, NY",
@@ -250,9 +250,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 11365,
-    "unique_movies": 36,
-    "non_friday_rate": 0.1349
+    "total_screens": 1157,
+    "unique_movies": 34,
+    "non_friday_rate": 0.1809
   },
   {
     "theater_key": "HARK|Gateway Pavilions 18|Avondale, AZ",
@@ -385,9 +385,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 8764,
-    "unique_movies": 20,
-    "non_friday_rate": 0.24
+    "total_screens": 2308,
+    "unique_movies": 19,
+    "non_friday_rate": 0.3396
   },
   {
     "theater_key": "ESP|Barstow Station is D'Place|Barstow, CA",
@@ -400,9 +400,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 13037,
-    "unique_movies": 69,
-    "non_friday_rate": 0.1643
+    "total_screens": 1389,
+    "unique_movies": 67,
+    "non_friday_rate": 0.1941
   },
   {
     "theater_key": "CGT|Skyline Twin DI|#|Barstow, CA",
@@ -415,8 +415,8 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 8259,
-    "unique_movies": 17,
+    "total_screens": 787,
+    "unique_movies": 15,
     "non_friday_rate": 0
   },
   {
@@ -475,9 +475,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 13436,
-    "unique_movies": 44,
-    "non_friday_rate": 0.2627
+    "total_screens": 1168,
+    "unique_movies": 42,
+    "non_friday_rate": 0.3563
   },
   {
     "theater_key": "ESP|Rialto Cinemas Elmwood|Berkeley, CA",
@@ -505,9 +505,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 13311,
-    "unique_movies": 32,
-    "non_friday_rate": 0.1224
+    "total_screens": 147,
+    "unique_movies": 31,
+    "non_friday_rate": 0.169
   },
   {
     "theater_key": "CFLM|Greenwood Features|Bethel, CT",
@@ -520,9 +520,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 15777,
-    "unique_movies": 36,
-    "non_friday_rate": 0.1538
+    "total_screens": 2730,
+    "unique_movies": 35,
+    "non_friday_rate": 0.2118
   },
   {
     "theater_key": "INDRP|Fine Arts Theatre|Beverly Hills, CA",
@@ -595,9 +595,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 12517,
-    "unique_movies": 46,
-    "non_friday_rate": 0.1481
+    "total_screens": 1831,
+    "unique_movies": 45,
+    "non_friday_rate": 0.2062
   },
   {
     "theater_key": "REG|Regal Edwards Brea East|Brea, CA",
@@ -625,9 +625,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 2248,
-    "unique_movies": 147,
-    "non_friday_rate": 0.2141
+    "total_screens": 2247,
+    "unique_movies": 146,
+    "non_friday_rate": 0.2147
   },
   {
     "theater_key": "AMC|AMC Brick Plaza 10|Brick Township, NJ",
@@ -640,9 +640,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 8272,
-    "unique_movies": 74,
-    "non_friday_rate": 0.1469
+    "total_screens": 1655,
+    "unique_movies": 73,
+    "non_friday_rate": 0.155
   },
   {
     "theater_key": "AMC|AMC DINE-IN Bridgewater Commons 7|Bridgewater, NJ",
@@ -655,9 +655,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 6462,
-    "unique_movies": 56,
-    "non_friday_rate": 0.1399
+    "total_screens": 2239,
+    "unique_movies": 55,
+    "non_friday_rate": 0.1471
   },
   {
     "theater_key": "AMC|AMC Bay Plaza 13|Bronx, NY",
@@ -670,9 +670,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 2156,
-    "unique_movies": 109,
-    "non_friday_rate": 0.1619
+    "total_screens": 2155,
+    "unique_movies": 108,
+    "non_friday_rate": 0.1625
   },
   {
     "theater_key": "REG|Regal Concourse 10|Bronx, NY",
@@ -775,9 +775,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 2545,
-    "unique_movies": 13,
-    "non_friday_rate": 0.1034
+    "total_screens": 39,
+    "unique_movies": 11,
+    "non_friday_rate": 0.1429
   },
   {
     "theater_key": "INDRP|Syndicated Theater|Brooklyn, NY",
@@ -790,9 +790,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 3287,
-    "unique_movies": 27,
-    "non_friday_rate": 0.3077
+    "total_screens": 1167,
+    "unique_movies": 26,
+    "non_friday_rate": 0.3429
   },
   {
     "theater_key": "KRIK|Buena Park Metroplex 18|Buena Park, CA",
@@ -835,9 +835,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 4799,
-    "unique_movies": 237,
-    "non_friday_rate": 0.2104
+    "total_screens": 4798,
+    "unique_movies": 236,
+    "non_friday_rate": 0.2108
   },
   {
     "theater_key": "AMC|AMC Burbank 30 with IMAX, Dolby, Prime|#|Burbank, CA",
@@ -1060,9 +1060,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 5036,
-    "unique_movies": 10,
-    "non_friday_rate": 0.2759
+    "total_screens": 38,
+    "unique_movies": 8,
+    "non_friday_rate": 0.4
   },
   {
     "theater_key": "ESP|Mary Pickford 14|Cathedral City, CA",
@@ -1090,9 +1090,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 9346,
-    "unique_movies": 125,
-    "non_friday_rate": 0.1893
+    "total_screens": 9345,
+    "unique_movies": 124,
+    "non_friday_rate": 0.1899
   },
   {
     "theater_key": "HARK|Cerritos 16|Cerritos, CA",
@@ -1330,9 +1330,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 12206,
-    "unique_movies": 205,
-    "non_friday_rate": 0.2133
+    "total_screens": 3273,
+    "unique_movies": 203,
+    "non_friday_rate": 0.2246
   },
   {
     "theater_key": "LAND|Landmark Closter Plaza|Closter, NJ",
@@ -1495,9 +1495,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 5417,
-    "unique_movies": 191,
-    "non_friday_rate": 0.2057
+    "total_screens": 5416,
+    "unique_movies": 190,
+    "non_friday_rate": 0.2062
   },
   {
     "theater_key": "BRIE|Cranford Theatre|Cranford, NJ",
@@ -1510,9 +1510,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 15248,
-    "unique_movies": 33,
-    "non_friday_rate": 0.25
+    "total_screens": 286,
+    "unique_movies": 31,
+    "non_friday_rate": 0.3333
   },
   {
     "theater_key": "CTRN|Crescent City Cinema|Crescent City, CA",
@@ -1525,9 +1525,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 18956,
-    "unique_movies": 58,
-    "non_friday_rate": 0.155
+    "total_screens": 965,
+    "unique_movies": 57,
+    "non_friday_rate": 0.2039
   },
   {
     "theater_key": "CULV|The Culver Theater|Culver City, CA",
@@ -1570,9 +1570,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 12208,
-    "unique_movies": 206,
-    "non_friday_rate": 0.2239
+    "total_screens": 3949,
+    "unique_movies": 204,
+    "non_friday_rate": 0.236
   },
   {
     "theater_key": "ARCE|Davis Varsity|Davis, CA",
@@ -1660,9 +1660,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 15620,
-    "unique_movies": 58,
-    "non_friday_rate": 0.1461
+    "total_screens": 1803,
+    "unique_movies": 57,
+    "non_friday_rate": 0.197
   },
   {
     "theater_key": "LOOK|Look Cinemas Dobbs Ferry|Dobbs Ferry, NY",
@@ -1750,9 +1750,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 9061,
-    "unique_movies": 102,
-    "non_friday_rate": 0.1636
+    "total_screens": 3200,
+    "unique_movies": 100,
+    "non_friday_rate": 0.1737
   },
   {
     "theater_key": "REG|Regal UA East Hampton|East Hampton, NY",
@@ -1780,9 +1780,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 9755,
-    "unique_movies": 108,
-    "non_friday_rate": 0.2082
+    "total_screens": 2486,
+    "unique_movies": 106,
+    "non_friday_rate": 0.2205
   },
   {
     "theater_key": "AMC|AMC DINE-IN Huntington 12 with Dolby, Prime|East Northport, NY",
@@ -1795,9 +1795,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 6632,
-    "unique_movies": 34,
-    "non_friday_rate": 0.2375
+    "total_screens": 223,
+    "unique_movies": 33,
+    "non_friday_rate": 0.2794
   },
   {
     "theater_key": "AMC|AMC Huntington 12 with Dolby, Prime|East Northport, NY",
@@ -1810,9 +1810,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 764,
-    "unique_movies": 67,
-    "non_friday_rate": 0.0952
+    "total_screens": 763,
+    "unique_movies": 66,
+    "non_friday_rate": 0.0958
   },
   {
     "theater_key": "AMC|AMC Monmouth Mall 15 with IMAX, Dolby|Eatontown, NJ",
@@ -1825,9 +1825,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 11974,
-    "unique_movies": 175,
-    "non_friday_rate": 0.2122
+    "total_screens": 2913,
+    "unique_movies": 173,
+    "non_friday_rate": 0.2254
   },
   {
     "theater_key": "AMC|AMC DINE-IN Menlo Park 12|Edison, NJ",
@@ -1840,9 +1840,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 7739,
-    "unique_movies": 97,
-    "non_friday_rate": 0.1686
+    "total_screens": 1134,
+    "unique_movies": 95,
+    "non_friday_rate": 0.1789
   },
   {
     "theater_key": "REG|Regal Edwards Rancho San Diego|El Cajon, CA",
@@ -1945,9 +1945,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 9399,
-    "unique_movies": 295,
-    "non_friday_rate": 0.2673
+    "total_screens": 3299,
+    "unique_movies": 293,
+    "non_friday_rate": 0.2796
   },
   {
     "theater_key": "CNMK|Elk Grove Laguna 16 + XD|Elk Grove, CA",
@@ -1975,9 +1975,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 5206,
-    "unique_movies": 201,
-    "non_friday_rate": 0.2377
+    "total_screens": 5205,
+    "unique_movies": 200,
+    "non_friday_rate": 0.2383
   },
   {
     "theater_key": "INDRP|La Paloma|Encinitas, CA",
@@ -2215,9 +2215,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 20209,
-    "unique_movies": 43,
-    "non_friday_rate": 0.0938
+    "total_screens": 2849,
+    "unique_movies": 42,
+    "non_friday_rate": 0.1348
   },
   {
     "theater_key": "CAC|Barrymore Film Center|Fort Lee, NJ",
@@ -2230,9 +2230,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 1223,
-    "unique_movies": 57,
-    "non_friday_rate": 0.8615
+    "total_screens": 1154,
+    "unique_movies": 56,
+    "non_friday_rate": 0.875
   },
   {
     "theater_key": "IPIC|iPic Theaters Hudson Lights|Fort Lee, NJ",
@@ -2245,9 +2245,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 5645,
-    "unique_movies": 45,
-    "non_friday_rate": 0.1307
+    "total_screens": 793,
+    "unique_movies": 44,
+    "non_friday_rate": 0.1408
   },
   {
     "theater_key": "AMC|AMC Freehold 14|Freehold, NJ",
@@ -2260,9 +2260,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 11125,
-    "unique_movies": 131,
-    "non_friday_rate": 0.2043
+    "total_screens": 2940,
+    "unique_movies": 129,
+    "non_friday_rate": 0.2175
   },
   {
     "theater_key": "CNMK|Century at Pacific Commons + XD|Fremont, CA",
@@ -2305,9 +2305,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 1210,
-    "unique_movies": 58,
-    "non_friday_rate": 0.1079
+    "total_screens": 1209,
+    "unique_movies": 57,
+    "non_friday_rate": 0.1087
   },
   {
     "theater_key": "REG|Regal Manchester|Fresno - Fresno, CA",
@@ -2380,9 +2380,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 4804,
-    "unique_movies": 234,
-    "non_friday_rate": 0.2156
+    "total_screens": 4803,
+    "unique_movies": 233,
+    "non_friday_rate": 0.216
   },
   {
     "theater_key": "AMC|AMC Roosevelt Field 8|Garden City, NY",
@@ -2395,9 +2395,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 3736,
-    "unique_movies": 53,
-    "non_friday_rate": 0.1401
+    "total_screens": 512,
+    "unique_movies": 52,
+    "non_friday_rate": 0.1438
   },
   {
     "theater_key": "REG|Regal Garden Grove|Garden Grove, CA",
@@ -2515,9 +2515,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 7950,
-    "unique_movies": 52,
-    "non_friday_rate": 0.1163
+    "total_screens": 4783,
+    "unique_movies": 51,
+    "non_friday_rate": 0.122
   },
   {
     "theater_key": "AMC|AMC Arrowhead Town Center 14 with Dolby|Glendale, AZ",
@@ -2545,9 +2545,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 816,
-    "unique_movies": 125,
-    "non_friday_rate": 0.1667
+    "total_screens": 815,
+    "unique_movies": 124,
+    "non_friday_rate": 0.1673
   },
   {
     "theater_key": "AMC|AMC Westgate 20 with IMAX, Dolby|Glendale, AZ",
@@ -2560,9 +2560,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 4755,
-    "unique_movies": 232,
-    "non_friday_rate": 0.2673
+    "total_screens": 4754,
+    "unique_movies": 231,
+    "non_friday_rate": 0.2679
   },
   {
     "theater_key": "WWDI|Glendale 9 DI|Glendale, AZ",
@@ -2590,9 +2590,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 2459,
-    "unique_movies": 191,
-    "non_friday_rate": 0.2393
+    "total_screens": 2458,
+    "unique_movies": 190,
+    "non_friday_rate": 0.2398
   },
   {
     "theater_key": "LAEM|Laemmle Glendale|Glendale, CA",
@@ -2650,9 +2650,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 2125,
-    "unique_movies": 100,
-    "non_friday_rate": 0.1667
+    "total_screens": 2124,
+    "unique_movies": 99,
+    "non_friday_rate": 0.1674
   },
   {
     "theater_key": "HARK|Estrella Falls 16|Goodyear, AZ",
@@ -2725,9 +2725,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 9078,
-    "unique_movies": 39,
-    "non_friday_rate": 0.1474
+    "total_screens": 120,
+    "unique_movies": 38,
+    "non_friday_rate": 0.2333
   },
   {
     "theater_key": "AMC|AMC DINE-IN Shops at Riverside 9 with Dolby|Hackensack, NJ",
@@ -2740,9 +2740,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 4090,
-    "unique_movies": 51,
-    "non_friday_rate": 0.1366
+    "total_screens": 924,
+    "unique_movies": 49,
+    "non_friday_rate": 0.1419
   },
   {
     "theater_key": "CNPL|Cinepolis Mansfield 14|Hackettstown, NJ",
@@ -2770,8 +2770,8 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 7858,
-    "unique_movies": 21,
+    "total_screens": 769,
+    "unique_movies": 20,
     "non_friday_rate": 0
   },
   {
@@ -2815,9 +2815,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 15545,
-    "unique_movies": 38,
-    "non_friday_rate": 0.1837
+    "total_screens": 1640,
+    "unique_movies": 36,
+    "non_friday_rate": 0.2432
   },
   {
     "theater_key": "CNMK|Century at Hayward|Hayward, CA",
@@ -2875,9 +2875,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 10625,
-    "unique_movies": 42,
-    "non_friday_rate": 0.1442
+    "total_screens": 2240,
+    "unique_movies": 41,
+    "non_friday_rate": 0.1667
   },
   {
     "theater_key": "GALX|Galaxy Green Valley|Henderson, NV",
@@ -2965,9 +2965,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 16704,
-    "unique_movies": 59,
-    "non_friday_rate": 0.1085
+    "total_screens": 2594,
+    "unique_movies": 57,
+    "non_friday_rate": 0.1437
   },
   {
     "theater_key": "PLHI|Palace Theatre|Hilo, HI",
@@ -2980,9 +2980,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 1493,
-    "unique_movies": 25,
-    "non_friday_rate": 0.6176
+    "total_screens": 1028,
+    "unique_movies": 23,
+    "non_friday_rate": 0.7241
   },
   {
     "theater_key": "REG|Regal Prince Kuhio|Hilo, HI",
@@ -3010,9 +3010,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 1574,
-    "unique_movies": 16,
-    "non_friday_rate": 0.1429
+    "total_screens": 988,
+    "unique_movies": 15,
+    "non_friday_rate": 0.15
   },
   {
     "theater_key": "ELCP|El Capitan|Hollywood, CA",
@@ -3130,9 +3130,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 5751,
-    "unique_movies": 48,
-    "non_friday_rate": 0.2899
+    "total_screens": 1205,
+    "unique_movies": 47,
+    "non_friday_rate": 0.3101
   },
   {
     "theater_key": "CAC|Cinema Arts Center 3|Huntington, NY",
@@ -3160,9 +3160,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 8418,
-    "unique_movies": 10,
-    "non_friday_rate": 0.0294
+    "total_screens": 6254,
+    "unique_movies": 9,
+    "non_friday_rate": 0.0357
   },
   {
     "theater_key": "TSN|Hurleyville Arts Centre|Hurleyville, NY",
@@ -3190,9 +3190,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 2650,
-    "unique_movies": 53,
-    "non_friday_rate": 0.1232
+    "total_screens": 1241,
+    "unique_movies": 51,
+    "non_friday_rate": 0.1318
   },
   {
     "theater_key": "CLRK|Rustic|Idyllwild, CA",
@@ -3235,9 +3235,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 5754,
-    "unique_movies": 244,
-    "non_friday_rate": 0.2099
+    "total_screens": 5753,
+    "unique_movies": 243,
+    "non_friday_rate": 0.2103
   },
   {
     "theater_key": "CNPL|Cinepolis Inglewood|Inglewood, CA",
@@ -3325,9 +3325,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 15145,
-    "unique_movies": 47,
-    "non_friday_rate": 0.2059
+    "total_screens": 1811,
+    "unique_movies": 46,
+    "non_friday_rate": 0.2828
   },
   {
     "theater_key": "AMC|AMC Newport Centre 11|Jersey City, NJ",
@@ -3340,9 +3340,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 6395,
-    "unique_movies": 93,
-    "non_friday_rate": 0.1803
+    "total_screens": 1730,
+    "unique_movies": 91,
+    "non_friday_rate": 0.1867
   },
   {
     "theater_key": "REG|Regal Maui Mall|Kahului, HI",
@@ -3370,9 +3370,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 263,
-    "unique_movies": 28,
-    "non_friday_rate": 0.2048
+    "total_screens": 241,
+    "unique_movies": 27,
+    "non_friday_rate": 0.2073
   },
   {
     "theater_key": "REG|Regal Windward|Kaneohe, HI",
@@ -3460,9 +3460,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 4200,
-    "unique_movies": 12,
-    "non_friday_rate": 0.1786
+    "total_screens": 795,
+    "unique_movies": 11,
+    "non_friday_rate": 0.2632
   },
   {
     "theater_key": "REG|Regal Keauhou|Keauhou-Kona, HI",
@@ -3505,9 +3505,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 9092,
-    "unique_movies": 27,
-    "non_friday_rate": 0.0864
+    "total_screens": 819,
+    "unique_movies": 26,
+    "non_friday_rate": 0.1186
   },
   {
     "theater_key": "BREN|Brenden Kingman Cinemas|Kingman, AZ",
@@ -3550,9 +3550,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 22396,
-    "unique_movies": 26,
-    "non_friday_rate": 0.141
+    "total_screens": 1490,
+    "unique_movies": 24,
+    "non_friday_rate": 0.3143
   },
   {
     "theater_key": "CTRN|Pelican Cinema|Klamath Falls, OR",
@@ -3565,9 +3565,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 27708,
-    "unique_movies": 71,
-    "non_friday_rate": 0.139
+    "total_screens": 3550,
+    "unique_movies": 70,
+    "non_friday_rate": 0.1809
   },
   {
     "theater_key": "REG|Regal UA La Canada|La Canada Flt, CA",
@@ -3640,9 +3640,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 1937,
-    "unique_movies": 132,
-    "non_friday_rate": 0.1831
+    "total_screens": 1936,
+    "unique_movies": 131,
+    "non_friday_rate": 0.1837
   },
   {
     "theater_key": "CTRN|The Lot|La Jolla, CA",
@@ -3865,9 +3865,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 8112,
-    "unique_movies": 20,
-    "non_friday_rate": 0.1148
+    "total_screens": 1808,
+    "unique_movies": 19,
+    "non_friday_rate": 0.14
   },
   {
     "theater_key": "CNMK|Cinemark 22 + IMAX|Lancaster, CA",
@@ -3895,9 +3895,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 2150,
-    "unique_movies": 115,
-    "non_friday_rate": 0.3408
+    "total_screens": 1341,
+    "unique_movies": 114,
+    "non_friday_rate": 0.3506
   },
   {
     "theater_key": "TMKO|Larkspur Landing Cinema|Larkspur, CA",
@@ -3925,9 +3925,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 1389,
-    "unique_movies": 81,
-    "non_friday_rate": 0.1275
+    "total_screens": 1388,
+    "unique_movies": 80,
+    "non_friday_rate": 0.1281
   },
   {
     "theater_key": "AMC|AMC Town Square 18 with IMAX, Dolby|Las Vegas, NV",
@@ -3955,9 +3955,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 2167,
-    "unique_movies": 234,
-    "non_friday_rate": 0.2306
+    "total_screens": 2166,
+    "unique_movies": 233,
+    "non_friday_rate": 0.2311
   },
   {
     "theater_key": "BREN|Brenden Palms 14 with IMAX + JBX|Las Vegas, NV",
@@ -4150,9 +4150,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 2512,
-    "unique_movies": 75,
-    "non_friday_rate": 0.5204
+    "total_screens": 222,
+    "unique_movies": 74,
+    "non_friday_rate": 0.5795
   },
   {
     "theater_key": "BREN|Brenden Avi|Laughlin, NV",
@@ -4165,9 +4165,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 21490,
-    "unique_movies": 54,
-    "non_friday_rate": 0.1106
+    "total_screens": 2759,
+    "unique_movies": 53,
+    "non_friday_rate": 0.1369
   },
   {
     "theater_key": "ESP|Riverside Cinema 6|Laughlin, NV",
@@ -4210,9 +4210,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 24106,
-    "unique_movies": 60,
-    "non_friday_rate": 0.0098
+    "total_screens": 2618,
+    "unique_movies": 59,
+    "non_friday_rate": 0.0123
   },
   {
     "theater_key": "AMC|AMC DINE-IN Levittown 10|Levittown, NY",
@@ -4225,9 +4225,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 5921,
-    "unique_movies": 44,
-    "non_friday_rate": 0.1739
+    "total_screens": 339,
+    "unique_movies": 43,
+    "non_friday_rate": 0.1905
   },
   {
     "theater_key": "AMC|AMC Levittown 10|Levittown, NY",
@@ -4255,9 +4255,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 6720,
-    "unique_movies": 91,
-    "non_friday_rate": 0.1336
+    "total_screens": 1626,
+    "unique_movies": 89,
+    "non_friday_rate": 0.141
   },
   {
     "theater_key": "TMKO|Livermore Cinemas|Livermore, CA",
@@ -4285,9 +4285,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 8149,
-    "unique_movies": 23,
-    "non_friday_rate": 0.1692
+    "total_screens": 107,
+    "unique_movies": 22,
+    "non_friday_rate": 0.2245
   },
   {
     "theater_key": "TMKO|Lodi Stadium 12|Lodi, CA",
@@ -4330,9 +4330,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 1577,
-    "unique_movies": 102,
-    "non_friday_rate": 0.1583
+    "total_screens": 1576,
+    "unique_movies": 101,
+    "non_friday_rate": 0.1589
   },
   {
     "theater_key": "ESP|Art Theatre of Long Beach|Long Beach, CA",
@@ -4345,9 +4345,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 13649,
-    "unique_movies": 40,
-    "non_friday_rate": 0.2821
+    "total_screens": 1311,
+    "unique_movies": 39,
+    "non_friday_rate": 0.44
   },
   {
     "theater_key": "CNMK|Cinemark 14 @ The Pike + XD|Long Beach, CA",
@@ -4420,9 +4420,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 1785,
-    "unique_movies": 5,
-    "non_friday_rate": 0.6667
+    "total_screens": 4,
+    "unique_movies": 4,
+    "non_friday_rate": 1
   },
   {
     "theater_key": "INDLF|California Science Center IMAX Theater|Los Angeles, CA",
@@ -4615,8 +4615,8 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 558,
-    "unique_movies": 4,
+    "total_screens": 24,
+    "unique_movies": 3,
     "non_friday_rate": 0
   },
   {
@@ -4705,9 +4705,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 5123,
-    "unique_movies": 16,
-    "non_friday_rate": 0.2143
+    "total_screens": 84,
+    "unique_movies": 15,
+    "non_friday_rate": 0.2647
   },
   {
     "theater_key": "BRIE|Mamaroneck Cinemas|Mamaroneck, NY",
@@ -4735,9 +4735,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 7447,
-    "unique_movies": 19,
-    "non_friday_rate": 0.1695
+    "total_screens": 90,
+    "unique_movies": 18,
+    "non_friday_rate": 0.2273
   },
   {
     "theater_key": "AMC|AMC Manteca 16 with Dolby|Manteca, CA",
@@ -4750,9 +4750,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 2788,
-    "unique_movies": 176,
-    "non_friday_rate": 0.2493
+    "total_screens": 2787,
+    "unique_movies": 175,
+    "non_friday_rate": 0.25
   },
   {
     "theater_key": "READ|Reading Manville with Titan Luxe|Manville, NJ",
@@ -4780,9 +4780,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 2068,
-    "unique_movies": 94,
-    "non_friday_rate": 0.1864
+    "total_screens": 2067,
+    "unique_movies": 93,
+    "non_friday_rate": 0.1872
   },
   {
     "theater_key": "CNMK|Century Marina + XD|Marina, CA",
@@ -4870,9 +4870,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 2635,
-    "unique_movies": 146,
-    "non_friday_rate": 0.2203
+    "total_screens": 2634,
+    "unique_movies": 145,
+    "non_friday_rate": 0.2211
   },
   {
     "theater_key": "AMC|AMC Superstition East 12 with IMAX|Mesa, AZ",
@@ -4900,9 +4900,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 2142,
-    "unique_movies": 98,
-    "non_friday_rate": 0.1345
+    "total_screens": 2141,
+    "unique_movies": 97,
+    "non_friday_rate": 0.1351
   },
   {
     "theater_key": "CNMK|Cinemark 16|Mesa, AZ",
@@ -4975,9 +4975,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 10510,
-    "unique_movies": 174,
-    "non_friday_rate": 0.1986
+    "total_screens": 4061,
+    "unique_movies": 172,
+    "non_friday_rate": 0.208
   },
   {
     "theater_key": "CONS|Cons Mililani 14 with TITAN LUXE|Mililani, HI",
@@ -5020,9 +5020,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 4741,
-    "unique_movies": 59,
-    "non_friday_rate": 0.2479
+    "total_screens": 2869,
+    "unique_movies": 58,
+    "non_friday_rate": 0.2632
   },
   {
     "theater_key": "CNMK|Milpitas Great Mall 20 + XD|Milpitas, CA",
@@ -5125,9 +5125,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 2274,
-    "unique_movies": 43,
-    "non_friday_rate": 0.4242
+    "total_screens": 824,
+    "unique_movies": 42,
+    "non_friday_rate": 0.4667
   },
   {
     "theater_key": "REG|Regal UA Cortlandt Town Center|Mohegan Lake, NY",
@@ -5140,9 +5140,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 8235,
-    "unique_movies": 111,
-    "non_friday_rate": 0.1903
+    "total_screens": 3141,
+    "unique_movies": 110,
+    "non_friday_rate": 0.2032
   },
   {
     "theater_key": "FLSH|Monroe Theater|Monroe, NY",
@@ -5155,9 +5155,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 14262,
-    "unique_movies": 41,
-    "non_friday_rate": 0.1316
+    "total_screens": 1704,
+    "unique_movies": 40,
+    "non_friday_rate": 0.1639
   },
   {
     "theater_key": "LOOK|Look Cinemas Monrovia|Monrovia, CA",
@@ -5215,9 +5215,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 8626,
-    "unique_movies": 71,
-    "non_friday_rate": 0.1714
+    "total_screens": 767,
+    "unique_movies": 70,
+    "non_friday_rate": 0.1899
   },
   {
     "theater_key": "AMC|AMC Montebello 10|Montebello, CA",
@@ -5245,9 +5245,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 44626,
-    "unique_movies": 164,
-    "non_friday_rate": 0.1375
+    "total_screens": 8835,
+    "unique_movies": 162,
+    "non_friday_rate": 0.1576
   },
   {
     "theater_key": "CNMK|Monterey Cinemas 13|Monterey, CA",
@@ -5275,9 +5275,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 9367,
-    "unique_movies": 27,
-    "non_friday_rate": 0.1687
+    "total_screens": 1519,
+    "unique_movies": 26,
+    "non_friday_rate": 0.2121
   },
   {
     "theater_key": "HARK|Moreno Valley 16|Moreno Valley, CA",
@@ -5305,9 +5305,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 16239,
-    "unique_movies": 46,
-    "non_friday_rate": 0.1139
+    "total_screens": 1210,
+    "unique_movies": 45,
+    "non_friday_rate": 0.1353
   },
   {
     "theater_key": "AMC|AMC Headquarters Plaza 10|Morristown, NJ",
@@ -5320,9 +5320,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 10404,
-    "unique_movies": 78,
-    "non_friday_rate": 0.1632
+    "total_screens": 4335,
+    "unique_movies": 76,
+    "non_friday_rate": 0.1741
   },
   {
     "theater_key": "CLRK|Bay Theatre|Morro Bay, CA",
@@ -5335,9 +5335,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 5633,
-    "unique_movies": 14,
-    "non_friday_rate": 0.0667
+    "total_screens": 33,
+    "unique_movies": 13,
+    "non_friday_rate": 0.0952
   },
   {
     "theater_key": "BRIE|Mount Kisco 5|Mount Kisco, NY",
@@ -5350,9 +5350,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 10070,
-    "unique_movies": 34,
-    "non_friday_rate": 0.126
+    "total_screens": 796,
+    "unique_movies": 32,
+    "non_friday_rate": 0.1667
   },
   {
     "theater_key": "CTRN|Mount Shasta Cinemas|Mount Shasta, CA",
@@ -5410,9 +5410,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 6319,
-    "unique_movies": 80,
-    "non_friday_rate": 0.1502
+    "total_screens": 1234,
+    "unique_movies": 78,
+    "non_friday_rate": 0.16
   },
   {
     "theater_key": "READ|Reading Cal Oaks 17 with Titan LUXE|Murrieta, CA",
@@ -5440,9 +5440,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 7722,
-    "unique_movies": 107,
-    "non_friday_rate": 0.1885
+    "total_screens": 1529,
+    "unique_movies": 106,
+    "non_friday_rate": 0.2016
   },
   {
     "theater_key": "CNMK|Century Napa Valley 12 + XD|Napa, CA",
@@ -5470,9 +5470,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 2877,
-    "unique_movies": 143,
-    "non_friday_rate": 0.1881
+    "total_screens": 2876,
+    "unique_movies": 142,
+    "non_friday_rate": 0.1887
   },
   {
     "theater_key": "CTRN|The ONYX|Nevada City, CA",
@@ -5500,9 +5500,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 9791,
-    "unique_movies": 265,
-    "non_friday_rate": 0.2519
+    "total_screens": 3362,
+    "unique_movies": 263,
+    "non_friday_rate": 0.2634
   },
   {
     "theater_key": "BTIE|New Canaan Playhouse|New Canaan, CT",
@@ -5545,9 +5545,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 3526,
-    "unique_movies": 31,
-    "non_friday_rate": 0.1494
+    "total_screens": 1945,
+    "unique_movies": 29,
+    "non_friday_rate": 0.1605
   },
   {
     "theater_key": "REG|Regal New Roc|New Rochelle, NY",
@@ -5560,9 +5560,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 13984,
-    "unique_movies": 229,
-    "non_friday_rate": 0.2363
+    "total_screens": 5131,
+    "unique_movies": 228,
+    "non_friday_rate": 0.2478
   },
   {
     "theater_key": "DRFT|Alamo Manhattan 14|New York, NY",
@@ -5590,9 +5590,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 3633,
-    "unique_movies": 59,
-    "non_friday_rate": 0.1793
+    "total_screens": 3632,
+    "unique_movies": 58,
+    "non_friday_rate": 0.1806
   },
   {
     "theater_key": "AMC|AMC 34th Street 14 with IMAX, Dolby|New York, NY",
@@ -5605,9 +5605,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 798,
-    "unique_movies": 110,
-    "non_friday_rate": 0.2143
+    "total_screens": 797,
+    "unique_movies": 109,
+    "non_friday_rate": 0.2151
   },
   {
     "theater_key": "AMC|AMC 84th Street 6|New York, NY",
@@ -5635,9 +5635,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 8432,
-    "unique_movies": 324,
-    "non_friday_rate": 0.2186
+    "total_screens": 8428,
+    "unique_movies": 322,
+    "non_friday_rate": 0.2196
   },
   {
     "theater_key": "AMC|AMC Kips Bay 15 with IMAX|New York, NY",
@@ -5650,9 +5650,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 3299,
-    "unique_movies": 171,
-    "non_friday_rate": 0.2401
+    "total_screens": 3298,
+    "unique_movies": 170,
+    "non_friday_rate": 0.2408
   },
   {
     "theater_key": "AMC|AMC Lincoln Square 13 with IMAX, Dolby|New York, NY",
@@ -5680,9 +5680,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 603,
-    "unique_movies": 79,
-    "non_friday_rate": 0.1515
+    "total_screens": 602,
+    "unique_movies": 78,
+    "non_friday_rate": 0.1523
   },
   {
     "theater_key": "AMC|AMC Orpheum 7|New York, NY",
@@ -5710,9 +5710,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 1432,
-    "unique_movies": 59,
-    "non_friday_rate": 0.1224
+    "total_screens": 1431,
+    "unique_movies": 58,
+    "non_friday_rate": 0.1233
   },
   {
     "theater_key": "ANKA|Angelika Film Center 6|New York, NY",
@@ -5860,9 +5860,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 23811,
-    "unique_movies": 67,
-    "non_friday_rate": 0.385
+    "total_screens": 677,
+    "unique_movies": 66,
+    "non_friday_rate": 0.5816
   },
   {
     "theater_key": "MGPH|Metrograph|New York, NY",
@@ -5875,9 +5875,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 87002,
-    "unique_movies": 252,
-    "non_friday_rate": 0.3743
+    "total_screens": 2122,
+    "unique_movies": 251,
+    "non_friday_rate": 0.5211
   },
   {
     "theater_key": "QUAD|Quad Cinema|New York, NY",
@@ -5965,9 +5965,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 28590,
-    "unique_movies": 60,
-    "non_friday_rate": 0.3871
+    "total_screens": 1360,
+    "unique_movies": 59,
+    "non_friday_rate": 0.5769
   },
   {
     "theater_key": "ANKA|Village East 7|New York, NY",
@@ -5995,9 +5995,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 2093,
-    "unique_movies": 103,
-    "non_friday_rate": 0.1967
+    "total_screens": 2092,
+    "unique_movies": 102,
+    "non_friday_rate": 0.1975
   },
   {
     "theater_key": "REG|Regal Edwards Big Newport|Newport Beach, CA",
@@ -6040,9 +6040,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 19360,
-    "unique_movies": 67,
-    "non_friday_rate": 0.1053
+    "total_screens": 5809,
+    "unique_movies": 66,
+    "non_friday_rate": 0.1194
   },
   {
     "theater_key": "REG|Regal Commerce Center|North Brunswick, NJ",
@@ -6055,9 +6055,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 8592,
-    "unique_movies": 226,
-    "non_friday_rate": 0.2874
+    "total_screens": 3010,
+    "unique_movies": 225,
+    "non_friday_rate": 0.2982
   },
   {
     "theater_key": "CNMK|Cinemark North Hollywood|North Hollywood, CA",
@@ -6145,9 +6145,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 2777,
-    "unique_movies": 102,
-    "non_friday_rate": 0.176
+    "total_screens": 2776,
+    "unique_movies": 101,
+    "non_friday_rate": 0.1767
   },
   {
     "theater_key": "AMC|AMC Norwalk 20 with IMAX, Dolby|Norwalk, CA",
@@ -6160,9 +6160,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 4145,
-    "unique_movies": 248,
-    "non_friday_rate": 0.2317
+    "total_screens": 4144,
+    "unique_movies": 247,
+    "non_friday_rate": 0.2322
   },
   {
     "theater_key": "AMC|AMC Royale 6|Norwalk, CT",
@@ -6175,9 +6175,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 5740,
-    "unique_movies": 38,
-    "non_friday_rate": 0.1743
+    "total_screens": 1046,
+    "unique_movies": 37,
+    "non_friday_rate": 0.1845
   },
   {
     "theater_key": "AMC|AMC SoNo 8|Norwalk, CT",
@@ -6190,9 +6190,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 6561,
-    "unique_movies": 68,
-    "non_friday_rate": 0.1453
+    "total_screens": 1914,
+    "unique_movies": 67,
+    "non_friday_rate": 0.1538
   },
   {
     "theater_key": "CNMK|Novato Rowland Plaza 8|Novato, CA",
@@ -6340,9 +6340,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 3609,
-    "unique_movies": 256,
-    "non_friday_rate": 0.1736
+    "total_screens": 3608,
+    "unique_movies": 255,
+    "non_friday_rate": 0.1739
   },
   {
     "theater_key": "REG|Regal Edwards Ontario Mountain Village|Ontario, CA",
@@ -6385,9 +6385,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 7427,
-    "unique_movies": 323,
-    "non_friday_rate": 0.2076
+    "total_screens": 7426,
+    "unique_movies": 322,
+    "non_friday_rate": 0.2078
   },
   {
     "theater_key": "AMC|AMC Orange 30 with IMAX, Dolby|#|Orange, CA",
@@ -6430,9 +6430,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 17576,
-    "unique_movies": 46,
-    "non_friday_rate": 0.2661
+    "total_screens": 2084,
+    "unique_movies": 45,
+    "non_friday_rate": 0.3367
   },
   {
     "theater_key": "CNMK|Century Oro Valley Marketplace|Oro Valley, AZ",
@@ -6505,9 +6505,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 2208,
-    "unique_movies": 4,
-    "non_friday_rate": 0.5
+    "total_screens": 20,
+    "unique_movies": 3,
+    "non_friday_rate": 0.7778
   },
   {
     "theater_key": "REG|Regal Nu'uuli Place Twin|Pago Pago, AA",
@@ -6535,9 +6535,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 22504,
-    "unique_movies": 27,
-    "non_friday_rate": 0.1972
+    "total_screens": 2796,
+    "unique_movies": 25,
+    "non_friday_rate": 0.4375
   },
   {
     "theater_key": "BALC|Festival Theaters 9|Palm Springs, CA",
@@ -6580,9 +6580,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 2562,
-    "unique_movies": 14,
-    "non_friday_rate": 0.1163
+    "total_screens": 680,
+    "unique_movies": 13,
+    "non_friday_rate": 0.1282
   },
   {
     "theater_key": "ESP|Bianchi 11|Paramount, CA",
@@ -6625,9 +6625,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 8845,
-    "unique_movies": 156,
-    "non_friday_rate": 0.2377
+    "total_screens": 2781,
+    "unique_movies": 154,
+    "non_friday_rate": 0.2465
   },
   {
     "theater_key": "CTRN|Bluewater Cinemas|Parker, AZ",
@@ -6730,9 +6730,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 6495,
-    "unique_movies": 20,
-    "non_friday_rate": 0.1224
+    "total_screens": 39,
+    "unique_movies": 18,
+    "non_friday_rate": 0.2143
   },
   {
     "theater_key": "REG|Regal Pearl Highlands|Pearl City, HI",
@@ -6790,9 +6790,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 9233,
-    "unique_movies": 55,
-    "non_friday_rate": 0.1361
+    "total_screens": 1368,
+    "unique_movies": 54,
+    "non_friday_rate": 0.1494
   },
   {
     "theater_key": "HARK|Park West 14|Peoria, AZ",
@@ -6850,9 +6850,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 6717,
-    "unique_movies": 253,
-    "non_friday_rate": 0.25
+    "total_screens": 6716,
+    "unique_movies": 252,
+    "non_friday_rate": 0.2505
   },
   {
     "theater_key": "AMC|AMC Arizona Center 14|Phoenix, AZ",
@@ -6865,9 +6865,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 4461,
-    "unique_movies": 128,
-    "non_friday_rate": 0.1743
+    "total_screens": 4460,
+    "unique_movies": 127,
+    "non_friday_rate": 0.1749
   },
   {
     "theater_key": "AMC|AMC Deer Valley 17 with IMAX, Dolby|Phoenix, AZ",
@@ -6880,9 +6880,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 2949,
-    "unique_movies": 191,
-    "non_friday_rate": 0.2284
+    "total_screens": 2948,
+    "unique_movies": 190,
+    "non_friday_rate": 0.229
   },
   {
     "theater_key": "AMC|AMC Desert Ridge 18 with IMAX, Dolby|Phoenix, AZ",
@@ -6895,9 +6895,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 3445,
-    "unique_movies": 188,
-    "non_friday_rate": 0.228
+    "total_screens": 3444,
+    "unique_movies": 187,
+    "non_friday_rate": 0.2287
   },
   {
     "theater_key": "AMC|AMC DINE-IN Desert Ridge 18 with IMAX, Dolby|Phoenix, AZ",
@@ -6925,9 +6925,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 1082,
-    "unique_movies": 142,
-    "non_friday_rate": 0.2
+    "total_screens": 1081,
+    "unique_movies": 141,
+    "non_friday_rate": 0.2006
   },
   {
     "theater_key": "ARCE|America Cinemas of Phoenix|Phoenix, AZ",
@@ -7060,9 +7060,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 17249,
-    "unique_movies": 55,
-    "non_friday_rate": 0.1222
+    "total_screens": 388,
+    "unique_movies": 54,
+    "non_friday_rate": 0.1549
   },
   {
     "theater_key": "CNMK|Century Downtown Pleasant Hill 16 + XD|Pleasant Hill, CA",
@@ -7090,9 +7090,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 38209,
-    "unique_movies": 97,
-    "non_friday_rate": 0.1938
+    "total_screens": 355,
+    "unique_movies": 96,
+    "non_friday_rate": 0.2762
   },
   {
     "theater_key": "AMC|AMC Port Chester 14 with IMAX, Dolby|Port Chester, NY",
@@ -7105,9 +7105,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 10850,
-    "unique_movies": 147,
-    "non_friday_rate": 0.1845
+    "total_screens": 2963,
+    "unique_movies": 145,
+    "non_friday_rate": 0.1956
   },
   {
     "theater_key": "AMC|AMC Porter Ranch 9 with Dolby, Prime|Porter Ranch, CA",
@@ -7120,9 +7120,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 438,
-    "unique_movies": 62,
-    "non_friday_rate": 0.1358
+    "total_screens": 437,
+    "unique_movies": 61,
+    "non_friday_rate": 0.1366
   },
   {
     "theater_key": "GALX|Galaxy Porterville|Porterville, CA",
@@ -7150,9 +7150,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 10581,
-    "unique_movies": 220,
-    "non_friday_rate": 0.232
+    "total_screens": 3848,
+    "unique_movies": 219,
+    "non_friday_rate": 0.2435
   },
   {
     "theater_key": "AMC|AMC DINE-IN Poway 10|Poway, CA",
@@ -7360,9 +7360,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 10835,
-    "unique_movies": 25,
-    "non_friday_rate": 0.0617
+    "total_screens": 94,
+    "unique_movies": 23,
+    "non_friday_rate": 0.0962
   },
   {
     "theater_key": "TSU|Riverside Plaza Cinemas|Red Bluff, CA",
@@ -7390,9 +7390,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 4367,
-    "unique_movies": 51,
-    "non_friday_rate": 0.1645
+    "total_screens": 1676,
+    "unique_movies": 49,
+    "non_friday_rate": 0.1786
   },
   {
     "theater_key": "CNMK|Redding 14 + XD|Redding, CA",
@@ -7450,9 +7450,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 2879,
-    "unique_movies": 105,
-    "non_friday_rate": 0.1507
+    "total_screens": 2878,
+    "unique_movies": 104,
+    "non_friday_rate": 0.1513
   },
   {
     "theater_key": "AMC|AMC South Bay Galleria 16 with Dolby|Redondo Beach, CA",
@@ -7525,9 +7525,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 17633,
-    "unique_movies": 39,
-    "non_friday_rate": 0.17
+    "total_screens": 501,
+    "unique_movies": 38,
+    "non_friday_rate": 0.2742
   },
   {
     "theater_key": "CNMK|Cinemark Rialto 13 + XD|Rialto, CA",
@@ -7585,9 +7585,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 10437,
-    "unique_movies": 106,
-    "non_friday_rate": 0.1654
+    "total_screens": 1008,
+    "unique_movies": 104,
+    "non_friday_rate": 0.1767
   },
   {
     "theater_key": "NTC|Prospector Theater|Ridgefield, CT",
@@ -7630,9 +7630,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 2958,
-    "unique_movies": 172,
-    "non_friday_rate": 0.2192
+    "total_screens": 2957,
+    "unique_movies": 171,
+    "non_friday_rate": 0.2198
   },
   {
     "theater_key": "GALX|Galaxy Mission Grove|Riverside, CA",
@@ -7735,9 +7735,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 14209,
-    "unique_movies": 198,
-    "non_friday_rate": 0.2418
+    "total_screens": 3900,
+    "unique_movies": 196,
+    "non_friday_rate": 0.2552
   },
   {
     "theater_key": "CNMK|Blue Oaks Century 16 + XD|Rocklin, CA",
@@ -7780,9 +7780,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 2261,
-    "unique_movies": 31,
-    "non_friday_rate": 0.1294
+    "total_screens": 224,
+    "unique_movies": 30,
+    "non_friday_rate": 0.1375
   },
   {
     "theater_key": "REG|Regal Promenade|Rolling Hills Estates, CA",
@@ -7825,9 +7825,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 17789,
-    "unique_movies": 34,
-    "non_friday_rate": 0.2877
+    "total_screens": 44,
+    "unique_movies": 33,
+    "non_friday_rate": 0.5385
   },
   {
     "theater_key": "NTC|Rosendale Theater|#|Rosendale, NY",
@@ -7840,9 +7840,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 2163,
-    "unique_movies": 4,
-    "non_friday_rate": 0.3333
+    "total_screens": 3,
+    "unique_movies": 3,
+    "non_friday_rate": 0.6667
   },
   {
     "theater_key": "TMKO|Cinema West Olympus Pointe|Roseville, CA",
@@ -7930,9 +7930,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 1409,
-    "unique_movies": 38,
-    "non_friday_rate": 0.25
+    "total_screens": 1408,
+    "unique_movies": 37,
+    "non_friday_rate": 0.2529
   },
   {
     "theater_key": "REG|Regal Delta Shores|Sacramento, CA",
@@ -8020,9 +8020,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 9639,
-    "unique_movies": 16,
-    "non_friday_rate": 0.1026
+    "total_screens": 1345,
+    "unique_movies": 14,
+    "non_friday_rate": 0.25
   },
   {
     "theater_key": "ANKA|Tower 3|Sacramento, CA",
@@ -8065,9 +8065,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 2640,
-    "unique_movies": 68,
-    "non_friday_rate": 0.3596
+    "total_screens": 734,
+    "unique_movies": 67,
+    "non_friday_rate": 0.3761
   },
   {
     "theater_key": "TAG|Hinkson Memorial Theatre|Saint Johns, AZ",
@@ -8080,9 +8080,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 2561,
-    "unique_movies": 11,
-    "non_friday_rate": 0.0323
+    "total_screens": 27,
+    "unique_movies": 9,
+    "non_friday_rate": 0.0625
   },
   {
     "theater_key": "MAYA|Maya Salinas 14|Salinas, CA",
@@ -8185,9 +8185,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 2583,
-    "unique_movies": 199,
-    "non_friday_rate": 0.2127
+    "total_screens": 2582,
+    "unique_movies": 198,
+    "non_friday_rate": 0.2132
   },
   {
     "theater_key": "AMC|AMC Mission Valley 20 with IMAX, Dolby|San Diego, CA",
@@ -8200,9 +8200,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 7360,
-    "unique_movies": 253,
-    "non_friday_rate": 0.2421
+    "total_screens": 7359,
+    "unique_movies": 252,
+    "non_friday_rate": 0.2426
   },
   {
     "theater_key": "AMC|AMC Palm Promenade 14 with IMAX, Dolby|San Diego, CA",
@@ -8215,9 +8215,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 2093,
-    "unique_movies": 128,
-    "non_friday_rate": 0.1673
+    "total_screens": 2092,
+    "unique_movies": 127,
+    "non_friday_rate": 0.1679
   },
   {
     "theater_key": "ANKA|Angelika Carmel Mountain|San Diego, CA",
@@ -8305,8 +8305,8 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 7833,
-    "unique_movies": 27,
+    "total_screens": 141,
+    "unique_movies": 26,
     "non_friday_rate": 0
   },
   {
@@ -8320,8 +8320,8 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 10584,
-    "unique_movies": 22,
+    "total_screens": 116,
+    "unique_movies": 21,
     "non_friday_rate": 0
   },
   {
@@ -8365,9 +8365,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 521,
-    "unique_movies": 2,
-    "non_friday_rate": 0.3333
+    "total_screens": 1,
+    "unique_movies": 1,
+    "non_friday_rate": 1
   },
   {
     "theater_key": "DRFT|Alamo New Mission 5|San Francisco, CA",
@@ -8395,9 +8395,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 1498,
-    "unique_movies": 53,
-    "non_friday_rate": 0.1923
+    "total_screens": 1497,
+    "unique_movies": 52,
+    "non_friday_rate": 0.1935
   },
   {
     "theater_key": "AMC|AMC Metreon 16 with IMAX, Dolby|San Francisco, CA",
@@ -8410,9 +8410,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 863,
-    "unique_movies": 189,
-    "non_friday_rate": 0.2334
+    "total_screens": 862,
+    "unique_movies": 188,
+    "non_friday_rate": 0.234
   },
   {
     "theater_key": "APPL|Apple Cinemas Van Ness IMAX|San Francisco, CA",
@@ -8440,9 +8440,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 2303,
-    "unique_movies": 25,
-    "non_friday_rate": 0.4211
+    "total_screens": 643,
+    "unique_movies": 24,
+    "non_friday_rate": 0.4706
   },
   {
     "theater_key": "CAST|Castro|San Francisco, CA",
@@ -8485,9 +8485,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 14753,
-    "unique_movies": 37,
-    "non_friday_rate": 0.0877
+    "total_screens": 2171,
+    "unique_movies": 36,
+    "non_friday_rate": 0.1136
   },
   {
     "theater_key": "ESP|Presidio Theatre|San Francisco, CA",
@@ -8500,9 +8500,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 657,
-    "unique_movies": 28,
-    "non_friday_rate": 0.2627
+    "total_screens": 488,
+    "unique_movies": 27,
+    "non_friday_rate": 0.2672
   },
   {
     "theater_key": "REG|Regal Stonestown Galleria|San Francisco, CA",
@@ -8545,9 +8545,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 4331,
-    "unique_movies": 10,
-    "non_friday_rate": 0.0385
+    "total_screens": 39,
+    "unique_movies": 8,
+    "non_friday_rate": 0.0588
   },
   {
     "theater_key": "REG|Regal San Jacinto Metro|San Jacinto, CA",
@@ -8575,9 +8575,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 1861,
-    "unique_movies": 172,
-    "non_friday_rate": 0.2471
+    "total_screens": 1860,
+    "unique_movies": 171,
+    "non_friday_rate": 0.2478
   },
   {
     "theater_key": "AMC|AMC Saratoga 14 with IMAX, Dolby|San Jose, CA",
@@ -8590,9 +8590,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 1137,
-    "unique_movies": 144,
-    "non_friday_rate": 0.2315
+    "total_screens": 1136,
+    "unique_movies": 143,
+    "non_friday_rate": 0.2323
   },
   {
     "theater_key": "WWDI|Capitol 6 DI|San Jose, CA",
@@ -8650,9 +8650,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 662,
-    "unique_movies": 6,
-    "non_friday_rate": 0.7692
+    "total_screens": 344,
+    "unique_movies": 5,
+    "non_friday_rate": 0.8333
   },
   {
     "theater_key": "CNMK|San Leandro Bayfair 16|San Leandro, CA",
@@ -8680,9 +8680,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 2010,
-    "unique_movies": 52,
-    "non_friday_rate": 0.3448
+    "total_screens": 757,
+    "unique_movies": 51,
+    "non_friday_rate": 0.3659
   },
   {
     "theater_key": "CGT|Sunset DI|San Luis Obispo, CA",
@@ -8860,9 +8860,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 4615,
-    "unique_movies": 279,
-    "non_friday_rate": 0.2486
+    "total_screens": 4614,
+    "unique_movies": 278,
+    "non_friday_rate": 0.249
   },
   {
     "theater_key": "LAEM|Newhall|Santa Clarita, CA",
@@ -8920,9 +8920,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 20285,
-    "unique_movies": 39,
-    "non_friday_rate": 0.0804
+    "total_screens": 3437,
+    "unique_movies": 38,
+    "non_friday_rate": 0.1139
   },
   {
     "theater_key": "WWDI|Santa Cruz 9|Santa Cruz, CA",
@@ -9040,9 +9040,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 15039,
-    "unique_movies": 46,
-    "non_friday_rate": 0.1694
+    "total_screens": 937,
+    "unique_movies": 45,
+    "non_friday_rate": 0.2593
   },
   {
     "theater_key": "BRIE|Sayville Theater|Sayville, NY",
@@ -9055,9 +9055,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 304,
-    "unique_movies": 29,
-    "non_friday_rate": 0.2099
+    "total_screens": 266,
+    "unique_movies": 28,
+    "non_friday_rate": 0.2125
   },
   {
     "theater_key": "HARK|Camelview at Fashion Square|Scottsdale, AZ",
@@ -9070,9 +9070,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 2671,
-    "unique_movies": 132,
-    "non_friday_rate": 0.1932
+    "total_screens": 2669,
+    "unique_movies": 131,
+    "non_friday_rate": 0.1943
   },
   {
     "theater_key": "LAND|Landmark Scottsdale Quarter|Scottsdale, AZ",
@@ -9145,9 +9145,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 7994,
-    "unique_movies": 147,
-    "non_friday_rate": 0.2427
+    "total_screens": 1727,
+    "unique_movies": 146,
+    "non_friday_rate": 0.2568
   },
   {
     "theater_key": "MDFT|Mary D. Fisher Theatre|Sedona, AZ",
@@ -9190,9 +9190,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 1961,
-    "unique_movies": 36,
-    "non_friday_rate": 0.1364
+    "total_screens": 1791,
+    "unique_movies": 35,
+    "non_friday_rate": 0.1402
   },
   {
     "theater_key": "REG|Regal Sherman Oaks Galleria|Sherman Oaks, CA",
@@ -9265,9 +9265,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 16259,
-    "unique_movies": 37,
-    "non_friday_rate": 0.0968
+    "total_screens": 1117,
+    "unique_movies": 35,
+    "non_friday_rate": 0.119
   },
   {
     "theater_key": "AFBS|Premiere Cinemas Soledad|Soledad, CA",
@@ -9280,9 +9280,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 15744,
-    "unique_movies": 38,
-    "non_friday_rate": 0.1241
+    "total_screens": 2499,
+    "unique_movies": 37,
+    "non_friday_rate": 0.1513
   },
   {
     "theater_key": "REG|Regal Sonora|Sonora, CA",
@@ -9325,9 +9325,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 284,
-    "unique_movies": 13,
-    "non_friday_rate": 0.1944
+    "total_screens": 78,
+    "unique_movies": 12,
+    "non_friday_rate": 0.2059
   },
   {
     "theater_key": "REG|Regal Hadley|South Plainfield, NJ",
@@ -9340,9 +9340,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 8328,
-    "unique_movies": 202,
-    "non_friday_rate": 0.256
+    "total_screens": 2210,
+    "unique_movies": 201,
+    "non_friday_rate": 0.2674
   },
   {
     "theater_key": "CSI|Southampton Playhouse|Southampton, NY",
@@ -9355,9 +9355,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 1370,
-    "unique_movies": 38,
-    "non_friday_rate": 0.2111
+    "total_screens": 447,
+    "unique_movies": 37,
+    "non_friday_rate": 0.2159
   },
   {
     "theater_key": "WWDI|El Rancho 4 DI|Sparks, NV",
@@ -9370,9 +9370,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 12400,
-    "unique_movies": 38,
-    "non_friday_rate": 0.1221
+    "total_screens": 1812,
+    "unique_movies": 37,
+    "non_friday_rate": 0.1538
   },
   {
     "theater_key": "GALX|Galaxy Legends|Sparks, NV",
@@ -9415,9 +9415,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 2450,
-    "unique_movies": 23,
-    "non_friday_rate": 0.1231
+    "total_screens": 1325,
+    "unique_movies": 21,
+    "non_friday_rate": 0.1356
   },
   {
     "theater_key": "TRI|El Rio|Springerville, AZ",
@@ -9430,8 +9430,8 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 4774,
-    "unique_movies": 10,
+    "total_screens": 29,
+    "unique_movies": 9,
     "non_friday_rate": 0
   },
   {
@@ -9445,9 +9445,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 6243,
-    "unique_movies": 82,
-    "non_friday_rate": 0.203
+    "total_screens": 1659,
+    "unique_movies": 81,
+    "non_friday_rate": 0.2162
   },
   {
     "theater_key": "AMC|AMC Majestic 6 with Prime|Stamford, CT",
@@ -9460,9 +9460,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 4460,
-    "unique_movies": 45,
-    "non_friday_rate": 0.1182
+    "total_screens": 264,
+    "unique_movies": 43,
+    "non_friday_rate": 0.1262
   },
   {
     "theater_key": "NTC|Avon Theatre|Stamford, CT",
@@ -9505,9 +9505,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 6499,
-    "unique_movies": 53,
-    "non_friday_rate": 0.1811
+    "total_screens": 432,
+    "unique_movies": 51,
+    "non_friday_rate": 0.2
   },
   {
     "theater_key": "AMC|AMC Staten Island Mall 11 with IMAX, Dolby|Staten Island, NY",
@@ -9535,9 +9535,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 7767,
-    "unique_movies": 96,
-    "non_friday_rate": 0.1652
+    "total_screens": 2510,
+    "unique_movies": 95,
+    "non_friday_rate": 0.1751
   },
   {
     "theater_key": "REG|Regal Stockton City Centre|Stockton, CA",
@@ -9580,9 +9580,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 9129,
-    "unique_movies": 214,
-    "non_friday_rate": 0.239
+    "total_screens": 1834,
+    "unique_movies": 212,
+    "non_friday_rate": 0.2512
   },
   {
     "theater_key": "AMC|AMC DINE-IN Sunnyvale 12 with IMAX, Dolby|Sunnyvale, CA",
@@ -9610,9 +9610,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 492,
-    "unique_movies": 74,
-    "non_friday_rate": 0.1871
+    "total_screens": 491,
+    "unique_movies": 73,
+    "non_friday_rate": 0.1882
   },
   {
     "theater_key": "AMC|AMC Surprise 14 with IMAX|Surprise, AZ",
@@ -9625,9 +9625,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 2227,
-    "unique_movies": 147,
-    "non_friday_rate": 0.1925
+    "total_screens": 2226,
+    "unique_movies": 146,
+    "non_friday_rate": 0.1931
   },
   {
     "theater_key": "PBCM|FatCats Surprise|Surprise, AZ",
@@ -9685,9 +9685,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 7312,
-    "unique_movies": 38,
-    "non_friday_rate": 0.1667
+    "total_screens": 769,
+    "unique_movies": 36,
+    "non_friday_rate": 0.2143
   },
   {
     "theater_key": "AMC|AMC Temecula 10|Temecula, CA",
@@ -9790,9 +9790,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 38033,
-    "unique_movies": 95,
-    "non_friday_rate": 0.0212
+    "total_screens": 4661,
+    "unique_movies": 94,
+    "non_friday_rate": 0.0269
   },
   {
     "theater_key": "HARK|Tempe Marketplace 16|Tempe, AZ",
@@ -9820,9 +9820,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 4075,
-    "unique_movies": 135,
-    "non_friday_rate": 0.2006
+    "total_screens": 4074,
+    "unique_movies": 134,
+    "non_friday_rate": 0.2013
   },
   {
     "theater_key": "REG|Regal Janss Marketplace|Thousand Oaks, CA",
@@ -9850,9 +9850,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 11145,
-    "unique_movies": 24,
-    "non_friday_rate": 0.1899
+    "total_screens": 1767,
+    "unique_movies": 23,
+    "non_friday_rate": 0.2344
   },
   {
     "theater_key": "MARQ|Marquee Orchard 10|Toms River, NJ",
@@ -9865,9 +9865,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 1697,
-    "unique_movies": 84,
-    "non_friday_rate": 0.2452
+    "total_screens": 1387,
+    "unique_movies": 83,
+    "non_friday_rate": 0.2464
   },
   {
     "theater_key": "AMC|AMC Del Amo 18 with IMAX, Dolby|Torrance, CA",
@@ -9880,9 +9880,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 3503,
-    "unique_movies": 210,
-    "non_friday_rate": 0.2311
+    "total_screens": 3502,
+    "unique_movies": 209,
+    "non_friday_rate": 0.2317
   },
   {
     "theater_key": "AMC|AMC Rolling Hills 20 with IMAX, Dolby|Torrance, CA",
@@ -9895,9 +9895,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 4116,
-    "unique_movies": 233,
-    "non_friday_rate": 0.1911
+    "total_screens": 4115,
+    "unique_movies": 232,
+    "non_friday_rate": 0.1915
   },
   {
     "theater_key": "CNMK|Movies 14|Tracy, CA",
@@ -9940,9 +9940,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 17695,
-    "unique_movies": 176,
-    "non_friday_rate": 0.177
+    "total_screens": 9627,
+    "unique_movies": 174,
+    "non_friday_rate": 0.1856
   },
   {
     "theater_key": "CLRK|Tuba City Twin|Tuba City, AZ",
@@ -9955,9 +9955,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 3301,
-    "unique_movies": 11,
-    "non_friday_rate": 0.2222
+    "total_screens": 31,
+    "unique_movies": 10,
+    "non_friday_rate": 0.3333
   },
   {
     "theater_key": "AMC|AMC Foothills 15 with IMAX, Prime|Tucson, AZ",
@@ -9970,9 +9970,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 1834,
-    "unique_movies": 172,
-    "non_friday_rate": 0.2145
+    "total_screens": 1833,
+    "unique_movies": 171,
+    "non_friday_rate": 0.2151
   },
   {
     "theater_key": "HARK|Arizona Pavilions 12|Tucson, AZ",
@@ -10135,9 +10135,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 2725,
-    "unique_movies": 128,
-    "non_friday_rate": 0.1815
+    "total_screens": 2724,
+    "unique_movies": 127,
+    "non_friday_rate": 0.1821
   },
   {
     "theater_key": "RCFB|Smith's Ranch DI|Twentynine Palms, CA",
@@ -10150,9 +10150,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 7744,
-    "unique_movies": 8,
-    "non_friday_rate": 0.1481
+    "total_screens": 24,
+    "unique_movies": 7,
+    "non_friday_rate": 0.2857
   },
   {
     "theater_key": "REG|Regal Ukiah|Ukiah, CA",
@@ -10195,9 +10195,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 5548,
-    "unique_movies": 192,
-    "non_friday_rate": 0.1834
+    "total_screens": 5543,
+    "unique_movies": 190,
+    "non_friday_rate": 0.185
   },
   {
     "theater_key": "AMC|AMC Universal Citywalk Hollywood 19 with IMAX, Prime|#|Universal City, CA",
@@ -10225,9 +10225,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 4865,
-    "unique_movies": 35,
-    "non_friday_rate": 0.1463
+    "total_screens": 809,
+    "unique_movies": 34,
+    "non_friday_rate": 0.1644
   },
   {
     "theater_key": "BREN|Vacaville 16 + JBX|Vacaville, CA",
@@ -10375,9 +10375,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 7596,
-    "unique_movies": 74,
-    "non_friday_rate": 0.2388
+    "total_screens": 1520,
+    "unique_movies": 73,
+    "non_friday_rate": 0.2526
   },
   {
     "theater_key": "AMC|AMC Wayne 12 with Prime|Wayne, NJ",
@@ -10390,9 +10390,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 9589,
-    "unique_movies": 109,
-    "non_friday_rate": 0.194
+    "total_screens": 1190,
+    "unique_movies": 107,
+    "non_friday_rate": 0.2055
   },
   {
     "theater_key": "CNMK|Cinemark Willowbrook Mall + XD|Wayne, NJ",
@@ -10420,9 +10420,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 6974,
-    "unique_movies": 27,
-    "non_friday_rate": 0.0909
+    "total_screens": 232,
+    "unique_movies": 26,
+    "non_friday_rate": 0.15
   },
   {
     "theater_key": "REG|Regal Edwards West Covina|West Covina, CA",
@@ -10450,8 +10450,8 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 7461,
-    "unique_movies": 21,
+    "total_screens": 84,
+    "unique_movies": 20,
     "non_friday_rate": 0
   },
   {
@@ -10495,9 +10495,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 14840,
-    "unique_movies": 259,
-    "non_friday_rate": 0.2316
+    "total_screens": 4390,
+    "unique_movies": 257,
+    "non_friday_rate": 0.2432
   },
   {
     "theater_key": "AMC|AMC DINE-IN Essex Green 9|West Orange, NJ",
@@ -10510,9 +10510,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 7866,
-    "unique_movies": 64,
-    "non_friday_rate": 0.1746
+    "total_screens": 2698,
+    "unique_movies": 63,
+    "non_friday_rate": 0.1844
   },
   {
     "theater_key": "AMC|AMC Raceway 10|Westbury, NY",
@@ -10525,9 +10525,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 7347,
-    "unique_movies": 98,
-    "non_friday_rate": 0.1551
+    "total_screens": 2648,
+    "unique_movies": 97,
+    "non_friday_rate": 0.1631
   },
   {
     "theater_key": "REG|Regal Westbury|Westbury, NY",
@@ -10585,9 +10585,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 12499,
-    "unique_movies": 42,
-    "non_friday_rate": 0.0667
+    "total_screens": 1687,
+    "unique_movies": 40,
+    "non_friday_rate": 0.0885
   },
   {
     "theater_key": "CTRN|Crater Lake Cinema|White City, OR",
@@ -10675,9 +10675,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 14721,
-    "unique_movies": 38,
-    "non_friday_rate": 0.1735
+    "total_screens": 2739,
+    "unique_movies": 37,
+    "non_friday_rate": 0.2537
   },
   {
     "theater_key": "CLRK|Window Rock Cinema|Window Rock, AZ",
@@ -10690,9 +10690,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 666,
-    "unique_movies": 13,
-    "non_friday_rate": 0.1818
+    "total_screens": 518,
+    "unique_movies": 12,
+    "non_friday_rate": 0.2
   },
   {
     "theater_key": "INDRP|Winslow Movie Theater|Winslow, AZ",
@@ -10735,9 +10735,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 1395,
-    "unique_movies": 7,
-    "non_friday_rate": 0.2667
+    "total_screens": 13,
+    "unique_movies": 6,
+    "non_friday_rate": 0.4444
   },
   {
     "theater_key": "DRFT|Alamo Yonkers 6|Yonkers, NY",
@@ -10765,9 +10765,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 7628,
-    "unique_movies": 52,
-    "non_friday_rate": 0.1183
+    "total_screens": 1090,
+    "unique_movies": 51,
+    "non_friday_rate": 0.1274
   },
   {
     "theater_key": "NAM|Showcase Cinema de Lux Ridge Hill|Yonkers, NY",
@@ -10780,9 +10780,9 @@
     "population": null,
     "median_household_income": null,
     "median_age": null,
-    "total_screens": 9321,
-    "unique_movies": 91,
-    "non_friday_rate": 0.1737
+    "total_screens": 929,
+    "unique_movies": 90,
+    "non_friday_rate": 0.1899
   },
   {
     "theater_key": "REG|Regal Yorba Linda|Yorba Linda, CA",

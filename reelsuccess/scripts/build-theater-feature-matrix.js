@@ -54,14 +54,31 @@ function normalizeMovieTitle(title) {
     .trim();
 }
 
+const KNOWN_NON_MOVIE_TITLES = new Set([
+  "W",
+  "CW",
+  "TR",
+  "ND",
+  "NE",
+  "NP",
+  "TC",
+  "N/A",
+  "NA",
+]);
+
 function isNoiseMovieTitle(title) {
   const t = String(title || "").trim();
+  const tUpper = t.toUpperCase();
   if (!t) return true;
+  if (KNOWN_NON_MOVIE_TITLES.has(tUpper)) return true;
+  if (/^[A-Z]{1,2}$/.test(t)) return true; // legend-like short codes
+  if (/^[A-Z]{1,3}\s*-\s*/.test(t)) return true; // code prefixes like "TR - ..."
   if (/^[-+]?\d+%[,]?\d*$/i.test(t)) return true;
   if (/^[-+]?\d+[\d,]*(\.\d+)?$/.test(t)) return true;
   if (/^(total|gross)$/i.test(t)) return true;
   if (/^(data valid as of:|page\s+\d+\s+of\s+\d+)/i.test(t)) return true;
   if (/^# denotes/i.test(t) || /^\* denotes/i.test(t)) return true;
+  if (/\b(theatre rented|theater rented|weather|no engagement|not engaged)\b/i.test(t)) return true;
   if (/^[A-Za-z .'/&-]+,\s*[A-Z]{2}$/.test(t)) return true;
   if (/^[A-Za-z .'/&-]+\/[A-Za-z .'/&-]+,\s*[A-Z]{2}$/.test(t)) return true;
   if (/\bCounty\b/i.test(t)) return true;

@@ -7,12 +7,12 @@
     "minMovieTheaters": 3
   },
   "counts": {
-    "screenings_raw": 8878,
-    "screenings_clean": 6649,
-    "dropped_noise_titles": 2229,
-    "unique_theaters": 668,
-    "movie_features": 89,
-    "matrix_rows": 668
+    "screenings_raw": 211261,
+    "screenings_clean": 140965,
+    "dropped_noise_titles": 70296,
+    "unique_theaters": 724,
+    "movie_features": 856,
+    "matrix_rows": 724
   },
   "outputs": {
     "screenings_clean": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/output/screenings_clean_step3.json",
