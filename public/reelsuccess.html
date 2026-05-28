@@ -11,23 +11,29 @@
 
   <div class="container">
     <div class="card reelsuccess-card">
-      <img src="icon.png" class="logo" />
-      <h1>ReelSuccess</h1>
-      <p class="subtitle">Find similar theaters and proven movie recommendations.</p>
-
-      <p style="margin: 0 0 10px; text-align: left;">
-        <a href="index.html" class="app-link">← Back to ReelVotes</a>
-      </p>
-
-      <div class="reelsuccess-auth-row">
-        <p id="reelsuccessIdentity" class="subtitle" style="margin:0;">Not signed in.</p>
-        <div class="reelsuccess-auth-actions">
-          <button id="reelsuccessSignInBtn" class="reelsuccess-any-button" type="button">Sign in</button>
-          <button id="reelsuccessSignOutBtn" class="reelsuccess-any-button" type="button" style="display:none;">Sign out</button>
+      <!-- Header with logo/title on left, auth on right -->
+      <div class="reelsuccess-header">
+        <div class="reelsuccess-header-left">
+          <img src="icon.png" class="logo reelsuccess-logo" />
+          <div class="reelsuccess-header-text">
+            <h1>ReelSuccess</h1>
+            <p class="subtitle">Find similar theaters and proven movie recommendations.</p>
+          </div>
+        </div>
+        <div class="reelsuccess-header-right">
+          <p id="reelsuccessIdentity" class="subtitle" style="margin:0;font-size:12px;">Not signed in.</p>
+          <div class="reelsuccess-auth-actions">
+            <button id="reelsuccessSignInBtn" class="reelsuccess-sign-btn" type="button">Sign in</button>
+            <button id="reelsuccessSignOutBtn" class="reelsuccess-sign-btn" type="button" style="display:none;">Sign out</button>
+          </div>
         </div>
       </div>
 
-      <div class="main-tabs" style="margin-top:14px;">
+      <p style="margin: 8px 0 0; text-align: left;">
+        <a href="index.html" class="app-link">← Back to ReelVotes</a>
+      </p>
+
+      <div class="main-tabs">
         <button id="findMovieTabBtn" type="button" class="main-tab-btn active">Find Your Next Movie</button>
         <button id="grossUploadTabBtn" type="button" class="main-tab-btn">Upload and Manage Grosses</button>
       </div>

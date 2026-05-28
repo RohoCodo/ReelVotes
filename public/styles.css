@@ -72,9 +72,83 @@ body {
     text-align: left;
   }
 
+  .reelsuccess-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+    margin-bottom: 10px;
+  }
+
+  .reelsuccess-header-left {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    flex: 1;
+  }
+
+  .reelsuccess-logo {
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .reelsuccess-header-text h1 {
+    margin: 0;
+    text-align: left;
+    font-size: 28px;
+  }
+
+  .reelsuccess-header-text .subtitle {
+    text-align: left;
+    margin: 4px 0 0;
+  }
+
+  .reelsuccess-header-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+    white-space: nowrap;
+  }
+
+  .reelsuccess-sign-btn {
+    padding: 10px 16px;
+    background: #ff4757;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.2s ease;
+  }
+
+  .reelsuccess-sign-btn:hover {
+    background: #ff3838;
+  }
+
+  @media (max-width: 768px) {
+    .reelsuccess-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .reelsuccess-header-right {
+      align-items: flex-start;
+      width: 100%;
+    }
+
+    .reelsuccess-sign-btn {
+      width: 100%;
+    }
+  }
+
   .reelsuccess-card h1,
   .reelsuccess-card .subtitle {
-    text-align: center;
+    text-align: left;
   }
 
   .reelsuccess-controls {
@@ -87,6 +161,20 @@ body {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     gap: 10px;
+    align-items: center;
+  }
+
+  .reelsuccess-auth-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .reelsuccess-auth-actions {
+    display: flex;
+    gap: 8px;
     align-items: center;
   }
 
@@ -114,6 +202,52 @@ body {
     background: #1f1f1f;
     color: #fff;
     font-size: 14px;
+  }
+
+  .reelsuccess-search-results {
+    display: grid;
+    gap: 6px;
+    max-height: 260px;
+    overflow-y: auto;
+    padding: 8px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(0, 0, 0, 0.35);
+  }
+
+  .reelsuccess-search-result-item {
+    width: 100%;
+    text-align: left;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #fff;
+    border-radius: 8px;
+    padding: 8px 10px;
+    cursor: pointer;
+    display: grid;
+    gap: 3px;
+  }
+
+  .reelsuccess-search-result-item:hover {
+    background: rgba(255, 71, 87, 0.18);
+    border-color: rgba(255, 71, 87, 0.55);
+  }
+
+  .reelsuccess-search-result-item.active {
+    background: rgba(255, 71, 87, 0.28);
+    border-color: rgba(255, 71, 87, 0.8);
+  }
+
+  .reelsuccess-search-result-item .title {
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  .reelsuccess-search-result-item .meta {
+    font-size: 12px;
+    color: #cfcfcf;
+    line-height: 1.2;
   }
 
   .reelsuccess-stats-grid {
@@ -219,6 +353,80 @@ body {
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 999px;
     padding: 8px 12px;
+  }
+
+  .main-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 2px solid #333;
+    margin: 20px 0 14px 0;
+    padding-bottom: 0;
+  }
+
+  .main-tab-btn {
+    flex: 0 1 auto;
+    padding: 12px 20px;
+    background: transparent;
+    color: #aaa;
+    border: none;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: color 0.2s ease, border-color 0.2s ease;
+    border-bottom: 3px solid transparent;
+    position: relative;
+    top: 2px;
+  }
+
+  .main-tab-btn:hover {
+    color: #ddd;
+  }
+
+  .main-tab-btn + .main-tab-btn {
+    border-left: none;
+    margin-left: 8px;
+  }
+
+  .main-tab-btn.active {
+    color: #ff4757;
+    border-bottom-color: #ff4757;
+    font-weight: 700;
+  }
+
+  .main-tab-panel[hidden] {
+    display: none !important;
+  }
+
+  .moments-feed {
+    display: grid;
+    gap: 10px;
+  }
+
+  .moment-item {
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 10px;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.25);
+  }
+
+  .moment-item-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 6px;
+  }
+
+  .moment-item-body {
+    font-size: 12px;
+    line-height: 1.45;
+    color: #d8d8d8;
+    white-space: pre-wrap;
+  }
+
+  .moment-item-meta {
+    margin-top: 8px;
+    font-size: 11px;
+    color: #9a9a9a;
   }
 
   .info-box {
