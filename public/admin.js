@@ -22,9 +22,6 @@ const getEventVoteStatsCallable = httpsCallable(functions, "getEventVoteStats");
 const reelSuccessSetAccessCallable = httpsCallable(functions, "reelSuccessSetAccess");
 const reelSuccessListAccessCallable = httpsCallable(functions, "reelSuccessListAccess");
 
-// Hardcoded total votes needed to reach goal (same as main app)
-const VOTES_NEEDED = 50;
-
 // Admin whitelist (normalized to lowercase)
 const ADMIN_EMAILS = new Set([
   "rt332@cornell.edu",
@@ -440,7 +437,7 @@ function renderMovies(movies) {
 
   movies.forEach((movie) => {
     const voteCount = movie.vote_count || 0;
-    const percentage = Math.round((voteCount / VOTES_NEEDED) * 100);
+    const percentage = totalVotes > 0 ? Math.round((voteCount / totalVotes) * 100) : 0;
 
     const item = document.createElement("div");
     item.className = "chosen-movie";
@@ -451,7 +448,7 @@ function renderMovies(movies) {
       <div class="chosen-movie-bar">
         <div class="chosen-movie-fill" style="width: ${Math.min(percentage, 100)}%"></div>
       </div>
-      <div class="chosen-movie-count">${voteCount} / ${VOTES_NEEDED} needed</div>
+      <div class="chosen-movie-count">${voteCount} vote${voteCount === 1 ? "" : "s"}</div>
     `;
 
     adminList.appendChild(item);
