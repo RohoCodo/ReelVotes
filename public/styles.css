@@ -43,7 +43,9 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100%;
+    min-height: 100vh;
+    min-height: 100dvh;
+    height: auto;
     padding: 20px;
   }
   
@@ -154,6 +156,23 @@ body {
   }
 
   @media (max-width: 640px) {
+    .container {
+      align-items: flex-start;
+      padding: 12px;
+      min-height: 100dvh;
+    }
+
+    .card {
+      max-width: 100%;
+      padding: 18px;
+    }
+
+    .top-right-links {
+      position: static;
+      justify-content: center;
+      margin-bottom: 8px;
+    }
+
     .reelsuccess-search-row {
       grid-template-columns: 1fr;
     }
