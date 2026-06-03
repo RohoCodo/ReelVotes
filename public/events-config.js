@@ -74,9 +74,9 @@ window.REELVOTES_EVENTS = [
   },
   {
     id: "2026-06-15",
-    firestoreEventId: "np-2026-06-15-1830",
-    screeningLabel: "6/15 @ 6:30pm",
-    screeningDateTime: "2026-06-15T18:30:00",
+    firestoreEventId: "np-2026-06-15-2100",
+    screeningLabel: "6/15 @ 9:00pm",
+    screeningDateTime: "2026-06-15T21:00:00",
     voteStatus: "live",
     requireEmail: true,
     showLiveVoteCounts: false,
