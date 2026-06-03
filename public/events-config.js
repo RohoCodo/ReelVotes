@@ -74,13 +74,13 @@ window.REELVOTES_EVENTS = [
   },
   {
     id: "2026-06-15",
-    firestoreEventId: "np-2026-06-15-2100",
+    firestoreEventId: "np-2026-06-15-1830",
     screeningLabel: "6/15 @ 9:00pm",
     screeningDateTime: "2026-06-15T21:00:00",
-    voteStatus: "live",
+    voteStatus: "ended",
     requireEmail: true,
     showLiveVoteCounts: false,
-    voteWindowLabel: "Voting now",
+    voteWindowLabel: "Voting ended",
     allowedMovies: [
       "Children of Men",
       "War of the Worlds",
