@@ -1944,35 +1944,16 @@ async function getFirestoreVoteStatus(firestoreEventId) {
   }
 }
 
-// If no explicit event was requested and the current event is ended in
-// Firestore, find the latest event that is actually live in Firestore and
-// redirect there so the homepage always lands on the live vote.
+// If no explicit event was requested, send user to showtimes list.
+// If the current event is ended, also send them to showtimes.
 async function redirectIfEndedWithoutExplicitRequest() {
   if (requestedEventId) {
     // User explicitly picked this event; respect that choice.
     return;
   }
 
-  if (EVENT_STATUS !== "ended") {
-    return;
-  }
-
-  // Current event is ended — find the latest live event in Firestore.
-  // Exclude events already known to be ended in the static config.
-  const otherLiveCandidates = configuredEvents
-    .filter((event) => event.id !== selectedEvent?.id && event.voteStatus !== "ended")
-    .sort((a, b) => getEventSortTime(b) - getEventSortTime(a));
-
-  for (const candidate of otherLiveCandidates) {
-    const firestoreId = candidate.firestoreEventId || candidate.id;
-    const status = await getFirestoreVoteStatus(firestoreId);
-    if (status === "live") {
-      const nextUrl = new URL(window.location.href);
-      nextUrl.searchParams.set("event", candidate.id);
-      window.location.replace(nextUrl.toString());
-      return;
-    }
-  }
+  // No event was requested — redirect to showtimes/event selector
+  window.location.replace('select-event.html');
 }
 
 // Initialize
