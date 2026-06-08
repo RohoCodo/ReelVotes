@@ -792,6 +792,94 @@ function sanitizeMovieTitles(movieTitlesInput) {
   return deduped;
 }
 
+function sanitizeOptionalMovieTitles(movieTitlesInput) {
+  if (movieTitlesInput == null) {
+    return [];
+  }
+
+  const rawTitles = Array.isArray(movieTitlesInput)
+    ? movieTitlesInput
+    : [movieTitlesInput];
+
+  if (rawTitles.length === 0) {
+    return [];
+  }
+
+  const deduped = [];
+  const seen = new Set();
+
+  rawTitles.forEach((title) => {
+    const normalizedMovieTitle = String(title || "").trim();
+    if (!normalizedMovieTitle) {
+      return;
+    }
+    if (normalizedMovieTitle.length > 200) {
+      throw new HttpsError("invalid-argument", "Movie titles must be 200 characters or fewer.");
+    }
+
+    const key = normalizeMovieTitle(normalizedMovieTitle);
+    if (!seen.has(key)) {
+      seen.add(key);
+      deduped.push(normalizedMovieTitle);
+    }
+  });
+
+  if (deduped.length > 20) {
+    throw new HttpsError("invalid-argument", "You can preload up to 20 movies per event.");
+  }
+
+  return deduped;
+}
+
+function sanitizeVoteStatus(voteStatusInput) {
+  const normalizedVoteStatus = String(voteStatusInput || "not-started").trim().toLowerCase();
+  if (!["not-started", "live", "ended"].includes(normalizedVoteStatus)) {
+    throw new HttpsError("invalid-argument", "voteStatus must be 'not-started', 'live', or 'ended'.");
+  }
+  return normalizedVoteStatus;
+}
+
+function sanitizeScreeningDateTime(screeningDateTimeInput) {
+  const normalizedDateTime = String(screeningDateTimeInput || "").trim();
+  if (!normalizedDateTime) {
+    throw new HttpsError("invalid-argument", "screeningDateTime is required.");
+  }
+
+  const isoPattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/;
+  if (!isoPattern.test(normalizedDateTime)) {
+    throw new HttpsError("invalid-argument", "screeningDateTime must look like YYYY-MM-DDTHH:mm.");
+  }
+
+  const parsedDate = new Date(normalizedDateTime);
+  if (Number.isNaN(parsedDate.getTime())) {
+    throw new HttpsError("invalid-argument", "screeningDateTime is invalid.");
+  }
+
+  return normalizedDateTime.length === 16 ? `${normalizedDateTime}:00` : normalizedDateTime;
+}
+
+function buildScreeningLabel(screeningDateTime) {
+  const [datePart, timePart] = String(screeningDateTime).split("T");
+  const [, month, day] = datePart.split("-");
+  const [hoursRaw, minutes] = timePart.split(":");
+  const hours = Number(hoursRaw);
+  const suffix = hours >= 12 ? "pm" : "am";
+  const displayHour = hours % 12 || 12;
+  return `${Number(month)}/${Number(day)} @ ${displayHour}:${minutes}${suffix}`;
+}
+
+function buildShowtimeFirestoreId(screeningDateTime) {
+  const [datePart, timePart] = String(screeningDateTime).split("T");
+  const compactTime = timePart.slice(0, 5).replace(":", "");
+  return `np-${datePart}-${compactTime}`;
+}
+
+function buildVoteWindowLabel(voteStatus) {
+  if (voteStatus === "live") return "Voting now";
+  if (voteStatus === "ended") return "Voting ended";
+  return "Voting opens soon";
+}
+
 function sanitizeClientId(clientId) {
   const normalizedClientId = String(clientId || "").trim();
   if (!normalizedClientId || normalizedClientId.length > 200) {
@@ -1204,6 +1292,76 @@ exports.saveEventAdminSettings = onCall(async (request) => {
     movieCount: movieTitles.length,
     deletedMovieCount,
     requireEmail,
+  };
+});
+
+exports.createEventShowtime = onCall(async (request) => {
+  const adminEmail = assertAdminEmail(request.data?.adminEmail);
+  const screeningDateTime = sanitizeScreeningDateTime(request.data?.screeningDateTime);
+  const voteStatus = sanitizeVoteStatus(request.data?.voteStatus);
+  const requireEmail = request.data?.requireEmail !== false;
+  const movieTitles = sanitizeOptionalMovieTitles(request.data?.movieTitles);
+
+  const eventId = buildShowtimeFirestoreId(screeningDateTime);
+  const screeningLabel = buildScreeningLabel(screeningDateTime);
+  const voteWindowLabel = buildVoteWindowLabel(voteStatus);
+  const eventRef = db.collection("events").doc(eventId);
+  const eventDoc = await eventRef.get();
+
+  if (eventDoc.exists) {
+    throw new HttpsError("already-exists", `A showtime already exists for ${screeningLabel}.`);
+  }
+
+  const batch = db.batch();
+  const now = admin.firestore.FieldValue.serverTimestamp();
+
+  batch.set(eventRef, {
+    screeningLabel,
+    screeningDateTime,
+    voteStatus,
+    voteWindowLabel,
+    requireEmail,
+    updated_at: now,
+    updated_by: adminEmail,
+    created_at: now,
+    created_by: adminEmail,
+  }, {merge: true});
+
+  movieTitles.forEach((title) => {
+    const movieRef = eventRef.collection("movies").doc(movieDocId(title));
+    batch.set(movieRef, {
+      event_id: eventId,
+      movie_title: title,
+      vote_count: 0,
+      created_at: now,
+      updated_at: now,
+    });
+  });
+
+  await batch.commit();
+
+  logger.info("Admin created showtime", {
+    eventId,
+    adminEmail,
+    screeningDateTime,
+    voteStatus,
+    requireEmail,
+    movieCount: movieTitles.length,
+  });
+
+  return {
+    ok: true,
+    eventId,
+    event: {
+      id: eventId,
+      firestoreEventId: eventId,
+      screeningLabel,
+      screeningDateTime,
+      voteStatus,
+      voteWindowLabel,
+      requireEmail,
+      allowedMovies: movieTitles,
+    },
   };
 });
 

@@ -17,6 +17,7 @@ const db = getFirestore(app);
 const functions = getFunctions(app);
 const runEliminationRoundCallable = httpsCallable(functions, "runEliminationRound");
 const saveEventAdminSettingsCallable = httpsCallable(functions, "saveEventAdminSettings");
+const createEventShowtimeCallable = httpsCallable(functions, "createEventShowtime");
 const setEventVoteStatusCallable = httpsCallable(functions, "setEventVoteStatus");
 const getEventVoteStatsCallable = httpsCallable(functions, "getEventVoteStats");
 const reelSuccessSetAccessCallable = httpsCallable(functions, "reelSuccessSetAccess");
@@ -60,10 +61,33 @@ const adminRequireEmailCheckbox = document.getElementById("adminRequireEmailChec
 const adminMoviesInput = document.getElementById("adminMoviesInput");
 const adminSaveBtn = document.getElementById("adminSaveBtn");
 const adminSaveStatus = document.getElementById("adminSaveStatus");
+const adminNewShowtimeDateInput = document.getElementById("adminNewShowtimeDate");
+const adminNewShowtimeTimeInput = document.getElementById("adminNewShowtimeTime");
+const adminNewVoteStatusSelect = document.getElementById("adminNewVoteStatus");
+const adminNewRequireEmailCheckbox = document.getElementById("adminNewRequireEmailCheckbox");
+const adminNewMoviesInput = document.getElementById("adminNewMoviesInput");
+const adminCreateBtn = document.getElementById("adminCreateBtn");
+const adminCreateStatus = document.getElementById("adminCreateStatus");
 let currentAdminEmail = null;
 let currentVoteStatus = "live";
 let currentUniqueVoterCount = null;
 let currentActiveVoteCount = null;
+
+function getEventSortTime(event) {
+  const rawDateTime = String(event?.screeningDateTime || "").trim();
+  const parsedDateTime = rawDateTime ? Date.parse(rawDateTime) : Number.NaN;
+  if (Number.isFinite(parsedDateTime)) {
+    return parsedDateTime;
+  }
+
+  const rawId = String(event?.id || event?.firestoreEventId || "").trim();
+  const parsedId = rawId ? Date.parse(rawId) : Number.NaN;
+  return Number.isFinite(parsedId) ? parsedId : Number.NEGATIVE_INFINITY;
+}
+
+function sortEventsByTime(events) {
+  return [...events].sort((left, right) => getEventSortTime(left) - getEventSortTime(right));
+}
 
 // Populate event selector dropdown
 function populateSelector() {
@@ -76,7 +100,7 @@ function populateSelector() {
     eventSelector.appendChild(opt);
     return;
   }
-  configuredEvents.forEach(ev => {
+  sortEventsByTime(configuredEvents).forEach(ev => {
     const opt = document.createElement("option");
     opt.value = ev.id;
     opt.textContent = `${ev.screeningLabel || ev.id}${ev.voteStatus === 'ended' ? ' (ended)' : ev.voteStatus === 'live' ? ' (live)' : ''}`;
@@ -176,6 +200,61 @@ function setSaveStatus(message, isError = false) {
   if (!adminSaveStatus) return;
   adminSaveStatus.textContent = message;
   adminSaveStatus.style.color = isError ? "#ff6b6b" : "#bbb";
+}
+
+function setCreateStatus(message, isError = false) {
+  if (!adminCreateStatus) return;
+  adminCreateStatus.textContent = message;
+  adminCreateStatus.style.color = isError ? "#ff6b6b" : "#bbb";
+}
+
+function collectMovieTitles(rawValue) {
+  return Array.from(
+    new Map(
+      String(rawValue || "")
+        .split("\n")
+        .map((title) => title.trim())
+        .filter(Boolean)
+        .map((title) => [title.toLowerCase(), title]),
+    ).values(),
+  );
+}
+
+async function refreshConfiguredEventsFromFirestore() {
+  const snapshot = await getDocs(collection(db, "events"));
+  const mergedByFirestoreId = new Map();
+
+  configuredEvents.forEach((event) => {
+    const firestoreEventId = EVENT_ID_ALIASES[event.id] || event.firestoreEventId || event.id;
+    mergedByFirestoreId.set(firestoreEventId, {...event, firestoreEventId});
+  });
+
+  snapshot.forEach((eventDoc) => {
+    const eventData = eventDoc.data() || {};
+    if (!eventData.screeningLabel && !eventData.screeningDateTime) {
+      return;
+    }
+
+    const firestoreEventId = eventDoc.id;
+    const existing = mergedByFirestoreId.get(firestoreEventId) || {};
+    mergedByFirestoreId.set(firestoreEventId, {
+      ...existing,
+      id: existing.id || firestoreEventId,
+      firestoreEventId,
+      screeningLabel: eventData.screeningLabel || existing.screeningLabel || firestoreEventId,
+      screeningDateTime: eventData.screeningDateTime || existing.screeningDateTime || "",
+      voteStatus: String(eventData.voteStatus || existing.voteStatus || "not-started").trim().toLowerCase(),
+      voteWindowLabel: eventData.voteWindowLabel || existing.voteWindowLabel || "",
+      requireEmail: typeof eventData.requireEmail === "boolean" ? eventData.requireEmail : (existing.requireEmail !== false),
+      showLiveVoteCounts: eventData.showLiveVoteCounts === true || existing.showLiveVoteCounts === true,
+      allowedMovies: Array.isArray(existing.allowedMovies) ? existing.allowedMovies : [],
+    });
+  });
+
+  const nextEvents = sortEventsByTime(Array.from(mergedByFirestoreId.values()));
+  configuredEvents.splice(0, configuredEvents.length, ...nextEvents);
+  populateSelector();
+  updateEventLabel(currentEventId);
 }
 
 function setAccessStatus(message, isError = false) {
@@ -430,6 +509,7 @@ function renderMovies(movies) {
   const totalPeople = typeof currentUniqueVoterCount === "number"
     ? currentUniqueVoterCount
     : totalVotes;
+  const maxVotes = movies.reduce((max, movie) => Math.max(max, movie.vote_count || 0), 0);
   const totalEl = document.createElement("div");
   totalEl.style.cssText = "color:#aaa;font-size:13px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid #333;display:flex;justify-content:center;align-items:center;gap:16px;flex-wrap:wrap;text-align:center;width:100%;";
   totalEl.innerHTML = `<span>Total votes: ${totalVotes}</span><span>Total people: ${totalPeople}</span>`;
@@ -437,7 +517,7 @@ function renderMovies(movies) {
 
   movies.forEach((movie) => {
     const voteCount = movie.vote_count || 0;
-    const percentage = totalVotes > 0 ? Math.round((voteCount / totalVotes) * 100) : 0;
+    const percentage = maxVotes > 0 ? Math.round((voteCount / maxVotes) * 100) : 0;
 
     const item = document.createElement("div");
     item.className = "chosen-movie";
@@ -507,11 +587,7 @@ async function saveAdminControls() {
     return;
   }
 
-  const rawTitles = String(adminMoviesInput?.value || "")
-    .split("\n")
-    .map((title) => title.trim())
-    .filter(Boolean);
-  const dedupedTitles = Array.from(new Map(rawTitles.map((title) => [title.toLowerCase(), title])).values());
+  const dedupedTitles = collectMovieTitles(adminMoviesInput?.value || "");
 
   if (dedupedTitles.length === 0) {
     setSaveStatus("Enter at least one movie.", true);
@@ -541,6 +617,66 @@ async function saveAdminControls() {
     setSaveStatus(`Save failed: ${error?.message || "unknown error"}`, true);
   } finally {
     if (adminSaveBtn) adminSaveBtn.disabled = false;
+  }
+}
+
+async function createShowtime() {
+  if (!currentAdminEmail) {
+    setCreateStatus("Admin session missing. Refresh and sign in again.", true);
+    return;
+  }
+
+  const showDate = String(adminNewShowtimeDateInput?.value || "").trim();
+  const showTime = String(adminNewShowtimeTimeInput?.value || "").trim();
+  const voteStatus = String(adminNewVoteStatusSelect?.value || "not-started").trim();
+  const movieTitles = collectMovieTitles(adminNewMoviesInput?.value || "");
+
+  if (!showDate) {
+    setCreateStatus("Select a show date.", true);
+    return;
+  }
+  if (!showTime) {
+    setCreateStatus("Select a show time.", true);
+    return;
+  }
+
+  if (adminCreateBtn) adminCreateBtn.disabled = true;
+  setCreateStatus("Creating showtime...");
+
+  try {
+    const response = await createEventShowtimeCallable({
+      adminEmail: currentAdminEmail,
+      screeningDateTime: `${showDate}T${showTime}`,
+      voteStatus,
+      requireEmail: adminNewRequireEmailCheckbox?.checked === true,
+      movieTitles,
+    });
+
+    const createdEvent = response?.data?.event || null;
+    if (adminNewMoviesInput) adminNewMoviesInput.value = "";
+    await refreshConfiguredEventsFromFirestore();
+
+    currentEventId = createdEvent?.firestoreEventId || response?.data?.eventId || currentEventId;
+    populateSelector();
+    updateEventLabel(currentEventId);
+    if (eventSelector) {
+      const selected = configuredEvents.find((event) => (EVENT_ID_ALIASES[event.id] || event.firestoreEventId || event.id) === currentEventId);
+      if (selected) {
+        eventSelector.value = selected.id;
+      }
+    }
+
+    await loadAdminControlsForEvent(currentEventId);
+    startLiveListener(currentEventId);
+    showTab("edit");
+
+    setCreateStatus(`Created ${createdEvent?.screeningLabel || currentEventId}.`);
+    setSaveStatus("Loaded new showtime.");
+  } catch (error) {
+    console.error("Failed creating showtime:", error);
+    setCreateStatus(error?.message || "Failed creating showtime.", true);
+  } finally {
+    if (adminCreateBtn) adminCreateBtn.disabled = false;
   }
 }
 
@@ -646,6 +782,10 @@ if (adminSaveBtn) {
   adminSaveBtn.addEventListener("click", saveAdminControls);
 }
 
+if (adminCreateBtn) {
+  adminCreateBtn.addEventListener("click", createShowtime);
+}
+
 function promptLoginModal(validateFn) {
   return new Promise((resolve) => {
     const modal = document.getElementById("loginModal");
@@ -712,6 +852,9 @@ ensureAdminAccess()
   .then((adminEmail) => {
     currentAdminEmail = adminEmail;
     setAdminIdentity(adminEmail);
+    refreshConfiguredEventsFromFirestore().catch((error) => {
+      console.error("Failed loading runtime event catalog:", error);
+    });
     startLiveListener(currentEventId);
     loadAdminControlsForEvent(currentEventId);
     if (runEliminationBtn) {

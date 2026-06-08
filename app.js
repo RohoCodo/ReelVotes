@@ -53,9 +53,6 @@ let hasActiveMovieList = false;
 let voterClientId = null;
 const movieMetadataCache = new Map();
 
-// Hardcoded total votes needed to reach goal
-const VOTES_NEEDED = 50;
-
 // Get event ID from URL parameters
 const urlParams = new URLSearchParams(window.location.search);
 const requestedEventId = urlParams.get("event");
@@ -63,6 +60,9 @@ const EVENT_ID_ALIASES = {
   "2026-04-27": "newparkway1"
 };
 const requestedEventDataId = EVENT_ID_ALIASES[requestedEventId] || requestedEventId;
+if (window.REELVOTES_EVENT_PROMISE && typeof window.REELVOTES_EVENT_PROMISE.then === "function") {
+  await window.REELVOTES_EVENT_PROMISE;
+}
 const configuredEvents = window.REELVOTES_EVENTS || [];
 
 function getEventSortTime(event) {
@@ -1321,11 +1321,14 @@ async function displayChosenMovies(showVoteCounts = false) {
     voteCount: movie.vote_count || 0
   }));
 
+  const totalVotes = movies.reduce((sum, entry) => sum + entry.voteCount, 0);
+  const maxVotes = movies.reduce((max, entry) => Math.max(max, entry.voteCount), 0);
+
   // Sort by vote count descending
   movies.sort((a, b) => b.voteCount - a.voteCount);
 
   movies.forEach(({ movie, voteCount }) => {
-    const percentage = Math.round((voteCount / VOTES_NEEDED) * 100);
+    const percentage = maxVotes > 0 ? Math.round((voteCount / maxVotes) * 100) : 0;
     const item = document.createElement("div");
     item.className = "chosen-movie";
     item.innerHTML = `
@@ -1336,7 +1339,7 @@ async function displayChosenMovies(showVoteCounts = false) {
       <div class="chosen-movie-bar">
         <div class="chosen-movie-fill" style="width: ${Math.min(percentage, 100)}%"></div>
       </div>
-      <div class="chosen-movie-count">${voteCount} / ${VOTES_NEEDED} votes</div>
+      <div class="chosen-movie-count">${voteCount} vote${voteCount === 1 ? "" : "s"}</div>
       ` : ''}
     `;
     

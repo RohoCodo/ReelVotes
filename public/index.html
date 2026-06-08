@@ -190,7 +190,22 @@
 </div>
 
 <script src="runtime-config.js"></script>
-<script>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+  import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDMa_twNQAZVrnLHUNNNsxk6aTa-9FrnSc",
+    authDomain: "reelconvo.firebaseapp.com",
+    projectId: "reelconvo",
+    storageBucket: "reelconvo.firebasestorage.app",
+    messagingSenderId: "913820455359",
+    appId: "1:913820455359:web:1c75954a231b921b55510a"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
   function getSubtitlePrefix(event, eventId) {
     const fallbackIso = String(eventId || "").match(/^(\d{4})-(\d{2})-(\d{2})$/)
       ? `${eventId}T23:59:59`
@@ -224,65 +239,99 @@
     return String(eventId || "TBD");
   }
 
-  const events = window.REELVOTES_EVENTS || [];
-  const queryEventId = new URLSearchParams(window.location.search).get("event");
-  const eventId = queryEventId;
-  const EVENT_ID_ALIASES = {
-    "2026-04-27": "newparkway1"
-  };
-  const eventDataId = EVENT_ID_ALIASES[eventId] || eventId;
-  const resolvedEvent = events.find((item) => item.id === eventId || item.firestoreEventId === eventId);
-  const getEventSortTime = (item) => {
+  function getEventSortTime(item) {
     const rawDateTime = String(item?.screeningDateTime || "").trim();
     const parsedDateTime = rawDateTime ? Date.parse(rawDateTime) : Number.NaN;
     if (Number.isFinite(parsedDateTime)) return parsedDateTime;
-    const rawId = String(item?.id || "").trim();
+    const rawId = String(item?.id || item?.firestoreEventId || "").trim();
     const parsedId = rawId ? Date.parse(rawId) : Number.NaN;
     return Number.isFinite(parsedId) ? parsedId : Number.NEGATIVE_INFINITY;
+  }
+
+  async function loadMergedEvents() {
+    const configuredEvents = Array.isArray(window.REELVOTES_EVENTS) ? window.REELVOTES_EVENTS : [];
+    const mergedByFirestoreId = new Map();
+
+    configuredEvents.forEach((event) => {
+      const firestoreEventId = event.firestoreEventId || event.id;
+      mergedByFirestoreId.set(firestoreEventId, { ...event, firestoreEventId });
+    });
+
+    try {
+      const snapshot = await getDocs(collection(db, "events"));
+      snapshot.forEach((eventDoc) => {
+        const eventData = eventDoc.data() || {};
+        if (!eventData.screeningLabel && !eventData.screeningDateTime) {
+          return;
+        }
+
+        const firestoreEventId = eventDoc.id;
+        const existing = mergedByFirestoreId.get(firestoreEventId) || {};
+        mergedByFirestoreId.set(firestoreEventId, {
+          ...existing,
+          id: existing.id || firestoreEventId,
+          firestoreEventId,
+          screeningLabel: eventData.screeningLabel || existing.screeningLabel || firestoreEventId,
+          screeningDateTime: eventData.screeningDateTime || existing.screeningDateTime || "",
+          voteStatus: String(eventData.voteStatus || existing.voteStatus || "not-started").trim().toLowerCase(),
+          voteWindowLabel: eventData.voteWindowLabel || existing.voteWindowLabel || "",
+          requireEmail: typeof eventData.requireEmail === "boolean" ? eventData.requireEmail : (existing.requireEmail !== false),
+          showLiveVoteCounts: eventData.showLiveVoteCounts === true || existing.showLiveVoteCounts === true,
+        });
+      });
+    } catch (error) {
+      console.error("[index] Could not load runtime events:", error);
+    }
+
+    return Array.from(mergedByFirestoreId.values()).sort((left, right) => getEventSortTime(left) - getEventSortTime(right));
+  }
+
+  const EVENT_ID_ALIASES = {
+    "2026-04-27": "newparkway1"
   };
-  const getLatestConfiguredEvent = (predicate) => events
-    .filter((item) => predicate(item))
-    .sort((left, right) => getEventSortTime(right) - getEventSortTime(left))[0] || null;
-  const defaultEvent = getLatestConfiguredEvent((item) => item.voteStatus === "live")
-    || getLatestConfiguredEvent((item) => item.voteStatus !== "ended")
-    || events[0]
-    || null;
-  const event = resolvedEvent || (eventId ? {
-    id: eventId,
-    firestoreEventId: eventDataId,
-    screeningLabel: eventId,
-    voteStatus: "live"
-  } : defaultEvent);
 
-  console.log("[index] Resolving page event", {
-    href: window.location.href,
-    queryEventId,
-    eventId,
-    events,
-    resolvedEvent: event
-  });
+  window.REELVOTES_EVENT_PROMISE = (async () => {
+    const events = await loadMergedEvents();
+    window.REELVOTES_EVENTS = events;
 
-  if (!event) {
-    console.error("[index] No events available in configuration; cannot render voting page");
-  } else {
+    const queryEventId = new URLSearchParams(window.location.search).get("event");
+    const eventId = queryEventId;
+    const eventDataId = EVENT_ID_ALIASES[eventId] || eventId;
+    const resolvedEvent = events.find((item) => (
+      item.id === eventId
+      || item.firestoreEventId === eventId
+      || item.firestoreEventId === eventDataId
+    ));
+    const getLatestConfiguredEvent = (predicate) => events
+      .filter((item) => predicate(item))
+      .sort((left, right) => getEventSortTime(right) - getEventSortTime(left))[0] || null;
+    const defaultEvent = getLatestConfiguredEvent((item) => item.voteStatus === "live")
+      || getLatestConfiguredEvent((item) => item.voteStatus !== "ended")
+      || events[0]
+      || null;
+    const event = resolvedEvent || (eventId ? {
+      id: eventId,
+      firestoreEventId: eventDataId,
+      screeningLabel: eventId,
+      voteStatus: "live"
+    } : defaultEvent);
+
+    if (!event) {
+      console.error("[index] No events available in configuration; cannot render voting page");
+      return null;
+    }
+
     if (!eventId) {
-      console.warn("[index] No event query param present; defaulting to latest live event", event);
       const normalizedUrl = new URL(window.location.href);
       normalizedUrl.searchParams.set("event", event.id);
       window.history.replaceState({}, "", normalizedUrl.toString());
     }
 
-    if (!resolvedEvent) {
-      console.warn("[index] Event query present but config match missing; using fallback event", {
-        eventId,
-        event
-      });
-    }
     window.REELVOTES_EVENT = event;
     if (event?.id) {
       window.sessionStorage.setItem("reelvotesSelectedEventId", event.id);
     }
-    console.log("[index] Event resolved successfully", event);
+
     const eventSubtitle = document.getElementById("eventSubtitle");
     if (eventSubtitle) {
       const subtitlePrefix = getSubtitlePrefix(event, eventId || event?.id);
@@ -294,7 +343,9 @@
         </a>
       `;
     }
-  }
+
+    return event;
+  })();
 </script>
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" defer></script>
 <script type="module" src="app.js?v=20260528-1"></script>

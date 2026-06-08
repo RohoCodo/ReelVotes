@@ -25,7 +25,18 @@
       <a href="https://www.thenewparkway.com" target="_blank">(website)</a>
     </p>
 
-    <div id="dateList" class="event-grid"></div>
+    <div class="main-tabs" style="margin-top:18px;">
+      <button id="liveShowsTabBtn" type="button" class="main-tab-btn active">Live Shows</button>
+      <button id="historyShowsTabBtn" type="button" class="main-tab-btn">History</button>
+    </div>
+
+    <section id="liveShowsPanel" class="main-tab-panel" role="region" aria-label="Live shows">
+      <div id="liveDateList" class="event-grid"></div>
+    </section>
+
+    <section id="historyShowsPanel" class="main-tab-panel" role="region" aria-label="Past shows" hidden>
+      <div id="historyDateList" class="event-grid"></div>
+    </section>
 
     <div style="margin-top:28px;text-align:center;">
       <button id="adminManageBtn" style="background:none;border:1px solid #444;color:#888;font-size:13px;padding:7px 16px;border-radius:8px;cursor:pointer;">⚙ Admin: Manage Events</button>
@@ -82,42 +93,119 @@
   const functions = getFunctions(app);
   const saveEventAdminSettingsCallable = httpsCallable(functions, "saveEventAdminSettings");
 
-  const events = window.REELVOTES_EVENTS || [];
-  const dateList = document.getElementById("dateList");
+  function getEventSortTime(event) {
+    const rawDateTime = String(event?.screeningDateTime || "").trim();
+    const parsedDateTime = rawDateTime ? Date.parse(rawDateTime) : Number.NaN;
+    if (Number.isFinite(parsedDateTime)) {
+      return parsedDateTime;
+    }
 
-  document.addEventListener("pointerdown", (event) => {
-    const target = event.target instanceof Element ? event.target : null;
-    console.log("[select-event] Document pointerdown", {
-      tag: target?.tagName,
-      className: target?.className,
-      text: target?.textContent?.trim()?.slice(0, 60)
+    const rawId = String(event?.id || event?.firestoreEventId || "").trim();
+    const parsedId = rawId ? Date.parse(rawId) : Number.NaN;
+    return Number.isFinite(parsedId) ? parsedId : Number.NEGATIVE_INFINITY;
+  }
+
+  async function loadMergedEvents() {
+    const configuredEvents = Array.isArray(window.REELVOTES_EVENTS) ? window.REELVOTES_EVENTS : [];
+    const mergedByFirestoreId = new Map();
+
+    configuredEvents.forEach((event) => {
+      const firestoreEventId = event.firestoreEventId || event.id;
+      mergedByFirestoreId.set(firestoreEventId, {...event, firestoreEventId});
     });
-  }, true);
 
-  document.addEventListener("click", (event) => {
-    const target = event.target instanceof Element ? event.target : null;
-    console.log("[select-event] Document click", {
-      tag: target?.tagName,
-      className: target?.className,
-      text: target?.textContent?.trim()?.slice(0, 60)
-    });
-  }, true);
+    try {
+      const snapshot = await getDocs(collection(db, "events"));
+      snapshot.forEach((eventDoc) => {
+        const eventData = eventDoc.data() || {};
+        if (!eventData.screeningLabel && !eventData.screeningDateTime) {
+          return;
+        }
 
-  console.log("[select-event] Loaded showtime selector", {
-    href: window.location.href,
-    events
-  });
+        const firestoreEventId = eventDoc.id;
+        const existing = mergedByFirestoreId.get(firestoreEventId) || {};
+        mergedByFirestoreId.set(firestoreEventId, {
+          ...existing,
+          id: existing.id || firestoreEventId,
+          firestoreEventId,
+          screeningLabel: eventData.screeningLabel || existing.screeningLabel || firestoreEventId,
+          screeningDateTime: eventData.screeningDateTime || existing.screeningDateTime || "",
+          voteStatus: String(eventData.voteStatus || existing.voteStatus || "not-started").trim().toLowerCase(),
+          voteWindowLabel: eventData.voteWindowLabel || existing.voteWindowLabel || "",
+          requireEmail: typeof eventData.requireEmail === "boolean" ? eventData.requireEmail : (existing.requireEmail !== false),
+          showLiveVoteCounts: eventData.showLiveVoteCounts === true || existing.showLiveVoteCounts === true,
+        });
+      });
+    } catch (error) {
+      console.error("Could not load runtime events:", error);
+    }
 
-  dateList.innerHTML = events.map((event) => `
-    <div class="event-card loading">
-      <strong>${event.screeningLabel}</strong><br />
-      <span>Checking voting status…</span>
-    </div>
-  `).join("");
+    return Array.from(mergedByFirestoreId.values()).sort((left, right) => getEventSortTime(left) - getEventSortTime(right));
+  }
+
+  const events = await loadMergedEvents();
+  const liveDateList = document.getElementById("liveDateList");
+  const historyDateList = document.getElementById("historyDateList");
+  const liveShowsTabBtn = document.getElementById("liveShowsTabBtn");
+  const historyShowsTabBtn = document.getElementById("historyShowsTabBtn");
+  const liveShowsPanel = document.getElementById("liveShowsPanel");
+  const historyShowsPanel = document.getElementById("historyShowsPanel");
+
+  function setActiveTab(tabName) {
+    const showLive = tabName === "live";
+    if (liveShowsPanel) liveShowsPanel.hidden = !showLive;
+    if (historyShowsPanel) historyShowsPanel.hidden = showLive;
+    if (liveShowsTabBtn) liveShowsTabBtn.classList.toggle("active", showLive);
+    if (historyShowsTabBtn) historyShowsTabBtn.classList.toggle("active", !showLive);
+  }
+
+  if (liveShowsTabBtn) liveShowsTabBtn.addEventListener("click", () => setActiveTab("live"));
+  if (historyShowsTabBtn) historyShowsTabBtn.addEventListener("click", () => setActiveTab("history"));
+
+  function toLocalDateKey(screeningDateTime) {
+    const rawValue = String(screeningDateTime || "").trim();
+    if (!rawValue) return "";
+    const isoMatch = rawValue.match(/^(\d{4}-\d{2}-\d{2})/);
+    if (isoMatch) {
+      return isoMatch[1];
+    }
+    const parsed = new Date(rawValue);
+    if (Number.isNaN(parsed.getTime())) {
+      return "";
+    }
+    const year = parsed.getFullYear();
+    const month = String(parsed.getMonth() + 1).padStart(2, "0");
+    const day = String(parsed.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
+
+  function isPastShow(event) {
+    const eventDateKey = toLocalDateKey(event?.screeningDateTime);
+    if (!eventDateKey) return false;
+
+    const now = new Date();
+    const todayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+    return eventDateKey < todayKey;
+  }
+
+  function renderLoadingCards(listEl, items) {
+    if (!listEl) return;
+    listEl.innerHTML = items.map((event) => `
+      <div class="event-card loading">
+        <strong>${event.screeningLabel}</strong><br />
+        <span>Checking voting status…</span>
+      </div>
+    `).join("");
+  }
+
+  const pastEvents = events.filter((event) => isPastShow(event));
+  const liveEvents = events.filter((event) => !isPastShow(event));
+
+  renderLoadingCards(liveDateList, liveEvents);
+  renderLoadingCards(historyDateList, pastEvents);
 
   const eventsWithStatus = await Promise.all(
     events.map(async (event) => {
-      console.log("[select-event] Resolving event status", event);
       const firestoreEventId = event.firestoreEventId || event.id;
       try {
         const eventDoc = await getDoc(doc(db, "events", firestoreEventId));
@@ -142,12 +230,6 @@
 
         const moviesRef = collection(db, "events", firestoreEventId, "movies");
         const snapshot = await getDocs(moviesRef);
-        console.log("[select-event] Firestore status loaded", {
-          eventId: event.id,
-          firestoreEventId,
-          empty: snapshot.empty,
-          size: snapshot.size
-        });
         return { ...event, status: snapshot.empty ? "not-started" : "live" };
       } catch (error) {
         console.error("Could not load voting status for", event.id, error);
@@ -156,40 +238,51 @@
     })
   );
 
-  console.log("[select-event] Final statuses", eventsWithStatus);
-
-  dateList.innerHTML = eventsWithStatus.map((event) => {
-    const nextHref = `/?event=${encodeURIComponent(event.id)}`;
-    if (event.status === "ended") {
-      return `
-        <a class="event-card event-card-ended" data-event-id="${event.id}" href="${nextHref}" onclick="sessionStorage.setItem('reelvotesSelectedEventId','${event.id}'); console.log('[select-event] Inline click nav', '${event.id}', '${nextHref}'); window.location.href='${nextHref}'; return false;">
-          <strong>${event.screeningLabel}</strong><br />
-          <span>Voting has ended · View results</span>
-        </a>
-      `;
-    }
-
-    if (event.status !== "live") {
-      return `
+  function renderEventCards(items, listEl, emptyMessage) {
+    if (!listEl) return;
+    if (!items.length) {
+      listEl.innerHTML = `
         <div class="event-card disabled" aria-disabled="true">
-          <strong>${event.screeningLabel}</strong><br />
-          <span>Voting has not started</span>
+          <strong>${emptyMessage}</strong><br />
+          <span>No showtimes in this section yet</span>
         </div>
       `;
+      return;
     }
 
-    return `
-      <a class="event-card" data-event-id="${event.id}" href="${nextHref}" onclick="sessionStorage.setItem('reelvotesSelectedEventId','${event.id}'); console.log('[select-event] Inline click nav', '${event.id}', '${nextHref}'); window.location.href='${nextHref}'; return false;">
-        <strong>${event.screeningLabel}</strong><br />
-        <span>Voting now</span>
-      </a>
-    `;
-  }).join("");
+    listEl.innerHTML = items.map((event) => {
+      const nextHref = `/?event=${encodeURIComponent(event.id)}`;
+      if (event.status === "ended") {
+        return `
+          <a class="event-card event-card-ended" data-event-id="${event.id}" href="${nextHref}">
+            <strong>${event.screeningLabel}</strong><br />
+            <span>Voting has ended · View results</span>
+          </a>
+        `;
+      }
 
-  const interactiveCards = dateList.querySelectorAll("[data-event-id]");
-  console.log("[select-event] Interactive cards rendered", interactiveCards.length);
+      if (event.status !== "live") {
+        return `
+          <div class="event-card disabled" aria-disabled="true">
+            <strong>${event.screeningLabel}</strong><br />
+            <span>Voting has not started</span>
+          </div>
+        `;
+      }
 
-  dateList.addEventListener("click", (event) => {
+      return `
+        <a class="event-card" data-event-id="${event.id}" href="${nextHref}">
+          <strong>${event.screeningLabel}</strong><br />
+          <span>Voting now</span>
+        </a>
+      `;
+    }).join("");
+  }
+
+  renderEventCards(eventsWithStatus.filter((event) => !isPastShow(event)), liveDateList, "No upcoming showtimes");
+  renderEventCards(eventsWithStatus.filter((event) => isPastShow(event)), historyDateList, "No past showtimes");
+
+  [liveDateList, historyDateList].forEach((listEl) => listEl?.addEventListener("click", (event) => {
     const origin = event.target instanceof Element ? event.target : null;
     const card = origin?.closest("[data-event-id]");
     if (!card) {
@@ -200,16 +293,10 @@
     const nextUrl = new URL("/", window.location.origin);
     nextUrl.searchParams.set("event", eventId);
 
-    console.log("[select-event] Showtime clicked (delegated)", {
-      eventId,
-      nextUrl: nextUrl.toString(),
-      card
-    });
-
     window.sessionStorage.setItem("reelvotesSelectedEventId", eventId);
     event.preventDefault();
     window.location.href = nextUrl.toString();
-  });
+  }));
 
   // ── Admin modal ──────────────────────────────────────────────────────────
   const ADMIN_EMAILS = new Set([
