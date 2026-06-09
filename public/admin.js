@@ -20,6 +20,7 @@ const saveEventAdminSettingsCallable = httpsCallable(functions, "saveEventAdminS
 const createEventShowtimeCallable = httpsCallable(functions, "createEventShowtime");
 const setEventVoteStatusCallable = httpsCallable(functions, "setEventVoteStatus");
 const getEventVoteStatsCallable = httpsCallable(functions, "getEventVoteStats");
+const rebuildEventMovieVoteCountsCallable = httpsCallable(functions, "rebuildEventMovieVoteCounts");
 const reelSuccessSetAccessCallable = httpsCallable(functions, "reelSuccessSetAccess");
 const reelSuccessListAccessCallable = httpsCallable(functions, "reelSuccessListAccess");
 
@@ -55,8 +56,10 @@ const eventSelector = document.getElementById("eventSelector");
 const publicPreviewLink = document.getElementById("publicPreviewLink");
 const endVoteBtn = document.getElementById("endVoteBtn");
 const runEliminationBtn = document.getElementById("runEliminationBtn");
+const rebuildCountsBtn = document.getElementById("rebuildCountsBtn");
 const voteControlStatusEl = document.getElementById("voteControlStatus");
 const eliminationStatusEl = document.getElementById("eliminationStatus");
+const rebuildCountsStatusEl = document.getElementById("rebuildCountsStatus");
 const adminRequireEmailCheckbox = document.getElementById("adminRequireEmailCheckbox");
 const adminMoviesInput = document.getElementById("adminMoviesInput");
 const adminSaveBtn = document.getElementById("adminSaveBtn");
@@ -383,6 +386,12 @@ function setVoteControlStatus(message, isError = false) {
   voteControlStatusEl.style.color = isError ? "#ff6b6b" : "#bbb";
 }
 
+function setRebuildCountsStatus(message, isError = false) {
+  if (!rebuildCountsStatusEl) return;
+  rebuildCountsStatusEl.textContent = message;
+  rebuildCountsStatusEl.style.color = isError ? "#ff6b6b" : "#bbb";
+}
+
 function updateEndVoteButton() {
   if (!endVoteBtn) return;
   const isEnded = currentVoteStatus === "ended";
@@ -486,6 +495,50 @@ async function runEliminationRoundNow() {
     if (runEliminationBtn) {
       runEliminationBtn.disabled = false;
       runEliminationBtn.textContent = "Run elimination round now";
+    }
+  }
+}
+
+async function rebuildMovieCountsNow() {
+  if (!currentAdminEmail) {
+    setRebuildCountsStatus("Admin session missing. Refresh and sign in again.", true);
+    return;
+  }
+
+  if (!currentEventId) {
+    setRebuildCountsStatus("No event selected.", true);
+    return;
+  }
+
+  try {
+    if (rebuildCountsBtn) {
+      rebuildCountsBtn.disabled = true;
+      rebuildCountsBtn.textContent = "Rebuilding…";
+    }
+
+    setRebuildCountsStatus("Rebuilding movie vote counts from votes...");
+
+    const response = await rebuildEventMovieVoteCountsCallable({
+      eventId: currentEventId,
+      adminEmail: currentAdminEmail,
+    });
+
+    const data = response?.data || {};
+    const unmatched = Number(data.unmatchedTitleCount || 0);
+    if (unmatched > 0) {
+      setRebuildCountsStatus(`Rebuilt counts. Matched ${data.matchedVoteCount || 0}/${data.activeVoteCount || 0} active votes. ${unmatched} vote title(s) did not match current movie titles.`, true);
+    } else {
+      setRebuildCountsStatus(`Rebuilt counts. Matched ${data.matchedVoteCount || 0}/${data.activeVoteCount || 0} active votes.`);
+    }
+
+    await refreshVoteStats(currentEventId);
+  } catch (error) {
+    console.error("Failed rebuilding movie counts:", error);
+    setRebuildCountsStatus(error?.message || "Failed rebuilding movie vote counts.", true);
+  } finally {
+    if (rebuildCountsBtn) {
+      rebuildCountsBtn.disabled = false;
+      rebuildCountsBtn.textContent = "Rebuild counts from votes";
     }
   }
 }
@@ -861,6 +914,10 @@ ensureAdminAccess()
       runEliminationBtn.disabled = false;
       runEliminationBtn.addEventListener("click", runEliminationRoundNow);
     }
+    if (rebuildCountsBtn) {
+      rebuildCountsBtn.disabled = false;
+      rebuildCountsBtn.addEventListener("click", rebuildMovieCountsNow);
+    }
     if (endVoteBtn) {
       endVoteBtn.disabled = false;
       endVoteBtn.addEventListener("click", endVoteNow);
@@ -882,6 +939,9 @@ ensureAdminAccess()
     console.warn("Admin access blocked:", err.message);
     if (runEliminationBtn) {
       runEliminationBtn.disabled = true;
+    }
+    if (rebuildCountsBtn) {
+      rebuildCountsBtn.disabled = true;
     }
     if (endVoteBtn) {
       endVoteBtn.disabled = true;

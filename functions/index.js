@@ -1436,6 +1436,105 @@ exports.getEventVoteStats = onCall(async (request) => {
   };
 });
 
+exports.rebuildEventMovieVoteCounts = onCall(async (request) => {
+  const eventId = sanitizeEventId(request.data?.eventId);
+  const adminEmail = assertAdminEmail(request.data?.adminEmail);
+
+  const eventRef = db.collection("events").doc(eventId);
+  const moviesRef = eventRef.collection("movies");
+  const votesRef = eventRef.collection("votes");
+
+  const [moviesSnapshot, votesSnapshot] = await Promise.all([
+    moviesRef.get(),
+    votesRef.get(),
+  ]);
+
+  if (moviesSnapshot.empty) {
+    throw new HttpsError("failed-precondition", "No movies exist for this event.");
+  }
+
+  const normalizedMovieToDocId = new Map();
+  const countsByDocId = new Map();
+
+  moviesSnapshot.forEach((movieDoc) => {
+    const movieData = movieDoc.data() || {};
+    const movieTitle = String(movieData.movie_title || movieDoc.id || "").trim();
+    const normalizedMovie = normalizeMovieTitle(movieTitle);
+    if (!normalizedMovieToDocId.has(normalizedMovie)) {
+      normalizedMovieToDocId.set(normalizedMovie, movieDoc.id);
+    }
+    countsByDocId.set(movieDoc.id, 0);
+  });
+
+  let activeVoteCount = 0;
+  let matchedVoteCount = 0;
+  const unmatchedTitles = new Set();
+
+  votesSnapshot.forEach((voteDoc) => {
+    const voteData = voteDoc.data() || {};
+    if (voteData.is_active === false) {
+      return;
+    }
+
+    activeVoteCount += 1;
+
+    const votedTitle = String(
+      voteData.movie_title ||
+      (Array.isArray(voteData.movie_titles) && voteData.movie_titles.length ? voteData.movie_titles[0] : ""),
+    ).trim();
+
+    if (!votedTitle) {
+      return;
+    }
+
+    const normalizedVoteTitle = normalizeMovieTitle(votedTitle);
+    const movieDocId = normalizedMovieToDocId.get(normalizedVoteTitle);
+    if (!movieDocId) {
+      unmatchedTitles.add(votedTitle);
+      return;
+    }
+
+    countsByDocId.set(movieDocId, Number(countsByDocId.get(movieDocId) || 0) + 1);
+    matchedVoteCount += 1;
+  });
+
+  const batch = db.batch();
+  const now = admin.firestore.FieldValue.serverTimestamp();
+
+  countsByDocId.forEach((voteCount, movieDocId) => {
+    batch.set(moviesRef.doc(movieDocId), {
+      vote_count: voteCount,
+      updated_at: now,
+    }, {merge: true});
+  });
+
+  batch.set(eventRef, {
+    updated_at: now,
+    updated_by: adminEmail,
+  }, {merge: true});
+
+  await batch.commit();
+
+  logger.info("Admin rebuilt movie vote counts", {
+    eventId,
+    adminEmail,
+    movieCount: countsByDocId.size,
+    activeVoteCount,
+    matchedVoteCount,
+    unmatchedTitleCount: unmatchedTitles.size,
+  });
+
+  return {
+    ok: true,
+    eventId,
+    movieCount: countsByDocId.size,
+    activeVoteCount,
+    matchedVoteCount,
+    unmatchedTitles: Array.from(unmatchedTitles).slice(0, 20),
+    unmatchedTitleCount: unmatchedTitles.size,
+  };
+});
+
 exports.getVoteStatus = onCall(async (request) => {
   const eventId = sanitizeEventId(request.data?.eventId);
   const clientId = sanitizeClientId(request.data?.clientId);
