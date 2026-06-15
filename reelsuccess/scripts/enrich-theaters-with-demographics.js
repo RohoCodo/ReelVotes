@@ -179,6 +179,10 @@ async function fetchJson(url) {
   const contentType = String(res.headers.get("content-type") || "").toLowerCase();
   const raw = await res.text();
 
+  if (!raw.trim()) {
+    return [];
+  }
+
   if (!contentType.includes("json") && raw.trim().startsWith("<")) {
     throw new Error("Census API returned HTML instead of JSON (likely missing/invalid API key).", {
       cause: raw.slice(0, 160),
@@ -206,6 +210,10 @@ async function getPlacesForState(stateAbbr, year, censusApiKey, cache) {
   const url = `https://api.census.gov/data/${year}/acs/acs5?get=${encodeURIComponent(getFields)}&for=place:*&in=state:${meta.fips}${keyParam}`;
 
   const data = await fetchJson(url);
+  if (!Array.isArray(data) || data.length < 2 || !Array.isArray(data[0])) {
+    cache[stateAbbr] = [];
+    return cache[stateAbbr];
+  }
   const [header, ...rows] = data;
 
   const places = rows.map((row) => {

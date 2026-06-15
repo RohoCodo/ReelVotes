@@ -67,6 +67,13 @@ const demographicsStatusEl = document.getElementById("reelsuccessDemographicsSta
 const recScoreTabsWrapEl = document.getElementById("reelsuccessScoreTabs");
 const recScoreExplainerEl = document.getElementById("reelsuccessScoreExplainer");
 
+// TMDB API Config
+const TMDB_API_KEY = "05e2d906f097b769ba4d7e8c7305accf";
+const TMDB_BASE_URL = "https://api.themoviedb.org/3";
+const TMDB_TITLE_OVERRIDES = {
+  "blade runner": { tmdbId: 78 },
+};
+
 const grossBusinessDateInput = document.getElementById("grossBusinessDateInput");
 const grossPdfInput = document.getElementById("grossPdfInput");
 const grossUploadBtn = document.getElementById("grossUploadBtn");
@@ -80,6 +87,7 @@ let findAutoSelectTimer = null;
 let grossAutoSelectTimer = null;
 let recommendationSets = null;
 let activeRecommendationScoreKey = "robust_blend";
+let movieMetadataCache = new Map();
 
 const RECOMMENDATION_SCORE_META = {
   robust_blend: {
@@ -463,6 +471,71 @@ function updateDemographicsStatus(profile) {
   demographicsStatusEl.textContent = "";
 }
 
+async function searchTMDB(query) {
+  try {
+    const response = await fetch(`${TMDB_BASE_URL}/search/movie?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}`);
+    const data = await response.json();
+    return data.results || [];
+  } catch (error) {
+    console.error("TMDB search error:", error);
+    return [];
+  }
+}
+
+async function getMovieDetails(movieId) {
+  try {
+    const response = await fetch(`${TMDB_BASE_URL}/movie/${movieId}?api_key=${TMDB_API_KEY}&append_to_response=credits`);
+    return await response.json();
+  } catch (error) {
+    console.error("Error fetching movie details:", error);
+    return null;
+  }
+}
+
+function buildPosterUrl(posterPath, size = "w185") {
+  return posterPath ? `https://image.tmdb.org/t/p/${size}${posterPath}` : null;
+}
+
+async function getMovieMetadataByTitle(title) {
+  const normalizedTitle = String(title || "").trim();
+  if (!normalizedTitle) {
+    return { tmdbId: null, poster: null };
+  }
+
+  if (movieMetadataCache.has(normalizedTitle)) {
+    return movieMetadataCache.get(normalizedTitle);
+  }
+
+  try {
+    const normalizedLookup = normalizedTitle.toLowerCase();
+    const override = TMDB_TITLE_OVERRIDES[normalizedLookup];
+
+    if (override?.tmdbId) {
+      const details = await getMovieDetails(override.tmdbId);
+      const metadata = {
+        tmdbId: override.tmdbId,
+        poster: buildPosterUrl(details?.poster_path),
+      };
+      movieMetadataCache.set(normalizedTitle, metadata);
+      return metadata;
+    }
+
+    const results = await searchTMDB(normalizedTitle);
+    const match = results.find((movie) => movie.title?.trim().toLowerCase() === normalizedLookup) || results[0];
+    const metadata = {
+      tmdbId: match?.id || null,
+      poster: buildPosterUrl(match?.poster_path),
+    };
+    movieMetadataCache.set(normalizedTitle, metadata);
+    return metadata;
+  } catch (error) {
+    console.error("Error fetching movie metadata:", error);
+    const metadata = { tmdbId: null, poster: null };
+    movieMetadataCache.set(normalizedTitle, metadata);
+    return metadata;
+  }
+}
+
 function getRecommendationsForScoreKey(scoreKey) {
   if (!recommendationSets) return [];
   const byScore = recommendationSets?.recommendations_by_score || null;
@@ -548,7 +621,7 @@ function renderSimilarTheaters(rows) {
   });
 }
 
-function renderRecommendations(rows, scoreKey = activeRecommendationScoreKey) {
+async function renderRecommendations(rows, scoreKey = activeRecommendationScoreKey) {
   if (!recsBodyEl || !recsSectionEl) return;
   recsBodyEl.innerHTML = "";
   const scoreField = RECOMMENDATION_SCORE_META[scoreKey]?.field || "recommendation_score";
@@ -558,16 +631,24 @@ function renderRecommendations(rows, scoreKey = activeRecommendationScoreKey) {
   }
 
   recsSectionEl.classList.remove("hidden");
-  rows.forEach((row) => {
+  for (const row of rows) {
     const displayScore = Number(row?.[scoreField] ?? row?.recommendation_score ?? 0);
+    const metadata = row?.posterUrl || row?.poster || row?.poster_url
+      ? { poster: row.posterUrl || row.poster || row.poster_url }
+      : await getMovieMetadataByTitle(row.movie_title);
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${escapeHtml(row.movie_title)}</td>
+      <td class="reelsuccess-rec-title-cell">
+        <div class="reelsuccess-rec-movie-cell">
+          ${metadata.poster ? `<img class="reelsuccess-rec-poster" src="${metadata.poster}" alt="${escapeHtml(row.movie_title)} poster" loading="lazy" />` : `<div class="reelsuccess-rec-poster reelsuccess-rec-poster-fallback" aria-hidden="true"></div>`}
+          <span class="reelsuccess-rec-title">${escapeHtml(row.movie_title)}</span>
+        </div>
+      </td>
       <td>${displayScore.toFixed(3)}</td>
       <td>${Number(row.support_theater_count || 0)}</td>
     `;
     recsBodyEl.appendChild(tr);
-  });
+  }
 
   updateRecommendationScoreTabsUI();
 }
