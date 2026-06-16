@@ -464,7 +464,7 @@ function updateDemographicsStatus(profile) {
     return;
   }
   if (status) {
-    demographicsStatusEl.textContent = `Demographics: missing (${status}). Similarity currently relies on historical and operational features.`;
+    demographicsStatusEl.textContent = "Demographics: unavailable right now. Similarity currently relies on historical and operational features.";
     demographicsStatusEl.style.color = "#ffb36b";
     return;
   }
@@ -496,44 +496,85 @@ function buildPosterUrl(posterPath, size = "w185") {
   return posterPath ? `https://image.tmdb.org/t/p/${size}${posterPath}` : null;
 }
 
+function normalizeMovieTitleForSearch(title) {
+  const raw = String(title || "").trim();
+  if (!raw) return "";
+
+  const trailingArticleMatch = raw.match(/^(.*),\s*(The|A|An)$/i);
+  const withLeadingArticle = trailingArticleMatch
+    ? `${trailingArticleMatch[2]} ${trailingArticleMatch[1]}`.trim()
+    : raw;
+
+  return withLeadingArticle
+    .replace(/\s+/g, " ")
+    .replace(/[\u2018\u2019]/g, "'")
+    .replace(/[\u201C\u201D]/g, '"')
+    .trim();
+}
+
 async function getMovieMetadataByTitle(title) {
   const normalizedTitle = String(title || "").trim();
-  if (!normalizedTitle) {
+  const normalizedLookupTitle = normalizeMovieTitleForSearch(normalizedTitle);
+
+  if (!normalizedLookupTitle) {
     return { tmdbId: null, poster: null };
   }
 
-  if (movieMetadataCache.has(normalizedTitle)) {
-    return movieMetadataCache.get(normalizedTitle);
+  const cacheKey = normalizedLookupTitle.toLowerCase();
+  if (movieMetadataCache.has(cacheKey)) {
+    return movieMetadataCache.get(cacheKey);
   }
 
   try {
-    const normalizedLookup = normalizedTitle.toLowerCase();
+    const normalizedLookup = normalizedLookupTitle.toLowerCase();
     const override = TMDB_TITLE_OVERRIDES[normalizedLookup];
 
     if (override?.tmdbId) {
       const details = await getMovieDetails(override.tmdbId);
       const metadata = {
         tmdbId: override.tmdbId,
-        poster: buildPosterUrl(details?.poster_path),
+        poster: buildPosterUrl(details?.poster_path, "w154"),
       };
-      movieMetadataCache.set(normalizedTitle, metadata);
+      movieMetadataCache.set(cacheKey, metadata);
       return metadata;
     }
 
-    const results = await searchTMDB(normalizedTitle);
-    const match = results.find((movie) => movie.title?.trim().toLowerCase() === normalizedLookup) || results[0];
+    const searchCandidates = [
+      normalizedLookupTitle,
+      normalizedLookupTitle.replace(/[:\-–—]/g, " ").replace(/\s+/g, " ").trim(),
+      normalizedLookupTitle.replace(/\(.*?\)/g, "").trim(),
+    ].filter(Boolean);
+
+    let results = [];
+    for (const candidate of searchCandidates) {
+      const next = await searchTMDB(candidate);
+      if (Array.isArray(next) && next.length) {
+        results = next;
+        break;
+      }
+    }
+
+    const match = results.find((movie) => String(movie.title || "").trim().toLowerCase() === normalizedLookup) || results[0];
     const metadata = {
       tmdbId: match?.id || null,
-      poster: buildPosterUrl(match?.poster_path),
+      poster: buildPosterUrl(match?.poster_path, "w154"),
     };
-    movieMetadataCache.set(normalizedTitle, metadata);
+    movieMetadataCache.set(cacheKey, metadata);
     return metadata;
   } catch (error) {
     console.error("Error fetching movie metadata:", error);
     const metadata = { tmdbId: null, poster: null };
-    movieMetadataCache.set(normalizedTitle, metadata);
+    movieMetadataCache.set(cacheKey, metadata);
     return metadata;
   }
+}
+
+function getScoreValue(row, scoreKey = activeRecommendationScoreKey) {
+  const scoreField = RECOMMENDATION_SCORE_META[scoreKey]?.field || "recommendation_score";
+  const value = Number(row?.[scoreField]);
+  if (Number.isFinite(value)) return value;
+  const fallback = Number(row?.recommendation_score ?? 0);
+  return Number.isFinite(fallback) ? fallback : 0;
 }
 
 function getRecommendationsForScoreKey(scoreKey) {
@@ -542,7 +583,10 @@ function getRecommendationsForScoreKey(scoreKey) {
   if (byScore && Array.isArray(byScore[scoreKey]) && byScore[scoreKey].length) {
     return byScore[scoreKey];
   }
-  return recommendationSets?.recommendations || [];
+  const fallbackRows = Array.isArray(recommendationSets?.recommendations)
+    ? recommendationSets.recommendations.slice()
+    : [];
+  return fallbackRows.sort((left, right) => getScoreValue(right, scoreKey) - getScoreValue(left, scoreKey));
 }
 
 function updateRecommendationScoreTabsUI() {
@@ -624,7 +668,6 @@ function renderSimilarTheaters(rows) {
 async function renderRecommendations(rows, scoreKey = activeRecommendationScoreKey) {
   if (!recsBodyEl || !recsSectionEl) return;
   recsBodyEl.innerHTML = "";
-  const scoreField = RECOMMENDATION_SCORE_META[scoreKey]?.field || "recommendation_score";
   if (!rows || !rows.length) {
     recsSectionEl.classList.add("hidden");
     return;
@@ -632,7 +675,7 @@ async function renderRecommendations(rows, scoreKey = activeRecommendationScoreK
 
   recsSectionEl.classList.remove("hidden");
   for (const row of rows) {
-    const displayScore = Number(row?.[scoreField] ?? row?.recommendation_score ?? 0);
+    const displayScore = getScoreValue(row, scoreKey);
     const metadata = row?.posterUrl || row?.poster || row?.poster_url
       ? { poster: row.posterUrl || row.poster || row.poster_url }
       : await getMovieMetadataByTitle(row.movie_title);
@@ -686,7 +729,7 @@ async function loadInsights(theaterKey) {
   };
   renderProfile(data.profile || null);
   renderSimilarTheaters(data.similar_theaters || []);
-  renderRecommendations(getRecommendationsForScoreKey(activeRecommendationScoreKey), activeRecommendationScoreKey);
+  await renderRecommendations(getRecommendationsForScoreKey(activeRecommendationScoreKey), activeRecommendationScoreKey);
   lastLoadedTheaterKey = theaterKey;
   setStatus(`Insights loaded for ${data?.profile?.theater_name || "theater"}.`);
 }
@@ -695,12 +738,12 @@ function bindRecommendationScoreTabs() {
   if (!recScoreTabsWrapEl) return;
   const buttons = recScoreTabsWrapEl.querySelectorAll(".reelsuccess-score-tab-btn");
   buttons.forEach((btn) => {
-    btn.addEventListener("click", () => {
+    btn.addEventListener("click", async () => {
       const scoreKey = String(btn.dataset?.scoreKey || "").trim();
       if (!RECOMMENDATION_SCORE_META[scoreKey]) return;
       activeRecommendationScoreKey = scoreKey;
       const rows = getRecommendationsForScoreKey(scoreKey);
-      renderRecommendations(rows, scoreKey);
+      await renderRecommendations(rows, scoreKey);
     });
   });
   updateRecommendationScoreTabsUI();
@@ -1154,6 +1197,10 @@ function bindAuth() {
       setStatus("Sign in with an authorized account.");
       return;
     }
+
+    // Always allow sign-out once Firebase auth session exists, even if access checks fail.
+    if (signInBtn) signInBtn.style.display = "none";
+    if (signOutBtn) signOutBtn.style.display = "";
 
     try {
       const tokenResult = await user.getIdTokenResult();
