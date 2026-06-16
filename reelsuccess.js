@@ -650,7 +650,10 @@ function renderSimilarTheaters(rows) {
   if (!similarBodyEl || !similarSectionEl) return;
   similarBodyEl.innerHTML = "";
   if (!rows || !rows.length) {
-    similarSectionEl.classList.add("hidden");
+    similarSectionEl.classList.remove("hidden");
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td colspan="3" style="color:#aaa;text-align:center;">No similar theaters available for this location yet.</td>`;
+    similarBodyEl.appendChild(tr);
     return;
   }
 
@@ -670,7 +673,11 @@ async function renderRecommendations(rows, scoreKey = activeRecommendationScoreK
   if (!recsBodyEl || !recsSectionEl) return;
   recsBodyEl.innerHTML = "";
   if (!rows || !rows.length) {
-    recsSectionEl.classList.add("hidden");
+    recsSectionEl.classList.remove("hidden");
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td colspan="3" style="color:#aaa;text-align:center;">No recommendations available yet for this theater.</td>`;
+    recsBodyEl.appendChild(tr);
+    updateRecommendationScoreTabsUI();
     return;
   }
 

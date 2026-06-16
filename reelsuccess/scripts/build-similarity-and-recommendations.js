@@ -371,10 +371,26 @@ function main() {
   const keys = Array.from(vectorMap.keys());
   const similarityByTheater = {};
 
+  const weightTotal = args.wHistory + args.wMovie + args.wDemo + args.wOps;
+  const effectiveWeights = weightTotal > 0
+    ? {
+        history: args.wHistory / weightTotal,
+        movie: args.wMovie / weightTotal,
+        demographics: args.wDemo / weightTotal,
+        operations: args.wOps / weightTotal,
+      }
+    : {
+        history: 0.75,
+        movie: 0.05,
+        demographics: 0.15,
+        operations: 0.05,
+      };
+
   for (let i = 0; i < keys.length; i += 1) {
     const aKey = keys[i];
     const a = vectorMap.get(aKey);
-    const sims = [];
+    const strictSims = [];
+    const fallbackSims = [];
 
     for (let j = 0; j < keys.length; j += 1) {
       if (i === j) continue;
@@ -391,12 +407,12 @@ function main() {
 
       const historyStats = movieHistorySimilarity(movieHistoryByTheater.get(aKey), movieHistoryByTheater.get(bKey));
 
-      // Weights: 75% movie history (primary driver), 15% demographics, 5% feature, 5% ops
+      // Weighted blend of historical, demographic, movie-vector, and operational similarity.
       const rawCombined =
-        0.75 * historyStats.score +
-        0.15 * demoSim01 +
-        0.05 * movieSim01 +
-        0.05 * opSim01;
+        effectiveWeights.history * historyStats.score +
+        effectiveWeights.demographics * demoSim01 +
+        effectiveWeights.movie * movieSim01 +
+        effectiveWeights.operations * opSim01;
 
       const confidence = similarityConfidence(
         historyStats.common_movie_count,
@@ -405,10 +421,7 @@ function main() {
 
       const combined = (confidence * rawCombined) + ((1 - confidence) * 0.5);
 
-      if (historyStats.common_movie_count < 5) continue;
-      if (historyStats.overlap_score < 0.08) continue;
-
-      sims.push({
+      const simRow = {
         theater_key: bKey,
         score: Number(combined.toFixed(6)),
         raw_score: Number(rawCombined.toFixed(6)),
@@ -421,12 +434,20 @@ function main() {
         movie_similarity: Number(movieSim01.toFixed(6)),
         demographic_similarity: Number(demoSim01.toFixed(6)),
         operational_similarity: Number(opSim01.toFixed(6)),
-      });
+      };
+
+      fallbackSims.push(simRow);
+
+      if (historyStats.common_movie_count < 5) continue;
+      if (historyStats.overlap_score < 0.08) continue;
+
+      strictSims.push(simRow);
     }
 
-    sims.sort((x, y) => y.score - x.score);
+    const chosenSims = strictSims.length ? strictSims : fallbackSims;
+    chosenSims.sort((x, y) => y.score - x.score);
 
-    similarityByTheater[aKey] = sims.slice(0, args.topKSimilar).map((s) => ({
+    similarityByTheater[aKey] = chosenSims.slice(0, args.topKSimilar).map((s) => ({
       ...s,
       theater_name: theaterByKey.get(s.theater_key)?.theater_name || "",
       theater_city_state: theaterByKey.get(s.theater_key)?.theater_city_state || "",
@@ -509,21 +530,85 @@ function main() {
           ...variants,
         };
       })
-      .filter((r) => r.support_theater_count >= 2);
+      ;
 
-    const rankedBaseline = candidateScored
+    let sourceForRanking = candidateScored.filter((r) => r.support_theater_count >= 2);
+    if (!sourceForRanking.length) {
+      sourceForRanking = candidateScored.filter((r) => r.support_theater_count >= 1);
+    }
+
+    if (!sourceForRanking.length) {
+      const globalFallback = Array.from(movieGlobalPlayCounts.entries())
+        .filter(([movieTitle]) => !isLikelyBadMovieTitle(movieTitle))
+        .filter(([movieTitle]) => !played.has(movieTitle))
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, args.topKRecMovies)
+        .map(([movieTitle, globalPlayCount]) => {
+          const globalPresenceRate = globalPlayCount / totalTheaterCount;
+          return {
+            movie_title: movieTitle,
+            recommendation_score: Number(globalPresenceRate.toFixed(6)),
+            support_theater_count: 1,
+            weighted_movie_signal: Number(globalPresenceRate.toFixed(6)),
+            score_baseline: Number(globalPresenceRate.toFixed(6)),
+            score_support_boosted: Number(globalPresenceRate.toFixed(6)),
+            score_lift_adjusted: Number(globalPresenceRate.toFixed(6)),
+            score_robust_blend: Number(globalPresenceRate.toFixed(6)),
+            support_boost: 1,
+            lift: 1,
+            confidence: 0,
+            popularity_penalty: 1,
+            global_play_count: globalPlayCount,
+            global_presence_rate: Number(globalPresenceRate.toFixed(6)),
+            local_presence_rate: 0,
+            total_theaters: totalTheaterCount,
+            similar_theaters: [],
+          };
+        });
+
+      sourceForRanking = globalFallback.length
+        ? globalFallback
+        : Array.from(movieGlobalPlayCounts.entries())
+          .filter(([movieTitle]) => !isLikelyBadMovieTitle(movieTitle))
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, args.topKRecMovies)
+          .map(([movieTitle, globalPlayCount]) => {
+            const globalPresenceRate = globalPlayCount / totalTheaterCount;
+            return {
+              movie_title: movieTitle,
+              recommendation_score: Number(globalPresenceRate.toFixed(6)),
+              support_theater_count: 1,
+              weighted_movie_signal: Number(globalPresenceRate.toFixed(6)),
+              score_baseline: Number(globalPresenceRate.toFixed(6)),
+              score_support_boosted: Number(globalPresenceRate.toFixed(6)),
+              score_lift_adjusted: Number(globalPresenceRate.toFixed(6)),
+              score_robust_blend: Number(globalPresenceRate.toFixed(6)),
+              support_boost: 1,
+              lift: 1,
+              confidence: 0,
+              popularity_penalty: 1,
+              global_play_count: globalPlayCount,
+              global_presence_rate: Number(globalPresenceRate.toFixed(6)),
+              local_presence_rate: 0,
+              total_theaters: totalTheaterCount,
+              similar_theaters: [],
+            };
+          });
+    }
+
+    const rankedBaseline = sourceForRanking
       .slice()
       .sort((x, y) => y.score_baseline - x.score_baseline)
       .slice(0, args.topKRecMovies);
-    const rankedSupportBoosted = candidateScored
+    const rankedSupportBoosted = sourceForRanking
       .slice()
       .sort((x, y) => y.score_support_boosted - x.score_support_boosted)
       .slice(0, args.topKRecMovies);
-    const rankedLiftAdjusted = candidateScored
+    const rankedLiftAdjusted = sourceForRanking
       .slice()
       .sort((x, y) => y.score_lift_adjusted - x.score_lift_adjusted)
       .slice(0, args.topKRecMovies);
-    const rankedRobustBlend = candidateScored
+    const rankedRobustBlend = sourceForRanking
       .slice()
       .sort((x, y) => y.score_robust_blend - x.score_robust_blend)
       .slice(0, args.topKRecMovies);
@@ -549,7 +634,12 @@ function main() {
     created_at: new Date().toISOString(),
     params: {
       topKSimilar: args.topKSimilar,
-      weights: { history: args.wHistory, movie: args.wMovie, demographics: args.wDemo, operations: args.wOps },
+      weights: {
+        history: Number(effectiveWeights.history.toFixed(6)),
+        movie: Number(effectiveWeights.movie.toFixed(6)),
+        demographics: Number(effectiveWeights.demographics.toFixed(6)),
+        operations: Number(effectiveWeights.operations.toFixed(6)),
+      },
       confidence: {
         common_movie_k: 8,
         overlap_weight_target: 26,
@@ -568,7 +658,12 @@ function main() {
     params: {
       topKRecMovies: args.topKRecMovies,
       neighborPool: args.neighborPool,
-      similarityWeights: { history: args.wHistory, movie: args.wMovie, demographics: args.wDemo, operations: args.wOps },
+      similarityWeights: {
+        history: Number(effectiveWeights.history.toFixed(6)),
+        movie: Number(effectiveWeights.movie.toFixed(6)),
+        demographics: Number(effectiveWeights.demographics.toFixed(6)),
+        operations: Number(effectiveWeights.operations.toFixed(6)),
+      },
       recommendationScoring: {
         default: "robust_blend",
         variants: ["robust_blend", "baseline", "support_boosted", "lift_adjusted"],
@@ -598,7 +693,12 @@ function main() {
       topKSimilar: args.topKSimilar,
       topKRecMovies: args.topKRecMovies,
       neighborPool: args.neighborPool,
-      weights: { history: args.wHistory, movie: args.wMovie, demographics: args.wDemo, operations: args.wOps },
+      weights: {
+        history: Number(effectiveWeights.history.toFixed(6)),
+        movie: Number(effectiveWeights.movie.toFixed(6)),
+        demographics: Number(effectiveWeights.demographics.toFixed(6)),
+        operations: Number(effectiveWeights.operations.toFixed(6)),
+      },
     },
     counts: {
       theaters: keys.length,
