@@ -67,3 +67,11 @@ node_modules/
 
 # dataconnect generated files
 .dataconnect
+
+# ReelSuccess generated artifacts (large)
+reelsuccess/input-pdfs/
+reelsuccess/output/screenings.json
+reelsuccess/output/screenings.csv
+reelsuccess/output/screenings_clean_step3.json
+reelsuccess/output/theater_recommendations_step4.json
+functions/reelsuccess-data/theater_insights_by_key.json

@@ -70,3 +70,17 @@ Output:
 ## Important
 
 Whenever Step 4 outputs are regenerated, re-run the Step 5 data-prep script before deploying functions again, so API data stays in sync.
+
+## One-command full rebuild (recommended)
+
+You can run the full pipeline (Step 1 → quality gate → Step 3 → Step 4 → Step 5) with:
+
+```bash
+node reelsuccess/scripts/run-reelsuccess-pipeline.js
+```
+
+To also deploy functions at the end:
+
+```bash
+node reelsuccess/scripts/run-reelsuccess-pipeline.js --deployFunctions
+```
