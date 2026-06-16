@@ -1086,37 +1086,73 @@ function buildPosterUrl(posterPath, size = "w185") {
   return posterPath ? `https://image.tmdb.org/t/p/${size}${posterPath}` : null;
 }
 
+function normalizeMovieTitleForSearch(title) {
+  const raw = String(title || "").trim();
+  if (!raw) return "";
+
+  const trailingArticleMatch = raw.match(/^(.*),\s*(The|A|An)$/i);
+  const withLeadingArticle = trailingArticleMatch
+    ? `${trailingArticleMatch[2]} ${trailingArticleMatch[1]}`.trim()
+    : raw;
+
+  return withLeadingArticle
+    .replace(/\s+/g, " ")
+    .replace(/[\u2018\u2019]/g, "'")
+    .replace(/[\u201C\u201D]/g, '"')
+    .trim();
+}
+
 async function getMovieMetadataByTitle(title) {
-  if (movieMetadataCache.has(title)) {
-    return movieMetadataCache.get(title);
+  const normalizedLookupTitle = normalizeMovieTitleForSearch(title);
+  if (!normalizedLookupTitle) {
+    return { tmdbId: null, poster: null };
+  }
+
+  const cacheKey = normalizedLookupTitle.toLowerCase();
+  if (movieMetadataCache.has(cacheKey)) {
+    return movieMetadataCache.get(cacheKey);
   }
 
   try {
-    const normalizedTitle = title.trim().toLowerCase();
+    const normalizedTitle = normalizedLookupTitle.toLowerCase();
     const override = TMDB_TITLE_OVERRIDES[normalizedTitle];
 
     if (override?.tmdbId) {
       const details = await getMovieDetails(override.tmdbId);
       const metadata = {
         tmdbId: override.tmdbId,
-        poster: buildPosterUrl(details?.poster_path)
+        poster: buildPosterUrl(details?.poster_path, "w154")
       };
-      movieMetadataCache.set(title, metadata);
+      movieMetadataCache.set(cacheKey, metadata);
       return metadata;
     }
 
-    const results = await searchTMDB(title);
+    const searchCandidates = [
+      normalizedLookupTitle,
+      normalizedLookupTitle.replace(/[:\-–—]/g, " ").replace(/\s+/g, " ").trim(),
+      normalizedLookupTitle.replace(/\(.*?\)/g, "").trim(),
+    ].filter(Boolean);
+
+    let results = [];
+    for (const candidate of searchCandidates) {
+      const next = await searchTMDB(candidate);
+      if (Array.isArray(next) && next.length) {
+        results = next;
+        break;
+      }
+    }
+
     const match = results.find(movie => movie.title?.trim().toLowerCase() === normalizedTitle) || results[0];
     const metadata = {
       tmdbId: match?.id || null,
-      poster: buildPosterUrl(match?.poster_path)
+      poster: buildPosterUrl(match?.poster_path, "w154")
     };
-    movieMetadataCache.set(title, metadata);
+    movieMetadataCache.set(cacheKey, metadata);
     return metadata;
   } catch (error) {
     console.error("Error fetching movie metadata:", error);
     const metadata = { tmdbId: null, poster: null };
-    movieMetadataCache.set(title, metadata);
+    movieMetadataCache.set(cacheKey, metadata);
     return metadata;
   }
 }
@@ -1316,9 +1352,17 @@ async function displayChosenMovies(showVoteCounts = false) {
     return;
   }
 
-  const movies = moviesSource.map(movie => ({
-    movie,
-    voteCount: movie.vote_count || 0
+  const movies = await Promise.all(moviesSource.map(async (movie) => {
+    const title = String(movie?.title || "").trim();
+    const metadata = await getMovieMetadataByTitle(title);
+    return {
+      movie: {
+        ...movie,
+        poster: movie?.poster || metadata.poster || null,
+        tmdb_id: movie?.tmdb_id || metadata.tmdbId || null,
+      },
+      voteCount: movie.vote_count || 0,
+    };
   }));
 
   const totalVotes = movies.reduce((sum, entry) => sum + entry.voteCount, 0);
@@ -1332,8 +1376,13 @@ async function displayChosenMovies(showVoteCounts = false) {
     const item = document.createElement("div");
     item.className = "chosen-movie";
     item.innerHTML = `
-      <div class="chosen-movie-title">
-        <span>${movie.title}</span>
+      <div class="chosen-movie-header">
+        ${movie.poster
+          ? `<img class="chosen-movie-poster" src="${movie.poster}" alt="${escapeHtml(movie.title)} poster" loading="lazy" />`
+          : `<div class="chosen-movie-poster chosen-movie-poster-fallback" aria-hidden="true"></div>`}
+        <div class="chosen-movie-title">
+          <span>${movie.title}</span>
+        </div>
       </div>
       ${showVoteCounts ? `
       <div class="chosen-movie-bar">

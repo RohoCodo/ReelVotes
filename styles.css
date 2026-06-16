@@ -298,6 +298,49 @@ body {
     font-weight: 700;
   }
 
+  .reelsuccess-rec-title-cell {
+    white-space: normal !important;
+    min-width: 260px;
+  }
+
+  .reelsuccess-rec-movie-cell {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    min-width: 260px;
+  }
+
+  img.reelsuccess-rec-poster {
+    width: 48px !important;
+    min-width: 48px !important;
+    max-width: 48px !important;
+    height: 72px !important;
+    min-height: 72px !important;
+    max-height: 72px !important;
+    display: block;
+    object-fit: cover;
+    border-radius: 8px;
+    background: #333;
+    flex-shrink: 0;
+  }
+
+  .reelsuccess-rec-poster-fallback {
+    width: 48px;
+    min-width: 48px;
+    max-width: 48px;
+    height: 72px;
+    min-height: 72px;
+    max-height: 72px;
+    background: linear-gradient(135deg, rgba(255, 71, 87, 0.35), rgba(255, 107, 129, 0.15));
+  }
+
+  .reelsuccess-rec-title {
+    white-space: normal;
+    line-height: 1.25;
+    font-weight: 600;
+    color: #fff;
+  }
+
   .reelsuccess-score-tabs {
     display: flex;
     gap: 8px;
@@ -809,12 +852,50 @@ body {
     box-shadow: 0 0 15px rgba(255, 235, 59, 0.4);
   }
 
+  .chosen-movie-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  img.chosen-movie-poster {
+    width: 44px !important;
+    min-width: 44px !important;
+    max-width: 44px !important;
+    height: 64px !important;
+    min-height: 64px !important;
+    max-height: 64px !important;
+    object-fit: cover;
+    border-radius: 8px;
+    display: block;
+    background: #333;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.25);
+  }
+
+  .chosen-movie-poster-fallback {
+    width: 44px;
+    min-width: 44px;
+    max-width: 44px;
+    height: 64px;
+    min-height: 64px;
+    max-height: 64px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, rgba(255, 71, 87, 0.35), rgba(255, 107, 129, 0.15));
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.2);
+  }
+
   .chosen-movie-title {
     font-weight: 600;
-    margin-bottom: 8px;
+    margin-bottom: 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    min-width: 0;
+  }
+
+  .chosen-movie-title span {
+    overflow-wrap: anywhere;
   }
 
   .chosen-movie-year {
@@ -987,14 +1068,15 @@ body {
   }
 
   .confirmation-poster {
-    width: 120px;
-    height: 174px;
+    width: 132px;
+    height: 196px;
     object-fit: cover;
-    border-radius: 12px;
+    border-radius: 14px;
     background: #333;
     display: block;
     margin: 0 auto 18px;
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 16px 34px rgba(0, 0, 0, 0.38);
   }
   
   .voted-movie-row {
