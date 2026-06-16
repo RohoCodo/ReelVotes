@@ -37,6 +37,7 @@ const deleteGrossUploadCallable = httpsCallable(functions, "reelSuccessDeleteGro
 const provisionMyClaimsCallable = httpsCallable(functions, "reelSuccessProvisionMyClaims");
 const syncAccessCallable = httpsCallable(functions, "reelSuccessSyncAccess");
 const authProvider = new GoogleAuthProvider();
+authProvider.setCustomParameters({ prompt: "select_account" });
 
 const theaterSearchInput = document.getElementById("theaterSearchInput");
 const myTheaterButton = document.getElementById("myTheaterButton");
