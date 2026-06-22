@@ -989,11 +989,30 @@ body {
   }
 
   #adminList .chosen-movie-header {
-    justify-content: flex-start;
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    align-items: center;
+    column-gap: 10px;
+  }
+
+  #adminList .chosen-movie-header::after {
+    content: "";
+    width: 44px;
+    height: 1px;
+  }
+
+  #adminList .chosen-movie-header .chosen-movie-poster,
+  #adminList .chosen-movie-header .chosen-movie-poster-fallback {
+    grid-column: 1;
+    justify-self: start;
   }
 
   #adminList .admin-movie-title {
-    text-align: left;
+    grid-column: 2;
+    text-align: center;
+    justify-self: center;
+    width: 100%;
+    overflow-wrap: anywhere;
   }
 
   @media (max-width: 520px) {

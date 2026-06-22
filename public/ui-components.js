@@ -788,6 +788,9 @@ export function HowItWorksPage() {
           ReelVotes helps small theaters program movies you not only want to see, but that you will support by buying a ticket if your movie is chosen.
           When you vote, you are saying you'll show up. That is how votes become real screenings and how independent theaters you love can keep taking risks on great films.
         </p>
+        <p style="margin-top:10px;">
+          Theater operator? See <a class="app-link" href="/for-theaters">how ReelVotes works with your theater</a>.
+        </p>
       </section>
 
       <div class="steps-grid">
