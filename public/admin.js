@@ -689,12 +689,29 @@ function renderMovies(movies) {
   movies.forEach((movie) => {
     const voteCount = movie.vote_count || 0;
     const percentage = maxVotes > 0 ? Math.round((voteCount / maxVotes) * 100) : 0;
+    const poster = movie.poster || movie.posterUrl || movie.poster_url || null;
+    const title = movie.movie_title || movie.title || movie.id;
+    const safeTitle = String(title || "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#39;");
+    const safePoster = String(poster || "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#39;");
 
     const item = document.createElement("div");
     item.className = "chosen-movie";
     item.innerHTML = `
       <div class="chosen-movie-header">
-        <span>${movie.movie_title || movie.title || movie.id}</span>
+        ${poster
+          ? `<img class="chosen-movie-poster" src="${safePoster}" alt="${safeTitle} poster" loading="lazy" />`
+          : '<div class="chosen-movie-poster chosen-movie-poster-fallback" aria-hidden="true"></div>'}
+        <span>${safeTitle}</span>
       </div>
       <div class="chosen-movie-bar">
         <div class="chosen-movie-fill" style="width: ${Math.min(percentage, 100)}%"></div>

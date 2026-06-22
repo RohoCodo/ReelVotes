@@ -1076,7 +1076,9 @@ async function fetchChosenMovies() {
         title: data.movie_title,
         vote_count: data.vote_count || 0,
         eliminated: data.eliminated === true,
-        year: null
+        year: null,
+        poster: data.poster || data.posterUrl || data.poster_url || null,
+        tmdb_id: data.tmdb_id || data.tmdbId || null
       });
     });
 
@@ -1194,6 +1196,17 @@ async function buildUpcomingPreviewHtml() {
 
 async function renderPostVoteExperience({ movieTitles = [], heading = "You're In 🎬", subtitle = "Thanks for voting! Help your movie win by sharing this vote with friends." } = {}) {
   const upcomingPreviewHtml = await buildUpcomingPreviewHtml();
+  const leaderboardMovies = await Promise.all(
+    chosenMovies.map(async (movie) => {
+      const title = String(movie?.title || "").trim();
+      const metadata = await getMovieMetadataByTitle(title);
+      return {
+        ...movie,
+        poster: movie?.poster || metadata?.poster || null,
+        tmdb_id: movie?.tmdb_id || metadata?.tmdbId || null,
+      };
+    })
+  );
   resultsDiv.classList.remove("hidden");
   resultsDiv.innerHTML = `
     <section class="post-vote-shell">
@@ -1215,7 +1228,7 @@ async function renderPostVoteExperience({ movieTitles = [], heading = "You're In
   if (leaderboardMount) {
     new ResultsLeaderboard({
       mountEl: leaderboardMount,
-      movies: chosenMovies,
+      movies: leaderboardMovies,
       title: "Live Results",
     });
   }

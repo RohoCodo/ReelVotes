@@ -185,12 +185,12 @@ body {
 
   .site-nav-brand::before {
     content: "";
-    width: 30px;
-    height: 30px;
+    width: 36px;
+    height: 36px;
     border-radius: 999px;
-    border: 1px solid rgba(255, 255, 255, 0.45);
-    background: #000 url("/icon.png") center / 84% no-repeat;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: transparent url("/icon.png") center / contain no-repeat;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
     flex-shrink: 0;
   }
 
@@ -685,6 +685,17 @@ body {
     justify-content: center;
   }
 
+  @media (max-width: 640px) {
+    .screening-list.single-screening {
+      grid-template-columns: minmax(0, 1fr);
+      justify-content: stretch;
+    }
+
+    .day-screenings {
+      overflow-x: hidden;
+    }
+  }
+
   .screening-card {
     margin: 0;
     width: 100%;
@@ -860,10 +871,28 @@ body {
 
   .leaderboard-head {
     display: grid;
-    grid-template-columns: auto 1fr auto;
+    grid-template-columns: auto 40px 1fr auto;
     align-items: center;
     gap: 8px;
     margin-bottom: 6px;
+  }
+
+  .leaderboard-poster {
+    width: 40px;
+    height: 58px;
+    border-radius: 8px;
+    object-fit: cover;
+    display: block;
+    background: #333;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+  }
+
+  .leaderboard-poster-fallback {
+    width: 40px;
+    height: 58px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, rgba(255, 71, 87, 0.35), rgba(255, 107, 129, 0.15));
+    border: 1px solid rgba(255, 255, 255, 0.12);
   }
 
   .leaderboard-head p {
@@ -879,11 +908,30 @@ body {
   .leaderboard-head .movie {
     font-size: 14px;
     font-weight: 700;
+    min-width: 0;
+    overflow-wrap: anywhere;
   }
 
   .leaderboard-head .votes {
     font-size: 12px;
     color: #ccc;
+    white-space: nowrap;
+  }
+
+  @media (max-width: 520px) {
+    .leaderboard-head {
+      grid-template-columns: auto 36px 1fr;
+      grid-template-areas:
+        "rank poster movie"
+        "votes votes votes";
+      align-items: start;
+    }
+
+    .leaderboard-head .rank { grid-area: rank; }
+    .leaderboard-head .leaderboard-poster,
+    .leaderboard-head .leaderboard-poster-fallback { grid-area: poster; width: 36px; height: 52px; }
+    .leaderboard-head .movie { grid-area: movie; }
+    .leaderboard-head .votes { grid-area: votes; }
   }
 
   .leaderboard-track {
@@ -1172,6 +1220,12 @@ body {
 
     .admin-tab-switcher button:first-child {
       border-top: none;
+    }
+  }
+
+  @media (min-width: 701px) {
+    .site-nav-drawer a[href="/email-signup.html"] {
+      display: none !important;
     }
   }
 
