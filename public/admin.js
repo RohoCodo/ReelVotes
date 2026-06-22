@@ -75,6 +75,54 @@ let currentAdminEmail = null;
 let currentVoteStatus = "not-started";
 let currentUniqueVoterCount = null;
 let currentActiveVoteCount = null;
+const TMDB_API_KEY = "05e2d906f097b769ba4d7e8c7305accf";
+const TMDB_BASE_URL = "https://api.themoviedb.org/3";
+const adminMovieMetadataCache = new Map();
+
+function buildPosterUrl(posterPath, size = "w185") {
+  return posterPath ? `https://image.tmdb.org/t/p/${size}${posterPath}` : null;
+}
+
+async function searchTMDB(query) {
+  try {
+    const response = await fetch(
+      `${TMDB_BASE_URL}/search/movie?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}`
+    );
+    const data = await response.json();
+    return Array.isArray(data?.results) ? data.results : [];
+  } catch {
+    return [];
+  }
+}
+
+async function getMovieMetadataByTitle(title) {
+  const normalized = String(title || "").trim();
+  if (!normalized) return { poster: null, tmdbId: null };
+
+  const cacheKey = normalized.toLowerCase();
+  if (adminMovieMetadataCache.has(cacheKey)) {
+    const cached = adminMovieMetadataCache.get(cacheKey);
+    if (cached?.poster || cached?.tmdbId) {
+      return cached;
+    }
+  }
+
+  try {
+    const results = await searchTMDB(normalized);
+    const exact = results.find((row) => String(row?.title || "").trim().toLowerCase() === cacheKey);
+    const match = exact || results[0] || null;
+    const metadata = {
+      poster: buildPosterUrl(match?.poster_path, "w185"),
+      tmdbId: match?.id || null,
+    };
+    if (metadata.poster || metadata.tmdbId) {
+      adminMovieMetadataCache.set(cacheKey, metadata);
+    }
+    return metadata;
+  } catch {
+    return { poster: null, tmdbId: null };
+  }
+}
 
 function normalizeVoteStatus(value) {
   const status = String(value || "").trim().toLowerCase();
@@ -651,7 +699,7 @@ async function rebuildMovieCountsNow() {
   }
 }
 
-function renderMovies(movies) {
+async function renderMovies(movies) {
   if (!adminList) return;
 
   adminList.innerHTML = "";
@@ -686,11 +734,21 @@ function renderMovies(movies) {
   totalEl.innerHTML = `<span>Total votes: ${totalVotes}</span><span>Total people: ${totalPeople}</span>`;
   adminList.appendChild(totalEl);
 
-  movies.forEach((movie) => {
+  const moviesWithMetadata = await Promise.all(movies.map(async (movie) => {
+    const title = movie.movie_title || movie.title || movie.id;
+    const metadata = await getMovieMetadataByTitle(title);
+    return {
+      ...movie,
+      title,
+      poster: movie.poster || movie.posterUrl || movie.poster_url || metadata.poster || null,
+    };
+  }));
+
+  moviesWithMetadata.forEach((movie) => {
     const voteCount = movie.vote_count || 0;
     const percentage = maxVotes > 0 ? Math.round((voteCount / maxVotes) * 100) : 0;
-    const poster = movie.poster || movie.posterUrl || movie.poster_url || null;
-    const title = movie.movie_title || movie.title || movie.id;
+    const poster = movie.poster || null;
+    const title = movie.title || movie.movie_title || movie.id;
     const safeTitle = String(title || "")
       .replaceAll("&", "&amp;")
       .replaceAll("<", "&lt;")

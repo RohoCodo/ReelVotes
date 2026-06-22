@@ -691,15 +691,16 @@ export class ResultsLeaderboard {
         ${rows.length ? rows.map((item, index) => {
           const votes = Number(item.vote_count || 0);
           const percent = total > 0 ? Math.round((votes / total) * 100) : 0;
+          const title = item?.title || item?.movie_title || item?.id || "Untitled";
           const poster = item?.poster || item?.posterUrl || item?.poster_url || null;
           return `
             <div class="leaderboard-row ${index === 0 ? "top" : ""}">
               <div class="leaderboard-head">
                 <p class="rank">#${index + 1}</p>
                 ${poster
-                  ? `<img class="leaderboard-poster" src="${escapeHtml(poster)}" alt="${escapeHtml(item.title || "Movie")} poster" loading="lazy" />`
+                  ? `<img class="leaderboard-poster" src="${escapeHtml(poster)}" alt="${escapeHtml(title)} poster" loading="lazy" />`
                   : '<div class="leaderboard-poster-fallback" aria-hidden="true"></div>'}
-                <p class="movie">${escapeHtml(item.title || "Untitled")}</p>
+                <p class="movie">${escapeHtml(title)}</p>
                 <p class="votes">${votes} · ${percent}%</p>
               </div>
               <div class="leaderboard-track">

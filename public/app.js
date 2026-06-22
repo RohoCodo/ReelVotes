@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
 import { getFirestore, collection, getDocs, getDoc, doc, query, where, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-functions.js";
-import { ShareVotePanel, ResultsLeaderboard, ConfettiCelebration } from "./ui-components.js";
+import { ShareVotePanel, ResultsLeaderboard, ConfettiCelebration } from "./ui-components.js?v=20260622-17";
 
 // Firebase Config
 const firebaseConfig = {
@@ -1299,7 +1299,10 @@ async function getMovieMetadataByTitle(title) {
 
   const cacheKey = normalizedLookupTitle.toLowerCase();
   if (movieMetadataCache.has(cacheKey)) {
-    return movieMetadataCache.get(cacheKey);
+    const cached = movieMetadataCache.get(cacheKey);
+    if (cached?.poster || cached?.tmdbId) {
+      return cached;
+    }
   }
 
   try {
@@ -1310,9 +1313,11 @@ async function getMovieMetadataByTitle(title) {
       const details = await getMovieDetails(override.tmdbId);
       const metadata = {
         tmdbId: override.tmdbId,
-        poster: buildPosterUrl(details?.poster_path, "w154")
+        poster: buildPosterUrl(details?.poster_path, "w185")
       };
-      movieMetadataCache.set(cacheKey, metadata);
+      if (metadata.poster || metadata.tmdbId) {
+        movieMetadataCache.set(cacheKey, metadata);
+      }
       return metadata;
     }
 
@@ -1334,15 +1339,15 @@ async function getMovieMetadataByTitle(title) {
     const match = results.find(movie => movie.title?.trim().toLowerCase() === normalizedTitle) || results[0];
     const metadata = {
       tmdbId: match?.id || null,
-      poster: buildPosterUrl(match?.poster_path, "w154")
+      poster: buildPosterUrl(match?.poster_path, "w185")
     };
-    movieMetadataCache.set(cacheKey, metadata);
+    if (metadata.poster || metadata.tmdbId) {
+      movieMetadataCache.set(cacheKey, metadata);
+    }
     return metadata;
   } catch (error) {
     console.error("Error fetching movie metadata:", error);
-    const metadata = { tmdbId: null, poster: null };
-    movieMetadataCache.set(cacheKey, metadata);
-    return metadata;
+    return { tmdbId: null, poster: null };
   }
 }
 
@@ -2088,7 +2093,7 @@ function showVotingInterface() {
   updateVoteActionState();
 }
 
-function showEndedResultsInterface() {
+async function showEndedResultsInterface() {
   console.log("[app] showEndedResultsInterface", {
     hasActiveMovieList,
     chosenMoviesLength: chosenMovies.length
@@ -2136,9 +2141,22 @@ function showEndedResultsInterface() {
 
   const leaderboardMount = document.getElementById("resultsLeaderboardMount");
   if (leaderboardMount) {
+    const leaderboardMovies = await Promise.all(
+      chosenMovies.map(async (movie) => {
+        const title = String(movie?.title || movie?.movie_title || "").trim();
+        const metadata = await getMovieMetadataByTitle(title);
+        return {
+          ...movie,
+          title: movie?.title || movie?.movie_title || movie?.id,
+          poster: movie?.poster || movie?.posterUrl || movie?.poster_url || metadata?.poster || null,
+          tmdb_id: movie?.tmdb_id || movie?.tmdbId || metadata?.tmdbId || null,
+        };
+      })
+    );
+
     new ResultsLeaderboard({
       mountEl: leaderboardMount,
-      movies: chosenMovies,
+      movies: leaderboardMovies,
       title: "Final Results",
     });
   }
