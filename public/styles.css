@@ -344,7 +344,7 @@ body {
 
   /* Showtimes flow */
   .showtimes-layout {
-    max-width: min(560px, 100%);
+    max-width: min(860px, 100%);
     text-align: left;
   }
 
@@ -2019,6 +2019,31 @@ body {
     cursor: pointer;
     background: linear-gradient(135deg, #ff4757, #ff6b81);
     color: white;
+  }
+
+  .submit-btn {
+    width: 100%;
+    padding: 14px;
+    margin-top: 15px;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    background: linear-gradient(135deg, #ff4757, #ff6b81);
+    color: white;
+  }
+
+  .submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(255, 71, 87, 0.4);
+  }
+
+  .submit-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
   }
   
   #button-container {
