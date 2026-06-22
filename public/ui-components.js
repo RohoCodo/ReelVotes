@@ -226,7 +226,7 @@ export class CalendarView {
         <h3>${dateLabel}</h3>
         <p>${selectedEvents.length} screening${selectedEvents.length === 1 ? "" : "s"}</p>
       </div>
-      <div class="screening-list">
+      <div class="screening-list ${selectedEvents.length === 1 ? "single-screening" : ""}">
         ${selectedEvents.map((event) => ScreeningCard(event)).join("")}
       </div>
     `;

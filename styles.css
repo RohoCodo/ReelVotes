@@ -2,7 +2,7 @@
 
 /* Hotfix: keep showtimes card compact even if cached legacy rules load. */
 .showtimes-layout {
-  max-width: min(560px, 100%) !important;
+  max-width: min(860px, 100%) !important;
 }
 
 /* Root styles also include legacy rules below. */
@@ -71,6 +71,14 @@ body {
     z-index: 1;
   }
 
+@import url("/public/styles.css?v=20260622-5");
+
+/* Root-hosted pages (GitHub Pages) should mirror the public styling exactly. */
+
+/* Keep showtimes width aligned with How It Works page width. */
+.showtimes-layout {
+  max-width: min(860px, 100%) !important;
+}
   .admin-layout {
     max-width: min(1120px, 100%);
     text-align: left;

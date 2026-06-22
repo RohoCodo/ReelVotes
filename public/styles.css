@@ -646,6 +646,11 @@ body {
     gap: 10px;
   }
 
+  .screening-list.single-screening {
+    grid-template-columns: minmax(280px, 520px);
+    justify-content: center;
+  }
+
   .screening-card {
     margin: 0;
     width: 100%;
