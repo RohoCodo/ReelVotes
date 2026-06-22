@@ -1,4 +1,9 @@
-@import url("/public/styles.css?v=20260622-1");
+@import url("/public/styles.css?v=20260622-4");
+
+/* Hotfix: keep showtimes card compact even if cached legacy rules load. */
+.showtimes-layout {
+  max-width: min(560px, 100%) !important;
+}
 
 /* Root styles also include legacy rules below. */
 body {
