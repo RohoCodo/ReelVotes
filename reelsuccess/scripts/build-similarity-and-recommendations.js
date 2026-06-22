@@ -261,6 +261,9 @@ function isLikelyBadMovieTitle(title) {
   if (/^[A-Za-z .'/&-]+\/[A-Za-z .'/&-]+,\s*[A-Z]{2}$/.test(t)) return true; // market rows like Monterey/Salinas, CA
   if (/\bCounty\b/i.test(t)) return true;
   if (/^[A-Za-z .'-]+\s+-\s+[A-Za-z .'-]+$/.test(t)) return true;
+  if (/\bcopyright\b/i.test(t)) return true;
+  if (/\bcomscore\b/i.test(t)) return true;
+  if (/^\s*\d{4}\s+comscore\b/i.test(t)) return true;
   return false;
 }
 

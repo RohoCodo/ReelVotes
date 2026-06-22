@@ -1,0 +1,495 @@
+{
+  "ok": true,
+  "prefix": "box-office-grosses/",
+  "count": 54,
+  "signedUrlHours": 12,
+  "includeSignedUrls": false,
+  "pdfs": [
+    {
+      "name": "box-office-grosses/pfr-the-new-parkway-theater-oakland-ca/2026-01-02/1779688423320_branch_area_20260102_LA.pdf",
+      "bucket": "reelconvo.firebasestorage.app",
+      "size": 2661094,
+      "updated": "2026-05-25T05:53:46.640Z",
+      "contentType": "application/pdf",
+      "tokenDownloadUrl": "https://firebasestorage.googleapis.com/v0/b/reelconvo.firebasestorage.app/o/box-office-grosses%2Fpfr-the-new-parkway-theater-oakland-ca%2F2026-01-02%2F1779688423320_branch_area_20260102_LA.pdf?alt=media&token=e0b04ffd-0bf9-42ef-b494-977e155f58f7",
+      "signedUrl": null
+    },
+    {
+      "name": "box-office-grosses/pfr-the-new-parkway-theater-oakland-ca/2026-01-02/1779688427660_branch_area_20260102_NY.pdf",
+      "bucket": "reelconvo.firebasestorage.app",
+      "size": 1078223,
+      "updated": "2026-05-25T05:53:50.113Z",
+      "contentType": "application/pdf",
+      "tokenDownloadUrl": "https://firebasestorage.googleapis.com/v0/b/reelconvo.firebasestorage.app/o/box-office-grosses%2Fpfr-the-new-parkway-theater-oakland-ca%2F2026-01-02%2F1779688427660_branch_area_20260102_NY.pdf?alt=media&token=0d786d2b-59ba-4880-9496-a35628b77e1f",
+      "signedUrl": null
+    },
+    {
+      "name": "box-office-grosses/pfr-the-new-parkway-theater-oakland-ca/2026-01-02/1779688431104_branch_area_20260102_SF.pdf",
+      "bucket": "reelconvo.firebasestorage.app",
+      "size": 1132140,
+      "updated": "2026-05-25T05:53:53.811Z",
+      "contentType": "application/pdf",
+      "tokenDownloadUrl": "https://firebasestorage.googleapis.com/v0/b/reelconvo.firebasestorage.app/o/box-office-grosses%2Fpfr-the-new-parkway-theater-oakland-ca%2F2026-01-02%2F1779688431104_branch_area_20260102_SF.pdf?alt=media&token=a2af7fbc-043c-4a29-86d2-4384f9557420",
+      "signedUrl": null
+    },
+    {
+      "name": "box-office-grosses/pfr-the-new-parkway-theater-oakland-ca/2026-01-09/1779688402551_branch_area_20260109_LA.pdf",
+      "bucket": "reelconvo.firebasestorage.app",
+      "size": 2900369,
+      "updated": "2026-05-25T05:53:25.570Z",
+      "contentType": "application/pdf",
+      "tokenDownloadUrl": "https://firebasestorage.googleapis.com/v0/b/reelconvo.firebasestorage.app/o/box-office-grosses%2Fpfr-the-new-parkway-theater-oakland-ca%2F2026-01-09%2F1779688402551_branch_area_20260109_LA.pdf?alt=media&token=ad6f08d0-0648-4141-a6be-976c53104dac",
+      "signedUrl": null
+    },
+    {
+      "name": "box-office-grosses/pfr-the-new-parkway-theater-oakland-ca/2026-01-09/1779688406458_branch_area_20260109_NY.pdf",
+      "bucket": "reelconvo.firebasestorage.app",
+      "size": 1113089,
+      "updated": "2026-05-25T05:53:29.042Z",
+      "contentType": "application/pdf",
+      "tokenDownloadUrl": "https://firebasestorage.googleapis.com/v0/b/reelconvo.firebasestorage.app/o/box-office-grosses%2Fpfr-the-new-parkway-theater-oakland-ca%2F2026-01-09%2F1779688406458_branch_area_20260109_NY.pdf?alt=media&token=561e690b-73b0-4dee-8455-5f182ef8005d",
+      "signedUrl": null
+    },
+    {
+      "name": "box-office-grosses/pfr-the-new-parkway-theater-oakland-ca/2026-01-09/1779688409827_branch_area_20260109_SF.pdf",
+      "bucket": "reelconvo.firebasestorage.app",
+      "size": 1236251,
+      "updated": "2026-05-25T05:53:32.344Z",
+      "contentType": "application/pdf",
+      "tokenDownloadUrl": "https://firebasestorage.googleapis.com/v0/b/reelconvo.firebasestorage.app/o/box-office-grosses%2Fpfr-the-new-parkway-theater-oakland-ca%2F2026-01-09%2F1779688409827_branch_area_20260109_SF.pdf?alt=media&token=3bc1becb-4ac7-4ff7-846b-331b51abe927",
+      "signedUrl": null
+    },
+    {
+      "name": "box-office-grosses/pfr-the-new-parkway-theater-oakland-ca/2026-01-16/1779688351523_branch_area_20260116_LA.pdf",
+      "bucket": "reelconvo.firebasestorage.app",
+      "size": 3365794,
+      "updated": "2026-05-25T05:52:34.939Z",
+      "contentType": "application/pdf",
+      "tokenDownloadUrl": "https://firebasestorage.googleapis.com/v0/b/reelconvo.firebasestorage.app/o/box-office-grosses%2Fpfr-the-new-parkway-theater-oakland-ca%2F2026-01-16%2F1779688351523_branch_area_20260116_LA.pdf?alt=media&token=65850309-2296-44dd-9d39-ce8a11a73a02",
+      "signedUrl": null
+    },
+    {
+      "name": "box-office-grosses/pfr-the-new-parkway-theater-oakland-ca/2026-01-16/1779688355970_branch_area_20260116_NY.pdf",
+      "bucket": "reelconvo.firebasestorage.app",
+      "size": 1272588,
+      "updated": "2026-05-25T05:52:38.401Z",
+      "contentType": "application/pdf",
+      "tokenDownloadUrl": "https://firebasestorage.googleapis.com/v0/b/reelconvo.firebasestorage.app/o/box-office-grosses%2Fpfr-the-new-parkway-theater-oakland-ca%2F2026-01-16%2F1779688355970_branch_area_20260116_NY.pdf?alt=media&token=a18547f2-5897-4d0d-a0a0-0f79a3784561",
+      "signedUrl": null
+    },
+    {
+      "name": "box-office-grosses/pfr-the-new-parkway-theater-oakland-ca/2026-01-16/1779688359235_branch_area_20260116_SF.pdf",
+      "bucket": "reelconvo.firebasestorage.app",
+      "size": 1411887,
+      "updated": "2026-05-25T05:52:41.557Z",
+      "contentType": "application/pdf",
+      "tokenDownloadUrl": "https://firebasestorage.googleapis.com/v0/b/reelconvo.firebasestorage.app/o/box-office-grosses%2Fpfr-the-new-parkway-theater-oakland-ca%2F2026-01-16%2F1779688359235_branch_area_20260116_SF.pdf?alt=media&token=3c84d0fd-3702-4e3e-ab11-b990f5453da1",
+      "signedUrl": null
+    },
+    {
+      "name": "box-office-grosses/pfr-the-new-parkway-theater-oakland-ca/2026-01-23/1779688258270_branch_area_20260123_LA.pdf",
+      "bucket": "reelconvo.firebasestorage.app",
+      "size": 3629726,
+      "updated": "2026-05-25T05:51:01.752Z",
+      "contentType": "application/pdf",
+      "tokenDownloadUrl": "https://firebasestorage.googleapis.com/v0/b/reelconvo.firebasestorage.app/o/box-office-grosses%2Fpfr-the-new-parkway-theater-oakland-ca%2F2026-01-23%2F1779688258270_branch_area_20260123_LA.pdf?alt=media&token=2a37a40d-aa37-47f5-a35d-3c3a1b9b93f3",
+      "signedUrl": null
+    },
+    {
+      "name": "box-office-grosses/pfr-the-new-parkway-theater-oakland-ca/2026-01-23/1779688262730_branch_area_20260123_NY.pdf",
+      "bucket": "reelconvo.firebasestorage.app",
+      "size": 1301955,
+      "updated": "2026-05-25T05:51:05.084Z",
+      "contentType": "application/pdf",
+      "tokenDownloadUrl": "https://firebasestorage.googleapis.com/v0/b/reelconvo.firebasestorage.app/o/box-office-grosses%2Fpfr-the-new-parkway-theater-oakland-ca%2F2026-01-23%2F1779688262730_branch_area_20260123_NY.pdf?alt=media&token=4a28178f-f2f4-4642-b7e5-3ff36b72a3a4",
+      "signedUrl": null
+    },
+    {
+      "name": "box-office-grosses/pfr-the-new-parkway-theater-oakland-ca/2026-01-23/1779688265975_branch_area_20260123_SF.pdf",
+      "bucket": "reelconvo.firebasestorage.app",
+      "size": 1532331,
+      "updated": "2026-05-25T05:51:08.424Z",
+      "contentType": "application/pdf",
+      "tokenDownloadUrl": "https://firebasestorage.googleapis.com/v0/b/reelconvo.firebasestorage.app/o/box-office-grosses%2Fpfr-the-new-parkway-theater-oakland-ca%2F2026-01-23%2F1779688265975_branch_area_20260123_SF.pdf?alt=media&token=ef3d65ba-3c42-4599-9842-10279e58f698",
+      "signedUrl": null
+    },
+    {
+      "name": "box-office-grosses/pfr-the-new-parkway-theater-oakland-ca/2026-02-06/1779688199767_branch_area_20260206_LA.pdf",
+      "bucket": "reelconvo.firebasestorage.app",
+      "size": 3235370,
+      "updated": "2026-05-25T05:50:03.094Z",
+      "contentType": "application/pdf",
+      "tokenDownloadUrl": "https://firebasestorage.googleapis.com/v0/b/reelconvo.firebasestorage.app/o/box-office-grosses%2Fpfr-the-new-parkway-theater-oakland-ca%2F2026-02-06%2F1779688199767_branch_area_20260206_LA.pdf?alt=media&token=0a244116-390a-4f0b-b53c-9ec8e7a165ea",
+      "signedUrl": null
+    },
+    {
+      "name": "box-office-grosses/pfr-the-new-parkway-theater-oakland-ca/2026-02-06/1779688204151_branch_area_20260206_NY.pdf",
+      "bucket": "reelconvo.firebasestorage.app",
+      "size": 1300529,
+      "updated": "2026-05-25T05:50:06.767Z",
+      "contentType": "application/pdf",
+      "tokenDownloadUrl": "https://firebasestorage.googleapis.com/v0/b/reelconvo.firebasestorage.app/o/box-office-grosses%2Fpfr-the-new-parkway-theater-oakland-ca%2F2026-02-06%2F1779688204151_branch_area_20260206_NY.pdf?alt=media&token=6374cd0c-d79b-443d-9cf4-7342a4e01d80",
+      "signedUrl": null
+    },
+    {
+      "name": "box-office-grosses/pfr-the-new-parkway-theater-oakland-ca/2026-02-06/1779688207689_branch_area_20260206_SF.pdf",
+      "bucket": "reelconvo.firebasestorage.app",
+      "size": 1365114,
+      "updated": "2026-05-25T05:50:10.156Z",
+      "contentType": "application/pdf",
+      "tokenDownloadUrl": "https://firebasestorage.googleapis.com/v0/b/reelconvo.firebasestorage.app/o/box-office-grosses%2Fpfr-the-new-parkway-theater-oakland-ca%2F2026-02-06%2F1779688207689_branch_area_20260206_SF.pdf?alt=media&token=91557f23-b02f-49ec-a84d-38b2d55e489d",
+      "signedUrl": null
+    },
+    {
+      "name": "box-office-grosses/pfr-the-new-parkway-theater-oakland-ca/2026-02-13/1779688163496_branch_area_20260213_LA.pdf",
+      "bucket": "reelconvo.firebasestorage.app",
+      "size": 3299397,
+      "updated": "2026-05-25T05:49:27.448Z",
+      "contentType": "application/pdf",
+      "tokenDownloadUrl": "https://firebasestorage.googleapis.com/v0/b/reelconvo.firebasestorage.app/o/box-office-grosses%2Fpfr-the-new-parkway-theater-oakland-ca%2F2026-02-13%2F1779688163496_branch_area_20260213_LA.pdf?alt=media&token=96b46185-ea5c-4de3-ac54-6074e4683d4c",
+      "signedUrl": null
+    },
+    {
+      "name": "box-office-grosses/pfr-the-new-parkway-theater-oakland-ca/2026-02-13/1779688168396_branch_area_20260213_NY.pdf",
+      "bucket": "reelconvo.firebasestorage.app",
+      "size": 1351054,
+      "updated": "2026-05-25T05:49:31.068Z",
+      "contentType": "application/pdf",
+      "tokenDownloadUrl": "https://firebasestorage.googleapis.com/v0/b/reelconvo.firebasestorage.app/o/box-office-grosses%2Fpfr-the-new-parkway-theater-oakland-ca%2F2026-02-13%2F1779688168396_branch_area_20260213_NY.pdf?alt=media&token=8317bf4a-4f0b-43ea-9a54-63280435c133",
+      "signedUrl": null
+    },
+    {
+      "name": "box-office-grosses/pfr-the-new-parkway-theater-oakland-ca/2026-02-13/1779688172047_branch_area_20260213_SF.pdf",
+      "bucket": "reelconvo.firebasestorage.app",
+      "size": 1366545,
+      "updated": "2026-05-25T05:49:34.389Z",
+      "contentType": "application/pdf",
+      "tokenDownloadUrl": "https://firebasestorage.googleapis.com/v0/b/reelconvo.firebasestorage.app/o/box-office-grosses%2Fpfr-the-new-parkway-theater-oakland-ca%2F2026-02-13%2F1779688172047_branch_area_20260213_SF.pdf?alt=media&token=203ceab2-9cde-47e5-b3fa-0ad93d6db2c3",
+      "signedUrl": null
+    },
+    {
+      "name": "box-office-grosses/pfr-the-new-parkway-theater-oakland-ca/2026-02-20/1779687910104_branch_area_20260220_LA.pdf",
+      "bucket": "reelconvo.firebasestorage.app",
+      "size": 3138352,
+      "updated": "2026-05-25T05:45:13.686Z",
+      "contentType": "application/pdf",
+      "tokenDownloadUrl": "https://firebasestorage.googleapis.com/v0/b/reelconvo.firebasestorage.app/o/box-office-grosses%2Fpfr-the-new-parkway-theater-oakland-ca%2F2026-02-20%2F1779687910104_branch_area_20260220_LA.pdf?alt=media&token=d30dcb2f-b878-4674-9fc8-b97c64ab474f",
+      "signedUrl": null
+    },
+    {
+      "name": "box-office-grosses/pfr-the-new-parkway-theater-oakland-ca/2026-02-20/1779687914741_branch_area_20260220_NY.pdf",
+      "bucket": "reelconvo.firebasestorage.app",
+      "size": 1222093,
+      "updated": "2026-05-25T05:45:17.308Z",
+      "contentType": "application/pdf",
+      "tokenDownloadUrl": "https://firebasestorage.googleapis.com/v0/b/reelconvo.firebasestorage.app/o/box-office-grosses%2Fpfr-the-new-parkway-theater-oakland-ca%2F2026-02-20%2F1779687914741_branch_area_20260220_NY.pdf?alt=media&token=8d22fd5d-290c-4aae-a28f-75858cdf88ba",
+      "signedUrl": null
+    },
+    {
+      "name": "box-office-grosses/pfr-the-new-parkway-theater-oakland-ca/2026-02-20/1779687918360_branch_area_20260220_SF.pdf",
+      "bucket": "reelconvo.firebasestorage.app",
+      "size": 1303928,
+      "updated": "2026-05-25T05:45:20.901Z",
+      "contentType": "application/pdf",
+      "tokenDownloadUrl": "https://firebasestorage.googleapis.com/v0/b/reelconvo.firebasestorage.app/o/box-office-grosses%2Fpfr-the-new-parkway-theater-oakland-ca%2F2026-02-20%2F1779687918360_branch_area_20260220_SF.pdf?alt=media&token=bc378180-822c-4d12-8828-f7f418b5f384",
+      "signedUrl": null
+    },
+    {
+      "name": "box-office-grosses/pfr-the-new-parkway-theater-oakland-ca/2026-02-27/1779687806608_branch_area_20260227_LA.pdf",
+      "bucket": "reelconvo.firebasestorage.app",
+      "size": 2997438,
+      "updated": "2026-05-25T05:43:29.985Z",
+      "contentType": "application/pdf",
+      "tokenDownloadUrl": "https://firebasestorage.googleapis.com/v0/b/reelconvo.firebasestorage.app/o/box-office-grosses%2Fpfr-the-new-parkway-theater-oakland-ca%2F2026-02-27%2F1779687806608_branch_area_20260227_LA.pdf?alt=media&token=95956008-d2a1-4ebb-b91c-1c5d737c6ee1",
+      "signedUrl": null
+    },
+    {
+      "name": "box-office-grosses/pfr-the-new-parkway-theater-oakland-ca/2026-02-27/1779687810831_branch_area_20260227_NY.pdf",
+      "bucket": "reelconvo.firebasestorage.app",
+      "size": 1185614,
+      "updated": "2026-05-25T05:43:33.369Z",
+      "contentType": "application/pdf",
+      "tokenDownloadUrl": "https://firebasestorage.googleapis.com/v0/b/reelconvo.firebasestorage.app/o/box-office-grosses%2Fpfr-the-new-parkway-theater-oakland-ca%2F2026-02-27%2F1779687810831_branch_area_20260227_NY.pdf?alt=media&token=e67ba382-1abc-4463-b8ef-3b1163f45c6d",
+      "signedUrl": null
+    },
+    {
+      "name": "box-office-grosses/pfr-the-new-parkway-theater-oakland-ca/2026-02-27/1779687815297_branch_area_20260227_SF.pdf",
+      "bucket": "reelconvo.firebasestorage.app",
+      "size": 1232170,
+      "updated": "2026-05-25T05:43:37.847Z",
+      "contentType": "application/pdf",
+      "tokenDownloadUrl": "https://firebasestorage.googleapis.com/v0/b/reelconvo.firebasestorage.app/o/box-office-grosses%2Fpfr-the-new-parkway-theater-oakland-ca%2F2026-02-27%2F1779687815297_branch_area_20260227_SF.pdf?alt=media&token=2f60a1df-29bf-417a-b93c-faf8bfa52dbd",
+      "signedUrl": null
+    },
+    {
+      "name": "box-office-grosses/pfr-the-new-parkway-theater-oakland-ca/2026-03-06/1779687728651_branch_area_20260306_LA.pdf",
+      "bucket": "reelconvo.firebasestorage.app",
+      "size": 2939861,
+      "updated": "2026-05-25T05:42:11.853Z",
+      "contentType": "application/pdf",
+      "tokenDownloadUrl": "https://firebasestorage.googleapis.com/v0/b/reelconvo.firebasestorage.app/o/box-office-grosses%2Fpfr-the-new-parkway-theater-oakland-ca%2F2026-03-06%2F1779687728651_branch_area_20260306_LA.pdf?alt=media&token=d73719cf-a9ab-4b78-9159-fde972535b8b",
+      "signedUrl": null
+    },
+    {
+      "name": "box-office-grosses/pfr-the-new-parkway-theater-oakland-ca/2026-03-06/1779687732733_branch_area_20260306_NY.pdf",
+      "bucket": "reelconvo.firebasestorage.app",
+      "size": 1109620,
+      "updated": "2026-05-25T05:42:14.972Z",
+      "contentType": "application/pdf",
+      "tokenDownloadUrl": "https://firebasestorage.googleapis.com/v0/b/reelconvo.firebasestorage.app/o/box-office-grosses%2Fpfr-the-new-parkway-theater-oakland-ca%2F2026-03-06%2F1779687732733_branch_area_20260306_NY.pdf?alt=media&token=a1bfc76e-488e-440d-b5cc-a73ab2e49578",
+      "signedUrl": null
+    },
+    {
+      "name": "box-office-grosses/pfr-the-new-parkway-theater-oakland-ca/2026-03-06/1779687735937_branch_area_20260306_SF.pdf",
+      "bucket": "reelconvo.firebasestorage.app",
+      "size": 1250807,
+      "updated": "2026-05-25T05:42:18.239Z",
+      "contentType": "application/pdf",
+      "tokenDownloadUrl": "https://firebasestorage.googleapis.com/v0/b/reelconvo.firebasestorage.app/o/box-office-grosses%2Fpfr-the-new-parkway-theater-oakland-ca%2F2026-03-06%2F1779687735937_branch_area_20260306_SF.pdf?alt=media&token=2077eea1-3611-4d72-bb01-689e0be33cc8",
+      "signedUrl": null
+    },
+    {
+      "name": "box-office-grosses/pfr-the-new-parkway-theater-oakland-ca/2026-03-13/1779687700101_branch_area_20260313_LA.pdf",
+      "bucket": "reelconvo.firebasestorage.app",
+      "size": 3038641,
+      "updated": "2026-05-25T05:41:43.454Z",
+      "contentType": "application/pdf",
+      "tokenDownloadUrl": "https://firebasestorage.googleapis.com/v0/b/reelconvo.firebasestorage.app/o/box-office-grosses%2Fpfr-the-new-parkway-theater-oakland-ca%2F2026-03-13%2F1779687700101_branch_area_20260313_LA.pdf?alt=media&token=2af86cd0-752b-4dd5-96a8-8da4a6e1b0cc",
+      "signedUrl": null
+    },
+    {
+      "name": "box-office-grosses/pfr-the-new-parkway-theater-oakland-ca/2026-03-13/1779687704458_branch_area_20260313_NY.pdf",
+      "bucket": "reelconvo.firebasestorage.app",
+      "size": 1134948,
+      "updated": "2026-05-25T05:41:47.179Z",
+      "contentType": "application/pdf",
+      "tokenDownloadUrl": "https://firebasestorage.googleapis.com/v0/b/reelconvo.firebasestorage.app/o/box-office-grosses%2Fpfr-the-new-parkway-theater-oakland-ca%2F2026-03-13%2F1779687704458_branch_area_20260313_NY.pdf?alt=media&token=6a95cec5-9b07-4218-82a8-ec794fcceec5",
+      "signedUrl": null
+    },
+    {
+      "name": "box-office-grosses/pfr-the-new-parkway-theater-oakland-ca/2026-03-13/1779687708139_branch_area_20260313_SF.pdf",
+      "bucket": "reelconvo.firebasestorage.app",
+      "size": 1273207,
+      "updated": "2026-05-25T05:41:50.925Z",
+      "contentType": "application/pdf",
+      "tokenDownloadUrl": "https://firebasestorage.googleapis.com/v0/b/reelconvo.firebasestorage.app/o/box-office-grosses%2Fpfr-the-new-parkway-theater-oakland-ca%2F2026-03-13%2F1779687708139_branch_area_20260313_SF.pdf?alt=media&token=e779b5b1-5fdd-46d3-a614-56c8557929ea",
+      "signedUrl": null
+    },
+    {
+      "name": "box-office-grosses/pfr-the-new-parkway-theater-oakland-ca/2026-03-20/1779687319003_branch_area_20260320_LA.pdf",
+      "bucket": "reelconvo.firebasestorage.app",
+      "size": 2544691,
+      "updated": "2026-05-25T05:35:22.663Z",
+      "contentType": "application/pdf",
+      "tokenDownloadUrl": "https://firebasestorage.googleapis.com/v0/b/reelconvo.firebasestorage.app/o/box-office-grosses%2Fpfr-the-new-parkway-theater-oakland-ca%2F2026-03-20%2F1779687319003_branch_area_20260320_LA.pdf?alt=media&token=833e8201-0352-4167-95a2-d5428d357b99",
+      "signedUrl": null
+    },
+    {
+      "name": "box-office-grosses/pfr-the-new-parkway-theater-oakland-ca/2026-03-20/1779687323569_branch_area_20260320_NY.pdf",
+      "bucket": "reelconvo.firebasestorage.app",
+      "size": 1056743,
+      "updated": "2026-05-25T05:35:26.063Z",
+      "contentType": "application/pdf",
+      "tokenDownloadUrl": "https://firebasestorage.googleapis.com/v0/b/reelconvo.firebasestorage.app/o/box-office-grosses%2Fpfr-the-new-parkway-theater-oakland-ca%2F2026-03-20%2F1779687323569_branch_area_20260320_NY.pdf?alt=media&token=8678ccbf-b694-4ac1-93f7-85cd5cb7b28b",
+      "signedUrl": null
+    },
+    {
+      "name": "box-office-grosses/pfr-the-new-parkway-theater-oakland-ca/2026-03-20/1779687326749_branch_area_20260320_SF.pdf",
+      "bucket": "reelconvo.firebasestorage.app",
+      "size": 1048515,
+      "updated": "2026-05-25T05:35:29.324Z",
+      "contentType": "application/pdf",
+      "tokenDownloadUrl": "https://firebasestorage.googleapis.com/v0/b/reelconvo.firebasestorage.app/o/box-office-grosses%2Fpfr-the-new-parkway-theater-oakland-ca%2F2026-03-20%2F1779687326749_branch_area_20260320_SF.pdf?alt=media&token=45c8df9a-159f-4bc9-8bff-1673416c28d8",
+      "signedUrl": null
+    },
+    {
+      "name": "box-office-grosses/pfr-the-new-parkway-theater-oakland-ca/2026-03-27/1779687509516_branch_area_20260327_LA.pdf",
+      "bucket": "reelconvo.firebasestorage.app",
+      "size": 2644084,
+      "updated": "2026-05-25T05:38:33.990Z",
+      "contentType": "application/pdf",
+      "tokenDownloadUrl": "https://firebasestorage.googleapis.com/v0/b/reelconvo.firebasestorage.app/o/box-office-grosses%2Fpfr-the-new-parkway-theater-oakland-ca%2F2026-03-27%2F1779687509516_branch_area_20260327_LA.pdf?alt=media&token=25c110b8-b9ea-4b0b-a688-fe8df7da2021",
+      "signedUrl": null
+    },
+    {
+      "name": "box-office-grosses/pfr-the-new-parkway-theater-oakland-ca/2026-03-27/1779687515015_branch_area_20260327_NY.pdf",
+      "bucket": "reelconvo.firebasestorage.app",
+      "size": 1082839,
+      "updated": "2026-05-25T05:38:37.724Z",
+      "contentType": "application/pdf",
+      "tokenDownloadUrl": "https://firebasestorage.googleapis.com/v0/b/reelconvo.firebasestorage.app/o/box-office-grosses%2Fpfr-the-new-parkway-theater-oakland-ca%2F2026-03-27%2F1779687515015_branch_area_20260327_NY.pdf?alt=media&token=cb4522f9-d2ba-49cf-8814-5fd97e08cb27",
+      "signedUrl": null
+    },
+    {
+      "name": "box-office-grosses/pfr-the-new-parkway-theater-oakland-ca/2026-03-27/1779687518683_branch_area_20260327_SF.pdf",
+      "bucket": "reelconvo.firebasestorage.app",
+      "size": 1120072,
+      "updated": "2026-05-25T05:38:41.163Z",
+      "contentType": "application/pdf",
+      "tokenDownloadUrl": "https://firebasestorage.googleapis.com/v0/b/reelconvo.firebasestorage.app/o/box-office-grosses%2Fpfr-the-new-parkway-theater-oakland-ca%2F2026-03-27%2F1779687518683_branch_area_20260327_SF.pdf?alt=media&token=17ddbc53-42b2-4c55-bc02-12abb1ebe314",
+      "signedUrl": null
+    },
+    {
+      "name": "box-office-grosses/pfr-the-new-parkway-theater-oakland-ca/2026-04-03/1779686865810_branch_area_20260403_LA.pdf",
+      "bucket": "reelconvo.firebasestorage.app",
+      "size": 2276537,
+      "updated": "2026-05-25T05:27:48.744Z",
+      "contentType": "application/pdf",
+      "tokenDownloadUrl": "https://firebasestorage.googleapis.com/v0/b/reelconvo.firebasestorage.app/o/box-office-grosses%2Fpfr-the-new-parkway-theater-oakland-ca%2F2026-04-03%2F1779686865810_branch_area_20260403_LA.pdf?alt=media&token=a76e651d-dd2c-4247-9b3c-2efd04988caa",
+      "signedUrl": null
+    },
+    {
+      "name": "box-office-grosses/pfr-the-new-parkway-theater-oakland-ca/2026-04-03/1779686869595_branch_area_20260403_NY.pdf",
+      "bucket": "reelconvo.firebasestorage.app",
+      "size": 918556,
+      "updated": "2026-05-25T05:27:52.092Z",
+      "contentType": "application/pdf",
+      "tokenDownloadUrl": "https://firebasestorage.googleapis.com/v0/b/reelconvo.firebasestorage.app/o/box-office-grosses%2Fpfr-the-new-parkway-theater-oakland-ca%2F2026-04-03%2F1779686869595_branch_area_20260403_NY.pdf?alt=media&token=557d23a9-4d7a-42e9-8839-ea0364ff64a0",
+      "signedUrl": null
+    },
+    {
+      "name": "box-office-grosses/pfr-the-new-parkway-theater-oakland-ca/2026-04-03/1779686873172_branch_area_20260403_SF.pdf",
+      "bucket": "reelconvo.firebasestorage.app",
+      "size": 985688,
+      "updated": "2026-05-25T05:27:55.496Z",
+      "contentType": "application/pdf",
+      "tokenDownloadUrl": "https://firebasestorage.googleapis.com/v0/b/reelconvo.firebasestorage.app/o/box-office-grosses%2Fpfr-the-new-parkway-theater-oakland-ca%2F2026-04-03%2F1779686873172_branch_area_20260403_SF.pdf?alt=media&token=501108a6-5d7e-430b-93cb-40a9269cf264",
+      "signedUrl": null
+    },
+    {
+      "name": "box-office-grosses/pfr-the-new-parkway-theater-oakland-ca/2026-04-10/1779686698230_branch_area_20260410_LA.pdf",
+      "bucket": "reelconvo.firebasestorage.app",
+      "size": 2542443,
+      "updated": "2026-05-25T05:25:02.545Z",
+      "contentType": "application/pdf",
+      "tokenDownloadUrl": "https://firebasestorage.googleapis.com/v0/b/reelconvo.firebasestorage.app/o/box-office-grosses%2Fpfr-the-new-parkway-theater-oakland-ca%2F2026-04-10%2F1779686698230_branch_area_20260410_LA.pdf?alt=media&token=d1b6f108-eb42-4398-96fc-96ff98c80ee4",
+      "signedUrl": null
+    },
+    {
+      "name": "box-office-grosses/pfr-the-new-parkway-theater-oakland-ca/2026-04-10/1779686706169_branch_area_20260410_NY.pdf",
+      "bucket": "reelconvo.firebasestorage.app",
+      "size": 1026321,
+      "updated": "2026-05-25T05:25:08.643Z",
+      "contentType": "application/pdf",
+      "tokenDownloadUrl": "https://firebasestorage.googleapis.com/v0/b/reelconvo.firebasestorage.app/o/box-office-grosses%2Fpfr-the-new-parkway-theater-oakland-ca%2F2026-04-10%2F1779686706169_branch_area_20260410_NY.pdf?alt=media&token=369197fe-f5dc-4569-9fc7-ed6d7a4f78b4",
+      "signedUrl": null
+    },
+    {
+      "name": "box-office-grosses/pfr-the-new-parkway-theater-oakland-ca/2026-04-10/1779686709593_branch_area_20260410_SF.pdf",
+      "bucket": "reelconvo.firebasestorage.app",
+      "size": 1084388,
+      "updated": "2026-05-25T05:25:12.006Z",
+      "contentType": "application/pdf",
+      "tokenDownloadUrl": "https://firebasestorage.googleapis.com/v0/b/reelconvo.firebasestorage.app/o/box-office-grosses%2Fpfr-the-new-parkway-theater-oakland-ca%2F2026-04-10%2F1779686709593_branch_area_20260410_SF.pdf?alt=media&token=639cab64-fa73-4bb7-b462-d5eca7a78b23",
+      "signedUrl": null
+    },
+    {
+      "name": "box-office-grosses/pfr-the-new-parkway-theater-oakland-ca/2026-04-17/1779686809790_branch_area_20260417_LA.pdf",
+      "bucket": "reelconvo.firebasestorage.app",
+      "size": 2637548,
+      "updated": "2026-05-25T05:26:53.253Z",
+      "contentType": "application/pdf",
+      "tokenDownloadUrl": "https://firebasestorage.googleapis.com/v0/b/reelconvo.firebasestorage.app/o/box-office-grosses%2Fpfr-the-new-parkway-theater-oakland-ca%2F2026-04-17%2F1779686809790_branch_area_20260417_LA.pdf?alt=media&token=af3196e0-eaf1-463e-9b13-0d23744279a0",
+      "signedUrl": null
+    },
+    {
+      "name": "box-office-grosses/pfr-the-new-parkway-theater-oakland-ca/2026-04-17/1779686813977_branch_area_20260417_NY.pdf",
+      "bucket": "reelconvo.firebasestorage.app",
+      "size": 1029204,
+      "updated": "2026-05-25T05:26:56.311Z",
+      "contentType": "application/pdf",
+      "tokenDownloadUrl": "https://firebasestorage.googleapis.com/v0/b/reelconvo.firebasestorage.app/o/box-office-grosses%2Fpfr-the-new-parkway-theater-oakland-ca%2F2026-04-17%2F1779686813977_branch_area_20260417_NY.pdf?alt=media&token=4feb60a1-fdd0-42ab-bcd9-deb6e380c86b",
+      "signedUrl": null
+    },
+    {
+      "name": "box-office-grosses/pfr-the-new-parkway-theater-oakland-ca/2026-04-17/1779686817264_branch_area_20260417_SF.pdf",
+      "bucket": "reelconvo.firebasestorage.app",
+      "size": 1132262,
+      "updated": "2026-05-25T05:26:59.660Z",
+      "contentType": "application/pdf",
+      "tokenDownloadUrl": "https://firebasestorage.googleapis.com/v0/b/reelconvo.firebasestorage.app/o/box-office-grosses%2Fpfr-the-new-parkway-theater-oakland-ca%2F2026-04-17%2F1779686817264_branch_area_20260417_SF.pdf?alt=media&token=a07327b3-c487-4959-bd5e-086eb9def1ad",
+      "signedUrl": null
+    },
+    {
+      "name": "box-office-grosses/pfr-the-new-parkway-theater-oakland-ca/2026-04-24/1779687173633_branch_area_20260424_LA.pdf",
+      "bucket": "reelconvo.firebasestorage.app",
+      "size": 2740001,
+      "updated": "2026-05-25T05:32:56.946Z",
+      "contentType": "application/pdf",
+      "tokenDownloadUrl": "https://firebasestorage.googleapis.com/v0/b/reelconvo.firebasestorage.app/o/box-office-grosses%2Fpfr-the-new-parkway-theater-oakland-ca%2F2026-04-24%2F1779687173633_branch_area_20260424_LA.pdf?alt=media&token=bb7e9719-8b53-4486-9ab3-7aeb82d0a82b",
+      "signedUrl": null
+    },
+    {
+      "name": "box-office-grosses/pfr-the-new-parkway-theater-oakland-ca/2026-04-24/1779687177972_branch_area_20260424_NY.pdf",
+      "bucket": "reelconvo.firebasestorage.app",
+      "size": 1095999,
+      "updated": "2026-05-25T05:33:00.658Z",
+      "contentType": "application/pdf",
+      "tokenDownloadUrl": "https://firebasestorage.googleapis.com/v0/b/reelconvo.firebasestorage.app/o/box-office-grosses%2Fpfr-the-new-parkway-theater-oakland-ca%2F2026-04-24%2F1779687177972_branch_area_20260424_NY.pdf?alt=media&token=99954a49-8a7e-416d-985a-90fc367e28cd",
+      "signedUrl": null
+    },
+    {
+      "name": "box-office-grosses/pfr-the-new-parkway-theater-oakland-ca/2026-04-24/1779687181453_branch_area_20260424_SF.pdf",
+      "bucket": "reelconvo.firebasestorage.app",
+      "size": 1171122,
+      "updated": "2026-05-25T05:33:04.200Z",
+      "contentType": "application/pdf",
+      "tokenDownloadUrl": "https://firebasestorage.googleapis.com/v0/b/reelconvo.firebasestorage.app/o/box-office-grosses%2Fpfr-the-new-parkway-theater-oakland-ca%2F2026-04-24%2F1779687181453_branch_area_20260424_SF.pdf?alt=media&token=a9ea52cd-e98c-41ba-b359-968fb7c87325",
+      "signedUrl": null
+    },
+    {
+      "name": "box-office-grosses/pfr-the-new-parkway-theater-oakland-ca/2026-05-01/1779686757188_branch_area_20260501_LA.pdf",
+      "bucket": "reelconvo.firebasestorage.app",
+      "size": 2490308,
+      "updated": "2026-05-25T05:26:00.658Z",
+      "contentType": "application/pdf",
+      "tokenDownloadUrl": "https://firebasestorage.googleapis.com/v0/b/reelconvo.firebasestorage.app/o/box-office-grosses%2Fpfr-the-new-parkway-theater-oakland-ca%2F2026-05-01%2F1779686757188_branch_area_20260501_LA.pdf?alt=media&token=9adae00e-5b07-4b23-b406-43162e961558",
+      "signedUrl": null
+    },
+    {
+      "name": "box-office-grosses/pfr-the-new-parkway-theater-oakland-ca/2026-05-01/1779686761484_branch_area_20260501_NY.pdf",
+      "bucket": "reelconvo.firebasestorage.app",
+      "size": 1014129,
+      "updated": "2026-05-25T05:26:03.705Z",
+      "contentType": "application/pdf",
+      "tokenDownloadUrl": "https://firebasestorage.googleapis.com/v0/b/reelconvo.firebasestorage.app/o/box-office-grosses%2Fpfr-the-new-parkway-theater-oakland-ca%2F2026-05-01%2F1779686761484_branch_area_20260501_NY.pdf?alt=media&token=3d409b42-4993-4e2e-87d2-32b8cfc5c40f",
+      "signedUrl": null
+    },
+    {
+      "name": "box-office-grosses/pfr-the-new-parkway-theater-oakland-ca/2026-05-01/1779686764644_branch_area_20260501_SF.pdf",
+      "bucket": "reelconvo.firebasestorage.app",
+      "size": 1080357,
+      "updated": "2026-05-25T05:26:06.904Z",
+      "contentType": "application/pdf",
+      "tokenDownloadUrl": "https://firebasestorage.googleapis.com/v0/b/reelconvo.firebasestorage.app/o/box-office-grosses%2Fpfr-the-new-parkway-theater-oakland-ca%2F2026-05-01%2F1779686764644_branch_area_20260501_SF.pdf?alt=media&token=ae50c626-b13e-4258-b701-f1dd5bab7218",
+      "signedUrl": null
+    },
+    {
+      "name": "box-office-grosses/pfr-the-new-parkway-theater-oakland-ca/2026-05-08/1779686733134_branch_area_20260508_LA.pdf",
+      "bucket": "reelconvo.firebasestorage.app",
+      "size": 2597647,
+      "updated": "2026-05-25T05:25:37.707Z",
+      "contentType": "application/pdf",
+      "tokenDownloadUrl": "https://firebasestorage.googleapis.com/v0/b/reelconvo.firebasestorage.app/o/box-office-grosses%2Fpfr-the-new-parkway-theater-oakland-ca%2F2026-05-08%2F1779686733134_branch_area_20260508_LA.pdf?alt=media&token=6d71a31d-2ec0-4047-a561-d7d6ee5114f6",
+      "signedUrl": null
+    },
+    {
+      "name": "box-office-grosses/pfr-the-new-parkway-theater-oakland-ca/2026-05-08/1779686738948_branch_area_20260508_NY.pdf",
+      "bucket": "reelconvo.firebasestorage.app",
+      "size": 1014075,
+      "updated": "2026-05-25T05:25:41.254Z",
+      "contentType": "application/pdf",
+      "tokenDownloadUrl": "https://firebasestorage.googleapis.com/v0/b/reelconvo.firebasestorage.app/o/box-office-grosses%2Fpfr-the-new-parkway-theater-oakland-ca%2F2026-05-08%2F1779686738948_branch_area_20260508_NY.pdf?alt=media&token=88e8bcc2-40f1-448c-a77e-0104dfa5d692",
+      "signedUrl": null
+    },
+    {
+      "name": "box-office-grosses/pfr-the-new-parkway-theater-oakland-ca/2026-05-08/1779686742045_branch_area_20260508_SF.pdf",
+      "bucket": "reelconvo.firebasestorage.app",
+      "size": 1125939,
+      "updated": "2026-05-25T05:25:44.426Z",
+      "contentType": "application/pdf",
+      "tokenDownloadUrl": "https://firebasestorage.googleapis.com/v0/b/reelconvo.firebasestorage.app/o/box-office-grosses%2Fpfr-the-new-parkway-theater-oakland-ca%2F2026-05-08%2F1779686742045_branch_area_20260508_SF.pdf?alt=media&token=9ce7d44c-d6eb-4688-a3dd-6d24a2351806",
+      "signedUrl": null
+    }
+  ]
+}

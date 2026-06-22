@@ -7,11 +7,11 @@
     "minMovieTheaters": 3
   },
   "counts": {
-    "screenings_raw": 211261,
-    "screenings_clean": 140965,
-    "dropped_noise_titles": 70296,
+    "screenings_raw": 132676,
+    "screenings_clean": 132050,
+    "dropped_noise_titles": 626,
     "unique_theaters": 724,
-    "movie_features": 856,
+    "movie_features": 825,
     "matrix_rows": 724
   },
   "outputs": {

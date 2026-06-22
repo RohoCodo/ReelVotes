@@ -1,20 +1,1331 @@
 {
   "files": [
     {
-      "file": "/Users/rohantyagi/Downloads/branch_area_20260410_SF.pdf",
-      "rows": 2059,
-      "textLines": 25748
+      "file": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/input-pdfs/1779686698230_branch_area_20260410_LA.pdf",
+      "rows": 3550,
+      "textLines": 60588,
+      "diagnostics": {
+        "screen_count_tokens": 4198,
+        "screen_count_out_of_range": 10103,
+        "orphaned_screen_count_tokens": 533,
+        "rows_parsed": 3550,
+        "non_friday_opening_rows": 919,
+        "rejected_after_screen_count": {
+          "percent_token": 101,
+          "dash_token": 2006,
+          "numeric_token": 1016,
+          "total_footer": 110,
+          "city_state_token": 36,
+          "copyright_footer": 11,
+          "data_valid_footer": 11,
+          "legend_footer": 22,
+          "page_footer": 11,
+          "column_or_code_token": 9
+        }
+      }
     },
     {
-      "file": "/Users/rohantyagi/Downloads/branch_area_20260410_NY.pdf",
-      "rows": 1989,
-      "textLines": 24345
+      "file": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/input-pdfs/1779686706169_branch_area_20260410_NY.pdf",
+      "rows": 1422,
+      "textLines": 24345,
+      "diagnostics": {
+        "screen_count_tokens": 1597,
+        "screen_count_out_of_range": 3764,
+        "orphaned_screen_count_tokens": 159,
+        "rows_parsed": 1422,
+        "non_friday_opening_rows": 373,
+        "rejected_after_screen_count": {
+          "numeric_token": 367,
+          "percent_token": 43,
+          "dash_token": 689,
+          "total_footer": 37,
+          "column_or_code_token": 11,
+          "copyright_footer": 2,
+          "data_valid_footer": 2,
+          "legend_footer": 4,
+          "page_footer": 2,
+          "city_state_token": 4
+        }
+      }
     },
     {
-      "file": "/Users/rohantyagi/Downloads/branch_area_20260410_LA.pdf",
-      "rows": 4830,
-      "textLines": 60588
+      "file": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/input-pdfs/1779686709593_branch_area_20260410_SF.pdf",
+      "rows": 1490,
+      "textLines": 25748,
+      "diagnostics": {
+        "screen_count_tokens": 1715,
+        "screen_count_out_of_range": 4107,
+        "orphaned_screen_count_tokens": 181,
+        "rows_parsed": 1490,
+        "non_friday_opening_rows": 396,
+        "rejected_after_screen_count": {
+          "numeric_token": 393,
+          "dash_token": 756,
+          "percent_token": 32,
+          "total_footer": 43,
+          "copyright_footer": 8,
+          "data_valid_footer": 8,
+          "legend_footer": 16,
+          "page_footer": 8,
+          "column_or_code_token": 13,
+          "city_state_token": 24
+        }
+      }
+    },
+    {
+      "file": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/input-pdfs/1779686733134_branch_area_20260508_LA.pdf",
+      "rows": 3625,
+      "textLines": 61684,
+      "diagnostics": {
+        "screen_count_tokens": 4485,
+        "screen_count_out_of_range": 9154,
+        "orphaned_screen_count_tokens": 686,
+        "rows_parsed": 3625,
+        "non_friday_opening_rows": 765,
+        "rejected_after_screen_count": {
+          "numeric_token": 1691,
+          "dash_token": 2575,
+          "percent_token": 256,
+          "total_footer": 174,
+          "city_state_token": 62,
+          "copyright_footer": 22,
+          "data_valid_footer": 22,
+          "legend_footer": 44,
+          "page_footer": 22,
+          "column_or_code_token": 16
+        }
+      }
+    },
+    {
+      "file": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/input-pdfs/1779686738948_branch_area_20260508_NY.pdf",
+      "rows": 1410,
+      "textLines": 23936,
+      "diagnostics": {
+        "screen_count_tokens": 1655,
+        "screen_count_out_of_range": 3082,
+        "orphaned_screen_count_tokens": 212,
+        "rows_parsed": 1410,
+        "non_friday_opening_rows": 291,
+        "rejected_after_screen_count": {
+          "numeric_token": 589,
+          "percent_token": 73,
+          "dash_token": 831,
+          "total_footer": 58,
+          "city_state_token": 9,
+          "copyright_footer": 5,
+          "data_valid_footer": 5,
+          "legend_footer": 10,
+          "page_footer": 5,
+          "column_or_code_token": 12
+        }
+      }
+    },
+    {
+      "file": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/input-pdfs/1779686742045_branch_area_20260508_SF.pdf",
+      "rows": 1549,
+      "textLines": 26704,
+      "diagnostics": {
+        "screen_count_tokens": 1908,
+        "screen_count_out_of_range": 4023,
+        "orphaned_screen_count_tokens": 279,
+        "rows_parsed": 1549,
+        "non_friday_opening_rows": 329,
+        "rejected_after_screen_count": {
+          "dash_token": 1034,
+          "numeric_token": 680,
+          "percent_token": 100,
+          "total_footer": 79,
+          "city_state_token": 38,
+          "copyright_footer": 6,
+          "data_valid_footer": 6,
+          "legend_footer": 12,
+          "page_footer": 6,
+          "column_or_code_token": 11
+        }
+      }
+    },
+    {
+      "file": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/input-pdfs/1779686757188_branch_area_20260501_LA.pdf",
+      "rows": 3497,
+      "textLines": 59234,
+      "diagnostics": {
+        "screen_count_tokens": 4243,
+        "screen_count_out_of_range": 10135,
+        "orphaned_screen_count_tokens": 599,
+        "rows_parsed": 3497,
+        "non_friday_opening_rows": 628,
+        "rejected_after_screen_count": {
+          "dash_token": 2395,
+          "numeric_token": 1348,
+          "total_footer": 140,
+          "percent_token": 211,
+          "copyright_footer": 26,
+          "data_valid_footer": 26,
+          "legend_footer": 52,
+          "page_footer": 26,
+          "city_state_token": 58,
+          "column_or_code_token": 8,
+          "no_letters": 3
+        }
+      }
+    },
+    {
+      "file": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/input-pdfs/1779686761484_branch_area_20260501_NY.pdf",
+      "rows": 1429,
+      "textLines": 24020,
+      "diagnostics": {
+        "screen_count_tokens": 1671,
+        "screen_count_out_of_range": 3649,
+        "orphaned_screen_count_tokens": 220,
+        "rows_parsed": 1429,
+        "non_friday_opening_rows": 293,
+        "rejected_after_screen_count": {
+          "no_letters": 1,
+          "dash_token": 836,
+          "numeric_token": 572,
+          "total_footer": 55,
+          "copyright_footer": 6,
+          "data_valid_footer": 6,
+          "legend_footer": 12,
+          "page_footer": 6,
+          "city_state_token": 8,
+          "percent_token": 74,
+          "column_or_code_token": 19
+        }
+      }
+    },
+    {
+      "file": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/input-pdfs/1779686764644_branch_area_20260501_SF.pdf",
+      "rows": 1487,
+      "textLines": 25654,
+      "diagnostics": {
+        "screen_count_tokens": 1772,
+        "screen_count_out_of_range": 4395,
+        "orphaned_screen_count_tokens": 226,
+        "rows_parsed": 1487,
+        "non_friday_opening_rows": 304,
+        "rejected_after_screen_count": {
+          "dash_token": 874,
+          "numeric_token": 505,
+          "percent_token": 61,
+          "total_footer": 58,
+          "city_state_token": 30,
+          "column_or_code_token": 7,
+          "no_letters": 2,
+          "copyright_footer": 3,
+          "data_valid_footer": 3,
+          "legend_footer": 6,
+          "page_footer": 3
+        }
+      }
+    },
+    {
+      "file": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/input-pdfs/1779686809790_branch_area_20260417_LA.pdf",
+      "rows": 3711,
+      "textLines": 63015,
+      "diagnostics": {
+        "screen_count_tokens": 4508,
+        "screen_count_out_of_range": 11262,
+        "orphaned_screen_count_tokens": 644,
+        "rows_parsed": 3711,
+        "non_friday_opening_rows": 936,
+        "rejected_after_screen_count": {
+          "dash_token": 2518,
+          "percent_token": 197,
+          "numeric_token": 1402,
+          "total_footer": 156,
+          "city_state_token": 50,
+          "copyright_footer": 14,
+          "data_valid_footer": 14,
+          "legend_footer": 28,
+          "page_footer": 14,
+          "column_or_code_token": 21
+        }
+      }
+    },
+    {
+      "file": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/input-pdfs/1779686813977_branch_area_20260417_NY.pdf",
+      "rows": 1437,
+      "textLines": 24451,
+      "diagnostics": {
+        "screen_count_tokens": 1690,
+        "screen_count_out_of_range": 3897,
+        "orphaned_screen_count_tokens": 230,
+        "rows_parsed": 1437,
+        "non_friday_opening_rows": 369,
+        "rejected_after_screen_count": {
+          "numeric_token": 461,
+          "percent_token": 50,
+          "dash_token": 865,
+          "total_footer": 51,
+          "city_state_token": 9,
+          "column_or_code_token": 16,
+          "copyright_footer": 6,
+          "data_valid_footer": 6,
+          "legend_footer": 12,
+          "page_footer": 6
+        }
+      }
+    },
+    {
+      "file": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/input-pdfs/1779686817264_branch_area_20260417_SF.pdf",
+      "rows": 1565,
+      "textLines": 26979,
+      "diagnostics": {
+        "screen_count_tokens": 1908,
+        "screen_count_out_of_range": 4871,
+        "orphaned_screen_count_tokens": 270,
+        "rows_parsed": 1565,
+        "non_friday_opening_rows": 418,
+        "rejected_after_screen_count": {
+          "numeric_token": 603,
+          "percent_token": 83,
+          "dash_token": 1113,
+          "column_or_code_token": 16,
+          "total_footer": 67,
+          "copyright_footer": 9,
+          "data_valid_footer": 9,
+          "legend_footer": 18,
+          "page_footer": 9,
+          "city_state_token": 39
+        }
+      }
+    },
+    {
+      "file": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/input-pdfs/1779686865810_branch_area_20260403_LA.pdf",
+      "rows": 3112,
+      "textLines": 53888,
+      "diagnostics": {
+        "screen_count_tokens": 3695,
+        "screen_count_out_of_range": 9148,
+        "orphaned_screen_count_tokens": 444,
+        "rows_parsed": 3112,
+        "non_friday_opening_rows": 604,
+        "rejected_after_screen_count": {
+          "dash_token": 1831,
+          "percent_token": 246,
+          "numeric_token": 1473,
+          "total_footer": 135,
+          "copyright_footer": 15,
+          "data_valid_footer": 15,
+          "legend_footer": 30,
+          "page_footer": 15,
+          "city_state_token": 49,
+          "column_or_code_token": 21
+        }
+      }
+    },
+    {
+      "file": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/input-pdfs/1779686869595_branch_area_20260403_NY.pdf",
+      "rows": 1246,
+      "textLines": 21598,
+      "diagnostics": {
+        "screen_count_tokens": 1396,
+        "screen_count_out_of_range": 2978,
+        "orphaned_screen_count_tokens": 120,
+        "rows_parsed": 1246,
+        "non_friday_opening_rows": 279,
+        "rejected_after_screen_count": {
+          "numeric_token": 627,
+          "percent_token": 86,
+          "dash_token": 624,
+          "total_footer": 60,
+          "city_state_token": 9,
+          "column_or_code_token": 11,
+          "copyright_footer": 5,
+          "data_valid_footer": 5,
+          "legend_footer": 10,
+          "page_footer": 5
+        }
+      }
+    },
+    {
+      "file": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/input-pdfs/1779686873172_branch_area_20260403_SF.pdf",
+      "rows": 1325,
+      "textLines": 23270,
+      "diagnostics": {
+        "screen_count_tokens": 1644,
+        "screen_count_out_of_range": 3793,
+        "orphaned_screen_count_tokens": 243,
+        "rows_parsed": 1325,
+        "non_friday_opening_rows": 289,
+        "rejected_after_screen_count": {
+          "percent_token": 124,
+          "dash_token": 959,
+          "numeric_token": 773,
+          "total_footer": 74,
+          "city_state_token": 44,
+          "column_or_code_token": 17,
+          "copyright_footer": 7,
+          "data_valid_footer": 7,
+          "legend_footer": 14,
+          "page_footer": 7
+        }
+      }
+    },
+    {
+      "file": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/input-pdfs/1779687173633_branch_area_20260424_LA.pdf",
+      "rows": 3905,
+      "textLines": 65688,
+      "diagnostics": {
+        "screen_count_tokens": 4720,
+        "screen_count_out_of_range": 12970,
+        "orphaned_screen_count_tokens": 660,
+        "rows_parsed": 3905,
+        "non_friday_opening_rows": 766,
+        "rejected_after_screen_count": {
+          "numeric_token": 1440,
+          "percent_token": 221,
+          "dash_token": 2701,
+          "total_footer": 151,
+          "copyright_footer": 18,
+          "data_valid_footer": 18,
+          "legend_footer": 36,
+          "page_footer": 18,
+          "city_state_token": 49,
+          "column_or_code_token": 24
+        }
+      }
+    },
+    {
+      "file": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/input-pdfs/1779687177972_branch_area_20260424_NY.pdf",
+      "rows": 1553,
+      "textLines": 26141,
+      "diagnostics": {
+        "screen_count_tokens": 1805,
+        "screen_count_out_of_range": 4618,
+        "orphaned_screen_count_tokens": 225,
+        "rows_parsed": 1553,
+        "non_friday_opening_rows": 329,
+        "rejected_after_screen_count": {
+          "numeric_token": 541,
+          "percent_token": 86,
+          "dash_token": 921,
+          "total_footer": 51,
+          "city_state_token": 9,
+          "copyright_footer": 10,
+          "data_valid_footer": 10,
+          "legend_footer": 20,
+          "page_footer": 10,
+          "column_or_code_token": 16
+        }
+      }
+    },
+    {
+      "file": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/input-pdfs/1779687181453_branch_area_20260424_SF.pdf",
+      "rows": 1638,
+      "textLines": 28019,
+      "diagnostics": {
+        "screen_count_tokens": 2016,
+        "screen_count_out_of_range": 5474,
+        "orphaned_screen_count_tokens": 302,
+        "rows_parsed": 1638,
+        "non_friday_opening_rows": 362,
+        "rejected_after_screen_count": {
+          "numeric_token": 655,
+          "percent_token": 106,
+          "dash_token": 1191,
+          "total_footer": 72,
+          "copyright_footer": 6,
+          "data_valid_footer": 6,
+          "legend_footer": 12,
+          "page_footer": 6,
+          "city_state_token": 42,
+          "column_or_code_token": 11
+        }
+      }
+    },
+    {
+      "file": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/input-pdfs/1779687319003_branch_area_20260320_LA.pdf",
+      "rows": 3576,
+      "textLines": 60781,
+      "diagnostics": {
+        "screen_count_tokens": 4396,
+        "screen_count_out_of_range": 10364,
+        "orphaned_screen_count_tokens": 656,
+        "rows_parsed": 3576,
+        "non_friday_opening_rows": 537,
+        "rejected_after_screen_count": {
+          "dash_token": 2753,
+          "percent_token": 198,
+          "numeric_token": 1459,
+          "total_footer": 162,
+          "city_state_token": 57,
+          "copyright_footer": 15,
+          "data_valid_footer": 15,
+          "legend_footer": 30,
+          "page_footer": 15,
+          "column_or_code_token": 12
+        }
+      }
+    },
+    {
+      "file": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/input-pdfs/1779687323569_branch_area_20260320_NY.pdf",
+      "rows": 1483,
+      "textLines": 25144,
+      "diagnostics": {
+        "screen_count_tokens": 1701,
+        "screen_count_out_of_range": 3734,
+        "orphaned_screen_count_tokens": 189,
+        "rows_parsed": 1483,
+        "non_friday_opening_rows": 245,
+        "rejected_after_screen_count": {
+          "percent_token": 79,
+          "dash_token": 817,
+          "numeric_token": 509,
+          "total_footer": 54,
+          "copyright_footer": 6,
+          "data_valid_footer": 6,
+          "legend_footer": 12,
+          "page_footer": 6,
+          "column_or_code_token": 23,
+          "city_state_token": 6
+        }
+      }
+    },
+    {
+      "file": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/input-pdfs/1779687326749_branch_area_20260320_SF.pdf",
+      "rows": 1443,
+      "textLines": 24967,
+      "diagnostics": {
+        "screen_count_tokens": 1713,
+        "screen_count_out_of_range": 4225,
+        "orphaned_screen_count_tokens": 204,
+        "rows_parsed": 1443,
+        "non_friday_opening_rows": 237,
+        "rejected_after_screen_count": {
+          "numeric_token": 557,
+          "dash_token": 982,
+          "percent_token": 94,
+          "total_footer": 61,
+          "copyright_footer": 7,
+          "data_valid_footer": 7,
+          "legend_footer": 14,
+          "page_footer": 7,
+          "city_state_token": 33,
+          "column_or_code_token": 15
+        }
+      }
+    },
+    {
+      "file": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/input-pdfs/1779687509516_branch_area_20260327_LA.pdf",
+      "rows": 3730,
+      "textLines": 63131,
+      "diagnostics": {
+        "screen_count_tokens": 4359,
+        "screen_count_out_of_range": 12646,
+        "orphaned_screen_count_tokens": 501,
+        "rows_parsed": 3730,
+        "non_friday_opening_rows": 480,
+        "rejected_after_screen_count": {
+          "dash_token": 2359,
+          "numeric_token": 1004,
+          "total_footer": 132,
+          "percent_token": 113,
+          "city_state_token": 46,
+          "copyright_footer": 12,
+          "data_valid_footer": 12,
+          "legend_footer": 24,
+          "page_footer": 12,
+          "column_or_code_token": 16
+        }
+      }
+    },
+    {
+      "file": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/input-pdfs/1779687515015_branch_area_20260327_NY.pdf",
+      "rows": 1520,
+      "textLines": 25769,
+      "diagnostics": {
+        "screen_count_tokens": 1727,
+        "screen_count_out_of_range": 4529,
+        "orphaned_screen_count_tokens": 182,
+        "rows_parsed": 1520,
+        "non_friday_opening_rows": 246,
+        "rejected_after_screen_count": {
+          "numeric_token": 423,
+          "percent_token": 47,
+          "dash_token": 910,
+          "total_footer": 52,
+          "city_state_token": 9,
+          "copyright_footer": 6,
+          "data_valid_footer": 6,
+          "legend_footer": 12,
+          "page_footer": 6,
+          "column_or_code_token": 24
+        }
+      }
+    },
+    {
+      "file": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/input-pdfs/1779687518683_branch_area_20260327_SF.pdf",
+      "rows": 1552,
+      "textLines": 26669,
+      "diagnostics": {
+        "screen_count_tokens": 1818,
+        "screen_count_out_of_range": 5289,
+        "orphaned_screen_count_tokens": 198,
+        "rows_parsed": 1552,
+        "non_friday_opening_rows": 238,
+        "rejected_after_screen_count": {
+          "numeric_token": 503,
+          "dash_token": 992,
+          "percent_token": 66,
+          "total_footer": 65,
+          "column_or_code_token": 18,
+          "city_state_token": 37,
+          "copyright_footer": 10,
+          "data_valid_footer": 10,
+          "legend_footer": 20,
+          "page_footer": 10
+        }
+      }
+    },
+    {
+      "file": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/input-pdfs/1779687700101_branch_area_20260313_LA.pdf",
+      "rows": 4420,
+      "textLines": 73361,
+      "diagnostics": {
+        "screen_count_tokens": 5950,
+        "screen_count_out_of_range": 14508,
+        "orphaned_screen_count_tokens": 1339,
+        "rows_parsed": 4420,
+        "non_friday_opening_rows": 435,
+        "rejected_after_screen_count": {
+          "dash_token": 4677,
+          "percent_token": 306,
+          "numeric_token": 1718,
+          "total_footer": 189,
+          "city_state_token": 65,
+          "copyright_footer": 25,
+          "data_valid_footer": 25,
+          "legend_footer": 50,
+          "page_footer": 25,
+          "column_or_code_token": 19
+        }
+      }
+    },
+    {
+      "file": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/input-pdfs/1779687704458_branch_area_20260313_NY.pdf",
+      "rows": 1635,
+      "textLines": 27198,
+      "diagnostics": {
+        "screen_count_tokens": 2053,
+        "screen_count_out_of_range": 4588,
+        "orphaned_screen_count_tokens": 383,
+        "rows_parsed": 1635,
+        "non_friday_opening_rows": 167,
+        "rejected_after_screen_count": {
+          "numeric_token": 604,
+          "percent_token": 96,
+          "dash_token": 1401,
+          "total_footer": 63,
+          "city_state_token": 12,
+          "column_or_code_token": 20,
+          "copyright_footer": 11,
+          "data_valid_footer": 11,
+          "legend_footer": 22,
+          "page_footer": 11
+        }
+      }
+    },
+    {
+      "file": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/input-pdfs/1779687708139_branch_area_20260313_SF.pdf",
+      "rows": 1834,
+      "textLines": 30673,
+      "diagnostics": {
+        "screen_count_tokens": 2340,
+        "screen_count_out_of_range": 6386,
+        "orphaned_screen_count_tokens": 416,
+        "rows_parsed": 1834,
+        "non_friday_opening_rows": 165,
+        "rejected_after_screen_count": {
+          "dash_token": 1719,
+          "numeric_token": 668,
+          "percent_token": 110,
+          "total_footer": 82,
+          "copyright_footer": 14,
+          "data_valid_footer": 14,
+          "legend_footer": 28,
+          "page_footer": 14,
+          "column_or_code_token": 16,
+          "city_state_token": 38
+        }
+      }
+    },
+    {
+      "file": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/input-pdfs/1779687728651_branch_area_20260306_LA.pdf",
+      "rows": 4238,
+      "textLines": 70813,
+      "diagnostics": {
+        "screen_count_tokens": 5291,
+        "screen_count_out_of_range": 13759,
+        "orphaned_screen_count_tokens": 899,
+        "rows_parsed": 4238,
+        "non_friday_opening_rows": 617,
+        "rejected_after_screen_count": {
+          "numeric_token": 1635,
+          "dash_token": 3244,
+          "percent_token": 303,
+          "total_footer": 149,
+          "city_state_token": 42,
+          "copyright_footer": 17,
+          "data_valid_footer": 17,
+          "legend_footer": 34,
+          "page_footer": 17,
+          "column_or_code_token": 15
+        }
+      }
+    },
+    {
+      "file": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/input-pdfs/1779687732733_branch_area_20260306_NY.pdf",
+      "rows": 1580,
+      "textLines": 26548,
+      "diagnostics": {
+        "screen_count_tokens": 1844,
+        "screen_count_out_of_range": 4510,
+        "orphaned_screen_count_tokens": 239,
+        "rows_parsed": 1580,
+        "non_friday_opening_rows": 228,
+        "rejected_after_screen_count": {
+          "numeric_token": 509,
+          "percent_token": 83,
+          "dash_token": 902,
+          "total_footer": 48,
+          "city_state_token": 11,
+          "column_or_code_token": 14,
+          "copyright_footer": 6,
+          "data_valid_footer": 6,
+          "legend_footer": 12,
+          "page_footer": 6
+        }
+      }
+    },
+    {
+      "file": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/input-pdfs/1779687735937_branch_area_20260306_SF.pdf",
+      "rows": 1787,
+      "textLines": 30058,
+      "diagnostics": {
+        "screen_count_tokens": 2218,
+        "screen_count_out_of_range": 5908,
+        "orphaned_screen_count_tokens": 352,
+        "rows_parsed": 1787,
+        "non_friday_opening_rows": 250,
+        "rejected_after_screen_count": {
+          "numeric_token": 745,
+          "percent_token": 114,
+          "dash_token": 1401,
+          "total_footer": 77,
+          "copyright_footer": 10,
+          "data_valid_footer": 10,
+          "legend_footer": 20,
+          "page_footer": 10,
+          "city_state_token": 41,
+          "column_or_code_token": 13
+        }
+      }
+    },
+    {
+      "file": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/input-pdfs/1779687806608_branch_area_20260227_LA.pdf",
+      "rows": 4309,
+      "textLines": 72021,
+      "diagnostics": {
+        "screen_count_tokens": 5385,
+        "screen_count_out_of_range": 14162,
+        "orphaned_screen_count_tokens": 895,
+        "rows_parsed": 4309,
+        "non_friday_opening_rows": 467,
+        "rejected_after_screen_count": {
+          "numeric_token": 1685,
+          "dash_token": 3378,
+          "percent_token": 319,
+          "total_footer": 177,
+          "copyright_footer": 20,
+          "data_valid_footer": 20,
+          "legend_footer": 40,
+          "page_footer": 20,
+          "city_state_token": 59,
+          "column_or_code_token": 22
+        }
+      }
+    },
+    {
+      "file": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/input-pdfs/1779687810831_branch_area_20260227_NY.pdf",
+      "rows": 1709,
+      "textLines": 28380,
+      "diagnostics": {
+        "screen_count_tokens": 2174,
+        "screen_count_out_of_range": 5052,
+        "orphaned_screen_count_tokens": 422,
+        "rows_parsed": 1709,
+        "non_friday_opening_rows": 244,
+        "rejected_after_screen_count": {
+          "numeric_token": 780,
+          "dash_token": 1432,
+          "total_footer": 81,
+          "percent_token": 130,
+          "city_state_token": 16,
+          "column_or_code_token": 24,
+          "copyright_footer": 6,
+          "data_valid_footer": 6,
+          "legend_footer": 12,
+          "page_footer": 6,
+          "no_letters": 1
+        }
+      }
+    },
+    {
+      "file": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/input-pdfs/1779687815297_branch_area_20260227_SF.pdf",
+      "rows": 1732,
+      "textLines": 29490,
+      "diagnostics": {
+        "screen_count_tokens": 2099,
+        "screen_count_out_of_range": 5796,
+        "orphaned_screen_count_tokens": 285,
+        "rows_parsed": 1732,
+        "non_friday_opening_rows": 212,
+        "rejected_after_screen_count": {
+          "numeric_token": 792,
+          "dash_token": 1203,
+          "percent_token": 150,
+          "total_footer": 80,
+          "column_or_code_token": 11,
+          "city_state_token": 37,
+          "copyright_footer": 8,
+          "data_valid_footer": 8,
+          "legend_footer": 16,
+          "page_footer": 8
+        }
+      }
+    },
+    {
+      "file": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/input-pdfs/1779687910104_branch_area_20260220_LA.pdf",
+      "rows": 4525,
+      "textLines": 75497,
+      "diagnostics": {
+        "screen_count_tokens": 5377,
+        "screen_count_out_of_range": 14975,
+        "orphaned_screen_count_tokens": 693,
+        "rows_parsed": 4525,
+        "non_friday_opening_rows": 642,
+        "rejected_after_screen_count": {
+          "dash_token": 2758,
+          "percent_token": 184,
+          "numeric_token": 1429,
+          "total_footer": 159,
+          "city_state_token": 57,
+          "copyright_footer": 20,
+          "data_valid_footer": 20,
+          "legend_footer": 40,
+          "page_footer": 20,
+          "column_or_code_token": 14
+        }
+      }
+    },
+    {
+      "file": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/input-pdfs/1779687914741_branch_area_20260220_NY.pdf",
+      "rows": 1758,
+      "textLines": 29288,
+      "diagnostics": {
+        "screen_count_tokens": 2188,
+        "screen_count_out_of_range": 5252,
+        "orphaned_screen_count_tokens": 394,
+        "rows_parsed": 1758,
+        "non_friday_opening_rows": 278,
+        "rejected_after_screen_count": {
+          "numeric_token": 834,
+          "percent_token": 140,
+          "dash_token": 1641,
+          "total_footer": 66,
+          "city_state_token": 13,
+          "column_or_code_token": 35,
+          "copyright_footer": 8,
+          "data_valid_footer": 8,
+          "legend_footer": 16,
+          "page_footer": 8
+        }
+      }
+    },
+    {
+      "file": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/input-pdfs/1779687918360_branch_area_20260220_SF.pdf",
+      "rows": 1849,
+      "textLines": 31250,
+      "diagnostics": {
+        "screen_count_tokens": 2102,
+        "screen_count_out_of_range": 6111,
+        "orphaned_screen_count_tokens": 199,
+        "rows_parsed": 1849,
+        "non_friday_opening_rows": 272,
+        "rejected_after_screen_count": {
+          "dash_token": 809,
+          "numeric_token": 477,
+          "total_footer": 50,
+          "percent_token": 83,
+          "copyright_footer": 6,
+          "data_valid_footer": 6,
+          "legend_footer": 12,
+          "page_footer": 6,
+          "city_state_token": 29,
+          "column_or_code_token": 14
+        }
+      }
+    },
+    {
+      "file": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/input-pdfs/1779688163496_branch_area_20260213_LA.pdf",
+      "rows": 4815,
+      "textLines": 79598,
+      "diagnostics": {
+        "screen_count_tokens": 5877,
+        "screen_count_out_of_range": 14426,
+        "orphaned_screen_count_tokens": 877,
+        "rows_parsed": 4815,
+        "non_friday_opening_rows": 828,
+        "rejected_after_screen_count": {
+          "percent_token": 278,
+          "dash_token": 3157,
+          "numeric_token": 1801,
+          "total_footer": 185,
+          "copyright_footer": 23,
+          "data_valid_footer": 23,
+          "legend_footer": 46,
+          "page_footer": 23,
+          "city_state_token": 71,
+          "column_or_code_token": 15
+        }
+      }
+    },
+    {
+      "file": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/input-pdfs/1779688168396_branch_area_20260213_NY.pdf",
+      "rows": 1973,
+      "textLines": 32505,
+      "diagnostics": {
+        "screen_count_tokens": 2348,
+        "screen_count_out_of_range": 5511,
+        "orphaned_screen_count_tokens": 344,
+        "rows_parsed": 1973,
+        "non_friday_opening_rows": 366,
+        "rejected_after_screen_count": {
+          "numeric_token": 735,
+          "percent_token": 135,
+          "dash_token": 1232,
+          "total_footer": 62,
+          "copyright_footer": 11,
+          "data_valid_footer": 11,
+          "legend_footer": 22,
+          "page_footer": 11,
+          "column_or_code_token": 12,
+          "city_state_token": 9
+        }
+      }
+    },
+    {
+      "file": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/input-pdfs/1779688172047_branch_area_20260213_SF.pdf",
+      "rows": 1962,
+      "textLines": 32880,
+      "diagnostics": {
+        "screen_count_tokens": 2300,
+        "screen_count_out_of_range": 5899,
+        "orphaned_screen_count_tokens": 263,
+        "rows_parsed": 1962,
+        "non_friday_opening_rows": 385,
+        "rejected_after_screen_count": {
+          "numeric_token": 649,
+          "percent_token": 96,
+          "dash_token": 1084,
+          "total_footer": 69,
+          "copyright_footer": 10,
+          "data_valid_footer": 10,
+          "legend_footer": 20,
+          "page_footer": 10,
+          "column_or_code_token": 21,
+          "city_state_token": 38
+        }
+      }
+    },
+    {
+      "file": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/input-pdfs/1779688199767_branch_area_20260206_LA.pdf",
+      "rows": 4691,
+      "textLines": 78229,
+      "diagnostics": {
+        "screen_count_tokens": 5974,
+        "screen_count_out_of_range": 16908,
+        "orphaned_screen_count_tokens": 1083,
+        "rows_parsed": 4691,
+        "non_friday_opening_rows": 792,
+        "rejected_after_screen_count": {
+          "numeric_token": 1973,
+          "dash_token": 3874,
+          "total_footer": 188,
+          "percent_token": 399,
+          "copyright_footer": 29,
+          "data_valid_footer": 29,
+          "legend_footer": 58,
+          "page_footer": 29,
+          "city_state_token": 53,
+          "column_or_code_token": 27
+        }
+      }
+    },
+    {
+      "file": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/input-pdfs/1779688204151_branch_area_20260206_NY.pdf",
+      "rows": 1902,
+      "textLines": 31341,
+      "diagnostics": {
+        "screen_count_tokens": 2359,
+        "screen_count_out_of_range": 6330,
+        "orphaned_screen_count_tokens": 415,
+        "rows_parsed": 1902,
+        "non_friday_opening_rows": 351,
+        "rejected_after_screen_count": {
+          "percent_token": 118,
+          "dash_token": 1472,
+          "numeric_token": 798,
+          "total_footer": 84,
+          "column_or_code_token": 29,
+          "copyright_footer": 10,
+          "data_valid_footer": 10,
+          "legend_footer": 20,
+          "page_footer": 10,
+          "city_state_token": 9
+        }
+      }
+    },
+    {
+      "file": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/input-pdfs/1779688207689_branch_area_20260206_SF.pdf",
+      "rows": 1945,
+      "textLines": 32953,
+      "diagnostics": {
+        "screen_count_tokens": 2431,
+        "screen_count_out_of_range": 7141,
+        "orphaned_screen_count_tokens": 401,
+        "rows_parsed": 1945,
+        "non_friday_opening_rows": 321,
+        "rejected_after_screen_count": {
+          "numeric_token": 787,
+          "dash_token": 1548,
+          "percent_token": 151,
+          "total_footer": 80,
+          "column_or_code_token": 28,
+          "copyright_footer": 11,
+          "data_valid_footer": 11,
+          "legend_footer": 22,
+          "page_footer": 11,
+          "city_state_token": 46
+        }
+      }
+    },
+    {
+      "file": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/input-pdfs/1779688258270_branch_area_20260123_LA.pdf",
+      "rows": 5234,
+      "textLines": 87561,
+      "diagnostics": {
+        "screen_count_tokens": 6145,
+        "screen_count_out_of_range": 17840,
+        "orphaned_screen_count_tokens": 762,
+        "rows_parsed": 5234,
+        "non_friday_opening_rows": 1638,
+        "rejected_after_screen_count": {
+          "dash_token": 2899,
+          "numeric_token": 1556,
+          "total_footer": 139,
+          "percent_token": 242,
+          "city_state_token": 53,
+          "copyright_footer": 23,
+          "data_valid_footer": 23,
+          "legend_footer": 46,
+          "page_footer": 23,
+          "column_or_code_token": 26
+        }
+      }
+    },
+    {
+      "file": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/input-pdfs/1779688262730_branch_area_20260123_NY.pdf",
+      "rows": 1867,
+      "textLines": 31302,
+      "diagnostics": {
+        "screen_count_tokens": 2137,
+        "screen_count_out_of_range": 5507,
+        "orphaned_screen_count_tokens": 239,
+        "rows_parsed": 1867,
+        "non_friday_opening_rows": 580,
+        "rejected_after_screen_count": {
+          "numeric_token": 630,
+          "percent_token": 87,
+          "dash_token": 970,
+          "total_footer": 66,
+          "city_state_token": 8,
+          "column_or_code_token": 107,
+          "copyright_footer": 8,
+          "data_valid_footer": 8,
+          "legend_footer": 16,
+          "page_footer": 8
+        }
+      }
+    },
+    {
+      "file": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/input-pdfs/1779688265975_branch_area_20260123_SF.pdf",
+      "rows": 2191,
+      "textLines": 36911,
+      "diagnostics": {
+        "screen_count_tokens": 2614,
+        "screen_count_out_of_range": 7401,
+        "orphaned_screen_count_tokens": 353,
+        "rows_parsed": 2191,
+        "non_friday_opening_rows": 722,
+        "rejected_after_screen_count": {
+          "dash_token": 1194,
+          "numeric_token": 692,
+          "total_footer": 67,
+          "percent_token": 115,
+          "copyright_footer": 10,
+          "data_valid_footer": 10,
+          "legend_footer": 20,
+          "page_footer": 10,
+          "city_state_token": 38,
+          "column_or_code_token": 24
+        }
+      }
+    },
+    {
+      "file": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/input-pdfs/1779688351523_branch_area_20260116_LA.pdf",
+      "rows": 4821,
+      "textLines": 80831,
+      "diagnostics": {
+        "screen_count_tokens": 5674,
+        "screen_count_out_of_range": 15702,
+        "orphaned_screen_count_tokens": 692,
+        "rows_parsed": 4821,
+        "non_friday_opening_rows": 1461,
+        "rejected_after_screen_count": {
+          "numeric_token": 1576,
+          "percent_token": 198,
+          "dash_token": 2828,
+          "copyright_footer": 19,
+          "data_valid_footer": 19,
+          "legend_footer": 38,
+          "page_footer": 19,
+          "total_footer": 157,
+          "city_state_token": 60,
+          "column_or_code_token": 22
+        }
+      }
+    },
+    {
+      "file": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/input-pdfs/1779688355970_branch_area_20260116_NY.pdf",
+      "rows": 1798,
+      "textLines": 30374,
+      "diagnostics": {
+        "screen_count_tokens": 1999,
+        "screen_count_out_of_range": 5069,
+        "orphaned_screen_count_tokens": 175,
+        "rows_parsed": 1798,
+        "non_friday_opening_rows": 581,
+        "rejected_after_screen_count": {
+          "numeric_token": 518,
+          "percent_token": 57,
+          "dash_token": 777,
+          "total_footer": 56,
+          "city_state_token": 11,
+          "column_or_code_token": 16,
+          "copyright_footer": 4,
+          "data_valid_footer": 4,
+          "legend_footer": 8,
+          "page_footer": 4
+        }
+      }
+    },
+    {
+      "file": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/input-pdfs/1779688359235_branch_area_20260116_SF.pdf",
+      "rows": 1994,
+      "textLines": 33846,
+      "diagnostics": {
+        "screen_count_tokens": 2367,
+        "screen_count_out_of_range": 6436,
+        "orphaned_screen_count_tokens": 291,
+        "rows_parsed": 1994,
+        "non_friday_opening_rows": 646,
+        "rejected_after_screen_count": {
+          "numeric_token": 704,
+          "dash_token": 1136,
+          "total_footer": 76,
+          "percent_token": 85,
+          "column_or_code_token": 15,
+          "city_state_token": 36,
+          "copyright_footer": 9,
+          "data_valid_footer": 9,
+          "legend_footer": 18,
+          "page_footer": 9
+        }
+      }
+    },
+    {
+      "file": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/input-pdfs/1779688402551_branch_area_20260109_LA.pdf",
+      "rows": 4044,
+      "textLines": 69224,
+      "diagnostics": {
+        "screen_count_tokens": 4394,
+        "screen_count_out_of_range": 12067,
+        "orphaned_screen_count_tokens": 244,
+        "rows_parsed": 4044,
+        "non_friday_opening_rows": 1317,
+        "rejected_after_screen_count": {
+          "dash_token": 1249,
+          "numeric_token": 1013,
+          "total_footer": 107,
+          "percent_token": 108,
+          "copyright_footer": 8,
+          "data_valid_footer": 8,
+          "legend_footer": 16,
+          "page_footer": 8,
+          "city_state_token": 39,
+          "column_or_code_token": 11
+        }
+      }
+    },
+    {
+      "file": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/input-pdfs/1779688406458_branch_area_20260109_NY.pdf",
+      "rows": 1535,
+      "textLines": 26418,
+      "diagnostics": {
+        "screen_count_tokens": 1629,
+        "screen_count_out_of_range": 3670,
+        "orphaned_screen_count_tokens": 69,
+        "rows_parsed": 1535,
+        "non_friday_opening_rows": 559,
+        "rejected_after_screen_count": {
+          "numeric_token": 415,
+          "percent_token": 47,
+          "dash_token": 413,
+          "total_footer": 41,
+          "copyright_footer": 11,
+          "data_valid_footer": 11,
+          "legend_footer": 22,
+          "page_footer": 11,
+          "city_state_token": 7,
+          "column_or_code_token": 13
+        }
+      }
+    },
+    {
+      "file": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/input-pdfs/1779688409827_branch_area_20260109_SF.pdf",
+      "rows": 1706,
+      "textLines": 29495,
+      "diagnostics": {
+        "screen_count_tokens": 1901,
+        "screen_count_out_of_range": 5122,
+        "orphaned_screen_count_tokens": 133,
+        "rows_parsed": 1706,
+        "non_friday_opening_rows": 599,
+        "rejected_after_screen_count": {
+          "numeric_token": 595,
+          "percent_token": 79,
+          "dash_token": 676,
+          "total_footer": 59,
+          "copyright_footer": 7,
+          "data_valid_footer": 7,
+          "legend_footer": 14,
+          "page_footer": 7,
+          "column_or_code_token": 15,
+          "city_state_token": 31
+        }
+      }
+    },
+    {
+      "file": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/input-pdfs/1779688423320_branch_area_20260102_LA.pdf",
+      "rows": 3605,
+      "textLines": 63105,
+      "diagnostics": {
+        "screen_count_tokens": 3895,
+        "screen_count_out_of_range": 8389,
+        "orphaned_screen_count_tokens": 214,
+        "rows_parsed": 3605,
+        "non_friday_opening_rows": 1403,
+        "rejected_after_screen_count": {
+          "dash_token": 1014,
+          "percent_token": 44,
+          "numeric_token": 610,
+          "total_footer": 76,
+          "city_state_token": 25,
+          "copyright_footer": 6,
+          "data_valid_footer": 6,
+          "legend_footer": 12,
+          "page_footer": 6,
+          "column_or_code_token": 6
+        }
+      }
+    },
+    {
+      "file": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/input-pdfs/1779688427660_branch_area_20260102_NY.pdf",
+      "rows": 1452,
+      "textLines": 25466,
+      "diagnostics": {
+        "screen_count_tokens": 1547,
+        "screen_count_out_of_range": 2834,
+        "orphaned_screen_count_tokens": 79,
+        "rows_parsed": 1452,
+        "non_friday_opening_rows": 615,
+        "rejected_after_screen_count": {
+          "percent_token": 29,
+          "dash_token": 332,
+          "numeric_token": 267,
+          "total_footer": 30,
+          "city_state_token": 6,
+          "column_or_code_token": 9,
+          "copyright_footer": 1,
+          "data_valid_footer": 1,
+          "legend_footer": 2,
+          "page_footer": 1
+        }
+      }
+    },
+    {
+      "file": "/Users/rohantyagi/Desktop/ReelVotes/reelsuccess/input-pdfs/1779688431104_branch_area_20260102_SF.pdf",
+      "rows": 1510,
+      "textLines": 26795,
+      "diagnostics": {
+        "screen_count_tokens": 1628,
+        "screen_count_out_of_range": 3480,
+        "orphaned_screen_count_tokens": 80,
+        "rows_parsed": 1510,
+        "non_friday_opening_rows": 646,
+        "rejected_after_screen_count": {
+          "dash_token": 430,
+          "percent_token": 23,
+          "numeric_token": 318,
+          "total_footer": 38,
+          "column_or_code_token": 6,
+          "city_state_token": 24,
+          "copyright_footer": 2,
+          "data_valid_footer": 2,
+          "legend_footer": 4,
+          "page_footer": 2
+        }
+      }
     }
   ],
-  "totalRows": 8878
+  "totalRows": 132676,
+  "parser": {
+    "minScreenCount": 1,
+    "maxScreenCount": 40,
+    "strict": false
+  },
+  "diagnostics": {
+    "screen_count_tokens": 158580,
+    "screen_count_out_of_range": 402949,
+    "orphaned_screen_count_tokens": 21393,
+    "rows_parsed": 132676,
+    "non_friday_opening_rows": 28420,
+    "rejected_after_screen_count": {
+      "percent_token": 7056,
+      "dash_token": 84382,
+      "numeric_token": 47104,
+      "total_footer": 4898,
+      "city_state_token": 1741,
+      "copyright_footer": 588,
+      "data_valid_footer": 588,
+      "legend_footer": 1176,
+      "page_footer": 588,
+      "column_or_code_token": 986,
+      "no_letters": 7
+    },
+    "suspicious_title_counts": {}
+  }
 }

@@ -1,0 +1,49 @@
+{
+  "suspicious_title_examples": {},
+  "rejected_after_screen_count": [
+    {
+      "reason": "dash_token",
+      "count": 84382
+    },
+    {
+      "reason": "numeric_token",
+      "count": 47104
+    },
+    {
+      "reason": "percent_token",
+      "count": 7056
+    },
+    {
+      "reason": "total_footer",
+      "count": 4898
+    },
+    {
+      "reason": "city_state_token",
+      "count": 1741
+    },
+    {
+      "reason": "legend_footer",
+      "count": 1176
+    },
+    {
+      "reason": "column_or_code_token",
+      "count": 986
+    },
+    {
+      "reason": "copyright_footer",
+      "count": 588
+    },
+    {
+      "reason": "data_valid_footer",
+      "count": 588
+    },
+    {
+      "reason": "page_footer",
+      "count": 588
+    },
+    {
+      "reason": "no_letters",
+      "count": 7
+    }
+  ]
+}
