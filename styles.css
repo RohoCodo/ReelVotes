@@ -128,11 +128,11 @@ body {
 
   .site-nav-brand::before {
     content: "";
-    width: 22px;
-    height: 22px;
+    width: 30px;
+    height: 30px;
     border-radius: 999px;
     border: 1px solid rgba(255, 255, 255, 0.45);
-    background: rgba(0, 0, 0, 0.35) url("/icon.png") center / 82% no-repeat;
+    background: #000 url("/icon.png") center / 84% no-repeat;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     flex-shrink: 0;
   }
