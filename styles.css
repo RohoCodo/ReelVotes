@@ -1,3 +1,7 @@
+@import url("/public/styles.css?v=20260622-1");
+
+/* Legacy root styles are disabled; the site now mirrors /public/styles.css for consistency. */
+/*
 body {
     margin: 0;
     font-family: -apple-system, BlinkMacSystemFont, sans-serif;
@@ -425,6 +429,7 @@ body {
   .hidden {
     display: none !important;
   }
+  */
 
   /* ReelSuccess */
   .reelsuccess-card {
