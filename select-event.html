@@ -25,6 +25,13 @@
       <a href="https://www.thenewparkway.com" target="_blank">(website)</a>
     </p>
 
+    <section class="theater-search-panel" aria-label="Find your theater">
+      <h3>Find your theater</h3>
+      <input id="theaterSearchInput" class="search-input" type="text" placeholder="Search theater, city, or code..." autocomplete="off" />
+      <div id="theaterSearchResults" class="reelsuccess-search-results hidden" style="margin-top:8px;"></div>
+      <p id="theaterSearchStatus" class="theater-search-status">Showing all upcoming and past showtimes.</p>
+    </section>
+
     <div class="main-tabs" style="margin-top:18px;">
       <button id="liveShowsTabBtn" type="button" class="main-tab-btn active">Live Shows</button>
       <button id="historyShowsTabBtn" type="button" class="main-tab-btn">History</button>
@@ -92,6 +99,8 @@
   const db = getFirestore(app);
   const functions = getFunctions(app);
   const saveEventAdminSettingsCallable = httpsCallable(functions, "saveEventAdminSettings");
+  const publicListTheatersCallable = httpsCallable(functions, "publicListTheaters");
+  const reelSuccessListTheatersCallable = httpsCallable(functions, "reelSuccessListTheaters");
 
   function getEventSortTime(event) {
     const rawDateTime = String(event?.screeningDateTime || "").trim();
@@ -134,6 +143,11 @@
           voteWindowLabel: eventData.voteWindowLabel || existing.voteWindowLabel || "",
           requireEmail: typeof eventData.requireEmail === "boolean" ? eventData.requireEmail : (existing.requireEmail !== false),
           showLiveVoteCounts: eventData.showLiveVoteCounts === true || existing.showLiveVoteCounts === true,
+          theaterName: eventData.theaterName || existing.theaterName || "The New Parkway Theater",
+          theaterCity: eventData.theaterCity || existing.theaterCity || "Oakland, CA",
+          theaterCode: eventData.theaterCode || existing.theaterCode || "",
+          theaterKey: eventData.theaterKey || existing.theaterKey || "",
+          partnered: eventData.partnered !== false,
         });
       });
     } catch (error) {
@@ -150,6 +164,9 @@
   const historyShowsTabBtn = document.getElementById("historyShowsTabBtn");
   const liveShowsPanel = document.getElementById("liveShowsPanel");
   const historyShowsPanel = document.getElementById("historyShowsPanel");
+  const theaterSearchInput = document.getElementById("theaterSearchInput");
+  const theaterSearchResults = document.getElementById("theaterSearchResults");
+  const theaterSearchStatus = document.getElementById("theaterSearchStatus");
 
   function setActiveTab(tabName) {
     const showLive = tabName === "live";
@@ -238,6 +255,168 @@
     })
   );
 
+  const slug = (value) => String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+
+  function theaterSignature(name, city) {
+    return `${slug(name)}|${slug(city)}`;
+  }
+
+  function eventTheaterSignature(event) {
+    return theaterSignature(event?.theaterName || "", event?.theaterCity || "");
+  }
+
+  function collectEventTheaters() {
+    const byKey = new Map();
+    eventsWithStatus.forEach((event) => {
+      const name = String(event.theaterName || "The New Parkway Theater").trim();
+      const city = String(event.theaterCity || "Oakland, CA").trim();
+      const signature = theaterSignature(name, city);
+      if (!signature || byKey.has(signature)) return;
+      byKey.set(signature, {
+        name,
+        city,
+        theaterCode: String(event.theaterCode || "").trim(),
+        theaterKey: String(event.theaterKey || "").trim(),
+        partnered: event.partnered !== false,
+      });
+    });
+    return Array.from(byKey.values());
+  }
+
+  const eventTheaters = collectEventTheaters();
+  let selectedTheaterSignature = "";
+  let remoteSearchTimer = null;
+
+  function setTheaterSearchStatus(message, isError = false) {
+    if (!theaterSearchStatus) return;
+    theaterSearchStatus.textContent = message || "";
+    theaterSearchStatus.style.color = isError ? "#ff8e8e" : "#aaa";
+  }
+
+  function mapRemoteTheaterRow(row = {}) {
+    const name = String(row?.theater_name || row?.theater_code || "Unknown Theater").trim();
+    const city = String(row?.theater_city_state || row?.city || "").trim();
+    return {
+      name,
+      city,
+      theaterCode: String(row?.theater_code || "").trim(),
+      theaterKey: String(row?.theater_key || "").trim(),
+      partnered: eventTheaters.some((theater) => theaterSignature(theater.name, theater.city) === theaterSignature(name, city)),
+    };
+  }
+
+  function renderTheaterResults(results = []) {
+    if (!theaterSearchResults) return;
+    if (!results.length) {
+      theaterSearchResults.innerHTML = "";
+      theaterSearchResults.classList.add("hidden");
+      return;
+    }
+
+    theaterSearchResults.innerHTML = results.map((result) => {
+      const signature = theaterSignature(result.name, result.city);
+      const badge = result.partnered ? "Partnered" : "In network";
+      return `
+        <button type="button" class="reelsuccess-search-result-item" data-theater-signature="${signature}">
+          <span>${result.name}${result.city ? ` · ${result.city}` : ""}</span>
+          <span style="font-size:11px;color:#ffc2d8;">${badge}</span>
+        </button>
+      `;
+    }).join("");
+
+    theaterSearchResults.classList.remove("hidden");
+  }
+
+  function getFilteredEvents() {
+    if (!selectedTheaterSignature) {
+      return eventsWithStatus;
+    }
+    return eventsWithStatus.filter((event) => eventTheaterSignature(event) === selectedTheaterSignature);
+  }
+
+  function renderAllEventLists() {
+    const filtered = getFilteredEvents();
+    renderEventCards(filtered.filter((event) => !isPastShow(event)), liveDateList, "No upcoming showtimes");
+    renderEventCards(filtered.filter((event) => isPastShow(event)), historyDateList, "No past showtimes");
+  }
+
+  function getDefaultTheaterSignature() {
+    const preferred = eventTheaters.find((theater) => String(theater.name || "").toLowerCase().includes("new parkway"))
+      || eventTheaters.find((theater) => theater.partnered)
+      || eventTheaters[0]
+      || null;
+    return preferred ? theaterSignature(preferred.name, preferred.city) : "";
+  }
+
+  function applyTheaterSelection(signature) {
+    selectedTheaterSignature = signature || "";
+    renderAllEventLists();
+
+    if (!signature) {
+      setTheaterSearchStatus("Showing all upcoming and past showtimes.");
+      return;
+    }
+
+    const count = getFilteredEvents().length;
+    const selected = eventTheaters.find((theater) => theaterSignature(theater.name, theater.city) === signature);
+    if (selected) {
+      const suffix = count === 1 ? "showtime" : "showtimes";
+      setTheaterSearchStatus(`Filtered to ${selected.name}${selected.city ? ` (${selected.city})` : ""} · ${count} ${suffix}.`);
+      return;
+    }
+
+    setTheaterSearchStatus(count > 0 ? `Filtered results: ${count} showtimes.` : "No ReelVotes showtimes found for this theater yet.");
+  }
+
+  async function queryReelSuccessTheaters(query = "") {
+    const payload = { query: String(query || "").trim(), limit: 40 };
+    let response = null;
+    try {
+      response = await publicListTheatersCallable(payload);
+    } catch {
+      response = await reelSuccessListTheatersCallable(payload);
+    }
+    const rows = Array.isArray(response?.data?.theaters) ? response.data.theaters : [];
+    return rows.map(mapRemoteTheaterRow);
+  }
+
+  async function refreshTheaterSearch(query = "") {
+    const trimmed = String(query || "").trim();
+    try {
+      const remote = await queryReelSuccessTheaters(trimmed);
+      const merged = new Map();
+      [...eventTheaters, ...remote].forEach((theater) => {
+        const signature = theaterSignature(theater.name, theater.city);
+        if (!signature) return;
+        merged.set(signature, theater);
+      });
+
+      const filtered = Array.from(merged.values()).filter((theater) => {
+        if (!trimmed) return true;
+        const haystack = [theater.name, theater.city, theater.theaterCode, theater.theaterKey]
+          .map((value) => String(value || "").toLowerCase());
+        return haystack.some((value) => value.includes(trimmed.toLowerCase()));
+      });
+
+      renderTheaterResults(filtered.slice(0, 24));
+      if (!trimmed && !selectedTheaterSignature) {
+        setTheaterSearchStatus("Showing all upcoming and past showtimes.");
+      }
+    } catch (error) {
+      console.error("Failed to fetch theaters from ReelSuccess:", error);
+      const fallback = eventTheaters.filter((theater) => {
+        if (!trimmed) return true;
+        return theaterSignature(theater.name, theater.city).includes(slug(trimmed));
+      });
+      renderTheaterResults(fallback.slice(0, 24));
+      setTheaterSearchStatus("Could not refresh remote theaters right now. Showing local showtime theaters.", true);
+    }
+  }
+
   function renderEventCards(items, listEl, emptyMessage) {
     if (!listEl) return;
     if (!items.length) {
@@ -251,10 +430,11 @@
     }
 
     listEl.innerHTML = items.map((event) => {
-      const nextHref = `/?event=${encodeURIComponent(event.id)}`;
+      const queryEventId = event.id;
+      const nextHref = `/?event=${encodeURIComponent(queryEventId)}`;
       if (event.status === "ended") {
         return `
-          <a class="event-card event-card-ended" data-event-id="${event.id}" href="${nextHref}">
+          <a class="event-card event-card-ended" data-event-id="${queryEventId}" href="${nextHref}">
             <strong>${event.screeningLabel}</strong><br />
             <span>Voting has ended · View results</span>
           </a>
@@ -271,7 +451,7 @@
       }
 
       return `
-        <a class="event-card" data-event-id="${event.id}" href="${nextHref}">
+        <a class="event-card" data-event-id="${queryEventId}" href="${nextHref}">
           <strong>${event.screeningLabel}</strong><br />
           <span>Voting now</span>
         </a>
@@ -279,8 +459,65 @@
     }).join("");
   }
 
-  renderEventCards(eventsWithStatus.filter((event) => !isPastShow(event)), liveDateList, "No upcoming showtimes");
-  renderEventCards(eventsWithStatus.filter((event) => isPastShow(event)), historyDateList, "No past showtimes");
+  renderAllEventLists();
+
+  theaterSearchInput?.addEventListener("input", (event) => {
+    const value = event.target instanceof HTMLInputElement ? event.target.value : "";
+    selectedTheaterSignature = "";
+    renderAllEventLists();
+    setTheaterSearchStatus(value.trim() ? "Searching all ReelSuccess theaters…" : "Showing all upcoming and past showtimes.");
+
+    if (remoteSearchTimer) {
+      clearTimeout(remoteSearchTimer);
+    }
+    remoteSearchTimer = setTimeout(() => {
+      refreshTheaterSearch(value);
+    }, 180);
+  });
+
+  theaterSearchResults?.addEventListener("click", (event) => {
+    const target = event.target instanceof Element ? event.target : null;
+    const button = target?.closest("[data-theater-signature]");
+    if (!button) return;
+
+    const signature = button.getAttribute("data-theater-signature") || "";
+    if (!signature) return;
+
+    const match = eventTheaters.find((theater) => theaterSignature(theater.name, theater.city) === signature);
+    if (theaterSearchInput && match) {
+      theaterSearchInput.value = `${match.name}${match.city ? ` · ${match.city}` : ""}`;
+    }
+
+    theaterSearchResults.classList.add("hidden");
+    applyTheaterSelection(signature);
+  });
+
+  theaterSearchInput?.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      theaterSearchResults?.classList.add("hidden");
+      theaterSearchInput.blur();
+    }
+  });
+
+  document.addEventListener("click", (event) => {
+    const target = event.target instanceof Element ? event.target : null;
+    if (!target) return;
+    if (target.closest("#theaterSearchInput") || target.closest("#theaterSearchResults")) {
+      return;
+    }
+    theaterSearchResults?.classList.add("hidden");
+  });
+
+  await refreshTheaterSearch("");
+
+  const defaultTheaterSignature = getDefaultTheaterSignature();
+  if (defaultTheaterSignature) {
+    const match = eventTheaters.find((theater) => theaterSignature(theater.name, theater.city) === defaultTheaterSignature);
+    if (theaterSearchInput && match) {
+      theaterSearchInput.value = `${match.name}${match.city ? ` · ${match.city}` : ""}`;
+    }
+    applyTheaterSelection(defaultTheaterSignature);
+  }
 
   [liveDateList, historyDateList].forEach((listEl) => listEl?.addEventListener("click", (event) => {
     const origin = event.target instanceof Element ? event.target : null;

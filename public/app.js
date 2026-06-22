@@ -1,6 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
 import { getFirestore, collection, getDocs, getDoc, doc, query, where, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-functions.js";
+import { ShareVotePanel, ResultsLeaderboard, ConfettiCelebration } from "./ui-components.js";
 
 // Firebase Config
 const firebaseConfig = {
@@ -98,6 +99,7 @@ const EVENT_ID = selectedEvent?.firestoreEventId
   || defaultConfiguredEvent?.firestoreEventId
   || defaultConfiguredEvent?.id
   || "newparkway1";
+let EVENT_DATA_ID = EVENT_ID;
 let EVENT_STATUS = selectedEvent?.voteStatus || null;
 let EVENT_REQUIRES_EMAIL = selectedEvent?.requireEmail !== false;
 const EVENT_SHOW_LIVE_VOTE_COUNTS = selectedEvent?.showLiveVoteCounts === true;
@@ -109,6 +111,52 @@ const ACTIVE_ALLOWED_MOVIES = EVENT_ALLOWED_MOVIES.length > 0 ? EVENT_ALLOWED_MO
 let _eventStatusInitialized = false;
 let _unsubscribeEventStatus = null;
 
+function buildEventIdCandidates(rawEventId) {
+  const normalized = String(rawEventId || "").trim();
+  const event = configuredEvents.find((item) => (
+    item.id === normalized
+    || item.firestoreEventId === normalized
+    || EVENT_ID_ALIASES[item.id] === normalized
+  )) || null;
+
+  return Array.from(new Set([
+    normalized,
+    requestedEventId,
+    requestedEventDataId,
+    event?.firestoreEventId,
+    event?.id,
+    EVENT_ID_ALIASES[event?.id],
+  ].filter(Boolean)));
+}
+
+async function resolveEventDataId(rawEventId) {
+  const candidates = buildEventIdCandidates(rawEventId);
+  if (!candidates.length) {
+    return rawEventId;
+  }
+
+  const scored = [];
+  for (const candidate of candidates) {
+    try {
+      const [eventDoc, moviesSnapshot, votesSnapshot] = await Promise.all([
+        getDoc(doc(db, "events", candidate)),
+        getDocs(collection(db, "events", candidate, "movies")),
+        getDocs(query(collection(db, "events", candidate, "votes"), limit(1))),
+      ]);
+
+      const movieCount = moviesSnapshot.size;
+      const hasVotes = !votesSnapshot.empty;
+      const score = (hasVotes ? 1000 : 0) + (movieCount * 10) + (eventDoc.exists() ? 1 : 0);
+      scored.push({ candidate, score });
+    } catch {
+      scored.push({ candidate, score: 0 });
+    }
+  }
+
+  scored.sort((a, b) => b.score - a.score);
+  return scored[0]?.candidate || candidates[0] || rawEventId;
+}
+
 async function loadEventRuntimeSettings() {
   return new Promise((resolve) => {
     if (_unsubscribeEventStatus) {
@@ -116,7 +164,7 @@ async function loadEventRuntimeSettings() {
     }
 
     _unsubscribeEventStatus = onSnapshot(
-      doc(db, "events", EVENT_ID),
+      doc(db, "events", EVENT_DATA_ID),
       (eventDoc) => {
         const eventData = eventDoc.exists() ? (eventDoc.data() || {}) : {};
         const newStatus = typeof eventData.voteStatus === "string" && eventData.voteStatus.trim()
@@ -200,6 +248,7 @@ const tabAccountBtn = document.getElementById("tabAccountBtn");
 const tabVotePanel = document.getElementById("tabVotePanel");
 const tabMomentsPanel = document.getElementById("tabMomentsPanel");
 const tabAccountPanel = document.getElementById("tabAccountPanel");
+const votePageHeading = document.getElementById("votePageHeading");
 const momentsFeed = document.getElementById("momentsFeed");
 const momentsStatus = document.getElementById("momentsStatus");
 const momentsRefreshBtn = document.getElementById("momentsRefreshBtn");
@@ -229,6 +278,19 @@ let captchaToken = null;
 let captchaWidgetId = null;
 let momentsLoaded = false;
 let momentsLoading = false;
+const confetti = new ConfettiCelebration({ key: `reelvotes_confetti_${EVENT_ID}` });
+
+function updateVotePageHeading(status) {
+  if (!votePageHeading) {
+    return;
+  }
+
+  const normalizedStatus = String(status || EVENT_STATUS || "").trim().toLowerCase();
+  const defaultHeading = votePageHeading.dataset.defaultHeading || "Pick the Next Movie Night";
+  const showResultsHeading = normalizedStatus === "ended";
+
+  votePageHeading.textContent = showResultsHeading ? "Movie Night Results" : defaultHeading;
+}
 
 function escapeHtml(value) {
   return String(value || "")
@@ -664,7 +726,6 @@ function showEmailVoteModal() {
     voteEmailInput.value = "";
   }
   emailVoteModal.classList.remove("hidden");
-  voteEmailInput?.focus();
 }
 
 function hideEmailVoteModal() {
@@ -880,7 +941,7 @@ function clearPersistedCastVote() {
 async function getExistingVote() {
   try {
     const response = await getVoteStatusCallable({
-      eventId: EVENT_ID,
+      eventId: EVENT_DATA_ID,
       clientId: voterClientId
     });
 
@@ -998,7 +1059,7 @@ async function fetchChosenMovies() {
   try {
     console.log("Fetching votes from Firebase...");
     // Fetch from the new movies collection under events/{event_id}/movies/
-    const moviesRef = collection(db, "events", EVENT_ID, "movies");
+    const moviesRef = collection(db, "events", EVENT_DATA_ID, "movies");
     const querySnapshot = await getDocs(moviesRef);
     
     console.log("Query snapshot size:", querySnapshot.size);
@@ -1024,6 +1085,7 @@ async function fetchChosenMovies() {
     console.log("Movies:", chosenMovies);
     console.log("[app] Computed movie list state", {
       EVENT_ID,
+      EVENT_DATA_ID,
       EVENT_STATUS,
       chosenMoviesLength: chosenMovies.length
     });
@@ -1053,6 +1115,85 @@ async function generateAppLink() {
     console.error("Error generating app link:", error);
     return `${window.location.origin}${window.location.pathname}`;
   }
+}
+
+async function getShareContent(movieTitles = []) {
+  const shareUrl = await generateAppLink();
+  const shareText = movieTitles.length
+    ? `I just voted for movie night 🎬\nHelp decide what gets screened and cast your vote:`
+    : "I just voted for movie night 🎬 Help decide what gets screened and cast your vote:";
+  return {
+    url: shareUrl,
+    text: `${shareText}\n${shareUrl}`,
+  };
+}
+
+function buildUpcomingPreviewHtml() {
+  const now = Date.now();
+  const upcoming = configuredEvents
+    .filter((event) => {
+      const parsed = Date.parse(String(event?.screeningDateTime || ""));
+      return Number.isFinite(parsed) && parsed >= now;
+    })
+    .sort((a, b) => getEventSortTime(a) - getEventSortTime(b))
+    .slice(0, 3);
+
+  if (!upcoming.length) {
+    return "";
+  }
+
+  const rows = upcoming.map((event) => {
+    const date = new Date(event.screeningDateTime);
+    const label = Number.isNaN(date.getTime())
+      ? String(event.screeningLabel || event.id)
+      : `${date.toLocaleDateString([], { month: "short", day: "numeric" })} · ${date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`;
+    return `<li>${label}</li>`;
+  }).join("");
+
+  return `
+    <section class="info-box" style="margin-top:12px;">
+      <h2 style="margin-top:0;">Upcoming screenings</h2>
+      <ul style="margin:8px 0 0 18px;color:#cfcfcf;">${rows}</ul>
+    </section>
+  `;
+}
+
+async function renderPostVoteExperience({ movieTitles = [], heading = "You're In 🎬", subtitle = "Thanks for voting! Help your movie win by sharing this vote with friends." } = {}) {
+  resultsDiv.classList.remove("hidden");
+  resultsDiv.innerHTML = `
+    <section class="post-vote-shell">
+      <header class="post-vote-header">
+        <div class="post-vote-icon" aria-hidden="true">✅</div>
+        <h2>${escapeHtml(heading)}</h2>
+        <p>${escapeHtml(subtitle)}</p>
+      </header>
+      <div id="resultsLeaderboardMount"></div>
+      <div id="shareVotePanelMount"></div>
+      <p class="post-vote-note">More votes = better screenings. Invite friends to support your pick.</p>
+      ${buildUpcomingPreviewHtml()}
+    </section>
+  `;
+
+  const leaderboardMount = document.getElementById("resultsLeaderboardMount");
+  const shareMount = document.getElementById("shareVotePanelMount");
+
+  if (leaderboardMount) {
+    new ResultsLeaderboard({
+      mountEl: leaderboardMount,
+      movies: chosenMovies,
+      title: "Live Results",
+    });
+  }
+
+  if (shareMount) {
+    new ShareVotePanel({
+      mountEl: shareMount,
+      getShareUrl: async () => (await getShareContent(movieTitles)).url,
+      getShareText: async () => (await getShareContent(movieTitles)).text,
+    });
+  }
+
+  confetti.fireOnce();
 }
 
 // Search TMDB API
@@ -1547,7 +1688,7 @@ async function recordVote(email = null) {
     }
 
     const payload = {
-      eventId: EVENT_ID,
+      eventId: EVENT_DATA_ID,
       movieTitle: movieTitles[0],
       movieTitles,
       clientId: voterClientId,
@@ -1623,6 +1764,18 @@ async function submitSelectedVote(email = null) {
   chosenSection.style.display = "none !important";
   submitBtn.classList.add("hidden");
 
+  // Show results shell immediately so voters get instant feedback.
+  resultsDiv.classList.remove("hidden");
+  resultsDiv.innerHTML = `
+    <section class="post-vote-shell">
+      <header class="post-vote-header">
+        <div class="post-vote-icon" aria-hidden="true">⏳</div>
+        <h2>Counting your vote…</h2>
+        <p>Fetching live results now.</p>
+      </header>
+    </section>
+  `;
+
   // Record vote and refresh data
   console.log("Recording vote...");
   const voteResult = await recordVote(email);
@@ -1658,9 +1811,6 @@ async function submitSelectedVote(email = null) {
     ? voteResult.movieTitles
     : selectedBallotMovies.map((movie) => movie.title);
 
-  const posterMovie = selectedBallotMovies[0] || null;
-  const listItems = submittedTitles.map((title) => `<li>${title}</li>`).join("");
-
   // Keep chosen section hidden on confirmation screen
   chosenSection.classList.add("hidden");
   chosenSection.style.display = "none !important";
@@ -1669,24 +1819,7 @@ async function submitSelectedVote(email = null) {
   searchResults.classList.add("hidden");
   searchResults.setAttribute('style', '');
 
-  await showReelVotesMissionModal();
-
-  resultsDiv.classList.remove("hidden");
-  resultsDiv.innerHTML = `
-    <div class="confirmation">
-      ${posterMovie?.poster ? `<img class="confirmation-poster" src="${posterMovie.poster}" alt="${posterMovie.title} poster" />` : ''}
-      <h2>Your ballot has been counted</h2>
-      <div class="voted-movie-row">
-        <div class="checkmark">✓</div>
-        <p class="voted-movie"><b>${submittedTitles.length} movie${submittedTitles.length === 1 ? "" : "s"} selected</b></p>
-      </div>
-      <ul style="text-align:left;margin:10px 0 0 26px;">${listItems}</ul>
-      <p class="vote-counted">The vote has been counted</p>
-
-    </div>
-
-    <button class="share-btn" onclick="shareVote()">📤 Share & Grow</button>
-  `;
+  await renderPostVoteExperience({ movieTitles: submittedTitles });
 }
 
 // Submit vote
@@ -1774,22 +1907,12 @@ singleVoteReminderAddMoreBtn?.addEventListener("click", () => {
 
 window.shareVote = async function() {
   const ballotTitles = selectedBallotMovies.map((movie) => movie.title);
-  const leadTitle = ballotTitles[0] || "a movie";
-  const text = ballotTitles.length > 1
-    ? `I just voted for ${ballotTitles.length} movies on ReelVotes (including ${leadTitle})! 🎬 Join the vote and make it happen!`
-    : `I'm backing ${leadTitle} for movie night! 🎬 Join the vote and make it happen!`;
-  const appLink = await generateAppLink();
-  const url = `${appLink}&vote=${encodeURIComponent(leadTitle)}`;
-  
-  if (navigator.share) {
-    navigator.share({
-      title: "ReelVotes",
-      text: text,
-      url: url
-    }).catch(err => console.log("Share failed:", err));
-  } else {
-    navigator.clipboard.writeText(`${text}\n${url}`);
+  const { text } = await getShareContent(ballotTitles);
+  try {
+    await navigator.clipboard.writeText(text);
     alert("Vote link copied to clipboard!");
+  } catch (error) {
+    console.error("Share copy failed", error);
   }
 };
 
@@ -1800,8 +1923,6 @@ async function showExistingVoteConfirmation(movie) {
     : movie?.title
       ? [movie.title]
       : [];
-
-  const leadTitle = movieTitles[0] || "your selected movie";
 
   // Hide voting interface
   const searchSection = document.getElementById("search-section");
@@ -1827,25 +1948,11 @@ async function showExistingVoteConfirmation(movie) {
   chosenSection.style.display = "none !important";
   submitBtn.classList.add("hidden");
   
-  const movieMetadata = await getMovieMetadataByTitle(leadTitle);
-  const listItems = movieTitles.map((title) => `<li>${title}</li>`).join("");
-  
-  // Display confirmation
-  resultsDiv.classList.remove("hidden");
-  resultsDiv.innerHTML = `
-    <div class="confirmation">
-      ${movieMetadata.poster ? `<img class="confirmation-poster" src="${movieMetadata.poster}" alt="${leadTitle} poster" />` : ''}
-      <h2>You've Already Voted!</h2>
-      <div class="voted-movie-row">
-        <div class="checkmark">✓</div>
-        <p class="voted-movie"><b>${movieTitles.length} movie${movieTitles.length === 1 ? "" : "s"} on your ballot</b></p>
-      </div>
-      ${movieTitles.length ? `<ul style="text-align:left;margin:10px 0 0 26px;">${listItems}</ul>` : ""}
-      <p class="vote-counted">Your vote has been counted</p>
-    </div>
-
-    <button class="share-btn" onclick="shareExistingVote('${leadTitle.replace(/'/g, "\\'")}')">📤 Share & Grow</button>
-  `;
+  await renderPostVoteExperience({
+    movieTitles,
+    heading: "You're In 🎬",
+    subtitle: "Thanks for voting! Your ballot is already in. Share the vote with friends to boost your picks.",
+  });
 }
 
 // Share existing vote
@@ -1892,6 +1999,8 @@ function showVotingInterface() {
     EVENT_STATUS
   });
 
+  updateVotePageHeading(EVENT_STATUS);
+
   // Hide results if visible
   resultsDiv.classList.add("hidden");
   selectedBallotMovies = [];
@@ -1937,6 +2046,8 @@ function showEndedResultsInterface() {
     chosenMoviesLength: chosenMovies.length
   });
 
+  updateVotePageHeading("ended");
+
   resultsDiv.classList.add("hidden");
   resultsDiv.innerHTML = "";
 
@@ -1959,21 +2070,30 @@ function showEndedResultsInterface() {
     captchaNotice.classList.add("hidden");
   }
 
-  if (chosenLabel) {
-    chosenLabel.textContent = "Final results:";
-  }
-
   if (chosenSection) {
-    chosenSection.style.display = hasActiveMovieList ? "block" : "none";
+    chosenSection.style.display = "none";
   }
 
-  // Disable clicking on result items
-  const chosenList = document.getElementById("chosenList");
-  if (chosenList) {
-    chosenList.classList.add("no-click");
-  }
+  resultsDiv.classList.remove("hidden");
+  resultsDiv.innerHTML = `
+    <section class="post-vote-shell">
+      <header class="post-vote-header">
+        <div class="post-vote-icon" aria-hidden="true">🏁</div>
+        <h2>Voting Ended</h2>
+        <p>Final rankings are in for this screening.</p>
+      </header>
+      <div id="resultsLeaderboardMount"></div>
+    </section>
+  `;
 
-  displayChosenMovies(true);
+  const leaderboardMount = document.getElementById("resultsLeaderboardMount");
+  if (leaderboardMount) {
+    new ResultsLeaderboard({
+      mountEl: leaderboardMount,
+      movies: chosenMovies,
+      title: "Final Results",
+    });
+  }
 }
 
 // Update the share link shown in the footer
@@ -2013,6 +2133,9 @@ async function init() {
   removeLegacyTabsUi();
   renderAccountState();
   hideVotingInterface();
+  // If an event was explicitly requested in the URL, preserve that exact screening.
+  // This avoids heuristics redirecting to a different event when the selected one has no votes yet.
+  EVENT_DATA_ID = requestedEventId ? EVENT_ID : await resolveEventDataId(EVENT_ID);
   voterClientId = getOrCreateClientId();
   await loadEventRuntimeSettings();
   await redirectIfEndedWithoutExplicitRequest();

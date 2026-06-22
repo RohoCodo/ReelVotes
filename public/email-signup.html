@@ -11,9 +11,39 @@
 <div class="overlay"></div>
 
 <div class="container">
-  <div class="card">
+  <div class="card" style="max-width:760px; text-align:left;">
 
-    <img src="icon.png" class="logo" />
+    <nav class="site-nav" aria-label="Primary">
+      <div class="site-nav-left">
+        <a class="site-nav-brand" href="/index.html">ReelVotes</a>
+      </div>
+      <div class="site-nav-center" aria-label="Core navigation">
+        <a class="site-nav-tab" href="/select-event.html">Showtimes</a>
+        <a class="site-nav-tab" href="/suggest">Suggest a Movie</a>
+        <a class="site-nav-tab" href="/how-it-works">How It Works</a>
+      </div>
+      <div class="site-nav-right">
+        <a class="site-nav-cta active" href="/email-signup.html">Join Email List</a>
+        <details class="site-nav-profile">
+          <summary aria-label="Open profile menu">⚙</summary>
+          <div class="site-nav-dropdown" role="menu">
+            <a href="/reelsuccess.html" role="menuitem">ReelSuccess</a>
+            <a href="/admin.html" role="menuitem">Admin View</a>
+          </div>
+        </details>
+      </div>
+      <button id="navToggleBtn" class="nav-toggle" type="button" aria-label="Toggle navigation">☰</button>
+      <div id="siteNavDrawer" class="site-nav-drawer" aria-label="Mobile navigation">
+        <a href="/select-event.html">Showtimes</a>
+        <a href="/suggest">Suggest a Movie</a>
+        <a href="/how-it-works">How It Works</a>
+        <a class="active" href="/email-signup.html">Join Email List</a>
+        <a href="/reelsuccess.html">ReelSuccess</a>
+        <a href="/admin.html">Admin View</a>
+      </div>
+    </nav>
+
+    <p class="subtitle" style="margin:0 0 6px;">Want to be notified of voting and ticket releases early?</p>
 
     <h1>Get Ticket Alerts Early</h1>
     <p class="subtitle">
@@ -38,12 +68,13 @@
     </div>
 
     <p class="track-results">
-      <a href="index.html" class="app-link">Back to voting 
+      <a href="index.html" class="app-link">Back to voting</a>
     </p>
 
   </div>
 </div>
 
+<script src="site-nav.js"></script>
 <script type="module" src="email-signup.js"></script>
 </body>
 </html>

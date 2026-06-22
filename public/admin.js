@@ -72,9 +72,16 @@ const adminNewMoviesInput = document.getElementById("adminNewMoviesInput");
 const adminCreateBtn = document.getElementById("adminCreateBtn");
 const adminCreateStatus = document.getElementById("adminCreateStatus");
 let currentAdminEmail = null;
-let currentVoteStatus = "live";
+let currentVoteStatus = "not-started";
 let currentUniqueVoterCount = null;
 let currentActiveVoteCount = null;
+
+function normalizeVoteStatus(value) {
+  const status = String(value || "").trim().toLowerCase();
+  if (status === "live") return "live";
+  if (status === "ended") return "ended";
+  return "not-started";
+}
 
 function getEventSortTime(event) {
   const rawDateTime = String(event?.screeningDateTime || "").trim();
@@ -105,10 +112,10 @@ function populateSelector() {
   }
   sortEventsByTime(configuredEvents).forEach(ev => {
     const opt = document.createElement("option");
+    const resolvedId = EVENT_ID_ALIASES[ev.id] || ev.firestoreEventId || ev.id;
     opt.value = ev.id;
     opt.textContent = `${ev.screeningLabel || ev.id}${ev.voteStatus === 'ended' ? ' (ended)' : ev.voteStatus === 'live' ? ' (live)' : ''}`;
-    const resolvedId = EVENT_ID_ALIASES[ev.id] || ev.firestoreEventId || ev.id;
-    if (resolvedId === currentEventId || ev.id === (urlEventId || '')) opt.selected = true;
+    if (resolvedId === currentEventId || ev.id === currentEventId || ev.id === (urlEventId || '')) opt.selected = true;
     eventSelector.appendChild(opt);
   });
 }
@@ -117,10 +124,10 @@ populateSelector();
 // Tab switching
 const tabResultsBtn = document.getElementById("tabResultsBtn");
 const tabEditBtn = document.getElementById("tabEditBtn");
-const tabAccessBtn = document.getElementById("tabAccessBtn");
+const tabShowtimeBtn = document.getElementById("tabShowtimeBtn");
 const tabResultsPanel = document.getElementById("tabResults");
 const tabEditPanel = document.getElementById("tabEdit");
-const tabAccessPanel = document.getElementById("tabAccess");
+const tabShowtimePanel = document.getElementById("tabShowtime");
 
 const accessTargetEmailInput = document.getElementById("accessTargetEmail");
 const accessRoleSelect = document.getElementById("accessRoleSelect");
@@ -135,10 +142,10 @@ const accessListBody = document.getElementById("accessListBody");
 function showTab(tab) {
   const onResults = tab === "results";
   const onEdit = tab === "edit";
-  const onAccess = tab === "access";
+  const onShowtime = tab === "showtime";
   if (tabResultsPanel) tabResultsPanel.style.display = onResults ? "" : "none";
   if (tabEditPanel) tabEditPanel.style.display = onEdit ? "" : "none";
-  if (tabAccessPanel) tabAccessPanel.style.display = onAccess ? "" : "none";
+  if (tabShowtimePanel) tabShowtimePanel.style.display = onShowtime ? "" : "none";
   if (tabResultsBtn) {
     tabResultsBtn.style.background = onResults ? "#ff4757" : "#222";
     tabResultsBtn.style.color = onResults ? "#fff" : "#aaa";
@@ -147,15 +154,15 @@ function showTab(tab) {
     tabEditBtn.style.background = onEdit ? "#ff4757" : "#222";
     tabEditBtn.style.color = onEdit ? "#fff" : "#aaa";
   }
-  if (tabAccessBtn) {
-    tabAccessBtn.style.background = onAccess ? "#ff4757" : "#222";
-    tabAccessBtn.style.color = onAccess ? "#fff" : "#aaa";
+  if (tabShowtimeBtn) {
+    tabShowtimeBtn.style.background = onShowtime ? "#ff4757" : "#222";
+    tabShowtimeBtn.style.color = onShowtime ? "#fff" : "#aaa";
   }
 }
 
 if (tabResultsBtn) tabResultsBtn.addEventListener("click", () => showTab("results"));
 if (tabEditBtn) tabEditBtn.addEventListener("click", () => showTab("edit"));
-if (tabAccessBtn) tabAccessBtn.addEventListener("click", () => showTab("access"));
+if (tabShowtimeBtn) tabShowtimeBtn.addEventListener("click", () => showTab("showtime"));
 
 // Start on results tab
 showTab("results");
@@ -163,20 +170,95 @@ function updateEventLabel(firestoreId) {
   const event = resolveEvent(firestoreId);
   const label = event?.screeningLabel || event?.id || firestoreId;
   if (eventLabel) eventLabel.textContent = `Event: ${label}`;
-  if (publicPreviewLink) {
-    const queryEventId = event?.id || firestoreId;
-    publicPreviewLink.href = `index.html?event=${encodeURIComponent(queryEventId)}`;
-  }
+  updatePublicPreviewLink();
 }
 updateEventLabel(currentEventId);
 
+function getPublicPreviewEventId() {
+  const selectedEventId = String(eventSelector?.value || "").trim();
+  if (selectedEventId) {
+    const selectedEvent = configuredEvents.find((item) => (
+      item.id === selectedEventId
+      || item.firestoreEventId === selectedEventId
+      || (EVENT_ID_ALIASES[item.id] || item.firestoreEventId || item.id) === selectedEventId
+    )) || null;
+    return selectedEvent?.id || selectedEventId;
+  }
+
+  const event = resolveEvent(currentEventId);
+  return event?.id || currentEventId;
+}
+
+function updatePublicPreviewLink() {
+  if (!publicPreviewLink) return;
+  const queryEventId = getPublicPreviewEventId();
+  publicPreviewLink.href = `/?event=${encodeURIComponent(queryEventId)}`;
+}
+
+if (publicPreviewLink) {
+  publicPreviewLink.addEventListener("click", () => {
+    updatePublicPreviewLink();
+  });
+}
+
+function buildEventIdCandidates(rawEventId) {
+  const normalized = String(rawEventId || "").trim();
+  const event = resolveEvent(normalized)
+    || configuredEvents.find((item) => item.id === normalized || item.firestoreEventId === normalized)
+    || null;
+
+  return Array.from(new Set([
+    normalized,
+    EVENT_ID_ALIASES[normalized],
+    event?.firestoreEventId,
+    EVENT_ID_ALIASES[event?.id],
+    event?.id,
+  ].filter(Boolean)));
+}
+
+async function resolveEventDataId(rawEventId) {
+  const candidates = buildEventIdCandidates(rawEventId);
+  if (!candidates.length) {
+    return rawEventId;
+  }
+
+  const scoredCandidates = [];
+
+  for (const candidate of candidates) {
+    try {
+      const [eventDoc, moviesSnapshot, votesSnapshot] = await Promise.all([
+        getDoc(doc(db, "events", candidate)),
+        getDocs(collection(db, "events", candidate, "movies")),
+        getDocs(collection(db, "events", candidate, "votes")),
+      ]);
+
+      const movieCount = moviesSnapshot.size;
+      const voteCount = votesSnapshot.size;
+      const score = (voteCount * 1000) + (movieCount * 10) + (eventDoc.exists() ? 1 : 0);
+
+      scoredCandidates.push({ candidate, score, voteCount, movieCount, exists: eventDoc.exists() });
+    } catch {
+      scoredCandidates.push({ candidate, score: 0, voteCount: 0, movieCount: 0, exists: false });
+    }
+  }
+
+  scoredCandidates.sort((a, b) => b.score - a.score);
+
+  const best = scoredCandidates[0];
+  if (best && best.score > 0) {
+    return best.candidate;
+  }
+
+  return candidates[0] || rawEventId;
+}
+
 // Render ballot (allowed movies list)
 function renderBallot(allowedMovies) {
-  const ballotSection = ballotListEl ? ballotListEl.closest('.ballot-section') || ballotListEl.parentElement : null;
+  const ballotSection = ballotListEl ? ballotListEl.closest('.ballot-section') : null;
   if (!ballotListEl) return;
   ballotListEl.innerHTML = "";
   if (!allowedMovies || allowedMovies.length === 0) {
-    // Hide the ballot heading + list entirely
+    // Hide only the dedicated ballot section when present.
     if (ballotSection) ballotSection.style.display = "none";
     return;
   }
@@ -395,8 +477,9 @@ function setRebuildCountsStatus(message, isError = false) {
 function updateEndVoteButton() {
   if (!endVoteBtn) return;
   const isEnded = currentVoteStatus === "ended";
+  const isNotStarted = currentVoteStatus === "not-started";
   endVoteBtn.disabled = !currentAdminEmail;
-  endVoteBtn.textContent = isEnded ? "Reopen vote" : "End vote";
+  endVoteBtn.textContent = isNotStarted ? "Start vote" : (isEnded ? "Reopen vote" : "End vote");
   endVoteBtn.style.opacity = endVoteBtn.disabled ? "0.6" : "1";
   endVoteBtn.style.cursor = endVoteBtn.disabled ? "not-allowed" : "pointer";
 }
@@ -412,11 +495,16 @@ async function endVoteNow() {
     return;
   }
 
-  const nextVoteStatus = currentVoteStatus === "ended" ? "live" : "ended";
+  const previousVoteStatus = currentVoteStatus;
+  const nextVoteStatus = previousVoteStatus === "not-started"
+    ? "live"
+    : (previousVoteStatus === "ended" ? "live" : "ended");
   const confirmed = window.confirm(
     nextVoteStatus === "ended"
       ? "End voting for this event now? This will block new votes."
-      : "Reopen voting for this event now? This will allow new votes.",
+      : (previousVoteStatus === "not-started"
+        ? "Start voting for this event now?"
+        : "Reopen voting for this event now? This will allow new votes."),
   );
   if (!confirmed) {
     return;
@@ -425,9 +513,15 @@ async function endVoteNow() {
   try {
     if (endVoteBtn) {
       endVoteBtn.disabled = true;
-      endVoteBtn.textContent = nextVoteStatus === "ended" ? "Ending…" : "Reopening…";
+      endVoteBtn.textContent = nextVoteStatus === "ended"
+        ? "Ending…"
+        : (previousVoteStatus === "not-started" ? "Starting…" : "Reopening…");
     }
-    setVoteControlStatus(nextVoteStatus === "ended" ? "Ending vote..." : "Reopening vote...");
+    setVoteControlStatus(
+      nextVoteStatus === "ended"
+        ? "Ending vote..."
+        : (previousVoteStatus === "not-started" ? "Starting vote..." : "Reopening vote...")
+    );
 
     await setEventVoteStatusCallable({
       eventId: currentEventId,
@@ -445,7 +539,9 @@ async function endVoteNow() {
     setVoteControlStatus(
       nextVoteStatus === "ended"
         ? "Vote ended. New vote submissions are now blocked."
-        : "Vote reopened. New vote submissions are now allowed.",
+        : (previousVoteStatus === "not-started"
+          ? "Vote started. New vote submissions are now allowed."
+          : "Vote reopened. New vote submissions are now allowed."),
     );
   } catch (error) {
     console.error("Failed ending vote:", error);
@@ -525,16 +621,28 @@ async function rebuildMovieCountsNow() {
 
     const data = response?.data || {};
     const unmatched = Number(data.unmatchedTitleCount || 0);
+    const usedInactiveFallback = data.usedInactiveFallback === true;
     if (unmatched > 0) {
       setRebuildCountsStatus(`Rebuilt counts. Matched ${data.matchedVoteCount || 0}/${data.activeVoteCount || 0} active votes. ${unmatched} vote title(s) did not match current movie titles.`, true);
     } else {
       setRebuildCountsStatus(`Rebuilt counts. Matched ${data.matchedVoteCount || 0}/${data.activeVoteCount || 0} active votes.`);
     }
+    if (usedInactiveFallback) {
+      setRebuildCountsStatus(`Rebuilt counts using fallback (all historical votes) because no active votes were found. Matched ${data.matchedVoteCount || 0} vote records.`);
+    }
 
     await refreshVoteStats(currentEventId);
   } catch (error) {
     console.error("Failed rebuilding movie counts:", error);
-    setRebuildCountsStatus(error?.message || "Failed rebuilding movie vote counts.", true);
+    const code = String(error?.code || "").toLowerCase();
+    const message = String(error?.message || "");
+    const needsDeploy = code.includes("not-found") || code.includes("unavailable") || /no\s+function|does\s+not\s+exist|no\s+endpoint/i.test(message);
+    if (needsDeploy) {
+      setRebuildCountsStatus("Rebuild function is not deployed yet. Deploy functions and try again.", true);
+      window.alert("Rebuild function is not deployed yet. Run: firebase deploy --only functions:rebuildEventMovieVoteCounts");
+    } else {
+      setRebuildCountsStatus(message || "Failed rebuilding movie vote counts.", true);
+    }
   } finally {
     if (rebuildCountsBtn) {
       rebuildCountsBtn.disabled = false;
@@ -551,7 +659,7 @@ function renderMovies(movies) {
   if (!movies.length) {
     const empty = document.createElement("div");
     empty.className = "chosen-movie";
-    empty.textContent = "No votes yet";
+    empty.textContent = "No votes yet for this event.";
     adminList.appendChild(empty);
     return;
   }
@@ -559,10 +667,20 @@ function renderMovies(movies) {
   const totalVotes = typeof currentActiveVoteCount === "number"
     ? currentActiveVoteCount
     : movies.reduce((sum, m) => sum + (m.vote_count || 0), 0);
+
+  if (totalVotes === 0) {
+    const empty = document.createElement("div");
+    empty.className = "chosen-movie";
+    empty.textContent = "No votes yet for this event.";
+    adminList.appendChild(empty);
+    return;
+  }
+
   const totalPeople = typeof currentUniqueVoterCount === "number"
     ? currentUniqueVoterCount
     : totalVotes;
   const maxVotes = movies.reduce((max, movie) => Math.max(max, movie.vote_count || 0), 0);
+
   const totalEl = document.createElement("div");
   totalEl.style.cssText = "color:#aaa;font-size:13px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid #333;display:flex;justify-content:center;align-items:center;gap:16px;flex-wrap:wrap;text-align:center;width:100%;";
   totalEl.innerHTML = `<span>Total votes: ${totalVotes}</span><span>Total people: ${totalPeople}</span>`;
@@ -575,7 +693,7 @@ function renderMovies(movies) {
     const item = document.createElement("div");
     item.className = "chosen-movie";
     item.innerHTML = `
-      <div class="chosen-movie-title">
+      <div class="chosen-movie-header">
         <span>${movie.movie_title || movie.title || movie.id}</span>
       </div>
       <div class="chosen-movie-bar">
@@ -591,7 +709,8 @@ function renderMovies(movies) {
 async function loadAdminControlsForEvent(firestoreId) {
   const configuredEvent = resolveEvent(firestoreId);
   const configuredRequireEmail = configuredEvent?.requireEmail !== false;
-  currentVoteStatus = configuredEvent?.voteStatus === "ended" ? "ended" : "live";
+  const configuredVoteStatus = normalizeVoteStatus(configuredEvent?.voteStatus);
+  currentVoteStatus = configuredVoteStatus;
   updateEndVoteButton();
   setSaveStatus("Loading settings…");
   setVoteControlStatus("");
@@ -603,8 +722,10 @@ async function loadAdminControlsForEvent(firestoreId) {
     ]);
 
     const eventData = eventDoc.exists() ? (eventDoc.data() || {}) : {};
-    const runtimeVoteStatus = String(eventData.voteStatus || "").trim().toLowerCase();
-    currentVoteStatus = runtimeVoteStatus === "ended" ? "ended" : (configuredEvent?.voteStatus === "ended" ? "ended" : "live");
+    const runtimeVoteStatusRaw = String(eventData.voteStatus || "").trim();
+    currentVoteStatus = runtimeVoteStatusRaw
+      ? normalizeVoteStatus(runtimeVoteStatusRaw)
+      : configuredVoteStatus;
     if (configuredEvent) {
       configuredEvent.voteStatus = currentVoteStatus;
       populateSelector();
@@ -627,9 +748,20 @@ async function loadAdminControlsForEvent(firestoreId) {
     }
 
     renderBallot(titles);
+
+    if (shouldAutoOpenEditForEmptySelection) {
+      if (titles.length === 0) {
+        showTab("edit");
+      }
+      shouldAutoOpenEditForEmptySelection = false;
+    }
+
     setSaveStatus(`Loaded ${titles.length} movie${titles.length === 1 ? "" : "s"}.`);
   } catch (error) {
     console.error("Failed loading admin controls:", error);
+    if (shouldAutoOpenEditForEmptySelection) {
+      shouldAutoOpenEditForEmptySelection = false;
+    }
     setSaveStatus("Could not load settings.", true);
   }
 }
@@ -737,6 +869,7 @@ let unsubscribeLive = null;
 let unsubscribeVoterCount = null;
 let latestMoviesForRender = [];
 let voteStatsPollTimer = null;
+let shouldAutoOpenEditForEmptySelection = false;
 
 async function refreshVoteStats(firestoreId) {
   if (!firestoreId || !currentAdminEmail) {
@@ -817,17 +950,19 @@ function startLiveListener(firestoreId) {
 
 // Handle event selector changes
 if (eventSelector) {
-  eventSelector.addEventListener("change", () => {
-    const selectedId = eventSelector.value;
+  eventSelector.addEventListener("change", async () => {
+    const selectedId = String(eventSelector.value || "").trim();
     const resolved = EVENT_ID_ALIASES[selectedId]
-      || configuredEvents.find(e => e.id === selectedId)?.firestoreEventId
+      || configuredEvents.find((e) => e.id === selectedId || e.firestoreEventId === selectedId)?.firestoreEventId
       || selectedId;
-    currentEventId = resolved;
-    currentVoteStatus = "live";
+    shouldAutoOpenEditForEmptySelection = true;
+    updatePublicPreviewLink();
+    currentEventId = await resolveEventDataId(resolved);
+    currentVoteStatus = normalizeVoteStatus(resolveEvent(currentEventId)?.voteStatus);
     updateEndVoteButton();
     setVoteControlStatus("");
-    startLiveListener(resolved);
-    loadAdminControlsForEvent(resolved);
+    startLiveListener(currentEventId);
+    await loadAdminControlsForEvent(currentEventId);
   });
 }
 
@@ -902,12 +1037,13 @@ async function ensureAdminAccess() {
 }
 
 ensureAdminAccess()
-  .then((adminEmail) => {
+  .then(async (adminEmail) => {
     currentAdminEmail = adminEmail;
     setAdminIdentity(adminEmail);
     refreshConfiguredEventsFromFirestore().catch((error) => {
       console.error("Failed loading runtime event catalog:", error);
     });
+    currentEventId = await resolveEventDataId(currentEventId);
     startLiveListener(currentEventId);
     loadAdminControlsForEvent(currentEventId);
     if (runEliminationBtn) {

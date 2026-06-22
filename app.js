@@ -98,6 +98,7 @@ const EVENT_ID = selectedEvent?.firestoreEventId
   || defaultConfiguredEvent?.firestoreEventId
   || defaultConfiguredEvent?.id
   || "newparkway1";
+let EVENT_DATA_ID = EVENT_ID;
 let EVENT_STATUS = selectedEvent?.voteStatus || null;
 let EVENT_REQUIRES_EMAIL = selectedEvent?.requireEmail !== false;
 const EVENT_SHOW_LIVE_VOTE_COUNTS = selectedEvent?.showLiveVoteCounts === true;
@@ -109,6 +110,52 @@ const ACTIVE_ALLOWED_MOVIES = EVENT_ALLOWED_MOVIES.length > 0 ? EVENT_ALLOWED_MO
 let _eventStatusInitialized = false;
 let _unsubscribeEventStatus = null;
 
+function buildEventIdCandidates(rawEventId) {
+  const normalized = String(rawEventId || "").trim();
+  const event = configuredEvents.find((item) => (
+    item.id === normalized
+    || item.firestoreEventId === normalized
+    || EVENT_ID_ALIASES[item.id] === normalized
+  )) || null;
+
+  return Array.from(new Set([
+    normalized,
+    requestedEventId,
+    requestedEventDataId,
+    event?.firestoreEventId,
+    event?.id,
+    EVENT_ID_ALIASES[event?.id],
+  ].filter(Boolean)));
+}
+
+async function resolveEventDataId(rawEventId) {
+  const candidates = buildEventIdCandidates(rawEventId);
+  if (!candidates.length) {
+    return rawEventId;
+  }
+
+  const scored = [];
+  for (const candidate of candidates) {
+    try {
+      const [eventDoc, moviesSnapshot, votesSnapshot] = await Promise.all([
+        getDoc(doc(db, "events", candidate)),
+        getDocs(collection(db, "events", candidate, "movies")),
+        getDocs(query(collection(db, "events", candidate, "votes"), limit(1))),
+      ]);
+
+      const movieCount = moviesSnapshot.size;
+      const hasVotes = !votesSnapshot.empty;
+      const score = (hasVotes ? 1000 : 0) + (movieCount * 10) + (eventDoc.exists() ? 1 : 0);
+      scored.push({ candidate, score });
+    } catch {
+      scored.push({ candidate, score: 0 });
+    }
+  }
+
+  scored.sort((a, b) => b.score - a.score);
+  return scored[0]?.candidate || candidates[0] || rawEventId;
+}
+
 async function loadEventRuntimeSettings() {
   return new Promise((resolve) => {
     if (_unsubscribeEventStatus) {
@@ -116,7 +163,7 @@ async function loadEventRuntimeSettings() {
     }
 
     _unsubscribeEventStatus = onSnapshot(
-      doc(db, "events", EVENT_ID),
+      doc(db, "events", EVENT_DATA_ID),
       (eventDoc) => {
         const eventData = eventDoc.exists() ? (eventDoc.data() || {}) : {};
         const newStatus = typeof eventData.voteStatus === "string" && eventData.voteStatus.trim()
@@ -200,6 +247,7 @@ const tabAccountBtn = document.getElementById("tabAccountBtn");
 const tabVotePanel = document.getElementById("tabVotePanel");
 const tabMomentsPanel = document.getElementById("tabMomentsPanel");
 const tabAccountPanel = document.getElementById("tabAccountPanel");
+const votePageHeading = document.getElementById("votePageHeading");
 const momentsFeed = document.getElementById("momentsFeed");
 const momentsStatus = document.getElementById("momentsStatus");
 const momentsRefreshBtn = document.getElementById("momentsRefreshBtn");
@@ -229,6 +277,16 @@ let captchaToken = null;
 let captchaWidgetId = null;
 let momentsLoaded = false;
 let momentsLoading = false;
+
+function updateVotePageHeading(status) {
+  if (!votePageHeading) {
+    return;
+  }
+
+  const normalizedStatus = String(status || EVENT_STATUS || "").trim().toLowerCase();
+  const defaultHeading = votePageHeading.dataset.defaultHeading || "Pick the Next Movie Night";
+  votePageHeading.textContent = normalizedStatus === "ended" ? "Movie Night Results" : defaultHeading;
+}
 
 function escapeHtml(value) {
   return String(value || "")
@@ -880,7 +938,7 @@ function clearPersistedCastVote() {
 async function getExistingVote() {
   try {
     const response = await getVoteStatusCallable({
-      eventId: EVENT_ID,
+      eventId: EVENT_DATA_ID,
       clientId: voterClientId
     });
 
@@ -998,7 +1056,7 @@ async function fetchChosenMovies() {
   try {
     console.log("Fetching votes from Firebase...");
     // Fetch from the new movies collection under events/{event_id}/movies/
-    const moviesRef = collection(db, "events", EVENT_ID, "movies");
+    const moviesRef = collection(db, "events", EVENT_DATA_ID, "movies");
     const querySnapshot = await getDocs(moviesRef);
     
     console.log("Query snapshot size:", querySnapshot.size);
@@ -1024,6 +1082,7 @@ async function fetchChosenMovies() {
     console.log("Movies:", chosenMovies);
     console.log("[app] Computed movie list state", {
       EVENT_ID,
+      EVENT_DATA_ID,
       EVENT_STATUS,
       chosenMoviesLength: chosenMovies.length
     });
@@ -1547,7 +1606,7 @@ async function recordVote(email = null) {
     }
 
     const payload = {
-      eventId: EVENT_ID,
+      eventId: EVENT_DATA_ID,
       movieTitle: movieTitles[0],
       movieTitles,
       clientId: voterClientId,
@@ -1623,6 +1682,15 @@ async function submitSelectedVote(email = null) {
   chosenSection.style.display = "none !important";
   submitBtn.classList.add("hidden");
 
+  // Show confirmation shell immediately after click.
+  resultsDiv.classList.remove("hidden");
+  resultsDiv.innerHTML = `
+    <div class="confirmation">
+      <h2>Counting your vote…</h2>
+      <p class="track-results">Fetching live results now.</p>
+    </div>
+  `;
+
   // Record vote and refresh data
   console.log("Recording vote...");
   const voteResult = await recordVote(email);
@@ -1668,8 +1736,6 @@ async function submitSelectedVote(email = null) {
   // Hide the movies list
   searchResults.classList.add("hidden");
   searchResults.setAttribute('style', '');
-
-  await showReelVotesMissionModal();
 
   resultsDiv.classList.remove("hidden");
   resultsDiv.innerHTML = `
@@ -1892,6 +1958,8 @@ function showVotingInterface() {
     EVENT_STATUS
   });
 
+  updateVotePageHeading(EVENT_STATUS);
+
   // Hide results if visible
   resultsDiv.classList.add("hidden");
   selectedBallotMovies = [];
@@ -1936,6 +2004,8 @@ function showEndedResultsInterface() {
     hasActiveMovieList,
     chosenMoviesLength: chosenMovies.length
   });
+
+  updateVotePageHeading("ended");
 
   resultsDiv.classList.add("hidden");
   resultsDiv.innerHTML = "";
@@ -2013,6 +2083,9 @@ async function init() {
   removeLegacyTabsUi();
   renderAccountState();
   hideVotingInterface();
+  // If an event was explicitly requested in the URL, preserve that exact screening.
+  // This avoids heuristics redirecting to a different event when the selected one has no votes yet.
+  EVENT_DATA_ID = requestedEventId ? EVENT_ID : await resolveEventDataId(EVENT_ID);
   voterClientId = getOrCreateClientId();
   await loadEventRuntimeSettings();
   await redirectIfEndedWithoutExplicitRequest();

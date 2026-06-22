@@ -12,37 +12,47 @@
 <div class="overlay"></div>
 
 <div class="container">
-  <div class="card">
+  <div class="card vote-layout">
 
-    <div class="top-right-links" aria-label="Legal and support links">
-      <a href="/support.html" class="app-link">Support</a>
-      <span aria-hidden="true">•</span>
-      <a href="/privacy.html" class="app-link">Privacy Policy</a>
-    </div>
+    <nav class="site-nav" aria-label="Primary">
+      <div class="site-nav-left">
+        <a class="site-nav-brand" href="/index.html">ReelVotes</a>
+      </div>
+      <div class="site-nav-center" aria-label="Core navigation">
+        <a class="site-nav-tab" href="/select-event.html">Showtimes</a>
+        <a class="site-nav-tab" href="/suggest">Suggest a Movie</a>
+        <a class="site-nav-tab" href="/how-it-works">How It Works</a>
+      </div>
+      <div class="site-nav-right">
+        <a class="site-nav-cta" href="/email-signup.html">Join Email List</a>
+        <details class="site-nav-profile">
+          <summary aria-label="Open profile menu">⚙</summary>
+          <div class="site-nav-dropdown" role="menu">
+            <a href="/reelsuccess.html" role="menuitem">ReelSuccess</a>
+            <a href="/admin.html" role="menuitem">Admin View</a>
+          </div>
+        </details>
+      </div>
+      <button id="navToggleBtn" class="nav-toggle" type="button" aria-label="Toggle navigation">☰</button>
+      <div id="siteNavDrawer" class="site-nav-drawer" aria-label="Mobile navigation">
+        <a href="/select-event.html">Showtimes</a>
+        <a href="/suggest">Suggest a Movie</a>
+        <a href="/how-it-works">How It Works</a>
+        <a href="/email-signup.html">Join Email List</a>
+        <a href="/reelsuccess.html">ReelSuccess</a>
+        <a href="/admin.html">Admin View</a>
+      </div>
+    </nav>
 
-    <!-- ICON -->
-    <img src="icon.png" class="logo" />
+    <h1 id="votePageHeading" data-default-heading="Pick the Next Movie Night">Pick the Next Movie Night</h1>
 
-    <h1>Pick the Next Movie Night</h1>
+    <p class="subtitle" id="eventSubtitle"></p>
 
     <p style="margin: 0 0 10px; text-align: left;">
       <a href="select-event.html" class="app-link">← Back to showtimes</a>
     </p>
 
-    <p class="subtitle" id="eventSubtitle"></p>
-
     <section id="tabVotePanel" class="main-tab-panel" role="region" aria-label="Vote">
-    <p class="vote-mode-note">Public poll. One vote per person. You may vote for as many movies as you want on that single ballot.</p>
-
-    <section class="info-box mission-box" aria-label="How ReelVotes works">
-      <div class="mission-header">
-        <h2>How ReelVotes works</h2>
-      </div>
-      <p>
-        ReelVotes helps small theaters program movies you not only want to see, but that you will support by buying a ticket if your movie is chosen.
-        When you vote, you are saying you'll show up. That is how votes become real screenings and how independent theaters you love can keep taking risks on great films.
-      </p>
-    </section>
 
     <!-- Search Input -->
     <div id="search-section">
@@ -138,15 +148,6 @@
     </div>
 
     <div id="results" class="hidden"></div>
-
-    <!-- APP LINK -->
-    <div class="footer">
-      <p>
-        Want to be notified of voting and ticket releases early?<br>
-        <a href="email-signup.html" class="app-link">Join the email list →</a>
-      </p>
-
-    </div>
 
     </section>
 
@@ -248,6 +249,19 @@
     return Number.isFinite(parsedId) ? parsedId : Number.NEGATIVE_INFINITY;
   }
 
+  function updateVotePageHeading(event, eventId) {
+    const headingEl = document.getElementById("votePageHeading");
+    if (!headingEl) return;
+
+    const defaultHeading = headingEl.dataset.defaultHeading || "Pick the Next Movie Night";
+    const status = String(event?.voteStatus || "").trim().toLowerCase();
+    const prefix = getSubtitlePrefix(event, eventId || event?.id);
+    const screeningHasTakenPlace = status === "ended" || prefix === "Shown on";
+
+    headingEl.textContent = screeningHasTakenPlace ? "Movie Night Results" : defaultHeading;
+    document.title = screeningHasTakenPlace ? "Movie Night Results" : "Vote the Next Movie Night";
+  }
+
   async function loadMergedEvents() {
     const configuredEvents = Array.isArray(window.REELVOTES_EVENTS) ? window.REELVOTES_EVENTS : [];
     const mergedByFirestoreId = new Map();
@@ -344,9 +358,12 @@
       `;
     }
 
+    updateVotePageHeading(event, eventId || event?.id);
+
     return event;
   })();
 </script>
+<script src="site-nav.js"></script>
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" defer></script>
 <script type="module" src="app.js?v=20260615-2"></script>
 </body>

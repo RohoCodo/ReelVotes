@@ -615,6 +615,14 @@ function normalizeMovieTitle(movieTitle) {
     .replace(/\s+/g, " ");
 }
 
+function normalizeMovieTitleLoose(movieTitle) {
+  return normalizeMovieTitle(movieTitle)
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\b(the|a|an)\b/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 const EVENT_ALLOWED_MOVIES = new Map([
   ["np-2026-05-26-1830", [
     "Back to the Future",
@@ -1454,14 +1462,19 @@ exports.rebuildEventMovieVoteCounts = onCall(async (request) => {
   }
 
   const normalizedMovieToDocId = new Map();
+  const normalizedLooseMovieToDocId = new Map();
   const countsByDocId = new Map();
 
   moviesSnapshot.forEach((movieDoc) => {
     const movieData = movieDoc.data() || {};
     const movieTitle = String(movieData.movie_title || movieDoc.id || "").trim();
     const normalizedMovie = normalizeMovieTitle(movieTitle);
+    const normalizedLooseMovie = normalizeMovieTitleLoose(movieTitle);
     if (!normalizedMovieToDocId.has(normalizedMovie)) {
       normalizedMovieToDocId.set(normalizedMovie, movieDoc.id);
+    }
+    if (normalizedLooseMovie && !normalizedLooseMovieToDocId.has(normalizedLooseMovie)) {
+      normalizedLooseMovieToDocId.set(normalizedLooseMovie, movieDoc.id);
     }
     countsByDocId.set(movieDoc.id, 0);
   });
@@ -1470,32 +1483,71 @@ exports.rebuildEventMovieVoteCounts = onCall(async (request) => {
   let matchedVoteCount = 0;
   const unmatchedTitles = new Set();
 
-  votesSnapshot.forEach((voteDoc) => {
-    const voteData = voteDoc.data() || {};
-    if (voteData.is_active === false) {
-      return;
+  const tallyVotes = (includeInactiveVotes = false) => {
+    let tallyActiveVoteCount = 0;
+    let tallyMatchedVoteCount = 0;
+    const tallyUnmatchedTitles = new Set();
+    const localCounts = new Map();
+
+    countsByDocId.forEach((_, movieDocId) => {
+      localCounts.set(movieDocId, 0);
+    });
+
+    votesSnapshot.forEach((voteDoc) => {
+      const voteData = voteDoc.data() || {};
+      const isInactive = voteData.is_active === false;
+      if (isInactive && !includeInactiveVotes) {
+        return;
+      }
+
+      tallyActiveVoteCount += 1;
+
+      const votedTitle = String(
+        voteData.movie_title ||
+        (Array.isArray(voteData.movie_titles) && voteData.movie_titles.length ? voteData.movie_titles[0] : ""),
+      ).trim();
+
+      if (!votedTitle) {
+        return;
+      }
+
+      const normalizedVoteTitle = normalizeMovieTitle(votedTitle);
+      const normalizedLooseVoteTitle = normalizeMovieTitleLoose(votedTitle);
+      const movieDocId = normalizedMovieToDocId.get(normalizedVoteTitle)
+        || normalizedLooseMovieToDocId.get(normalizedLooseVoteTitle);
+
+      if (!movieDocId) {
+        tallyUnmatchedTitles.add(votedTitle);
+        return;
+      }
+
+      localCounts.set(movieDocId, Number(localCounts.get(movieDocId) || 0) + 1);
+      tallyMatchedVoteCount += 1;
+    });
+
+    return {
+      counts: localCounts,
+      activeVoteCount: tallyActiveVoteCount,
+      matchedVoteCount: tallyMatchedVoteCount,
+      unmatchedTitles: tallyUnmatchedTitles,
+    };
+  };
+
+  let usedInactiveFallback = false;
+  let tally = tallyVotes(false);
+  if (tally.activeVoteCount === 0 && !votesSnapshot.empty) {
+    const fallbackTally = tallyVotes(true);
+    if (fallbackTally.matchedVoteCount > 0) {
+      tally = fallbackTally;
+      usedInactiveFallback = true;
     }
+  }
 
-    activeVoteCount += 1;
-
-    const votedTitle = String(
-      voteData.movie_title ||
-      (Array.isArray(voteData.movie_titles) && voteData.movie_titles.length ? voteData.movie_titles[0] : ""),
-    ).trim();
-
-    if (!votedTitle) {
-      return;
-    }
-
-    const normalizedVoteTitle = normalizeMovieTitle(votedTitle);
-    const movieDocId = normalizedMovieToDocId.get(normalizedVoteTitle);
-    if (!movieDocId) {
-      unmatchedTitles.add(votedTitle);
-      return;
-    }
-
-    countsByDocId.set(movieDocId, Number(countsByDocId.get(movieDocId) || 0) + 1);
-    matchedVoteCount += 1;
+  activeVoteCount = tally.activeVoteCount;
+  matchedVoteCount = tally.matchedVoteCount;
+  tally.unmatchedTitles.forEach((title) => unmatchedTitles.add(title));
+  tally.counts.forEach((count, movieDocId) => {
+    countsByDocId.set(movieDocId, count);
   });
 
   const batch = db.batch();
@@ -1522,6 +1574,7 @@ exports.rebuildEventMovieVoteCounts = onCall(async (request) => {
     activeVoteCount,
     matchedVoteCount,
     unmatchedTitleCount: unmatchedTitles.size,
+    usedInactiveFallback,
   });
 
   return {
@@ -1532,6 +1585,7 @@ exports.rebuildEventMovieVoteCounts = onCall(async (request) => {
     matchedVoteCount,
     unmatchedTitles: Array.from(unmatchedTitles).slice(0, 20),
     unmatchedTitleCount: unmatchedTitles.size,
+    usedInactiveFallback,
   };
 });
 
@@ -1894,6 +1948,88 @@ exports.addEmailSignup = onCall(async (request) => handleEmailSignup(request));
 // Backward-compatible alias for older clients.
 exports.submitEmailSignup = onCall(async (request) => handleEmailSignup(request));
 
+function sanitizeTextField(value, {required = false, maxLength = 500} = {}) {
+  const text = String(value || "").trim();
+  if (!text) {
+    if (required) {
+      throw new HttpsError("invalid-argument", "Missing required field.");
+    }
+    return "";
+  }
+  return text.slice(0, maxLength);
+}
+
+exports.submitMovieSuggestion = onCall(async (request) => {
+  const title = sanitizeTextField(request.data?.title, {required: true, maxLength: 200});
+  const yearRaw = sanitizeTextField(request.data?.year, {maxLength: 4});
+  const genre = sanitizeTextField(request.data?.genre, {maxLength: 80});
+  const why = sanitizeTextField(request.data?.why, {required: true, maxLength: 1200});
+  const link = sanitizeTextField(request.data?.link, {maxLength: 500});
+
+  const year = yearRaw && /^\d{4}$/.test(yearRaw) ? yearRaw : "";
+
+  await db.collection("movie_suggestions").add({
+    title,
+    year,
+    genre,
+    why,
+    link,
+    status: "new",
+    source: "web",
+    created_at: admin.firestore.FieldValue.serverTimestamp(),
+    updated_at: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  logger.info("Movie suggestion submitted", {title, genre});
+  return {ok: true};
+});
+
+exports.submitTheaterPetition = onCall(async (request) => {
+  const name = sanitizeTextField(request.data?.name, {required: true, maxLength: 120});
+  const email = sanitizeEmail(request.data?.email);
+  const theaterName = sanitizeTextField(request.data?.theaterName, {required: true, maxLength: 200});
+  const city = sanitizeTextField(request.data?.city, {required: true, maxLength: 120});
+  const message = sanitizeTextField(request.data?.message, {maxLength: 1200});
+
+  const theaterEmail = sanitizeTextField(request.data?.theaterEmail, {maxLength: 320});
+  const normalizedTheaterEmail = theaterEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(theaterEmail)
+    ? theaterEmail.toLowerCase()
+    : "";
+
+  const payload = {
+    name,
+    email,
+    theater_name: theaterName,
+    city,
+    message,
+    status: "new",
+    source: "web",
+    admin_follow_up: {
+      queued: true,
+      owner: "",
+    },
+    theater_email: normalizedTheaterEmail,
+    theater_email_status: normalizedTheaterEmail ? "pending" : "not-available",
+    created_at: admin.firestore.FieldValue.serverTimestamp(),
+    updated_at: admin.firestore.FieldValue.serverTimestamp(),
+  };
+
+  const docRef = await db.collection("theater_petitions").add(payload);
+
+  logger.info("Theater petition submitted", {
+    petitionId: docRef.id,
+    theaterName,
+    city,
+    theaterEmailStatus: payload.theater_email_status,
+  });
+
+  return {
+    ok: true,
+    petitionId: docRef.id,
+    emailedTheater: payload.theater_email_status === "pending",
+  };
+});
+
 exports.reelSuccessListTheaters = onCall(REELSUCCESS_CALL_OPTIONS, async (request) => {
   await assertReelSuccessRequester(request);
   const {theaterIndex, metadata} = loadReelSuccessIndexData();
@@ -1910,6 +2046,36 @@ exports.reelSuccessListTheaters = onCall(REELSUCCESS_CALL_OPTIONS, async (reques
         row.theater_code,
         row.city,
         row.state_abbr,
+      ].join(" ").toLowerCase();
+      return haystack.includes(query);
+    });
+  }
+
+  return {
+    ok: true,
+    total: filtered.length,
+    limit,
+    dataVersion: metadata?.created_at || null,
+    theaters: filtered.slice(0, limit),
+  };
+});
+
+exports.publicListTheaters = onCall(async (request) => {
+  const {theaterIndex, metadata} = loadReelSuccessIndexData();
+
+  const query = normalizeSearchQuery(request.data?.query);
+  const limit = sanitizePositiveInt(request.data?.limit, 25, 200);
+
+  let filtered = theaterIndex;
+  if (query) {
+    filtered = theaterIndex.filter((row) => {
+      const haystack = [
+        row.theater_name,
+        row.theater_city_state,
+        row.theater_code,
+        row.city,
+        row.state_abbr,
+        row.theater_key,
       ].join(" ").toLowerCase();
       return haystack.includes(query);
     });
@@ -2343,6 +2509,107 @@ exports.reelSuccessDeleteGrossUpload = onCall(REELSUCCESS_CALL_OPTIONS, async (r
   return {
     ok: true,
     uploadId,
+  };
+});
+
+exports.reelSuccessListGrossStoragePdfs = onCall(REELSUCCESS_CALL_OPTIONS, async (request) => {
+  const adminEmail = assertAdminEmail(request.data?.adminEmail);
+  const requestedPrefix = String(request.data?.prefix || "").trim();
+  const requestedTheaterId = String(request.data?.theaterId || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, "");
+
+  let prefix = requestedPrefix;
+  if (!prefix) {
+    prefix = requestedTheaterId
+      ? `box-office-grosses/${requestedTheaterId}/`
+      : "box-office-grosses/";
+  }
+
+  if (!prefix.startsWith("box-office-grosses/")) {
+    throw new HttpsError("invalid-argument", "prefix must start with box-office-grosses/.");
+  }
+  if (!prefix.endsWith("/")) {
+    prefix = `${prefix}/`;
+  }
+
+  const maxResults = sanitizePositiveInt(request.data?.maxResults, 1000, 5000);
+  const signedUrlHours = sanitizePositiveInt(request.data?.signedUrlHours, 12, 72);
+  const includeSignedUrls = request.data?.includeSignedUrls !== false;
+
+  const bucket = admin.storage().bucket();
+  const files = [];
+
+  let pageToken;
+  do {
+    const [batch, , response] = await bucket.getFiles({
+      prefix,
+      maxResults: Math.min(1000, maxResults - files.length),
+      pageToken,
+      autoPaginate: false,
+    });
+
+    files.push(...batch);
+    pageToken = response?.nextPageToken;
+  } while (pageToken && files.length < maxResults);
+
+  const pdfFiles = files.filter((file) => String(file.name || "").toLowerCase().endsWith(".pdf"));
+  const expiresMs = Date.now() + (signedUrlHours * 60 * 60 * 1000);
+
+  const pdfs = await Promise.all(pdfFiles.map(async (file) => {
+    const [metadata] = await file.getMetadata();
+
+    const tokenString = String(metadata?.metadata?.firebaseStorageDownloadTokens || "").trim();
+    const firstToken = tokenString ? tokenString.split(",")[0].trim() : "";
+    const tokenDownloadUrl = firstToken
+      ? `https://firebasestorage.googleapis.com/v0/b/${encodeURIComponent(bucket.name)}/o/${encodeURIComponent(file.name)}?alt=media&token=${encodeURIComponent(firstToken)}`
+      : null;
+
+    let signedUrl = null;
+    if (includeSignedUrls) {
+      try {
+        const [url] = await file.getSignedUrl({
+          action: "read",
+          expires: expiresMs,
+          version: "v4",
+        });
+        signedUrl = url;
+      } catch (error) {
+        logger.warn("Unable to generate signed URL for gross PDF", {
+          file: file.name,
+          error: error?.message || String(error),
+        });
+      }
+    }
+
+    return {
+      name: file.name,
+      bucket: bucket.name,
+      size: Number(metadata?.size || 0),
+      updated: metadata?.updated || null,
+      contentType: metadata?.contentType || null,
+      tokenDownloadUrl,
+      signedUrl,
+    };
+  }));
+
+  pdfs.sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")));
+
+  logger.info("ReelSuccess gross storage PDF listing generated", {
+    adminEmail,
+    prefix,
+    requestedTheaterId,
+    returned: pdfs.length,
+  });
+
+  return {
+    ok: true,
+    prefix,
+    count: pdfs.length,
+    signedUrlHours,
+    includeSignedUrls,
+    pdfs,
   };
 });
 

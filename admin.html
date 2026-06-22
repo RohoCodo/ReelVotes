@@ -11,31 +11,60 @@
 <div class="overlay"></div>
 
 <div class="container">
-  <div class="card">
-    <div class="top-right-links" aria-label="Top links">
-      <a href="reelsuccess.html" class="app-link">ReelSuccess</a>
-      <span aria-hidden="true">•</span>
-      <a href="select-event.html" class="app-link">Showtimes</a>
-    </div>
+  <div class="card admin-layout">
+    <nav class="site-nav" aria-label="Primary">
+      <div class="site-nav-left">
+        <a class="site-nav-brand" href="/index.html">ReelVotes</a>
+      </div>
+      <div class="site-nav-center" aria-label="Core navigation">
+        <a class="site-nav-tab" href="/select-event.html">Showtimes</a>
+        <a class="site-nav-tab" href="/suggest">Suggest a Movie</a>
+        <a class="site-nav-tab" href="/how-it-works">How It Works</a>
+      </div>
+      <div class="site-nav-right">
+        <a class="site-nav-cta" href="/email-signup.html">Join Email List</a>
+        <details class="site-nav-profile">
+          <summary aria-label="Open profile menu">⚙</summary>
+          <div class="site-nav-dropdown" role="menu">
+            <a href="/reelsuccess.html" role="menuitem">ReelSuccess</a>
+            <a href="/admin.html" role="menuitem" class="active">Admin View</a>
+          </div>
+        </details>
+      </div>
+      <button id="navToggleBtn" class="nav-toggle" type="button" aria-label="Toggle navigation">☰</button>
+      <div id="siteNavDrawer" class="site-nav-drawer" aria-label="Mobile navigation">
+        <a href="/select-event.html">Showtimes</a>
+        <a href="/suggest">Suggest a Movie</a>
+        <a href="/how-it-works">How It Works</a>
+        <a href="/email-signup.html">Join Email List</a>
+        <a href="/reelsuccess.html">ReelSuccess</a>
+        <a class="active" href="/admin.html">Admin View</a>
+      </div>
+    </nav>
 
     <img src="icon.png" class="logo" />
-    <h1>Admin Hub</h1>
-
-    <!-- Identity + event context -->
-    <p id="adminIdentity" class="subtitle" style="margin:2px 0 0;">Checking admin access…</p>
-    <p id="eventLabel" class="subtitle" style="margin:4px 0 8px;"></p>
+    <div class="admin-hero">
+      <h1>Admin Hub</h1>
+      <p class="subtitle">Manage showtimes, ballots, and ReelSuccess access in one place.</p>
+      <p id="adminIdentity" class="subtitle" style="margin-top:8px;">Checking admin access…</p>
+      <p id="eventLabel" class="subtitle" style="margin:4px 0 0;"></p>
+    </div>
 
     <!-- Event selector -->
-    <select id="eventSelector" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #ccc;font-size:14px;background:#fff;cursor:pointer;margin-bottom:16px;">
-      <option value="">Loading events…</option>
-    </select>
-
-    <p style="margin:0 0 14px;">
-      <a id="publicPreviewLink" href="index.html" class="app-link">Open public voting view</a>
-    </p>
+    <div class="admin-controls-grid">
+      <div class="admin-select-wrap">
+        <label for="eventSelector">Current showtime</label>
+        <select id="eventSelector" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid #444;font-size:14px;background:#111;color:#fff;cursor:pointer;">
+          <option value="">Loading events…</option>
+        </select>
+      </div>
+      <p style="margin:0;">
+        <a id="publicPreviewLink" href="index.html" class="app-link">Open public voting view</a>
+      </p>
+    </div>
 
     <!-- Tab switcher -->
-    <div style="display:flex;gap:0;border-radius:10px;overflow:hidden;border:1px solid #333;margin-bottom:18px;">
+    <div class="admin-tab-switcher" style="display:flex;gap:0;border-radius:10px;overflow:hidden;border:1px solid #333;margin-bottom:18px;">
       <button id="tabResultsBtn" type="button" style="flex:1;padding:10px;background:#ff4757;color:#fff;border:none;font-size:14px;font-weight:700;cursor:pointer;">📊 Results</button>
       <button id="tabEditBtn" type="button" style="flex:1;padding:10px;background:#222;color:#aaa;border:none;border-left:1px solid #333;font-size:14px;font-weight:600;cursor:pointer;">✏️ Edit Event</button>
       <button id="tabAccessBtn" type="button" style="flex:1;padding:10px;background:#222;color:#aaa;border:none;border-left:1px solid #333;font-size:14px;font-weight:600;cursor:pointer;">🔐 ReelSuccess Access</button>
@@ -51,7 +80,7 @@
       <div style="margin-top:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
         <button id="endVoteBtn" type="button" style="background:#ff4757;border:none;color:#fff;padding:10px 14px;border-radius:10px;font-weight:700;cursor:pointer;">End vote</button>
         <button id="runEliminationBtn" type="button" style="background:#ff4757;border:none;color:#fff;padding:10px 14px;border-radius:10px;font-weight:700;cursor:pointer;">Run elimination round</button>
-        <button id="rebuildCountsBtn" type="button" style="background:#222;border:1px solid #444;color:#fff;padding:10px 14px;border-radius:10px;font-weight:700;cursor:pointer;">Rebuild counts from votes</button>
+        <button id="rebuildCountsBtn" type="button" style="background:#ff4757;border:none;color:#fff;padding:10px 14px;border-radius:10px;font-weight:700;cursor:pointer;">Rebuild counts from votes</button>
       </div>
       <span id="voteControlStatus" class="subtitle" style="display:block;margin-top:8px;"></span>
       <span id="eliminationStatus" class="subtitle" style="display:block;margin-top:8px;"></span>
@@ -196,6 +225,7 @@
 </div>
 
 <script src="events-config.js?v=20260519-1"></script>
+<script src="site-nav.js"></script>
 <script type="module" src="admin.js"></script>
 </body>
 </html>

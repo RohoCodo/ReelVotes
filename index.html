@@ -23,13 +23,13 @@
     <!-- ICON -->
     <img src="icon.png" class="logo" />
 
-    <h1>Pick the Next Movie Night</h1>
+    <h1 id="votePageHeading" data-default-heading="Pick the Next Movie Night">Pick the Next Movie Night</h1>
+
+    <p class="subtitle" id="eventSubtitle"></p>
 
     <p style="margin: 0 0 10px; text-align: left;">
       <a href="select-event.html" class="app-link">← Back to showtimes</a>
     </p>
-
-    <p class="subtitle" id="eventSubtitle"></p>
 
     <section id="tabVotePanel" class="main-tab-panel" role="region" aria-label="Vote">
     <p class="vote-mode-note">Public poll. One vote per person. You may vote for as many movies as you want on that single ballot.</p>
@@ -248,6 +248,19 @@
     return Number.isFinite(parsedId) ? parsedId : Number.NEGATIVE_INFINITY;
   }
 
+  function updateVotePageHeading(event, eventId) {
+    const headingEl = document.getElementById("votePageHeading");
+    if (!headingEl) return;
+
+    const defaultHeading = headingEl.dataset.defaultHeading || "Pick the Next Movie Night";
+    const status = String(event?.voteStatus || "").trim().toLowerCase();
+    const prefix = getSubtitlePrefix(event, eventId || event?.id);
+    const screeningHasTakenPlace = status === "ended" || prefix === "Shown on";
+
+    headingEl.textContent = screeningHasTakenPlace ? "Movie Night Results" : defaultHeading;
+    document.title = screeningHasTakenPlace ? "Movie Night Results" : "Vote the Next Movie Night";
+  }
+
   async function loadMergedEvents() {
     const configuredEvents = Array.isArray(window.REELVOTES_EVENTS) ? window.REELVOTES_EVENTS : [];
     const mergedByFirestoreId = new Map();
@@ -343,6 +356,8 @@
         </a>
       `;
     }
+
+    updateVotePageHeading(event, eventId || event?.id);
 
     return event;
   })();
