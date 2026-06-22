@@ -116,11 +116,25 @@ body {
   }
 
   .site-nav-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
     color: #ffd7e3;
     text-decoration: none;
     font-size: 15px;
     font-weight: 700;
     letter-spacing: 0.02em;
+  }
+
+  .site-nav-brand::before {
+    content: "";
+    width: 22px;
+    height: 22px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    background: rgba(0, 0, 0, 0.35) url("/icon.png") center / 82% no-repeat;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    flex-shrink: 0;
   }
 
   .site-nav-tab {
