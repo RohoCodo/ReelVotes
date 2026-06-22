@@ -393,6 +393,7 @@ body {
     justify-content: space-between;
     align-items: center;
     text-align: left;
+    color: #fff;
     margin: 0;
     width: 100%;
     background: rgba(255, 255, 255, 0.05);
@@ -410,6 +411,7 @@ body {
   .theater-result-item h3 {
     margin: 0 0 3px;
     font-size: 15px;
+    color: #fff;
     word-break: break-word;
   }
 
@@ -2040,6 +2042,31 @@ body {
   }
 
   .submit-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  .suggestion-shell .submit-btn {
+    width: 100%;
+    padding: 14px;
+    margin-top: 15px;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    background: linear-gradient(135deg, #ff4757, #ff6b81);
+    color: #fff;
+  }
+
+  .suggestion-shell .submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(255, 71, 87, 0.4);
+  }
+
+  .suggestion-shell .submit-btn:disabled {
     opacity: 0.3;
     cursor: not-allowed;
     transform: none;
