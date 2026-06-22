@@ -4,7 +4,7 @@
   <title>ReelVotes – Admin Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta http-equiv="refresh" content="0; url=/public/admin.html" />
-  <link rel="stylesheet" href="/public/styles.css?v=20260622-6" />
+  <link rel="stylesheet" href="/public/styles.css?v=20260622-9" />
   <link rel="icon" type="image/png" href="icon.png" />
   <script>
     window.location.replace(`/public/admin.html${window.location.search || ""}${window.location.hash || ""}`);
@@ -81,7 +81,7 @@
         <p class="chosen-label">Live vote counts:</p>
         <div id="adminList" class="chosen-list"></div>
       </div>
-      <div style="margin-top:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+      <div class="admin-actions-row" style="margin-top:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
         <button id="endVoteBtn" type="button" style="background:#ff4757;border:none;color:#fff;padding:10px 14px;border-radius:10px;font-weight:700;cursor:pointer;">End vote</button>
         <button id="runEliminationBtn" type="button" style="background:#ff4757;border:none;color:#fff;padding:10px 14px;border-radius:10px;font-weight:700;cursor:pointer;">Run elimination round</button>
         <button id="rebuildCountsBtn" type="button" style="background:#ff4757;border:none;color:#fff;padding:10px 14px;border-radius:10px;font-weight:700;cursor:pointer;">Rebuild counts from votes</button>
