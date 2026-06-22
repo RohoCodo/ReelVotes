@@ -686,6 +686,25 @@ body {
   }
 
   @media (max-width: 640px) {
+    .calendar-shell {
+      padding: 10px;
+      border-radius: 14px;
+    }
+
+    .calendar-header h2 {
+      font-size: 16px;
+    }
+
+    .calendar-nav-btn {
+      padding: 7px 10px;
+      border-radius: 9px;
+    }
+
+    .calendar-view-toggle .main-tab-btn {
+      padding: 10px 12px;
+      font-size: 14px;
+    }
+
     .screening-list.single-screening {
       grid-template-columns: minmax(0, 1fr);
       justify-content: stretch;
@@ -700,9 +719,10 @@ body {
     }
 
     .screening-card-top {
-      flex-wrap: wrap;
-      align-items: flex-start;
-      gap: 6px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      align-items: start;
+      gap: 5px;
       margin-bottom: 6px;
     }
 
@@ -716,6 +736,7 @@ body {
       white-space: normal;
       line-height: 1.2;
       max-width: 100%;
+      width: fit-content;
     }
 
     .screening-card h3 {
