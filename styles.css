@@ -1,7 +1,6 @@
 @import url("/public/styles.css?v=20260622-1");
 
-/* Legacy root styles are disabled; the site now mirrors /public/styles.css for consistency. */
-/*
+/* Root styles also include legacy rules below. */
 body {
     margin: 0;
     font-family: -apple-system, BlinkMacSystemFont, sans-serif;
@@ -429,7 +428,6 @@ body {
   .hidden {
     display: none !important;
   }
-  */
 
   /* ReelSuccess */
   .reelsuccess-card {
@@ -1410,8 +1408,10 @@ body {
     background: #2b1b1d;
   }
 
-  /* Button */
-  button {
+  /* Button (voting flow only) */
+  #tabVotePanel button,
+  .vote-email-modal button,
+  #button-container button {
     width: 100%;
     padding: 14px;
     margin-top: 15px;
@@ -1485,7 +1485,9 @@ body {
     color: white;
   }
   
-  button:disabled {
+  #tabVotePanel button:disabled,
+  .vote-email-modal button:disabled,
+  #button-container button:disabled {
     opacity: 0.3;
     cursor: not-allowed;
   }

@@ -2005,8 +2005,10 @@ body {
     background: #2b1b1d;
   }
 
-  /* Button */
-  button {
+  /* Button (voting flow only) */
+  #tabVotePanel button,
+  .vote-email-modal button,
+  #button-container button {
     width: 100%;
     padding: 14px;
     margin-top: 15px;
@@ -2080,7 +2082,9 @@ body {
     color: white;
   }
   
-  button:disabled {
+  #tabVotePanel button:disabled,
+  .vote-email-modal button:disabled,
+  #button-container button:disabled {
     opacity: 0.3;
     cursor: not-allowed;
   }
