@@ -185,12 +185,12 @@ body {
 
   .site-nav-brand::before {
     content: "";
-    width: 36px;
-    height: 36px;
+    width: 40px;
+    height: 40px;
     border-radius: 999px;
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    border: none;
     background: transparent url("/icon.png") center / contain no-repeat;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
+    box-shadow: none;
     flex-shrink: 0;
   }
 
@@ -681,7 +681,7 @@ body {
   }
 
   .screening-list.single-screening {
-    grid-template-columns: minmax(280px, 520px);
+    grid-template-columns: minmax(0, 520px);
     justify-content: center;
   }
 
@@ -693,6 +693,40 @@ body {
 
     .day-screenings {
       overflow-x: hidden;
+    }
+
+    .screening-card {
+      padding: 10px;
+    }
+
+    .screening-card-top {
+      flex-wrap: wrap;
+      align-items: flex-start;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+
+    .screening-time {
+      font-size: 11px;
+    }
+
+    .status-badge {
+      font-size: 10px;
+      padding: 3px 6px;
+      white-space: normal;
+      line-height: 1.2;
+      max-width: 100%;
+    }
+
+    .screening-card h3 {
+      font-size: 14px;
+      margin: 0 0 6px;
+      overflow-wrap: anywhere;
+    }
+
+    .screening-theater {
+      font-size: 11px;
+      overflow-wrap: anywhere;
     }
   }
 
@@ -910,12 +944,16 @@ body {
     font-weight: 700;
     min-width: 0;
     overflow-wrap: anywhere;
+    text-align: left;
+    justify-self: start;
   }
 
   .leaderboard-head .votes {
     font-size: 12px;
     color: #ccc;
     white-space: nowrap;
+    text-align: right;
+    justify-self: end;
   }
 
   @media (max-width: 520px) {
