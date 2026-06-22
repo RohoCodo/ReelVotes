@@ -344,7 +344,7 @@ body {
 
   /* Showtimes flow */
   .showtimes-layout {
-    max-width: 960px;
+    max-width: min(560px, 100%);
     text-align: left;
   }
 
