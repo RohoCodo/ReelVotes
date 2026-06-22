@@ -465,7 +465,13 @@ function updateDemographicsStatus(profile) {
     return;
   }
   if (status) {
-    demographicsStatusEl.textContent = "Demographics: unavailable right now. Similarity currently relies on historical and operational features.";
+    if (status === "api-error") {
+      demographicsStatusEl.textContent = "Demographics: temporarily unavailable from the data source. Similarity currently uses historical and operational features.";
+    } else if (["no-match", "invalid-city-state", "missing-profile"].includes(status)) {
+      demographicsStatusEl.textContent = "Demographics: not available for this theater profile yet. Similarity currently uses historical and operational features.";
+    } else {
+      demographicsStatusEl.textContent = "Demographics: not currently included for this theater. Similarity currently uses historical and operational features.";
+    }
     demographicsStatusEl.style.color = "#ffb36b";
     return;
   }

@@ -31,6 +31,7 @@ const ADMIN_EMAILS = new Set([
   "programming@thenewparkway.com",
   "nikki@thenewparkwaytheater.com"
 ]);
+const PRIVILEGED_ADMIN_EMAIL = "rt332@cornell.edu";
 
 // Alias map: date-based ID → Firestore event ID
 const EVENT_ID_ALIASES = { "2026-04-27": "newparkway1" };
@@ -506,6 +507,10 @@ function isAdminEmail(email) {
   return ADMIN_EMAILS.has(normalizeEmail(email));
 }
 
+function isPrivilegedAdminEmail(email) {
+  return normalizeEmail(email) === PRIVILEGED_ADMIN_EMAIL;
+}
+
 function setEliminationStatus(message, isError = false) {
   if (!eliminationStatusEl) return;
   eliminationStatusEl.textContent = message;
@@ -528,10 +533,20 @@ function updateEndVoteButton() {
   if (!endVoteBtn) return;
   const isEnded = currentVoteStatus === "ended";
   const isNotStarted = currentVoteStatus === "not-started";
+  const isPrivileged = isPrivilegedAdminEmail(currentAdminEmail);
+  const hideReopen = isEnded && !isPrivileged;
   endVoteBtn.disabled = !currentAdminEmail;
   endVoteBtn.textContent = isNotStarted ? "Start vote" : (isEnded ? "Reopen vote" : "End vote");
+  endVoteBtn.style.display = hideReopen ? "none" : "";
   endVoteBtn.style.opacity = endVoteBtn.disabled ? "0.6" : "1";
   endVoteBtn.style.cursor = endVoteBtn.disabled ? "not-allowed" : "pointer";
+
+  if (runEliminationBtn) {
+    runEliminationBtn.style.display = isPrivileged ? "" : "none";
+  }
+  if (rebuildCountsBtn) {
+    rebuildCountsBtn.style.display = isPrivileged ? "" : "none";
+  }
 }
 
 async function endVoteNow() {
@@ -549,6 +564,10 @@ async function endVoteNow() {
   const nextVoteStatus = previousVoteStatus === "not-started"
     ? "live"
     : (previousVoteStatus === "ended" ? "live" : "ended");
+  if (previousVoteStatus === "ended" && !isPrivilegedAdminEmail(currentAdminEmail)) {
+    setVoteControlStatus(`Only ${PRIVILEGED_ADMIN_EMAIL} can reopen votes.`, true);
+    return;
+  }
   const confirmed = window.confirm(
     nextVoteStatus === "ended"
       ? "End voting for this event now? This will block new votes."
@@ -611,6 +630,11 @@ async function runEliminationRoundNow() {
     return;
   }
 
+  if (!isPrivilegedAdminEmail(currentAdminEmail)) {
+    setEliminationStatus(`Only ${PRIVILEGED_ADMIN_EMAIL} can run elimination rounds.`, true);
+    return;
+  }
+
   try {
     if (runEliminationBtn) {
       runEliminationBtn.disabled = true;
@@ -653,6 +677,11 @@ async function rebuildMovieCountsNow() {
 
   if (!currentEventId) {
     setRebuildCountsStatus("No event selected.", true);
+    return;
+  }
+
+  if (!isPrivilegedAdminEmail(currentAdminEmail)) {
+    setRebuildCountsStatus(`Only ${PRIVILEGED_ADMIN_EMAIL} can rebuild vote counts.`, true);
     return;
   }
 
@@ -1124,15 +1153,12 @@ ensureAdminAccess()
     startLiveListener(currentEventId);
     loadAdminControlsForEvent(currentEventId);
     if (runEliminationBtn) {
-      runEliminationBtn.disabled = false;
       runEliminationBtn.addEventListener("click", runEliminationRoundNow);
     }
     if (rebuildCountsBtn) {
-      rebuildCountsBtn.disabled = false;
       rebuildCountsBtn.addEventListener("click", rebuildMovieCountsNow);
     }
     if (endVoteBtn) {
-      endVoteBtn.disabled = false;
       endVoteBtn.addEventListener("click", endVoteNow);
       updateEndVoteButton();
     }

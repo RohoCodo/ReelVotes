@@ -39,10 +39,13 @@ const TURNSTILE_VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/sit
 const TURNSTILE_SECRET_KEY = process.env.TURNSTILE_SECRET_KEY || "";
 const ELIMINATION_SCHEDULE = "0 2 * * *";
 const ELIMINATION_TIMEZONE = "America/Los_Angeles";
+const SCREENING_WORKFLOW_SWEEP_SCHEDULE = "every 15 minutes";
+const SCREENING_WORKFLOW_TIMEZONE = "America/Los_Angeles";
 const ELIMINATION_ENABLED_EVENT_IDS = new Set([]);
 const DEFAULT_ELIMINATIONS_PER_NIGHT = 3;
 const LEGACY_ANON_EMAIL_SUFFIX = "@reelvotes.local";
 const EMAIL_OPTIONAL_EVENT_IDS = new Set([]);
+const PRIVILEGED_ADMIN_EMAIL = "rt332@cornell.edu";
 const ADMIN_EMAILS = new Set([
   "rt332@cornell.edu",
   "moses@thenewparkway.com",
@@ -67,6 +70,24 @@ let reelSuccessCache = {
   theaterInsightsByKey: null,
   metadata: null,
 };
+
+const WORKFLOW_STATUS = Object.freeze({
+  VOTING: "VOTING",
+  LICENSING: "LICENSING",
+  THEATER_APPROVAL: "THEATER_APPROVAL",
+  PRESALE: "PRESALE",
+  CONFIRMED: "CONFIRMED",
+  CANCELLED: "CANCELLED",
+  COMPLETED: "COMPLETED",
+});
+
+const TRANSITIONAL_WORKFLOW_STATES = new Set([
+  WORKFLOW_STATUS.VOTING,
+  WORKFLOW_STATUS.LICENSING,
+  WORKFLOW_STATUS.THEATER_APPROVAL,
+  WORKFLOW_STATUS.PRESALE,
+  WORKFLOW_STATUS.CONFIRMED,
+]);
 
 function readJsonFileSafe(filePath) {
   if (!fs.existsSync(filePath)) {
@@ -497,6 +518,14 @@ function assertAdminEmail(email) {
   return normalizedEmail;
 }
 
+function assertPrivilegedAdminEmail(email, actionName = "this action") {
+  const normalizedEmail = assertAdminEmail(email);
+  if (normalizedEmail !== PRIVILEGED_ADMIN_EMAIL) {
+    throw new HttpsError("permission-denied", `Only ${PRIVILEGED_ADMIN_EMAIL} can ${actionName}.`);
+  }
+  return normalizedEmail;
+}
+
 async function hasReelSuccessAccess(email) {
   const normalizedEmail = normalizeEmail(email);
   if (!normalizedEmail) {
@@ -850,6 +879,215 @@ function sanitizeVoteStatus(voteStatusInput) {
     throw new HttpsError("invalid-argument", "voteStatus must be 'not-started', 'live', or 'ended'.");
   }
   return normalizedVoteStatus;
+}
+
+function deriveWorkflowStatus(eventData = {}) {
+  const configured = String(eventData.workflowStatus || "").trim().toUpperCase();
+  if (Object.values(WORKFLOW_STATUS).includes(configured)) {
+    return configured;
+  }
+
+  const voteStatus = sanitizeVoteStatus(eventData.voteStatus);
+  return voteStatus === "ended" ? WORKFLOW_STATUS.LICENSING : WORKFLOW_STATUS.VOTING;
+}
+
+function toDateOrNull(value) {
+  if (!value) return null;
+
+  if (typeof value.toDate === "function") {
+    const dateValue = value.toDate();
+    if (dateValue instanceof Date && !Number.isNaN(dateValue.getTime())) {
+      return dateValue;
+    }
+  }
+
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return value;
+  }
+
+  if (typeof value === "string" || typeof value === "number") {
+    const parsed = new Date(value);
+    if (!Number.isNaN(parsed.getTime())) {
+      return parsed;
+    }
+  }
+
+  return null;
+}
+
+function hasReached(deadline, now) {
+  const dateValue = toDateOrNull(deadline);
+  return Boolean(dateValue && dateValue.getTime() <= now.getTime());
+}
+
+function toNumberOrZero(value) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function addDays(dateValue, days) {
+  const next = new Date(dateValue.getTime());
+  next.setDate(next.getDate() + Number(days || 0));
+  return next;
+}
+
+function buildInitialWorkflowFields(voteStatusInput, now = new Date()) {
+  const voteStatus = sanitizeVoteStatus(voteStatusInput);
+  const workflowStatus = voteStatus === "ended" ? WORKFLOW_STATUS.LICENSING : WORKFLOW_STATUS.VOTING;
+  const workflow = {
+    workflowStatus,
+    workflowUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    [`stateTimestamps.${workflowStatus}`]: admin.firestore.FieldValue.serverTimestamp(),
+  };
+
+  if (voteStatus === "live") {
+    workflow.voteStartedAt = now;
+    workflow.voteEndsAt = addDays(now, 7);
+  }
+
+  return workflow;
+}
+
+function getWorkflowTransition(eventData = {}, now = new Date()) {
+  const currentState = deriveWorkflowStatus(eventData);
+  const update = {
+    workflowUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    updated_at: admin.firestore.FieldValue.serverTimestamp(),
+    updated_by: "workflow-bot",
+  };
+
+  if (currentState === WORKFLOW_STATUS.VOTING) {
+    const voteEnded = sanitizeVoteStatus(eventData.voteStatus) === "ended";
+    if (voteEnded || hasReached(eventData.voteEndsAt, now)) {
+      return {
+        nextState: WORKFLOW_STATUS.LICENSING,
+        update: {
+          ...update,
+          voteStatus: "ended",
+          voteWindowLabel: buildVoteWindowLabel("ended"),
+        },
+        reason: "voting-window-ended",
+      };
+    }
+  }
+
+  if (currentState === WORKFLOW_STATUS.LICENSING) {
+    const licensingApproved = eventData.licensingApproved === true
+      || eventData?.licensing?.approved === true;
+    const licensingDenied = eventData.licensingApproved === false
+      || eventData?.licensing?.approved === false;
+
+    if (licensingApproved) {
+      return {
+        nextState: WORKFLOW_STATUS.THEATER_APPROVAL,
+        update,
+        reason: "licensing-approved",
+      };
+    }
+
+    if (licensingDenied) {
+      return {
+        nextState: WORKFLOW_STATUS.CANCELLED,
+        update: {
+          ...update,
+          cancellationReason: "Licensing not approved",
+        },
+        reason: "licensing-denied",
+      };
+    }
+  }
+
+  if (currentState === WORKFLOW_STATUS.THEATER_APPROVAL) {
+    const theaterApproved = eventData.theaterApproved === true
+      || eventData?.theaterApproval?.approved === true;
+    const theaterRejected = eventData.theaterApproved === false
+      || eventData?.theaterApproval?.approved === false;
+
+    if (theaterApproved) {
+      return {
+        nextState: WORKFLOW_STATUS.PRESALE,
+        update,
+        reason: "theater-approved",
+      };
+    }
+
+    if (theaterRejected) {
+      return {
+        nextState: WORKFLOW_STATUS.CANCELLED,
+        update: {
+          ...update,
+          cancellationReason: "Theater did not approve screening",
+        },
+        reason: "theater-rejected",
+      };
+    }
+  }
+
+  if (currentState === WORKFLOW_STATUS.PRESALE && hasReached(eventData.presaleEndsAt, now)) {
+    const sold = toNumberOrZero(eventData.ticketsSold);
+    const threshold = toNumberOrZero(eventData.presaleThreshold);
+    const passed = sold >= threshold;
+    return {
+      nextState: passed ? WORKFLOW_STATUS.CONFIRMED : WORKFLOW_STATUS.CANCELLED,
+      update: {
+        ...update,
+        cancellationReason: passed ? admin.firestore.FieldValue.delete() : "Presale threshold not met",
+      },
+      reason: passed ? "presale-threshold-met" : "presale-threshold-not-met",
+    };
+  }
+
+  if (currentState === WORKFLOW_STATUS.CONFIRMED && hasReached(eventData.screeningDateTime, now)) {
+    return {
+      nextState: WORKFLOW_STATUS.COMPLETED,
+      update,
+      reason: "screening-date-passed",
+    };
+  }
+
+  return null;
+}
+
+async function processScreeningTransitionsOnce() {
+  const now = new Date();
+  const eventsSnapshot = await db.collection("events").get();
+
+  let transitioned = 0;
+  const summaries = [];
+
+  for (const eventDoc of eventsSnapshot.docs) {
+    const eventData = eventDoc.data() || {};
+    const currentState = deriveWorkflowStatus(eventData);
+    if (!TRANSITIONAL_WORKFLOW_STATES.has(currentState)) {
+      continue;
+    }
+
+    const transition = getWorkflowTransition(eventData, now);
+    if (!transition) {
+      continue;
+    }
+
+    await eventDoc.ref.set({
+      workflowStatus: transition.nextState,
+      workflowUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      [`stateTimestamps.${transition.nextState}`]: admin.firestore.FieldValue.serverTimestamp(),
+      ...transition.update,
+    }, {merge: true});
+
+    transitioned += 1;
+    summaries.push({
+      eventId: eventDoc.id,
+      from: currentState,
+      to: transition.nextState,
+      reason: transition.reason,
+    });
+  }
+
+  return {
+    scanned: eventsSnapshot.size,
+    transitioned,
+    summaries,
+  };
 }
 
 function sanitizeScreeningDateTime(screeningDateTimeInput) {
@@ -1219,9 +1457,18 @@ exports.runNightlyElimination = onSchedule({
   logger.info("runNightlyElimination skipped: automatic eliminations are disabled.");
 });
 
+exports.processScreeningTransitions = onSchedule({
+  schedule: SCREENING_WORKFLOW_SWEEP_SCHEDULE,
+  timeZone: SCREENING_WORKFLOW_TIMEZONE,
+}, async () => {
+  const summary = await processScreeningTransitionsOnce();
+  logger.info("processScreeningTransitions completed", summary);
+  return summary;
+});
+
 exports.runEliminationRound = onCall(async (request) => {
   const eventId = sanitizeEventId(request.data?.eventId);
-  const adminEmail = assertAdminEmail(request.data?.adminEmail);
+  const adminEmail = assertPrivilegedAdminEmail(request.data?.adminEmail, "run elimination rounds");
 
   const result = await runNightlyEliminationForEvent(eventId, {manual: true});
 
@@ -1320,6 +1567,7 @@ exports.createEventShowtime = onCall(async (request) => {
   const voteWindowLabel = buildVoteWindowLabel(voteStatus);
   const eventRef = db.collection("events").doc(eventId);
   const eventDoc = await eventRef.get();
+  const initialWorkflowFields = buildInitialWorkflowFields(voteStatus);
 
   if (eventDoc.exists) {
     throw new HttpsError("already-exists", `A showtime already exists for ${screeningLabel}.`);
@@ -1333,6 +1581,7 @@ exports.createEventShowtime = onCall(async (request) => {
     screeningDateTime,
     voteStatus,
     voteWindowLabel,
+    ...initialWorkflowFields,
     requireEmail,
     updated_at: now,
     updated_by: adminEmail,
@@ -1388,10 +1637,22 @@ exports.setEventVoteStatus = onCall(async (request) => {
   }
 
   const eventRef = db.collection("events").doc(eventId);
+  const eventDoc = await eventRef.get();
+  const currentVoteStatus = sanitizeVoteStatus(eventDoc.data()?.voteStatus);
+  const isReopenRequest = currentVoteStatus === "ended" && voteStatus === "live";
+  if (isReopenRequest && adminEmail !== PRIVILEGED_ADMIN_EMAIL) {
+    throw new HttpsError("permission-denied", `Only ${PRIVILEGED_ADMIN_EMAIL} can reopen votes.`);
+  }
+
   const now = admin.firestore.FieldValue.serverTimestamp();
 
   await eventRef.set({
     voteStatus,
+    workflowStatus: voteStatus === "ended" ? WORKFLOW_STATUS.LICENSING : WORKFLOW_STATUS.VOTING,
+    workflowUpdatedAt: now,
+    [`stateTimestamps.${voteStatus === "ended" ? WORKFLOW_STATUS.LICENSING : WORKFLOW_STATUS.VOTING}`]: now,
+    voteWindowLabel: buildVoteWindowLabel(voteStatus),
+    ...(voteStatus === "live" ? {voteStartedAt: new Date(), voteEndsAt: addDays(new Date(), 7)} : {}),
     updated_at: now,
     updated_by: adminEmail,
   }, {merge: true});
@@ -1451,7 +1712,7 @@ exports.getEventVoteStats = onCall(async (request) => {
 
 exports.rebuildEventMovieVoteCounts = onCall(async (request) => {
   const eventId = sanitizeEventId(request.data?.eventId);
-  const adminEmail = assertAdminEmail(request.data?.adminEmail);
+  const adminEmail = assertPrivilegedAdminEmail(request.data?.adminEmail, "rebuild vote counts");
 
   const eventRef = db.collection("events").doc(eventId);
   const moviesRef = eventRef.collection("movies");
