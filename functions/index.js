@@ -98,7 +98,12 @@ function loadReelSuccessInsightsData() {
   const theaterInsightsPath = path.join(REELSUCCESS_DATA_DIR, "theater_insights_by_key.json");
 
   if (!reelSuccessCache.theaterInsightsByKey) {
-    reelSuccessCache.theaterInsightsByKey = readJsonFileSafe(theaterInsightsPath);
+    if (fs.existsSync(theaterInsightsPath)) {
+      reelSuccessCache.theaterInsightsByKey = readJsonFileSafe(theaterInsightsPath);
+    } else {
+      console.warn(`[reelSuccess] Missing optional insights file: ${path.basename(theaterInsightsPath)}. Falling back to profile-only insights.`);
+      reelSuccessCache.theaterInsightsByKey = {};
+    }
   }
 
   return {
@@ -2092,19 +2097,32 @@ exports.publicListTheaters = onCall(async (request) => {
 
 exports.reelSuccessGetTheaterInsights = onCall(REELSUCCESS_CALL_OPTIONS, async (request) => {
   await assertReelSuccessRequester(request);
-  const {metadata} = loadReelSuccessIndexData();
+  const {theaterIndex, metadata} = loadReelSuccessIndexData();
   const {theaterInsightsByKey} = loadReelSuccessInsightsData();
   const theaterKey = sanitizeTheaterKey(request.data?.theaterKey);
 
   const insights = theaterInsightsByKey[theaterKey] || null;
-  if (!insights) {
+  if (insights) {
+    return {
+      ok: true,
+      dataVersion: metadata?.created_at || null,
+      ...insights,
+    };
+  }
+
+  const profile = theaterIndex.find((row) => row.theater_key === theaterKey) || null;
+  if (!profile) {
     throw new HttpsError("not-found", "No ReelSuccess insights found for theaterKey.");
   }
 
   return {
     ok: true,
     dataVersion: metadata?.created_at || null,
-    ...insights,
+    profile,
+    similar_theaters: [],
+    recommendations: [],
+    recommendations_by_score: null,
+    based_on_similar_theaters: 0,
   };
 });
 
