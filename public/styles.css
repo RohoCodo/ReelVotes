@@ -988,6 +988,14 @@ body {
     text-align: center;
   }
 
+  #adminList .chosen-movie-header {
+    justify-content: flex-start;
+  }
+
+  #adminList .admin-movie-title {
+    text-align: left;
+  }
+
   @media (max-width: 520px) {
     .leaderboard-head {
       grid-template-columns: auto 36px 1fr;
