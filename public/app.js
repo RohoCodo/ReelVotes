@@ -1128,37 +1128,72 @@ async function getShareContent(movieTitles = []) {
   };
 }
 
-function buildUpcomingPreviewHtml() {
+async function buildUpcomingPreviewHtml() {
   const now = Date.now();
-  const upcoming = configuredEvents
+  const nextEvent = configuredEvents
     .filter((event) => {
       const parsed = Date.parse(String(event?.screeningDateTime || ""));
       return Number.isFinite(parsed) && parsed >= now;
     })
-    .sort((a, b) => getEventSortTime(a) - getEventSortTime(b))
-    .slice(0, 3);
+    .sort((a, b) => getEventSortTime(a) - getEventSortTime(b))[0] || null;
 
-  if (!upcoming.length) {
+  if (!nextEvent) {
     return "";
   }
 
-  const rows = upcoming.map((event) => {
-    const date = new Date(event.screeningDateTime);
-    const label = Number.isNaN(date.getTime())
-      ? String(event.screeningLabel || event.id)
-      : `${date.toLocaleDateString([], { month: "short", day: "numeric" })} · ${date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`;
-    return `<li>${label}</li>`;
-  }).join("");
+  const eventDate = new Date(nextEvent.screeningDateTime);
+  const eventWhen = Number.isNaN(eventDate.getTime())
+    ? String(nextEvent.screeningLabel || nextEvent.id || "TBD")
+    : `${eventDate.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" })} · ${eventDate.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`;
+
+  const theaterName = String(nextEvent?.theaterName || "").trim();
+  const theaterCity = String(nextEvent?.theaterCity || "").trim();
+  const eventLocation = [theaterName, theaterCity].filter(Boolean).join(" · ");
+
+  const nextEventParam = String(nextEvent?.id || nextEvent?.firestoreEventId || "").trim();
+  const nextVoteHref = nextEventParam
+    ? `index.html?event=${encodeURIComponent(nextEventParam)}`
+    : "select-event.html";
+
+  const ballotTitles = Array.isArray(nextEvent?.allowedMovies)
+    ? nextEvent.allowedMovies
+      .map((title) => String(title || "").trim())
+      .filter((title) => title.length > 0)
+    : [];
+
+  const movieCardsHtml = ballotTitles.length
+    ? (await Promise.all(ballotTitles.map(async (title) => {
+      const metadata = await getMovieMetadataByTitle(title);
+      return `
+        <article class="upcoming-next-movie">
+          ${metadata?.poster
+            ? `<img class="upcoming-next-poster" src="${metadata.poster}" alt="${escapeHtml(title)} poster" loading="lazy" />`
+            : `<div class="upcoming-next-poster upcoming-next-poster-fallback" aria-hidden="true"></div>`}
+          <p class="upcoming-next-title">${escapeHtml(title)}</p>
+        </article>
+      `;
+    }))).join("")
+    : '<p class="upcoming-next-empty">Ballot lineup will be announced soon.</p>';
 
   return `
-    <section class="info-box" style="margin-top:12px;">
-      <h2 style="margin-top:0;">Upcoming screenings</h2>
-      <ul style="margin:8px 0 0 18px;color:#cfcfcf;">${rows}</ul>
+    <section class="info-box upcoming-next-event">
+      <div class="upcoming-next-header">
+        <div>
+          <h2 style="margin-top:0;">Next screening</h2>
+          <p class="upcoming-next-when">${escapeHtml(eventWhen)}</p>
+          ${eventLocation ? `<p class="upcoming-next-location">${escapeHtml(eventLocation)}</p>` : ""}
+        </div>
+        <a class="app-link upcoming-next-link" href="${nextVoteHref}">Vote this event</a>
+      </div>
+      <div class="upcoming-next-grid">
+        ${movieCardsHtml}
+      </div>
     </section>
   `;
 }
 
 async function renderPostVoteExperience({ movieTitles = [], heading = "You're In 🎬", subtitle = "Thanks for voting! Help your movie win by sharing this vote with friends." } = {}) {
+  const upcomingPreviewHtml = await buildUpcomingPreviewHtml();
   resultsDiv.classList.remove("hidden");
   resultsDiv.innerHTML = `
     <section class="post-vote-shell">
@@ -1170,7 +1205,7 @@ async function renderPostVoteExperience({ movieTitles = [], heading = "You're In
       <div id="resultsLeaderboardMount"></div>
       <div id="shareVotePanelMount"></div>
       <p class="post-vote-note">More votes = better screenings. Invite friends to support your pick.</p>
-      ${buildUpcomingPreviewHtml()}
+      ${upcomingPreviewHtml}
     </section>
   `;
 
