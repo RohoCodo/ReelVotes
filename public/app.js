@@ -1336,7 +1336,10 @@ async function getMovieMetadataByTitle(title) {
       }
     }
 
-    const match = results.find(movie => movie.title?.trim().toLowerCase() === normalizedTitle) || results[0];
+    const exact = results.find(movie => movie.title?.trim().toLowerCase() === normalizedTitle) || null;
+    const withPoster = results.find(movie => Boolean(movie?.poster_path)) || null;
+    const exactWithPoster = results.find(movie => movie.title?.trim().toLowerCase() === normalizedTitle && movie?.poster_path) || null;
+    const match = exactWithPoster || withPoster || exact || results[0] || null;
     const metadata = {
       tmdbId: match?.id || null,
       poster: buildPosterUrl(match?.poster_path, "w185")

@@ -109,8 +109,10 @@ async function getMovieMetadataByTitle(title) {
 
   try {
     const results = await searchTMDB(normalized);
-    const exact = results.find((row) => String(row?.title || "").trim().toLowerCase() === cacheKey);
-    const match = exact || results[0] || null;
+    const exact = results.find((row) => String(row?.title || "").trim().toLowerCase() === cacheKey) || null;
+    const withPoster = results.find((row) => Boolean(row?.poster_path)) || null;
+    const exactWithPoster = results.find((row) => String(row?.title || "").trim().toLowerCase() === cacheKey && row?.poster_path) || null;
+    const match = exactWithPoster || withPoster || exact || results[0] || null;
     const metadata = {
       poster: buildPosterUrl(match?.poster_path, "w185"),
       tmdbId: match?.id || null,
@@ -769,7 +771,7 @@ async function renderMovies(movies) {
         ${poster
           ? `<img class="chosen-movie-poster" src="${safePoster}" alt="${safeTitle} poster" loading="lazy" />`
           : '<div class="chosen-movie-poster chosen-movie-poster-fallback" aria-hidden="true"></div>'}
-        <span>${safeTitle}</span>
+        <span class="admin-movie-title">${safeTitle}</span>
       </div>
       <div class="chosen-movie-bar">
         <div class="chosen-movie-fill" style="width: ${Math.min(percentage, 100)}%"></div>

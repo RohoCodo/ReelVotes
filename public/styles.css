@@ -735,8 +735,9 @@ body {
       padding: 3px 6px;
       white-space: normal;
       line-height: 1.2;
-      max-width: 100%;
-      width: fit-content;
+      max-width: 130px;
+      width: auto;
+      overflow-wrap: anywhere;
     }
 
     .screening-card h3 {
@@ -754,6 +755,7 @@ body {
   .screening-card {
     margin: 0;
     width: 100%;
+    box-sizing: border-box;
     text-align: left;
     border-radius: 14px;
     border: 1px solid rgba(255, 255, 255, 0.12);
@@ -965,8 +967,8 @@ body {
     font-weight: 700;
     min-width: 0;
     overflow-wrap: anywhere;
-    text-align: left;
-    justify-self: start;
+    text-align: center;
+    justify-self: center;
   }
 
   .leaderboard-head .votes {
@@ -975,6 +977,15 @@ body {
     white-space: nowrap;
     text-align: right;
     justify-self: end;
+  }
+
+  .chosen-movie-header {
+    justify-content: center;
+  }
+
+  .chosen-movie-header > span,
+  .admin-movie-title {
+    text-align: center;
   }
 
   @media (max-width: 520px) {
