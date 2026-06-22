@@ -3,8 +3,12 @@
 <head>
   <title>Vote the Next Movie Night</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="refresh" content="0; url=/public/index.html" />
   <link rel="stylesheet" href="styles.css?v=20260615-2" />
   <link rel="icon" type="image/png" href="icon.png" />
+  <script>
+    window.location.replace(`/public/index.html${window.location.search || ""}${window.location.hash || ""}`);
+  </script>
   <script src="events-config.js?v=20260528-1"></script>
 </head>
 <body>

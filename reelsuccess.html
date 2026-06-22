@@ -3,8 +3,12 @@
 <head>
   <title>ReelSuccess</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="refresh" content="0; url=/public/reelsuccess.html" />
   <link rel="stylesheet" href="styles.css?v=20260615-2" />
   <link rel="icon" type="image/png" href="icon.png" />
+  <script>
+    window.location.replace(`/public/reelsuccess.html${window.location.search || ""}${window.location.hash || ""}`);
+  </script>
 </head>
 <body>
   <div class="overlay"></div>

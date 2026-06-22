@@ -3,8 +3,12 @@
 <head>
   <title>ReelVotes Timetable</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="refresh" content="0; url=/public/timetable.html" />
   <link rel="stylesheet" href="styles.css" />
   <link rel="icon" type="image/png" href="icon.png" />
+  <script>
+    window.location.replace(`/public/timetable.html${window.location.search || ""}${window.location.hash || ""}`);
+  </script>
 </head>
 <body>
 

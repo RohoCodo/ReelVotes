@@ -3,9 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="refresh" content="0; url=/public/support.html" />
   <title>Support – ReelVotes</title>
   <link rel="stylesheet" href="styles.css" />
   <link rel="icon" type="image/png" href="icon.png" />
+  <script>
+    window.location.replace(`/public/support.html${window.location.search || ""}${window.location.hash || ""}`);
+  </script>
   <style>
     .support-container {
       max-width: 720px;
