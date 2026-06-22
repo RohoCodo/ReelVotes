@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Suggest a Movie | ReelVotes</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="/styles.css?v=20260621-1" />
+  <link rel="icon" type="image/png" href="/icon.png" />
+</head>
+<body>
+  <div class="overlay"></div>
+
+  <div class="container">
+    <div class="card" style="max-width:760px; text-align:left;">
+      <nav class="site-nav" aria-label="Primary">
+        <div class="site-nav-left">
+          <a class="site-nav-brand" href="/index.html">ReelVotes</a>
+        </div>
+        <div class="site-nav-center" aria-label="Core navigation">
+          <a class="site-nav-tab" href="/select-event.html">Showtimes</a>
+          <a class="site-nav-tab active" href="/suggest">Suggest a Movie</a>
+          <a class="site-nav-tab" href="/how-it-works">How It Works</a>
+        </div>
+        <div class="site-nav-right">
+          <a class="site-nav-cta" href="/email-signup.html">Join Email List</a>
+          <details class="site-nav-profile">
+            <summary aria-label="Open profile menu">⚙</summary>
+            <div class="site-nav-dropdown" role="menu">
+              <a href="/reelsuccess.html" role="menuitem">ReelSuccess</a>
+              <a href="/admin.html" role="menuitem">Admin View</a>
+            </div>
+          </details>
+        </div>
+        <button id="navToggleBtn" class="nav-toggle" type="button" aria-label="Toggle navigation">☰</button>
+        <div id="siteNavDrawer" class="site-nav-drawer" aria-label="Mobile navigation">
+          <a href="/select-event.html">Showtimes</a>
+          <a class="active" href="/suggest">Suggest a Movie</a>
+          <a href="/how-it-works">How It Works</a>
+          <a href="/email-signup.html">Join Email List</a>
+          <a href="/reelsuccess.html">ReelSuccess</a>
+          <a href="/admin.html">Admin View</a>
+        </div>
+      </nav>
+
+      <div id="movieSuggestionMount"></div>
+    </div>
+  </div>
+
+  <script src="/site-nav.js"></script>
+  <script type="module" src="/suggest/suggest.js"></script>
+</body>
+</html>
