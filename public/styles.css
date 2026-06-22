@@ -137,6 +137,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    flex-wrap: wrap;
     gap: 12px;
     margin-bottom: 14px;
     padding: 10px 12px;
@@ -158,12 +159,14 @@ body {
   }
 
   .site-nav-center {
+    display: none;
     flex: 1;
     justify-content: center;
     gap: 18px;
   }
 
   .site-nav-right {
+    margin-left: auto;
     justify-content: flex-end;
     gap: 10px;
     min-width: 200px;
@@ -309,7 +312,9 @@ body {
   }
 
   .nav-toggle {
-    display: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     width: auto;
     margin: 0;
     padding: 8px 10px;
@@ -319,11 +324,13 @@ body {
     color: #fff;
     font-size: 14px;
     cursor: pointer;
+    order: 3;
   }
 
   .site-nav-drawer {
     display: none;
     width: 100%;
+    order: 4;
     margin-top: 10px;
     border-radius: 12px;
     border: 1px solid rgba(255, 255, 255, 0.14);
@@ -1127,8 +1134,12 @@ body {
     }
 
     .site-nav-cta {
-      font-size: 11px;
-      padding: 8px 11px;
+      display: none;
+    }
+
+    .site-nav-drawer a[href="/reelsuccess.html"],
+    .site-nav-drawer a[href="/admin.html"] {
+      display: none !important;
     }
 
     .site-nav-links {
@@ -1161,6 +1172,12 @@ body {
 
     .admin-tab-switcher button:first-child {
       border-top: none;
+    }
+  }
+
+  @media (max-width: 900px) {
+    .site-nav-cta {
+      display: none !important;
     }
   }
 
