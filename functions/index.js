@@ -804,6 +804,55 @@ function sanitizeMovieTitle(movieTitle) {
   return normalizedMovieTitle;
 }
 
+function buildMovieChatKey(movieTitle) {
+  const normalized = normalizeMovieTitleLoose(movieTitle)
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 120);
+
+  if (!normalized) {
+    throw new HttpsError("invalid-argument", "Unable to build a valid movie chat room key.");
+  }
+
+  return normalized;
+}
+
+function buildMovieChatThreadId(movieTitle) {
+  return `movie__${buildMovieChatKey(movieTitle)}`;
+}
+
+function sanitizeMovieChatThreadId(threadId) {
+  const normalizedThreadId = String(threadId || "").trim();
+  if (!/^movie__[a-z0-9-]{2,120}$/.test(normalizedThreadId)) {
+    throw new HttpsError("invalid-argument", "Invalid movie chat room id.");
+  }
+  return normalizedThreadId;
+}
+
+function normalizeRoomCode(roomCode) {
+  return String(roomCode || "")
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, "");
+}
+
+function sanitizeRoomCode(roomCode) {
+  const normalizedCode = normalizeRoomCode(roomCode);
+  if (normalizedCode.length < 4 || normalizedCode.length > 32) {
+    throw new HttpsError("invalid-argument", "Room code must be 4-32 letters or numbers.");
+  }
+  return normalizedCode;
+}
+
+function sanitizeParticipantId(participantId) {
+  const normalizedParticipantId = String(participantId || "").trim();
+  if (!/^[a-z0-9_-]{8,120}$/i.test(normalizedParticipantId)) {
+    throw new HttpsError("invalid-argument", "Invalid chat participant id.");
+  }
+  return normalizedParticipantId;
+}
+
 function sanitizeMovieTitles(movieTitlesInput) {
   const rawTitles = Array.isArray(movieTitlesInput)
     ? movieTitlesInput
@@ -2293,6 +2342,150 @@ exports.submitTheaterPetition = onCall(async (request) => {
     ok: true,
     petitionId: docRef.id,
     emailedTheater: payload.theater_email_status === "pending",
+  };
+});
+
+exports.joinMovieChatRoom = onCall(async (request) => {
+  const movieTitle = sanitizeMovieTitle(request.data?.movieTitle);
+  const roomCode = sanitizeRoomCode(request.data?.roomCode);
+  const displayName = sanitizeTextField(request.data?.displayName, {maxLength: 40});
+  const participantId = sanitizeParticipantId(request.data?.participantId);
+  const threadId = buildMovieChatThreadId(movieTitle);
+
+  const threadRef = db.collection("threads").doc(threadId);
+  const memberRef = threadRef.collection("members").doc(participantId);
+
+  await db.runTransaction(async (transaction) => {
+    const threadDoc = await transaction.get(threadRef);
+    const now = admin.firestore.FieldValue.serverTimestamp();
+    const roomCodeHash = hashValue(roomCode);
+
+    if (!threadDoc.exists) {
+      transaction.set(threadRef, {
+        threadId,
+        movieTitle,
+        movieKey: buildMovieChatKey(movieTitle),
+        roomCodeHash,
+        codeRequired: true,
+        messageCount: 0,
+        createdAt: now,
+        updatedAt: now,
+        createdBy: participantId,
+      });
+    } else {
+      const threadData = threadDoc.data() || {};
+      const configuredRoomCodeHash = String(threadData.roomCodeHash || "").trim();
+
+      if (!configuredRoomCodeHash) {
+        throw new HttpsError(
+          "failed-precondition",
+          "Room code is not configured for this movie chat yet.",
+        );
+      }
+
+      if (configuredRoomCodeHash !== roomCodeHash) {
+        throw new HttpsError("permission-denied", "Incorrect room code.");
+      }
+
+      transaction.set(threadRef, {
+        updatedAt: now,
+      }, {merge: true});
+    }
+
+    transaction.set(memberRef, {
+      participantId,
+      movieTitle,
+      displayName,
+      joinedAt: now,
+      updatedAt: now,
+      verifiedByRoomCode: true,
+    }, {merge: true});
+  });
+
+  return {
+    ok: true,
+    threadId,
+    movieTitle,
+  };
+});
+
+exports.sendMovieChatMessage = onCall(async (request) => {
+  const threadId = sanitizeMovieChatThreadId(request.data?.threadId);
+  const roomCode = sanitizeRoomCode(request.data?.roomCode);
+  const participantId = sanitizeParticipantId(request.data?.participantId);
+  const text = sanitizeTextField(request.data?.text, {required: true, maxLength: 500});
+
+  const threadRef = db.collection("threads").doc(threadId);
+  const memberRef = threadRef.collection("members").doc(participantId);
+  const messageRef = threadRef.collection("messages").doc();
+
+  await db.runTransaction(async (transaction) => {
+    const [threadDoc, memberDoc] = await Promise.all([
+      transaction.get(threadRef),
+      transaction.get(memberRef),
+    ]);
+
+    if (!threadDoc.exists) {
+      throw new HttpsError("not-found", "Movie chat room not found.");
+    }
+
+    const threadData = threadDoc.data() || {};
+    const configuredRoomCodeHash = String(threadData.roomCodeHash || "").trim();
+    if (!configuredRoomCodeHash) {
+      throw new HttpsError("failed-precondition", "Room code is not configured for this movie chat.");
+    }
+    if (configuredRoomCodeHash !== hashValue(roomCode)) {
+      throw new HttpsError("permission-denied", "Incorrect room code.");
+    }
+
+    if (!memberDoc.exists) {
+      throw new HttpsError("permission-denied", "Join the room with a valid code first.");
+    }
+
+    const memberData = memberDoc.data() || {};
+    const nowMillis = Date.now();
+    const lastSentAt = memberData.lastSentAt;
+    if (
+      lastSentAt &&
+      typeof lastSentAt.toMillis === "function" &&
+      nowMillis - lastSentAt.toMillis() < 1200
+    ) {
+      throw new HttpsError("resource-exhausted", "You are sending messages too quickly.");
+    }
+
+    const movieTitle = String(threadData.movieTitle || "").trim() || "Untitled movie";
+    const movieKey = String(threadData.movieKey || "").trim() || buildMovieChatKey(movieTitle);
+    const displayName = sanitizeTextField(memberData.displayName, {maxLength: 40}) || "Guest";
+    const now = admin.firestore.FieldValue.serverTimestamp();
+
+    transaction.set(messageRef, {
+      threadId,
+      movieTitle,
+      movieKey,
+      participantId,
+      displayName,
+      text,
+      createdAt: now,
+      createdAtClient: nowMillis,
+    });
+
+    transaction.set(threadRef, {
+      updatedAt: now,
+      lastMessageAt: now,
+      lastMessagePreview: text.slice(0, 120),
+      messageCount: Number(threadData.messageCount || 0) + 1,
+    }, {merge: true});
+
+    transaction.set(memberRef, {
+      updatedAt: now,
+      lastSentAt: now,
+    }, {merge: true});
+  });
+
+  return {
+    ok: true,
+    threadId,
+    messageId: messageRef.id,
   };
 });
 

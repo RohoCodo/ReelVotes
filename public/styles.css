@@ -42,11 +42,12 @@ body {
   .container {
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start;
     min-height: 100vh;
     min-height: 100dvh;
     height: auto;
     padding: 20px;
+    padding-top: 24px;
   }
   
   .card {
@@ -1806,6 +1807,58 @@ body {
     margin-top: 8px;
     font-size: 11px;
     color: #9a9a9a;
+  }
+
+  .chat-meta-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 10px;
+  }
+
+  .chat-room-messages {
+    max-height: 420px;
+    overflow: auto;
+  }
+
+  @media (max-width: 700px) {
+    .chat-meta-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  @media (max-width: 640px) {
+    .chat-room-messages {
+      max-height: 46vh;
+    }
+
+    .chat-send-row .submit-btn {
+      width: 100%;
+    }
+  }
+
+  @media (max-width: 390px), (max-height: 740px) {
+    .chat-room-messages {
+      max-height: 40vh;
+    }
+
+    #chatRoomPanel {
+      padding: 10px 10px;
+    }
+
+    #chatRoomHeading {
+      font-size: 18px;
+      line-height: 1.2;
+    }
+
+    #chatMessageInput {
+      min-height: 74px !important;
+    }
+
+    #joinChatBtn,
+    #sendChatBtn {
+      min-height: 44px;
+    }
   }
 
   .info-box {

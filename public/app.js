@@ -414,15 +414,18 @@ function renderMomentItems(items) {
 
   momentsFeed.innerHTML = items.map((item) => {
     const movieTitle = escapeHtml(item.movieTitle || item.title || "Untitled movie");
+    const rawMovieTitle = String(item.movieTitle || item.title || "Untitled movie");
     const text = escapeHtml(item.text || item.take || item.content || "No text provided.");
     const author = escapeHtml(item.author || item.authorName || "Anonymous");
     const stamp = escapeHtml(formatMomentDate(item.createdAt || item.timestamp || item.created_at || item.updatedAt));
+    const chatHref = `/chat/?movie=${encodeURIComponent(rawMovieTitle)}`;
 
     return `
       <article class="moment-item">
         <div class="moment-item-title">${movieTitle}</div>
         <div class="moment-item-body">${text}</div>
         <div class="moment-item-meta">${author}${stamp ? ` • ${stamp}` : ""}</div>
+        <div style="margin-top:8px;"><a href="${chatHref}" class="app-link" style="margin:0;font-size:12px;">Join movie chat</a></div>
       </article>
     `;
   }).join("");
