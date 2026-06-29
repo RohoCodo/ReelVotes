@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Movie Chat | ReelVotes</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="/styles.css?v=20260629-1" />
+  <link rel="icon" type="image/png" href="/icon.png" />
+</head>
+<body>
+  <div class="overlay"></div>
+
+  <div class="container">
+    <div class="card" style="max-width:860px; text-align:left;">
+      <nav class="site-nav" aria-label="Primary">
+        <div class="site-nav-left">
+          <a class="site-nav-brand" href="/index.html">ReelVotes</a>
+        </div>
+        <div class="site-nav-center" aria-label="Core navigation">
+          <a class="site-nav-tab" href="/select-event.html">Showtimes</a>
+          <a class="site-nav-tab" href="/suggest">Suggest a Movie</a>
+          <a class="site-nav-tab" href="/how-it-works">How It Works</a>
+          <a class="site-nav-tab active" href="/chat/">Movie Chat</a>
+        </div>
+        <div class="site-nav-right">
+          <a class="site-nav-cta" href="/email-signup.html">Join Email List</a>
+          <details class="site-nav-profile">
+            <summary aria-label="Open profile menu">⚙</summary>
+            <div class="site-nav-dropdown" role="menu">
+              <a href="/reelsuccess.html" role="menuitem">ReelSuccess</a>
+              <a href="/admin.html" role="menuitem">Admin View</a>
+            </div>
+          </details>
+        </div>
+        <button id="navToggleBtn" class="nav-toggle" type="button" aria-label="Toggle navigation">☰</button>
+        <div id="siteNavDrawer" class="site-nav-drawer" aria-label="Mobile navigation">
+          <a href="/select-event.html">Showtimes</a>
+          <a href="/suggest">Suggest a Movie</a>
+          <a href="/how-it-works">How It Works</a>
+          <a class="active" href="/chat/">Movie Chat</a>
+          <a href="/email-signup.html">Join Email List</a>
+        </div>
+      </nav>
+
+      <section class="info-box" style="text-align:left;">
+        <h1 style="margin-top:0; text-align:center;">Movie Chat</h1>
+        <p class="subtitle" style="text-align:center; margin-top:-4px;">
+          Enter the movie title and room code from your post-screening card.
+        </p>
+
+        <div class="chat-meta-grid">
+          <div>
+            <label for="chatMovieInput">Movie Title</label>
+            <input id="chatMovieInput" class="search-input" type="text" placeholder="In the Mood for Love" />
+          </div>
+          <div>
+            <label for="chatRoomCodeInput">Room Code</label>
+            <input id="chatRoomCodeInput" class="search-input" type="text" maxlength="32" placeholder="A1B2C3" autocomplete="one-time-code" />
+          </div>
+        </div>
+
+        <div class="chat-meta-grid">
+          <div>
+            <label for="chatDisplayNameInput">Display Name (optional)</label>
+            <input id="chatDisplayNameInput" class="search-input" type="text" maxlength="40" placeholder="MovieFan92" />
+          </div>
+          <div style="display:flex; align-items:flex-end;">
+            <button id="joinChatBtn" type="button" class="submit-btn" style="margin:0; width:100%;">Join Chat</button>
+          </div>
+        </div>
+
+        <p id="chatStatus" class="subtitle" style="margin:8px 0 0;"></p>
+      </section>
+
+      <section id="chatRoomPanel" class="info-box hidden" style="margin-top:10px; text-align:left;">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:10px;">
+          <h2 id="chatRoomHeading" style="margin:0;">Room</h2>
+          <a id="chatShareLink" class="app-link" href="#" style="margin:0;">Copy room link</a>
+        </div>
+
+        <div id="chatMessages" class="moments-feed chat-room-messages"></div>
+
+        <div style="margin-top:10px;">
+          <label for="chatMessageInput">Message</label>
+          <textarea id="chatMessageInput" class="form-textarea" maxlength="500" placeholder="What did you think of the movie?" style="min-height:90px;"></textarea>
+          <div class="chat-send-row" style="display:flex; justify-content:flex-end; margin-top:8px;">
+            <button id="sendChatBtn" type="button" class="submit-btn" style="margin:0;">Send</button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script src="/site-nav.js"></script>
+  <script type="module" src="/chat/chat.js"></script>
+</body>
+</html>
