@@ -418,7 +418,7 @@ function renderMomentItems(items) {
     const text = escapeHtml(item.text || item.take || item.content || "No text provided.");
     const author = escapeHtml(item.author || item.authorName || "Anonymous");
     const stamp = escapeHtml(formatMomentDate(item.createdAt || item.timestamp || item.created_at || item.updatedAt));
-    const chatHref = `/chat/?movie=${encodeURIComponent(rawMovieTitle)}`;
+    const chatHref = `chat/?movie=${encodeURIComponent(rawMovieTitle)}`;
 
     return `
       <article class="moment-item">

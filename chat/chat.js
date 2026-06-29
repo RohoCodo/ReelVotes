@@ -219,7 +219,8 @@ async function joinRoom() {
     }
 
     if (shareLink) {
-      const roomUrl = `${window.location.origin}/chat/?movie=${encodeURIComponent(resolvedMovieTitle)}`;
+      const basePath = String(window.location.pathname || "/").replace(/index\.html$/i, "");
+      const roomUrl = `${window.location.origin}${basePath}?movie=${encodeURIComponent(resolvedMovieTitle)}`;
       shareLink.href = roomUrl;
       shareLink.onclick = async (event) => {
         event.preventDefault();

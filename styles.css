@@ -50,11 +50,12 @@ body {
   .container {
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start;
     min-height: 100vh;
     min-height: 100dvh;
     height: auto;
     padding: 20px;
+    padding-top: 24px;
   }
   
   .card {

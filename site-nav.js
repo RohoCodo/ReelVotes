@@ -1,4 +1,66 @@
 (function initSiteNav() {
+  const computeProjectBasePath = () => {
+    if (!/github\.io$/i.test(window.location.hostname)) {
+      return "";
+    }
+
+    const parts = String(window.location.pathname || "")
+      .split("/")
+      .filter(Boolean);
+
+    if (!parts.length) {
+      return "";
+    }
+
+    const firstPart = parts[0];
+    if (firstPart.includes(".")) {
+      return "";
+    }
+
+    return `/${firstPart}`;
+  };
+
+  const projectBasePath = computeProjectBasePath();
+
+  const withProjectBasePath = (href) => {
+    if (!projectBasePath) {
+      return href;
+    }
+
+    const normalizedHref = String(href || "");
+    if (!normalizedHref.startsWith("/") || normalizedHref.startsWith("//")) {
+      return normalizedHref;
+    }
+
+    if (
+      normalizedHref === projectBasePath ||
+      normalizedHref.startsWith(`${projectBasePath}/`)
+    ) {
+      return normalizedHref;
+    }
+
+    return `${projectBasePath}${normalizedHref}`;
+  };
+
+  const rewriteNavLinksForProjectPages = () => {
+    if (!projectBasePath) {
+      return;
+    }
+
+    document.querySelectorAll("a[href]").forEach((anchor) => {
+      const href = anchor.getAttribute("href");
+      if (!href) {
+        return;
+      }
+      const rewritten = withProjectBasePath(href);
+      if (rewritten !== href) {
+        anchor.setAttribute("href", rewritten);
+      }
+    });
+  };
+
+  rewriteNavLinksForProjectPages();
+
   const navToggleBtn = document.getElementById("navToggleBtn");
   const siteNavDrawer = document.getElementById("siteNavDrawer");
   const profileMenus = Array.from(document.querySelectorAll(".site-nav-profile"));
