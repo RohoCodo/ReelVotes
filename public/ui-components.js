@@ -670,6 +670,13 @@ export class ResultsLeaderboard {
     this.mountEl = options.mountEl;
     this.movies = Array.isArray(options.movies) ? options.movies : [];
     this.title = options.title || "Live Results";
+    this.highlightedTitles = new Set(
+      Array.isArray(options.highlightedTitles)
+        ? options.highlightedTitles
+          .map((title) => String(title || "").trim().toLowerCase())
+          .filter((title) => title.length > 0)
+        : []
+    );
     this.render();
   }
 
@@ -693,15 +700,16 @@ export class ResultsLeaderboard {
           const percent = total > 0 ? Math.round((votes / total) * 100) : 0;
           const title = item?.title || item?.movie_title || item?.id || "Untitled";
           const poster = item?.poster || item?.posterUrl || item?.poster_url || null;
+          const isVotedByCurrentUser = this.highlightedTitles.has(String(title || "").trim().toLowerCase());
           return `
-            <div class="leaderboard-row ${index === 0 ? "top" : ""}">
+            <div class="leaderboard-row ${index === 0 ? "top" : ""} ${isVotedByCurrentUser ? "voted" : ""}">
               <div class="leaderboard-head">
                 <p class="rank">#${index + 1}</p>
                 ${poster
                   ? `<img class="leaderboard-poster" src="${escapeHtml(poster)}" alt="${escapeHtml(title)} poster" loading="lazy" />`
                   : '<div class="leaderboard-poster-fallback" aria-hidden="true"></div>'}
                 <p class="movie">${escapeHtml(title)}</p>
-                <p class="votes">${votes} · ${percent}%</p>
+                <p class="votes">${votes} · ${percent}% ${isVotedByCurrentUser ? '<span class="leaderboard-voted-badge">Voted</span>' : ''}</p>
               </div>
               <div class="leaderboard-track">
                 <span class="leaderboard-fill" style="width:${Math.min(percent, 100)}%"></span>

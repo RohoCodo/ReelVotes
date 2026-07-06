@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
 import { getFirestore, collection, getDocs, getDoc, doc, query, where, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-functions.js";
-import { ShareVotePanel, ResultsLeaderboard, ConfettiCelebration } from "./ui-components.js?v=20260622-17";
+import { ShareVotePanel, ResultsLeaderboard, ConfettiCelebration } from "./ui-components.js?v=20260705-1";
 
 // Firebase Config
 const firebaseConfig = {
@@ -1199,6 +1199,15 @@ async function buildUpcomingPreviewHtml() {
 
 async function renderPostVoteExperience({ movieTitles = [], heading = "You're In 🎬", subtitle = "Thanks for voting! Help your movie win by sharing this vote with friends." } = {}) {
   const upcomingPreviewHtml = await buildUpcomingPreviewHtml();
+  const normalizedBallotTitles = Array.from(new Set(
+    movieTitles
+      .map((title) => String(title || "").trim())
+      .filter((title) => title.length > 0)
+  ));
+  const ballotListHtml = normalizedBallotTitles.length
+    ? `<ul class="post-vote-ballot-list">${normalizedBallotTitles.map((title) => `<li>${escapeHtml(title)}</li>`).join("")}</ul>`
+    : "";
+
   const leaderboardMovies = await Promise.all(
     chosenMovies.map(async (movie) => {
       const title = String(movie?.title || "").trim();
@@ -1218,6 +1227,11 @@ async function renderPostVoteExperience({ movieTitles = [], heading = "You're In
         <h2>${escapeHtml(heading)}</h2>
         <p>${escapeHtml(subtitle)}</p>
       </header>
+      <section class="info-box" style="margin:0 0 12px;text-align:left;">
+        <h3 style="margin:0 0 8px;">Vote confirmed</h3>
+        <p class="subtitle" style="margin:0;">Your ballot has been counted${normalizedBallotTitles.length ? ` (${normalizedBallotTitles.length} movie${normalizedBallotTitles.length === 1 ? "" : "s"})` : ""}.</p>
+        ${ballotListHtml}
+      </section>
       <div id="resultsLeaderboardMount"></div>
       <div id="shareVotePanelMount"></div>
       <p class="post-vote-note">More votes = better screenings. Invite friends to support your pick.</p>
@@ -1233,6 +1247,7 @@ async function renderPostVoteExperience({ movieTitles = [], heading = "You're In
       mountEl: leaderboardMount,
       movies: leaderboardMovies,
       title: "Live Results",
+      highlightedTitles: normalizedBallotTitles,
     });
   }
 

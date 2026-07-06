@@ -18,6 +18,7 @@ const functions = getFunctions(app);
 const runEliminationRoundCallable = httpsCallable(functions, "runEliminationRound");
 const saveEventAdminSettingsCallable = httpsCallable(functions, "saveEventAdminSettings");
 const createEventShowtimeCallable = httpsCallable(functions, "createEventShowtime");
+const deleteEventShowtimeCallable = httpsCallable(functions, "deleteEventShowtime");
 const setEventVoteStatusCallable = httpsCallable(functions, "setEventVoteStatus");
 const getEventVoteStatsCallable = httpsCallable(functions, "getEventVoteStats");
 const rebuildEventMovieVoteCountsCallable = httpsCallable(functions, "rebuildEventMovieVoteCounts");
@@ -65,6 +66,8 @@ const adminRequireEmailCheckbox = document.getElementById("adminRequireEmailChec
 const adminMoviesInput = document.getElementById("adminMoviesInput");
 const adminSaveBtn = document.getElementById("adminSaveBtn");
 const adminSaveStatus = document.getElementById("adminSaveStatus");
+const adminDeleteBtn = document.getElementById("adminDeleteBtn");
+const adminDeleteStatus = document.getElementById("adminDeleteStatus");
 const adminNewShowtimeDateInput = document.getElementById("adminNewShowtimeDate");
 const adminNewShowtimeTimeInput = document.getElementById("adminNewShowtimeTime");
 const adminNewVoteStatusSelect = document.getElementById("adminNewVoteStatus");
@@ -156,8 +159,8 @@ function populateSelector() {
   eventSelector.innerHTML = "";
   if (configuredEvents.length === 0) {
     const opt = document.createElement("option");
-    opt.value = currentEventId;
-    opt.textContent = currentEventId;
+    opt.value = "";
+    opt.textContent = "No showtimes available";
     eventSelector.appendChild(opt);
     return;
   }
@@ -336,6 +339,12 @@ function setSaveStatus(message, isError = false) {
   if (!adminSaveStatus) return;
   adminSaveStatus.textContent = message;
   adminSaveStatus.style.color = isError ? "#ff6b6b" : "#bbb";
+}
+
+function setDeleteStatus(message, isError = false) {
+  if (!adminDeleteStatus) return;
+  adminDeleteStatus.textContent = message;
+  adminDeleteStatus.style.color = isError ? "#ff6b6b" : "#bbb";
 }
 
 function setCreateStatus(message, isError = false) {
@@ -535,7 +544,7 @@ function updateEndVoteButton() {
   const isNotStarted = currentVoteStatus === "not-started";
   const isPrivileged = isPrivilegedAdminEmail(currentAdminEmail);
   const hideReopen = isEnded && !isPrivileged;
-  endVoteBtn.disabled = !currentAdminEmail;
+  endVoteBtn.disabled = !currentAdminEmail || !currentEventId;
   endVoteBtn.textContent = isNotStarted ? "Start vote" : (isEnded ? "Reopen vote" : "End vote");
   endVoteBtn.style.display = hideReopen ? "none" : "";
   endVoteBtn.style.opacity = endVoteBtn.disabled ? "0.6" : "1";
@@ -971,6 +980,106 @@ async function createShowtime() {
   }
 }
 
+function clearAdminViewForNoEvent() {
+  currentEventId = "";
+  currentVoteStatus = "not-started";
+  currentUniqueVoterCount = null;
+  currentActiveVoteCount = null;
+  latestMoviesForRender = [];
+
+  if (unsubscribeLive) { unsubscribeLive(); unsubscribeLive = null; }
+  if (unsubscribeVoterCount) { unsubscribeVoterCount(); unsubscribeVoterCount = null; }
+  if (voteStatsPollTimer) {
+    window.clearInterval(voteStatsPollTimer);
+    voteStatsPollTimer = null;
+  }
+
+  populateSelector();
+  updateEventLabel("");
+  updateEndVoteButton();
+  renderBallot([]);
+
+  if (adminMoviesInput) adminMoviesInput.value = "";
+  if (adminRequireEmailCheckbox) adminRequireEmailCheckbox.checked = true;
+  if (adminList) {
+    adminList.innerHTML = "";
+    const empty = document.createElement("div");
+    empty.className = "chosen-movie";
+    empty.textContent = "No showtime selected.";
+    adminList.appendChild(empty);
+  }
+  if (updatedAtEl) updatedAtEl.textContent = "";
+
+  setVoteControlStatus("No showtime selected.", true);
+  setSaveStatus("Select or create a showtime to edit.");
+}
+
+async function deleteCurrentShowtime() {
+  if (!currentAdminEmail) {
+    setDeleteStatus("Admin session missing. Refresh and sign in again.", true);
+    return;
+  }
+
+  if (!currentEventId) {
+    setDeleteStatus("No showtime selected.", true);
+    return;
+  }
+
+  const deletedEventId = currentEventId;
+  const event = resolveEvent(deletedEventId);
+  const label = event?.screeningLabel || event?.id || deletedEventId;
+  const confirmed = window.confirm(`Delete \"${label}\" permanently? This removes its movies and vote history.`);
+  if (!confirmed) {
+    return;
+  }
+
+  if (adminDeleteBtn) adminDeleteBtn.disabled = true;
+  setDeleteStatus("Deleting showtime...");
+
+  try {
+    await deleteEventShowtimeCallable({
+      eventId: deletedEventId,
+      adminEmail: currentAdminEmail,
+    });
+
+    const keptEvents = configuredEvents.filter((item) => {
+      const resolvedId = EVENT_ID_ALIASES[item.id] || item.firestoreEventId || item.id;
+      return resolvedId !== deletedEventId;
+    });
+    configuredEvents.splice(0, configuredEvents.length, ...keptEvents);
+
+    await refreshConfiguredEventsFromFirestore();
+
+    const nextEvent = configuredEvents.find((item) => {
+      const resolvedId = EVENT_ID_ALIASES[item.id] || item.firestoreEventId || item.id;
+      return resolvedId !== deletedEventId;
+    }) || null;
+
+    if (!nextEvent) {
+      clearAdminViewForNoEvent();
+      setDeleteStatus(`Deleted ${label}.`);
+      return;
+    }
+
+    currentEventId = EVENT_ID_ALIASES[nextEvent.id] || nextEvent.firestoreEventId || nextEvent.id;
+
+    if (eventSelector) {
+      eventSelector.value = nextEvent.id;
+    }
+
+    startLiveListener(currentEventId);
+    await loadAdminControlsForEvent(currentEventId);
+    setDeleteStatus(`Deleted ${label}.`);
+    setSaveStatus(`Loaded ${nextEvent.screeningLabel || nextEvent.id}.`);
+    showTab("edit");
+  } catch (error) {
+    console.error("Failed deleting showtime:", error);
+    setDeleteStatus(error?.message || "Failed deleting showtime.", true);
+  } finally {
+    if (adminDeleteBtn) adminDeleteBtn.disabled = false;
+  }
+}
+
 let unsubscribeLive = null;
 let unsubscribeVoterCount = null;
 let latestMoviesForRender = [];
@@ -1074,6 +1183,10 @@ if (eventSelector) {
 
 if (adminSaveBtn) {
   adminSaveBtn.addEventListener("click", saveAdminControls);
+}
+
+if (adminDeleteBtn) {
+  adminDeleteBtn.addEventListener("click", deleteCurrentShowtime);
 }
 
 if (adminCreateBtn) {

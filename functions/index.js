@@ -922,6 +922,31 @@ function sanitizeOptionalMovieTitles(movieTitlesInput) {
   return deduped;
 }
 
+async function deleteCollectionDocuments(collectionRef, batchSize = 400) {
+  let deletedCount = 0;
+
+  while (true) {
+    const snapshot = await collectionRef.limit(batchSize).get();
+    if (snapshot.empty) {
+      break;
+    }
+
+    const batch = db.batch();
+    snapshot.docs.forEach((docSnapshot) => {
+      batch.delete(docSnapshot.ref);
+    });
+    await batch.commit();
+
+    deletedCount += snapshot.size;
+
+    if (snapshot.size < batchSize) {
+      break;
+    }
+  }
+
+  return deletedCount;
+}
+
 function sanitizeVoteStatus(voteStatusInput) {
   const normalizedVoteStatus = String(voteStatusInput || "not-started").trim().toLowerCase();
   if (!["not-started", "live", "ended"].includes(normalizedVoteStatus)) {
@@ -1673,6 +1698,41 @@ exports.createEventShowtime = onCall(async (request) => {
       requireEmail,
       allowedMovies: movieTitles,
     },
+  };
+});
+
+exports.deleteEventShowtime = onCall(async (request) => {
+  const eventId = sanitizeEventId(request.data?.eventId);
+  const adminEmail = assertAdminEmail(request.data?.adminEmail);
+
+  const eventRef = db.collection("events").doc(eventId);
+  const eventDoc = await eventRef.get();
+  if (!eventDoc.exists) {
+    throw new HttpsError("not-found", "That showtime no longer exists.");
+  }
+
+  const subcollections = await eventRef.listCollections();
+  let deletedSubcollectionDocCount = 0;
+
+  for (const subcollectionRef of subcollections) {
+    const deletedCount = await deleteCollectionDocuments(subcollectionRef);
+    deletedSubcollectionDocCount += deletedCount;
+  }
+
+  await eventRef.delete();
+
+  logger.info("Admin deleted showtime", {
+    eventId,
+    adminEmail,
+    deletedSubcollectionCount: subcollections.length,
+    deletedSubcollectionDocCount,
+  });
+
+  return {
+    ok: true,
+    eventId,
+    deletedSubcollectionCount: subcollections.length,
+    deletedSubcollectionDocCount,
   };
 });
 
