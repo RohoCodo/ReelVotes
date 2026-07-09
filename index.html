@@ -4,7 +4,7 @@
   <title>Vote the Next Movie Night</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta http-equiv="refresh" content="0; url=/public/index.html" />
-  <link rel="stylesheet" href="styles.css?v=20260615-2" />
+  <link rel="stylesheet" href="styles.css?v=20260708-1" />
   <link rel="icon" type="image/png" href="icon.png" />
   <script>
     window.location.replace(`/public/index.html${window.location.search || ""}${window.location.hash || ""}`);
@@ -60,6 +60,7 @@
         />
         <button id="clearSearchBtn" class="clear-search-btn">✕</button>
       </div>
+      <p class="search-disclaimer">IMDb ratings are shown next to each movie. ▶ opens the trailer.</p>
       <div id="searchResults" class="search-results hidden"></div>
       <div id="moviePreview" class="movie-preview hidden">
         <div class="preview-content">
@@ -367,6 +368,6 @@
   })();
 </script>
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" defer></script>
-<script type="module" src="app.js?v=20260615-2"></script>
+<script type="module" src="app.js?v=20260708-1"></script>
 </body>
 </html>

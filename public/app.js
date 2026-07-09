@@ -111,6 +111,33 @@ const ACTIVE_ALLOWED_MOVIES = EVENT_ALLOWED_MOVIES.length > 0 ? EVENT_ALLOWED_MO
 let _eventStatusInitialized = false;
 let _unsubscribeEventStatus = null;
 
+function withTimeout(promise, timeoutMs, fallbackValue, label = "async task") {
+  return new Promise((resolve) => {
+    let settled = false;
+    const timeoutId = window.setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      console.warn(`[app] ${label} timed out after ${timeoutMs}ms; using fallback.`);
+      resolve(fallbackValue);
+    }, timeoutMs);
+
+    Promise.resolve(promise)
+      .then((value) => {
+        if (settled) return;
+        settled = true;
+        window.clearTimeout(timeoutId);
+        resolve(value);
+      })
+      .catch((error) => {
+        if (settled) return;
+        settled = true;
+        window.clearTimeout(timeoutId);
+        console.warn(`[app] ${label} failed; using fallback.`, error);
+        resolve(fallbackValue);
+      });
+  });
+}
+
 function buildEventIdCandidates(rawEventId) {
   const normalized = String(rawEventId || "").trim();
   const event = configuredEvents.find((item) => (
@@ -159,6 +186,19 @@ async function resolveEventDataId(rawEventId) {
 
 async function loadEventRuntimeSettings() {
   return new Promise((resolve) => {
+    let resolved = false;
+    const finishInitialLoad = () => {
+      if (resolved) return;
+      resolved = true;
+      _eventStatusInitialized = true;
+      resolve();
+    };
+
+    const startupTimeoutId = window.setTimeout(() => {
+      console.warn("[app] Runtime event settings load timed out; continuing with configured defaults.");
+      finishInitialLoad();
+    }, 2500);
+
     if (_unsubscribeEventStatus) {
       _unsubscribeEventStatus();
     }
@@ -179,8 +219,8 @@ async function loadEventRuntimeSettings() {
         }
 
         if (!_eventStatusInitialized) {
-          _eventStatusInitialized = true;
-          resolve();
+          window.clearTimeout(startupTimeoutId);
+          finishInitialLoad();
           return;
         }
 
@@ -195,8 +235,8 @@ async function loadEventRuntimeSettings() {
       (error) => {
         console.warn("[app] Could not load runtime event settings, using config defaults", error);
         if (!_eventStatusInitialized) {
-          _eventStatusInitialized = true;
-          resolve();
+          window.clearTimeout(startupTimeoutId);
+          finishInitialLoad();
         }
       }
     );
@@ -999,14 +1039,16 @@ async function routeCurrentVoter() {
     return;
   }
 
-  const existingVote = await getExistingVote();
+  const [existingVote] = await Promise.all([
+    withTimeout(getExistingVote(), 1800, null, "existing vote status lookup"),
+    fetchChosenMovies()
+  ]);
+
   if (existingVote) {
-    await fetchChosenMovies();
     await showExistingVoteConfirmation(existingVote);
     return;
   }
 
-  await fetchChosenMovies();
   showVotingInterface();
 }
 
@@ -1024,8 +1066,7 @@ function updateAllowedMovieHighlights() {
   allMovieItems.forEach((item) => {
     const itemTitle = item.dataset.movieTitle || "";
     const selected = isMovieSelected(itemTitle);
-    item.style.backgroundColor = selected ? "#FFD700" : "";
-    item.style.fontWeight = selected ? "bold" : "normal";
+    item.classList.toggle("selected", selected);
   });
 }
 
@@ -1280,7 +1321,7 @@ async function searchTMDB(query) {
 async function getMovieDetails(movieId) {
   try {
     const response = await fetch(
-      `${TMDB_BASE_URL}/movie/${movieId}?api_key=${TMDB_API_KEY}&append_to_response=credits`
+      `${TMDB_BASE_URL}/movie/${movieId}?api_key=${TMDB_API_KEY}&append_to_response=credits,videos`
     );
     return await response.json();
   } catch (error) {
@@ -1291,6 +1332,34 @@ async function getMovieDetails(movieId) {
 
 function buildPosterUrl(posterPath, size = "w185") {
   return posterPath ? `https://image.tmdb.org/t/p/${size}${posterPath}` : null;
+}
+
+function buildYouTubeTrailerSearchUrl(title) {
+  const query = `${String(title || "").trim()} official trailer`;
+  return `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
+}
+
+function selectYouTubeTrailerUrl(videos, fallbackTitle = "") {
+  const items = Array.isArray(videos?.results) ? videos.results : [];
+  const youtubeVideos = items.filter((item) => String(item?.site || "").toLowerCase() === "youtube" && item?.key);
+  const preferred = youtubeVideos.find((item) => String(item?.type || "").toLowerCase() === "trailer")
+    || youtubeVideos.find((item) => String(item?.type || "").toLowerCase() === "teaser")
+    || youtubeVideos[0]
+    || null;
+
+  if (preferred?.key) {
+    return `https://www.youtube.com/watch?v=${encodeURIComponent(preferred.key)}`;
+  }
+
+  return buildYouTubeTrailerSearchUrl(fallbackTitle);
+}
+
+function formatStarRating(voteAverage) {
+  const numeric = Number(voteAverage);
+  if (!Number.isFinite(numeric) || numeric <= 0) {
+    return null;
+  }
+  return `${numeric.toFixed(1)}★`;
 }
 
 function normalizeMovieTitleForSearch(title) {
@@ -1312,15 +1381,17 @@ function normalizeMovieTitleForSearch(title) {
 async function getMovieMetadataByTitle(title) {
   const normalizedLookupTitle = normalizeMovieTitleForSearch(title);
   if (!normalizedLookupTitle) {
-    return { tmdbId: null, poster: null };
+    return {
+      tmdbId: null,
+      poster: null,
+      starRating: null,
+      trailerUrl: buildYouTubeTrailerSearchUrl(title),
+    };
   }
 
   const cacheKey = normalizedLookupTitle.toLowerCase();
   if (movieMetadataCache.has(cacheKey)) {
-    const cached = movieMetadataCache.get(cacheKey);
-    if (cached?.poster || cached?.tmdbId) {
-      return cached;
-    }
+    return movieMetadataCache.get(cacheKey);
   }
 
   try {
@@ -1331,11 +1402,11 @@ async function getMovieMetadataByTitle(title) {
       const details = await getMovieDetails(override.tmdbId);
       const metadata = {
         tmdbId: override.tmdbId,
-        poster: buildPosterUrl(details?.poster_path, "w185")
+        poster: buildPosterUrl(details?.poster_path, "w185"),
+        starRating: formatStarRating(details?.vote_average),
+        trailerUrl: selectYouTubeTrailerUrl(details?.videos, normalizedLookupTitle),
       };
-      if (metadata.poster || metadata.tmdbId) {
-        movieMetadataCache.set(cacheKey, metadata);
-      }
+      movieMetadataCache.set(cacheKey, metadata);
       return metadata;
     }
 
@@ -1358,22 +1429,38 @@ async function getMovieMetadataByTitle(title) {
     const withPoster = results.find(movie => Boolean(movie?.poster_path)) || null;
     const exactWithPoster = results.find(movie => movie.title?.trim().toLowerCase() === normalizedTitle && movie?.poster_path) || null;
     const match = exactWithPoster || withPoster || exact || results[0] || null;
-    const metadata = {
+    let metadata = {
       tmdbId: match?.id || null,
-      poster: buildPosterUrl(match?.poster_path, "w185")
+      poster: buildPosterUrl(match?.poster_path, "w185"),
+      starRating: formatStarRating(match?.vote_average),
+      trailerUrl: buildYouTubeTrailerSearchUrl(normalizedLookupTitle),
     };
-    if (metadata.poster || metadata.tmdbId) {
-      movieMetadataCache.set(cacheKey, metadata);
+
+    if (metadata.tmdbId) {
+      const details = await getMovieDetails(metadata.tmdbId);
+      metadata = {
+        ...metadata,
+        poster: metadata.poster || buildPosterUrl(details?.poster_path, "w185"),
+        starRating: metadata.starRating || formatStarRating(details?.vote_average),
+        trailerUrl: selectYouTubeTrailerUrl(details?.videos, normalizedLookupTitle),
+      };
     }
+
+    movieMetadataCache.set(cacheKey, metadata);
     return metadata;
   } catch (error) {
     console.error("Error fetching movie metadata:", error);
-    return { tmdbId: null, poster: null };
+    return {
+      tmdbId: null,
+      poster: null,
+      starRating: null,
+      trailerUrl: buildYouTubeTrailerSearchUrl(title),
+    };
   }
 }
 
 // Display allowed movies list
-async function displayAllowedMovies() {
+function displayAllowedMovies() {
   console.log("Displaying allowed movies. SearchResults element:", searchResults);
   
   if (!searchResults) {
@@ -1390,14 +1477,22 @@ async function displayAllowedMovies() {
     ? runtimeMovieTitles
     : ACTIVE_ALLOWED_MOVIES;
 
-  const allowedMovieData = await Promise.all(
-    movieTitlesForDisplay.map(async (movieTitle) => {
-      const metadata = await getMovieMetadataByTitle(movieTitle);
-      return { title: movieTitle, ...metadata };
-    })
+  const runtimeMoviesByTitle = new Map(
+    chosenMovies.map((movie) => [
+      String(movie?.title || "").trim().toLowerCase(),
+      movie,
+    ])
   );
 
-  for (const movie of allowedMovieData) {
+  for (const movieTitle of movieTitlesForDisplay) {
+    const runtimeMovie = runtimeMoviesByTitle.get(String(movieTitle || "").trim().toLowerCase()) || null;
+    const movie = {
+      title: movieTitle,
+      poster: runtimeMovie?.poster || null,
+      tmdbId: runtimeMovie?.tmdb_id || runtimeMovie?.tmdbId || null,
+      starRating: null,
+      trailerUrl: buildYouTubeTrailerSearchUrl(movieTitle),
+    };
     const existingMovie = chosenMovies.find(m =>
       String(m.title || "").trim().toLowerCase() === String(movie.title || "").trim().toLowerCase()
     );
@@ -1414,7 +1509,11 @@ async function displayAllowedMovies() {
           <img class="allowed-movie-poster" src="${movie.poster || ''}" alt="${movie.title} poster" ${movie.poster ? '' : 'style="display:none;"'} />
           <span class="allowed-movie-title">${movie.title}</span>
         </div>
-        ${showCount ? `<span class="allowed-movie-votes">${voteCount} vote${voteCount !== 1 ? 's' : ''}</span>` : ''}
+        <div class="allowed-movie-side">
+          <span class="allowed-movie-rating" aria-label="Star rating">${movie.starRating || "—"}</span>
+          ${showCount ? `<span class="allowed-movie-votes">${voteCount} vote${voteCount !== 1 ? 's' : ''}</span>` : ''}
+          <a class="allowed-movie-trailer-link" href="${movie.trailerUrl}" target="_blank" rel="noopener noreferrer" aria-label="Watch ${escapeHtml(movie.title)} trailer on YouTube" title="Watch trailer on YouTube">▶</a>
+        </div>
       </div>
     `;
     item.onclick = () => {
@@ -1424,6 +1523,44 @@ async function displayAllowedMovies() {
       selectMovie({ title: movie.title, poster: movie.poster, tmdbId: movie.tmdbId, eliminated: false });
     };
     searchResults.appendChild(item);
+
+    const trailerLinkEl = item.querySelector(".allowed-movie-trailer-link");
+    trailerLinkEl?.addEventListener("click", (event) => {
+      event.stopPropagation();
+    });
+
+    const ratingEl = item.querySelector(".allowed-movie-rating");
+
+    if (!movie.poster || !movie.starRating || !movie.tmdbId) {
+      getMovieMetadataByTitle(movie.title)
+        .then((metadata) => {
+          if (!metadata?.poster && !metadata?.tmdbId && !metadata?.starRating) {
+            return;
+          }
+
+          movie.poster = metadata.poster || movie.poster;
+          movie.tmdbId = metadata.tmdbId || movie.tmdbId;
+          movie.starRating = metadata.starRating || movie.starRating;
+          movie.trailerUrl = metadata.trailerUrl || movie.trailerUrl;
+
+          const posterEl = item.querySelector(".allowed-movie-poster");
+          if (posterEl && movie.poster) {
+            posterEl.src = movie.poster;
+            posterEl.style.display = "block";
+          }
+
+          if (ratingEl && movie.starRating) {
+            ratingEl.textContent = movie.starRating;
+          }
+
+          if (trailerLinkEl && movie.trailerUrl) {
+            trailerLinkEl.href = movie.trailerUrl;
+          }
+        })
+        .catch((error) => {
+          console.warn("[app] Could not enrich movie metadata", { title: movie.title, error });
+        });
+    }
   }
 
   updateAllowedMovieHighlights();

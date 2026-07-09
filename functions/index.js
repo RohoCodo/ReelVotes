@@ -657,6 +657,12 @@ function normalizeMovieTitleLoose(movieTitle) {
     .trim();
 }
 
+function normalizeMovieTitleCompact(movieTitle) {
+  return normalizeMovieTitle(movieTitle)
+    .replace(/[^a-z0-9]+/g, "")
+    .trim();
+}
+
 const EVENT_ALLOWED_MOVIES = new Map([
   ["np-2026-05-26-1830", [
     "Back to the Future",
@@ -1440,25 +1446,9 @@ async function runNightlyEliminationForEvent(eventId, {manual = false} = {}) {
         return;
       }
 
-      const currentCredits = Number(keyData.reVoteCredits || 0);
-      transaction.set(doc.ref, {
-        reVoteCredits: currentCredits + 1,
-        lastEliminatedMovie: keyMovieTitle,
-        reVoteGrantedAt: admin.firestore.FieldValue.serverTimestamp(),
-      }, {merge: true});
-
       const keyEmail = String(keyData.email || "").trim().toLowerCase();
       if (isLikelyRealEmail(keyEmail)) {
         emailsToNotify.add(keyEmail);
-      }
-
-      if (keyData.vote_id) {
-        const voteRef = eventRef.collection("votes").doc(String(keyData.vote_id));
-        transaction.set(voteRef, {
-          is_active: false,
-          eliminated: true,
-          eliminated_at: admin.firestore.FieldValue.serverTimestamp(),
-        }, {merge: true});
       }
     });
 
@@ -1468,13 +1458,6 @@ async function runNightlyEliminationForEvent(eventId, {manual = false} = {}) {
       if (!eliminatedTitles.includes(keyMovieTitle)) {
         return;
       }
-
-      const currentCredits = Number(keyData.reVoteCredits || 0);
-      transaction.set(doc.ref, {
-        reVoteCredits: currentCredits + 1,
-        lastEliminatedMovie: keyMovieTitle,
-        reVoteGrantedAt: admin.firestore.FieldValue.serverTimestamp(),
-      }, {merge: true});
 
       const keyEmail = String(keyData.email || "").trim().toLowerCase();
       if (isLikelyRealEmail(keyEmail)) {
@@ -1556,6 +1539,266 @@ exports.runEliminationRound = onCall(async (request) => {
     ok: true,
     eventId,
     ...result,
+  };
+});
+
+exports.revertLatestEliminationRound = onCall(async (request) => {
+  const eventId = sanitizeEventId(request.data?.eventId);
+  const adminEmail = assertPrivilegedAdminEmail(request.data?.adminEmail, "revert elimination rounds");
+
+  const eventRef = db.collection("events").doc(eventId);
+  const moviesRef = eventRef.collection("movies");
+  const votesRef = eventRef.collection("votes");
+  const voteKeysRef = eventRef.collection("voter_keys");
+  const emailKeysRef = eventRef.collection("email_keys");
+
+  const eventDoc = await eventRef.get();
+  const eventData = eventDoc.exists ? (eventDoc.data() || {}) : {};
+  const currentRound = Number(eventData.currentEliminationRound || 0);
+  if (!Number.isFinite(currentRound) || currentRound <= 0) {
+    throw new HttpsError("failed-precondition", "No elimination round exists to revert.");
+  }
+
+  const roundRef = eventRef.collection("elimination_rounds").doc(`round_${currentRound}`);
+  const roundDoc = await roundRef.get();
+  if (!roundDoc.exists) {
+    throw new HttpsError("failed-precondition", `Elimination round ${currentRound} record was not found.`);
+  }
+
+  const roundData = roundDoc.data() || {};
+  const eliminatedTitlesRaw = Array.isArray(roundData.eliminated_titles)
+    ? roundData.eliminated_titles
+    : [];
+  const eliminatedTitles = Array.from(new Set(
+    eliminatedTitlesRaw
+      .map((title) => String(title || "").trim())
+      .filter((title) => title.length > 0),
+  ));
+
+  if (eliminatedTitles.length === 0) {
+    throw new HttpsError("failed-precondition", `Elimination round ${currentRound} has no movies to restore.`);
+  }
+
+  const normalizedEliminatedTitles = new Set(eliminatedTitles.map((title) => normalizeMovieTitle(title)));
+
+  const [moviesSnapshot, votesSnapshot, voteKeysSnapshot, emailKeysSnapshot] = await Promise.all([
+    moviesRef.get(),
+    votesRef.get(),
+    voteKeysRef.get(),
+    emailKeysRef.get(),
+  ]);
+
+  const now = admin.firestore.FieldValue.serverTimestamp();
+  const writer = db.bulkWriter();
+  const writes = [];
+
+  let restoredMovieCount = 0;
+  moviesSnapshot.forEach((movieDoc) => {
+    const movieData = movieDoc.data() || {};
+    const movieTitle = String(movieData.movie_title || movieDoc.id || "").trim();
+    const normalizedMovieTitle = normalizeMovieTitle(movieTitle);
+    const wasEliminatedInRound = Number(movieData.eliminated_round || 0) === currentRound;
+    if (!wasEliminatedInRound && !normalizedEliminatedTitles.has(normalizedMovieTitle)) {
+      return;
+    }
+
+    restoredMovieCount += 1;
+    writes.push(
+      writer.set(movieDoc.ref, {
+        eliminated: false,
+        eliminated_round: admin.firestore.FieldValue.delete(),
+        eliminated_at: admin.firestore.FieldValue.delete(),
+        restored_at: now,
+        updated_at: now,
+      }, {merge: true}),
+    );
+  });
+
+  let reactivatedVotes = 0;
+  const normalizedVoteTitles = new Set();
+  votesSnapshot.forEach((voteDoc) => {
+    const voteData = voteDoc.data() || {};
+    const normalizedPrimaryTitle = normalizeMovieTitle(voteData.movie_title || "");
+    const normalizedBallotTitles = Array.isArray(voteData.movie_titles)
+      ? voteData.movie_titles.map((title) => normalizeMovieTitle(title))
+      : [];
+    const matchedEliminatedTitle = normalizedEliminatedTitles.has(normalizedPrimaryTitle)
+      || normalizedBallotTitles.some((title) => normalizedEliminatedTitles.has(title));
+
+    if (!matchedEliminatedTitle || voteData.is_active !== false) {
+      return;
+    }
+
+    reactivatedVotes += 1;
+    writes.push(
+      writer.set(voteDoc.ref, {
+        is_active: true,
+        eliminated: false,
+        eliminated_at: admin.firestore.FieldValue.delete(),
+        reactivated_at: now,
+        updated_at: now,
+      }, {merge: true}),
+    );
+  });
+
+  let revertedVoteKeyCredits = 0;
+  voteKeysSnapshot.forEach((voteKeyDoc) => {
+    const voteKeyData = voteKeyDoc.data() || {};
+    const keyTitle = normalizeMovieTitle(voteKeyData.lastEliminatedMovie || voteKeyData.movie_title || "");
+    const currentCredits = Number(voteKeyData.reVoteCredits || 0);
+    if (!normalizedEliminatedTitles.has(keyTitle) || currentCredits <= 0) {
+      return;
+    }
+
+    revertedVoteKeyCredits += 1;
+    writes.push(
+      writer.set(voteKeyDoc.ref, {
+        reVoteCredits: Math.max(0, currentCredits - 1),
+        lastEliminatedMovie: admin.firestore.FieldValue.delete(),
+        reVoteGrantedAt: admin.firestore.FieldValue.delete(),
+        updated_at: now,
+      }, {merge: true}),
+    );
+  });
+
+  let revertedEmailKeyCredits = 0;
+  emailKeysSnapshot.forEach((emailKeyDoc) => {
+    const emailKeyData = emailKeyDoc.data() || {};
+    const keyTitle = normalizeMovieTitle(emailKeyData.lastEliminatedMovie || emailKeyData.movie_title || "");
+    const currentCredits = Number(emailKeyData.reVoteCredits || 0);
+    if (!normalizedEliminatedTitles.has(keyTitle) || currentCredits <= 0) {
+      return;
+    }
+
+    revertedEmailKeyCredits += 1;
+    writes.push(
+      writer.set(emailKeyDoc.ref, {
+        reVoteCredits: Math.max(0, currentCredits - 1),
+        lastEliminatedMovie: admin.firestore.FieldValue.delete(),
+        reVoteGrantedAt: admin.firestore.FieldValue.delete(),
+        updated_at: now,
+      }, {merge: true}),
+    );
+  });
+
+  const normalizedMovieToDocId = new Map();
+  const normalizedLooseMovieToDocId = new Map();
+  const normalizedCompactMovieToDocId = new Map();
+  const countsByDocId = new Map();
+
+  moviesSnapshot.forEach((movieDoc) => {
+    const movieData = movieDoc.data() || {};
+    const movieTitle = String(movieData.movie_title || movieDoc.id || "").trim();
+    const normalizedMovie = normalizeMovieTitle(movieTitle);
+    const normalizedLooseMovie = normalizeMovieTitleLoose(movieTitle);
+    const normalizedCompactMovie = normalizeMovieTitleCompact(movieTitle);
+    if (!normalizedMovieToDocId.has(normalizedMovie)) {
+      normalizedMovieToDocId.set(normalizedMovie, movieDoc.id);
+    }
+    if (normalizedLooseMovie && !normalizedLooseMovieToDocId.has(normalizedLooseMovie)) {
+      normalizedLooseMovieToDocId.set(normalizedLooseMovie, movieDoc.id);
+    }
+    if (normalizedCompactMovie && !normalizedCompactMovieToDocId.has(normalizedCompactMovie)) {
+      normalizedCompactMovieToDocId.set(normalizedCompactMovie, movieDoc.id);
+    }
+    countsByDocId.set(movieDoc.id, 0);
+  });
+
+  let activeVoteCount = 0;
+  let matchedVoteCount = 0;
+  const unmatchedTitles = new Set();
+
+  votesSnapshot.forEach((voteDoc) => {
+    const voteData = voteDoc.data() || {};
+    const isInactiveBeforeRevert = voteData.is_active === false;
+    const normalizedPrimaryTitle = normalizeMovieTitle(voteData.movie_title || "");
+    const normalizedBallotTitles = Array.isArray(voteData.movie_titles)
+      ? voteData.movie_titles.map((title) => normalizeMovieTitle(title))
+      : [];
+    const becameActiveBecauseOfRevert = isInactiveBeforeRevert && (
+      normalizedEliminatedTitles.has(normalizedPrimaryTitle)
+      || normalizedBallotTitles.some((title) => normalizedEliminatedTitles.has(title))
+    );
+    const isActiveAfterRevert = voteData.is_active !== false || becameActiveBecauseOfRevert;
+    if (!isActiveAfterRevert) {
+      return;
+    }
+
+    activeVoteCount += 1;
+
+    const votedTitle = String(
+      voteData.movie_title ||
+      (Array.isArray(voteData.movie_titles) && voteData.movie_titles.length ? voteData.movie_titles[0] : ""),
+    ).trim();
+    if (!votedTitle) {
+      return;
+    }
+
+    const normalizedVoteTitle = normalizeMovieTitle(votedTitle);
+    const normalizedLooseVoteTitle = normalizeMovieTitleLoose(votedTitle);
+    const normalizedCompactVoteTitle = normalizeMovieTitleCompact(votedTitle);
+    const movieDocId = normalizedMovieToDocId.get(normalizedVoteTitle)
+      || normalizedLooseMovieToDocId.get(normalizedLooseVoteTitle)
+      || normalizedCompactMovieToDocId.get(normalizedCompactVoteTitle);
+
+    if (!movieDocId) {
+      unmatchedTitles.add(votedTitle);
+      return;
+    }
+
+    countsByDocId.set(movieDocId, Number(countsByDocId.get(movieDocId) || 0) + 1);
+    matchedVoteCount += 1;
+  });
+
+  countsByDocId.forEach((voteCount, movieDocId) => {
+    writes.push(
+      writer.set(moviesRef.doc(movieDocId), {
+        vote_count: voteCount,
+        updated_at: now,
+      }, {merge: true}),
+    );
+  });
+
+  writes.push(
+    writer.set(eventRef, {
+      currentEliminationRound: Math.max(0, currentRound - 1),
+      lastEliminatedTitles: admin.firestore.FieldValue.delete(),
+      lastEliminationAt: admin.firestore.FieldValue.delete(),
+      updated_at: now,
+      updated_by: adminEmail,
+    }, {merge: true}),
+  );
+
+  writes.push(writer.delete(roundRef));
+
+  await Promise.all(writes);
+  await writer.close();
+
+  logger.info("Admin reverted latest elimination round", {
+    eventId,
+    adminEmail,
+    revertedRound: currentRound,
+    restoredMovieCount,
+    reactivatedVotes,
+    revertedVoteKeyCredits,
+    revertedEmailKeyCredits,
+    activeVoteCount,
+    matchedVoteCount,
+    unmatchedTitleCount: unmatchedTitles.size,
+  });
+
+  return {
+    ok: true,
+    eventId,
+    revertedRound: currentRound,
+    restoredMovieCount,
+    reactivatedVotes,
+    revertedVoteKeyCredits,
+    revertedEmailKeyCredits,
+    activeVoteCount,
+    matchedVoteCount,
+    unmatchedTitleCount: unmatchedTitles.size,
+    unmatchedTitles: Array.from(unmatchedTitles).slice(0, 20),
   };
 });
 
@@ -1838,6 +2081,7 @@ exports.rebuildEventMovieVoteCounts = onCall(async (request) => {
 
   const normalizedMovieToDocId = new Map();
   const normalizedLooseMovieToDocId = new Map();
+  const normalizedCompactMovieToDocId = new Map();
   const countsByDocId = new Map();
 
   moviesSnapshot.forEach((movieDoc) => {
@@ -1845,11 +2089,15 @@ exports.rebuildEventMovieVoteCounts = onCall(async (request) => {
     const movieTitle = String(movieData.movie_title || movieDoc.id || "").trim();
     const normalizedMovie = normalizeMovieTitle(movieTitle);
     const normalizedLooseMovie = normalizeMovieTitleLoose(movieTitle);
+    const normalizedCompactMovie = normalizeMovieTitleCompact(movieTitle);
     if (!normalizedMovieToDocId.has(normalizedMovie)) {
       normalizedMovieToDocId.set(normalizedMovie, movieDoc.id);
     }
     if (normalizedLooseMovie && !normalizedLooseMovieToDocId.has(normalizedLooseMovie)) {
       normalizedLooseMovieToDocId.set(normalizedLooseMovie, movieDoc.id);
+    }
+    if (normalizedCompactMovie && !normalizedCompactMovieToDocId.has(normalizedCompactMovie)) {
+      normalizedCompactMovieToDocId.set(normalizedCompactMovie, movieDoc.id);
     }
     countsByDocId.set(movieDoc.id, 0);
   });
@@ -1888,8 +2136,10 @@ exports.rebuildEventMovieVoteCounts = onCall(async (request) => {
 
       const normalizedVoteTitle = normalizeMovieTitle(votedTitle);
       const normalizedLooseVoteTitle = normalizeMovieTitleLoose(votedTitle);
+      const normalizedCompactVoteTitle = normalizeMovieTitleCompact(votedTitle);
       const movieDocId = normalizedMovieToDocId.get(normalizedVoteTitle)
-        || normalizedLooseMovieToDocId.get(normalizedLooseVoteTitle);
+        || normalizedLooseMovieToDocId.get(normalizedLooseVoteTitle)
+        || normalizedCompactMovieToDocId.get(normalizedCompactVoteTitle);
 
       if (!movieDocId) {
         tallyUnmatchedTitles.add(votedTitle);
