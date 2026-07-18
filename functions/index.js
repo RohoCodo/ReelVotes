@@ -663,6 +663,15 @@ function normalizeMovieTitleCompact(movieTitle) {
     .trim();
 }
 
+const VOTE_TITLE_ALIASES = new Map([
+  ["the live", "they live"],
+]);
+
+function normalizeVoteTitleForMatching(movieTitle) {
+  const normalized = normalizeMovieTitle(movieTitle);
+  return VOTE_TITLE_ALIASES.get(normalized) || normalized;
+}
+
 const EVENT_ALLOWED_MOVIES = new Map([
   ["np-2026-05-26-1830", [
     "Back to the Future",
@@ -2134,9 +2143,9 @@ exports.rebuildEventMovieVoteCounts = onCall(async (request) => {
         return;
       }
 
-      const normalizedVoteTitle = normalizeMovieTitle(votedTitle);
-      const normalizedLooseVoteTitle = normalizeMovieTitleLoose(votedTitle);
-      const normalizedCompactVoteTitle = normalizeMovieTitleCompact(votedTitle);
+      const normalizedVoteTitle = normalizeVoteTitleForMatching(votedTitle);
+      const normalizedLooseVoteTitle = normalizeMovieTitleLoose(normalizedVoteTitle);
+      const normalizedCompactVoteTitle = normalizeMovieTitleCompact(normalizedVoteTitle);
       const movieDocId = normalizedMovieToDocId.get(normalizedVoteTitle)
         || normalizedLooseMovieToDocId.get(normalizedLooseVoteTitle)
         || normalizedCompactMovieToDocId.get(normalizedCompactVoteTitle);
