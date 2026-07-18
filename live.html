@@ -10,13 +10,14 @@
   <!-- End Google Tag Manager -->
   <title>ReelVotes Live Vote</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta http-equiv="refresh" content="0; url=/public/select-event.html" />
+  <meta http-equiv="refresh" content="0; url=/public/index.html" />
   <link rel="icon" type="image/png" href="icon.png" />
   <script>
     const params = new URLSearchParams(window.location.search || "");
     params.delete("event");
+    params.set("live", "1");
     const query = params.toString();
-    const target = `/public/select-event.html${query ? `?${query}` : ""}${window.location.hash || ""}`;
+    const target = `/public/index.html${query ? `?${query}` : ""}${window.location.hash || ""}`;
     window.location.replace(target);
   </script>
 </head>

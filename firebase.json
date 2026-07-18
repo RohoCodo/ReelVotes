@@ -29,7 +29,7 @@
     "redirects": [
       {
         "source": "/live",
-        "destination": "/select-event.html",
+        "destination": "/live.html",
         "type": 302
       },
       {
