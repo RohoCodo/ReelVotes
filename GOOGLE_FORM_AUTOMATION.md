@@ -82,3 +82,81 @@ Then set script property:
 - If event exists, it is updated (`replaceMovieList` defaults to true).
 - Announcement emails are queued in Firestore `mail` collection (for the installed mail extension/service).
 - To re-send an announcement for an already-announced event, pass `forceResendAnnouncement: true`.
+
+## 6) Your current Google Form mapping (Cornell form)
+
+For form:
+- https://docs.google.com/forms/d/14KjwcZz1aS9keqQkdDddJEeagq-ipTcBGL8mbXe3UxE/edit
+
+Use these exact question titles from the form:
+- `Name of Theater`
+- `Address of Theater`
+- `Ticketing Email (in case there are problems or questions)`
+- `Date of Screening`
+- `Time of Screening`
+- `List of Ten Possible Movie Options for Vote`
+- `Target Number of Ticket Buyers to Make Screening Successful`
+- `Minimum Number of People Voting for the Leading Movie for the Vote to be Successful`
+- `Minimum Number of Tickets Sold During Test Period for the Screening to Occur`
+
+Suggested Apps Script (Sheet-bound `onFormSubmit` trigger):
+
+```javascript
+function toIsoDateTime(dateValue, timeValue) {
+  const tz = Session.getScriptTimeZone() || 'America/Los_Angeles';
+  const d = new Date(dateValue);
+  const t = new Date(timeValue);
+
+  const yyyy = Utilities.formatDate(d, tz, 'yyyy');
+  const mm = Utilities.formatDate(d, tz, 'MM');
+  const dd = Utilities.formatDate(d, tz, 'dd');
+  const hh = Utilities.formatDate(t, tz, 'HH');
+  const min = Utilities.formatDate(t, tz, 'mm');
+
+  return `${yyyy}-${mm}-${dd}T${hh}:${min}`;
+}
+
+function onFormSubmit(e) {
+  const values = e.namedValues || {};
+
+  const theaterName = (values['Name of Theater'] || [''])[0].trim();
+  const screeningDate = (values['Date of Screening'] || [''])[0];
+  const screeningTime = (values['Time of Screening'] || [''])[0];
+  const screeningDateTime = toIsoDateTime(screeningDate, screeningTime);
+
+  const movieTitles = (values['List of Ten Possible Movie Options for Vote'] || [''])[0]
+    .split(/\r?\n|,|;/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .join('\n');
+
+  const payload = {
+    token: PropertiesService.getScriptProperties().getProperty('REELVOTES_AUTOMATION_TOKEN'),
+    adminEmail: 'rt332@cornell.edu',
+    theaterName,
+    screeningDateTime,
+    voteStatus: 'not-started',
+    requireEmail: true,
+    movieTitles,
+    sendAnnouncement: true,
+    replaceMovieList: true,
+    emailSubject: `New ReelVotes screening at ${theaterName}`,
+    emailIntro: 'A new screening vote is open. Vote now for the movie you want to see most.',
+  };
+
+  const url = 'https://us-central1-reelconvo.cloudfunctions.net/ingestTheaterFormSubmission';
+
+  const res = UrlFetchApp.fetch(url, {
+    method: 'post',
+    contentType: 'application/json',
+    payload: JSON.stringify(payload),
+    muteHttpExceptions: true,
+    headers: {
+      'X-ReelVotes-Automation-Token': payload.token,
+    },
+  });
+
+  Logger.log(res.getResponseCode());
+  Logger.log(res.getContentText());
+}
+```
