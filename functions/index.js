@@ -1254,6 +1254,20 @@ function sanitizeOptionalMovieTitlesFlexible(movieTitlesInput) {
   return sanitizeOptionalMovieTitles(splitTitles);
 }
 
+function sanitizeOptionalWholeNumber(value, {min = 0, max = 10000000} = {}) {
+  const normalized = String(value ?? "").trim();
+  if (!normalized) return null;
+
+  const parsed = Number(normalized);
+  if (!Number.isFinite(parsed) || !Number.isInteger(parsed)) {
+    throw new HttpsError("invalid-argument", "Numeric fields must be whole numbers.");
+  }
+  if (parsed < min || parsed > max) {
+    throw new HttpsError("invalid-argument", `Numeric fields must be between ${min} and ${max}.`);
+  }
+  return parsed;
+}
+
 function buildVoteUrlFromScreeningDateTime(screeningDateTime) {
   const [datePart] = String(screeningDateTime || "").split("T");
   if (!datePart) return "https://reelvotes.com/";
@@ -2094,8 +2108,37 @@ exports.ingestTheaterFormSubmission = onRequest(async (request, response) => {
     const replaceMovieList = sanitizeBooleanInput(request.body?.replaceMovieList, true);
     const sendAnnouncement = sanitizeBooleanInput(request.body?.sendAnnouncement, true);
     const forceResendAnnouncement = sanitizeBooleanInput(request.body?.forceResendAnnouncement, false);
-    const theaterName = sanitizeTextField(request.body?.theaterName, {maxLength: 200});
+    const theaterName = sanitizeTextField(
+      request.body?.theaterName || request.body?.["Name of Theater"],
+      {maxLength: 200},
+    );
+    const theaterAddress = sanitizeTextField(
+      request.body?.theaterAddress || request.body?.["Address of Theater"],
+      {maxLength: 300},
+    );
+    const ticketingEmail = sanitizeOptionalEmail(
+      request.body?.ticketingEmail || request.body?.["Ticketing Email (in case there are problems or questions)"],
+    );
     const movieTitles = sanitizeOptionalMovieTitlesFlexible(request.body?.movieTitles);
+    const targetTicketBuyers = sanitizeOptionalWholeNumber(
+      request.body?.targetTicketBuyers || request.body?.["Target Number of Ticket Buyers to Make Screening Successful"],
+      {min: 0, max: 1000000},
+    );
+    const minimumLeadingVotes = sanitizeOptionalWholeNumber(
+      request.body?.minimumLeadingVotes || request.body?.["Minimum Number of People Voting for the Leading Movie for the Vote to be Successful"],
+      {min: 0, max: 1000000},
+    );
+    const minimumTicketsTestPeriod = sanitizeOptionalWholeNumber(
+      request.body?.minimumTicketsTestPeriod || request.body?.["Minimum Number of Tickets Sold During Test Period for the Screening to Occur"],
+      {min: 0, max: 1000000},
+    );
+
+    const successTargets = {};
+    if (targetTicketBuyers !== null) successTargets.targetTicketBuyers = targetTicketBuyers;
+    if (minimumLeadingVotes !== null) successTargets.minimumLeadingVotes = minimumLeadingVotes;
+    if (minimumTicketsTestPeriod !== null) successTargets.minimumTicketsTestPeriod = minimumTicketsTestPeriod;
+
+    const derivedPresaleThreshold = minimumTicketsTestPeriod ?? targetTicketBuyers;
 
     const eventId = buildShowtimeFirestoreId(screeningDateTime);
     const screeningLabel = buildScreeningLabel(screeningDateTime);
@@ -2127,6 +2170,10 @@ exports.ingestTheaterFormSubmission = onRequest(async (request, response) => {
       ...initialWorkflowFields,
       requireEmail,
       theaterName,
+      ...(theaterAddress ? {theaterAddress} : {}),
+      ...(ticketingEmail ? {ticketingEmail} : {}),
+      ...(derivedPresaleThreshold !== null ? {presaleThreshold: derivedPresaleThreshold} : {}),
+      ...(Object.keys(successTargets).length ? {successTargets} : {}),
       updated_at: now,
       updated_by: `${adminEmail} (google-form-automation)`,
       created_at: eventDoc.exists ? (eventDoc.data()?.created_at || now) : now,
@@ -2233,6 +2280,9 @@ exports.ingestTheaterFormSubmission = onRequest(async (request, response) => {
       voteStatus,
       requireEmail,
       movieCount: movieTitles.length,
+      targetTicketBuyers,
+      minimumLeadingVotes,
+      minimumTicketsTestPeriod,
       deletedMovieCount,
       sendAnnouncement,
       announcement,
@@ -2246,6 +2296,9 @@ exports.ingestTheaterFormSubmission = onRequest(async (request, response) => {
       voteStatus,
       requireEmail,
       movieCount: movieTitles.length,
+      targetTicketBuyers,
+      minimumLeadingVotes,
+      minimumTicketsTestPeriod,
       deletedMovieCount,
       voteUrl,
       announcement,

@@ -120,9 +120,14 @@ function onFormSubmit(e) {
   const values = e.namedValues || {};
 
   const theaterName = (values['Name of Theater'] || [''])[0].trim();
+  const theaterAddress = (values['Address of Theater'] || [''])[0].trim();
+  const ticketingEmail = (values['Ticketing Email (in case there are problems or questions)'] || [''])[0].trim();
   const screeningDate = (values['Date of Screening'] || [''])[0];
   const screeningTime = (values['Time of Screening'] || [''])[0];
   const screeningDateTime = toIsoDateTime(screeningDate, screeningTime);
+  const targetTicketBuyers = (values['Target Number of Ticket Buyers to Make Screening Successful'] || [''])[0].trim();
+  const minimumLeadingVotes = (values['Minimum Number of People Voting for the Leading Movie for the Vote to be Successful'] || [''])[0].trim();
+  const minimumTicketsTestPeriod = (values['Minimum Number of Tickets Sold During Test Period for the Screening to Occur'] || [''])[0].trim();
 
   const movieTitles = (values['List of Ten Possible Movie Options for Vote'] || [''])[0]
     .split(/\r?\n|,|;/)
@@ -134,10 +139,15 @@ function onFormSubmit(e) {
     token: PropertiesService.getScriptProperties().getProperty('REELVOTES_AUTOMATION_TOKEN'),
     adminEmail: 'rt332@cornell.edu',
     theaterName,
+    theaterAddress,
+    ticketingEmail,
     screeningDateTime,
     voteStatus: 'not-started',
     requireEmail: true,
     movieTitles,
+    targetTicketBuyers,
+    minimumLeadingVotes,
+    minimumTicketsTestPeriod,
     sendAnnouncement: true,
     replaceMovieList: true,
     emailSubject: `New ReelVotes screening at ${theaterName}`,
