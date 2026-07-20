@@ -12,7 +12,7 @@ const fs = require("fs");
 const path = require("path");
 const admin = require("firebase-admin");
 const {setGlobalOptions} = require("firebase-functions");
-const {onCall, HttpsError} = require("firebase-functions/v2/https");
+const {onCall, onRequest, HttpsError} = require("firebase-functions/v2/https");
 const {onSchedule} = require("firebase-functions/v2/scheduler");
 const logger = require("firebase-functions/logger");
 
@@ -37,6 +37,7 @@ const EVENTBRITE_EVENT_ID = "1985653305489";
 const RATE_LIMIT_WINDOW_MS = 15000;
 const TURNSTILE_VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
 const TURNSTILE_SECRET_KEY = process.env.TURNSTILE_SECRET_KEY || "";
+const GOOGLE_FORM_AUTOMATION_TOKEN = String(process.env.GOOGLE_FORM_AUTOMATION_TOKEN || "").trim();
 const ELIMINATION_SCHEDULE = "0 2 * * *";
 const ELIMINATION_TIMEZONE = "America/Los_Angeles";
 const SCREENING_WORKFLOW_SWEEP_SCHEDULE = "every 15 minutes";
@@ -1220,6 +1221,110 @@ function buildVoteWindowLabel(voteStatus) {
   return "Voting opens soon";
 }
 
+function sanitizeBooleanInput(value, fallback = false) {
+  if (typeof value === "boolean") {
+    return value;
+  }
+
+  const normalized = String(value || "").trim().toLowerCase();
+  if (!normalized) return fallback;
+  if (["1", "true", "yes", "y", "on"].includes(normalized)) return true;
+  if (["0", "false", "no", "n", "off"].includes(normalized)) return false;
+  return fallback;
+}
+
+function sanitizeOptionalVoteStatus(value, fallback = "not-started") {
+  const normalized = String(value || "").trim().toLowerCase();
+  return normalized ? sanitizeVoteStatus(normalized) : sanitizeVoteStatus(fallback);
+}
+
+function sanitizeOptionalMovieTitlesFlexible(movieTitlesInput) {
+  if (Array.isArray(movieTitlesInput)) {
+    return sanitizeOptionalMovieTitles(movieTitlesInput);
+  }
+
+  const raw = String(movieTitlesInput || "").trim();
+  if (!raw) return [];
+
+  const splitTitles = raw
+    .split(/\r?\n|,|;/g)
+    .map((title) => title.trim())
+    .filter(Boolean);
+
+  return sanitizeOptionalMovieTitles(splitTitles);
+}
+
+function buildVoteUrlFromScreeningDateTime(screeningDateTime) {
+  const [datePart] = String(screeningDateTime || "").split("T");
+  if (!datePart) return "https://reelvotes.com/";
+  return `https://reelvotes.com/?event=${datePart}`;
+}
+
+function sanitizeAutomationToken(request) {
+  const tokenFromHeader = String(request.get("x-reelvotes-automation-token") || "").trim();
+  const tokenFromBody = String(request.body?.token || "").trim();
+  const tokenFromQuery = String(request.query?.token || "").trim();
+  return tokenFromHeader || tokenFromBody || tokenFromQuery;
+}
+
+async function queueAnnouncementEmails({
+  eventId,
+  subject,
+  text,
+  voteUrl,
+  screeningLabel,
+  screeningDateTime,
+  theaterName,
+  movieTitles = [],
+}) {
+  const signupsSnapshot = await db.collection("email_signups").get();
+  const recipients = new Set();
+
+  signupsSnapshot.docs.forEach((signupDoc) => {
+    const signupData = signupDoc.data() || {};
+    const emailValue = String(signupData.email || signupDoc.id || "").trim().toLowerCase();
+    if (!emailValue) return;
+    if (!isLikelyRealEmail(emailValue)) return;
+    recipients.add(emailValue);
+  });
+
+  if (recipients.size === 0) {
+    return {queuedEmailCount: 0, recipientCount: 0};
+  }
+
+  const recipientList = Array.from(recipients);
+  let queuedEmailCount = 0;
+
+  for (let i = 0; i < recipientList.length; i += 450) {
+    const chunk = recipientList.slice(i, i + 450);
+    const batch = db.batch();
+
+    chunk.forEach((email) => {
+      const mailRef = db.collection("mail").doc();
+      batch.set(mailRef, {
+        to: [email],
+        message: {
+          subject,
+          text,
+        },
+        event_id: eventId,
+        type: "event-announcement",
+        vote_url: voteUrl,
+        screening_label: screeningLabel,
+        screening_date_time: screeningDateTime,
+        theater_name: theaterName,
+        movie_titles: movieTitles,
+        created_at: admin.firestore.FieldValue.serverTimestamp(),
+      });
+      queuedEmailCount += 1;
+    });
+
+    await batch.commit();
+  }
+
+  return {queuedEmailCount, recipientCount: recipients.size};
+}
+
 function sanitizeClientId(clientId) {
   const normalizedClientId = String(clientId || "").trim();
   if (!normalizedClientId || normalizedClientId.length > 200) {
@@ -1951,6 +2056,216 @@ exports.createEventShowtime = onCall(async (request) => {
       allowedMovies: movieTitles,
     },
   };
+});
+
+exports.ingestTheaterFormSubmission = onRequest(async (request, response) => {
+  if (request.method === "OPTIONS") {
+    response.set("Access-Control-Allow-Origin", "*");
+    response.set("Access-Control-Allow-Headers", "Content-Type, X-ReelVotes-Automation-Token");
+    response.set("Access-Control-Allow-Methods", "POST, OPTIONS");
+    response.status(204).send("");
+    return;
+  }
+
+  response.set("Access-Control-Allow-Origin", "*");
+
+  if (request.method !== "POST") {
+    response.status(405).json({ok: false, error: "method-not-allowed"});
+    return;
+  }
+
+  try {
+    if (!GOOGLE_FORM_AUTOMATION_TOKEN) {
+      logger.error("Google Form automation token is not configured.");
+      response.status(500).json({ok: false, error: "automation-token-not-configured"});
+      return;
+    }
+
+    const providedToken = sanitizeAutomationToken(request);
+    if (!providedToken || providedToken !== GOOGLE_FORM_AUTOMATION_TOKEN) {
+      response.status(401).json({ok: false, error: "unauthorized"});
+      return;
+    }
+
+    const adminEmail = assertAdminEmail(request.body?.adminEmail);
+    const screeningDateTime = sanitizeScreeningDateTime(request.body?.screeningDateTime);
+    const voteStatus = sanitizeOptionalVoteStatus(request.body?.voteStatus, "not-started");
+    const requireEmail = sanitizeBooleanInput(request.body?.requireEmail, true);
+    const replaceMovieList = sanitizeBooleanInput(request.body?.replaceMovieList, true);
+    const sendAnnouncement = sanitizeBooleanInput(request.body?.sendAnnouncement, true);
+    const forceResendAnnouncement = sanitizeBooleanInput(request.body?.forceResendAnnouncement, false);
+    const theaterName = sanitizeTextField(request.body?.theaterName, {maxLength: 200});
+    const movieTitles = sanitizeOptionalMovieTitlesFlexible(request.body?.movieTitles);
+
+    const eventId = buildShowtimeFirestoreId(screeningDateTime);
+    const screeningLabel = buildScreeningLabel(screeningDateTime);
+    const voteWindowLabel = buildVoteWindowLabel(voteStatus);
+    const voteUrl = buildVoteUrlFromScreeningDateTime(screeningDateTime);
+    const nowDate = new Date();
+    const initialWorkflowFields = buildInitialWorkflowFields(voteStatus, nowDate);
+
+    const eventRef = db.collection("events").doc(eventId);
+    const moviesRef = eventRef.collection("movies");
+    const [eventDoc, movieDocs] = await Promise.all([
+      eventRef.get(),
+      moviesRef.get(),
+    ]);
+
+    const existingMovieIds = new Map();
+    movieDocs.forEach((movieDoc) => {
+      existingMovieIds.set(movieDoc.id, movieDoc.data() || {});
+    });
+
+    const batch = db.batch();
+    const now = admin.firestore.FieldValue.serverTimestamp();
+
+    batch.set(eventRef, {
+      screeningLabel,
+      screeningDateTime,
+      voteStatus,
+      voteWindowLabel,
+      ...initialWorkflowFields,
+      requireEmail,
+      theaterName,
+      updated_at: now,
+      updated_by: `${adminEmail} (google-form-automation)`,
+      created_at: eventDoc.exists ? (eventDoc.data()?.created_at || now) : now,
+      created_by: eventDoc.exists ? (eventDoc.data()?.created_by || adminEmail) : adminEmail,
+      automation: {
+        source: "google-form",
+        lastIngestedAt: now,
+      },
+    }, {merge: true});
+
+    const nextMovieIds = new Set();
+    movieTitles.forEach((title) => {
+      const docId = movieDocId(title);
+      nextMovieIds.add(docId);
+      const existingMovie = existingMovieIds.get(docId) || {};
+
+      batch.set(moviesRef.doc(docId), {
+        event_id: eventId,
+        movie_title: title,
+        vote_count: Number(existingMovie.vote_count || 0),
+        created_at: existingMovie.created_at || now,
+        updated_at: now,
+      }, {merge: true});
+    });
+
+    let deletedMovieCount = 0;
+    if (replaceMovieList) {
+      existingMovieIds.forEach((_, oldMovieId) => {
+        if (!nextMovieIds.has(oldMovieId)) {
+          batch.delete(moviesRef.doc(oldMovieId));
+          deletedMovieCount += 1;
+        }
+      });
+    }
+
+    await batch.commit();
+
+    let announcement = {
+      skipped: !sendAnnouncement,
+      reason: !sendAnnouncement ? "announcement-disabled" : "pending",
+      queuedEmailCount: 0,
+      recipientCount: 0,
+    };
+
+    const alreadyAnnounced = Boolean(eventDoc.data()?.automation?.announcementSentAt);
+    if (sendAnnouncement && (!alreadyAnnounced || forceResendAnnouncement)) {
+      const subject = sanitizeTextField(
+        request.body?.emailSubject,
+        {maxLength: 200},
+      ) || `New ReelVotes screening: ${screeningLabel}`;
+
+      const introText = sanitizeTextField(
+        request.body?.emailIntro,
+        {maxLength: 1200},
+      ) || "A new movie vote is now available.";
+
+      const movieLine = movieTitles.length
+        ? `Movies: ${movieTitles.join(", ")}`
+        : "Movies will be posted shortly.";
+
+      const text = `${introText}\n\nTheater: ${theaterName || "Partner theater"}\nScreening: ${screeningLabel}\n${movieLine}\n\nVote now: ${voteUrl}`;
+
+      const queued = await queueAnnouncementEmails({
+        eventId,
+        subject,
+        text,
+        voteUrl,
+        screeningLabel,
+        screeningDateTime,
+        theaterName,
+        movieTitles,
+      });
+
+      await eventRef.set({
+        automation: {
+          source: "google-form",
+          announcementSentAt: admin.firestore.FieldValue.serverTimestamp(),
+          announcementSubject: subject,
+          announcementRecipientCount: queued.recipientCount,
+          lastIngestedAt: admin.firestore.FieldValue.serverTimestamp(),
+        },
+        updated_at: admin.firestore.FieldValue.serverTimestamp(),
+        updated_by: `${adminEmail} (google-form-automation)`,
+      }, {merge: true});
+
+      announcement = {
+        skipped: false,
+        reason: "queued",
+        queuedEmailCount: queued.queuedEmailCount,
+        recipientCount: queued.recipientCount,
+      };
+    } else if (sendAnnouncement && alreadyAnnounced && !forceResendAnnouncement) {
+      announcement = {
+        skipped: true,
+        reason: "already-announced",
+        queuedEmailCount: 0,
+        recipientCount: 0,
+      };
+    }
+
+    logger.info("Google Form ingestion processed", {
+      eventId,
+      adminEmail,
+      voteStatus,
+      requireEmail,
+      movieCount: movieTitles.length,
+      deletedMovieCount,
+      sendAnnouncement,
+      announcement,
+    });
+
+    response.status(200).json({
+      ok: true,
+      eventId,
+      screeningLabel,
+      screeningDateTime,
+      voteStatus,
+      requireEmail,
+      movieCount: movieTitles.length,
+      deletedMovieCount,
+      voteUrl,
+      announcement,
+    });
+  } catch (error) {
+    logger.error("Google Form ingestion failed", {
+      message: error?.message || String(error),
+      code: error?.code || null,
+    });
+
+    const status = error instanceof HttpsError
+      ? (error.code === "permission-denied" ? 403 : 400)
+      : 500;
+
+    response.status(status).json({
+      ok: false,
+      error: error?.message || "ingestion-failed",
+      code: error?.code || "internal",
+    });
+  }
 });
 
 exports.deleteEventShowtime = onCall(async (request) => {
