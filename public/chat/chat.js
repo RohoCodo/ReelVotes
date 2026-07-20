@@ -93,9 +93,15 @@ function getParams() {
   };
 }
 
-function updateUrl(movieTitle) {
+function updateUrl(movieTitle, roomCode = "") {
   const params = new URLSearchParams(window.location.search);
   params.set("movie", movieTitle);
+  const normalizedCode = sanitizeRoomCode(roomCode);
+  if (normalizedCode) {
+    params.set("code", normalizedCode);
+  } else {
+    params.delete("code");
+  }
   window.history.replaceState({}, "", `${window.location.pathname}?${params.toString()}`);
 }
 
@@ -208,7 +214,7 @@ async function joinRoom() {
       throw new Error("Chat room unavailable.");
     }
 
-    updateUrl(resolvedMovieTitle);
+    updateUrl(resolvedMovieTitle, roomCode);
     currentRoom = { movieTitle: resolvedMovieTitle, movieKey, threadId };
 
     if (roomHeading) {
@@ -220,7 +226,7 @@ async function joinRoom() {
 
     if (shareLink) {
       const basePath = String(window.location.pathname || "/").replace(/index\.html$/i, "");
-      const roomUrl = `${window.location.origin}${basePath}?movie=${encodeURIComponent(resolvedMovieTitle)}`;
+      const roomUrl = `${window.location.origin}${basePath}?movie=${encodeURIComponent(resolvedMovieTitle)}&code=${encodeURIComponent(roomCode)}`;
       shareLink.href = roomUrl;
       shareLink.onclick = async (event) => {
         event.preventDefault();
