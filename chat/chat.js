@@ -287,15 +287,20 @@ async function sendMessage() {
   try {
     const participantId = getParticipantId();
     const roomCode = sanitizeRoomCode(roomCodeInput?.value);
+    const displayName = sanitizeDisplayName(displayNameInput?.value);
     if (!roomCode) {
       setStatus("Enter the room code from your card.", true);
       return;
+    }
+    if (displayName) {
+      persistDisplayName(displayName);
     }
 
     await sendMovieChatMessageCallable({
       threadId: currentRoom.threadId,
       roomCode,
       participantId,
+      displayName,
       text,
     });
 

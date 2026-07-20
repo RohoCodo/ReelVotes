@@ -2732,6 +2732,7 @@ exports.sendMovieChatMessage = onCall(async (request) => {
   const threadId = sanitizeMovieChatThreadId(request.data?.threadId);
   const roomCode = sanitizeRoomCode(request.data?.roomCode);
   const participantId = sanitizeParticipantId(request.data?.participantId);
+  const displayNameInput = sanitizeTextField(request.data?.displayName, {maxLength: 40});
   const text = sanitizeTextField(request.data?.text, {required: true, maxLength: 500});
 
   const threadRef = db.collection("threads").doc(threadId);
@@ -2774,7 +2775,10 @@ exports.sendMovieChatMessage = onCall(async (request) => {
 
     const movieTitle = String(threadData.movieTitle || "").trim() || "Untitled movie";
     const movieKey = String(threadData.movieKey || "").trim() || buildMovieChatKey(movieTitle);
-    const displayName = sanitizeTextField(memberData.displayName, {maxLength: 40}) || "Guest";
+    const displayName =
+      displayNameInput ||
+      sanitizeTextField(memberData.displayName, {maxLength: 40}) ||
+      "Guest";
     const now = admin.firestore.FieldValue.serverTimestamp();
 
     transaction.set(messageRef, {
@@ -2796,6 +2800,7 @@ exports.sendMovieChatMessage = onCall(async (request) => {
     }, {merge: true});
 
     transaction.set(memberRef, {
+      displayName,
       updatedAt: now,
       lastSentAt: now,
     }, {merge: true});
