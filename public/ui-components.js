@@ -123,6 +123,16 @@ export class CalendarView {
   updateEvents(events) {
     this.events = Array.isArray(events) ? events : [];
     this.reindexEvents();
+
+    const monthPrefix = `${this.currentYear}-${String(this.currentMonth + 1).padStart(2, "0")}-`;
+    const selectionStillValid = this.selectedDateKey
+      && this.selectedDateKey.startsWith(monthPrefix)
+      && this.eventsByDate.has(this.selectedDateKey);
+
+    if (!selectionStillValid) {
+      this.syncSelectionToVisibleMonth();
+    }
+
     this.render();
   }
 
@@ -133,10 +143,35 @@ export class CalendarView {
     });
   }
 
+  getMonthDateKeys() {
+    const visibleYear = this.currentYear;
+    const visibleMonth = this.currentMonth + 1;
+
+    return Array.from(this.eventsByDate.keys())
+      .filter((dateKey) => {
+        const [year, month] = dateKey.split("-").map(Number);
+        return year === visibleYear && month === visibleMonth;
+      })
+      .sort((left, right) => left.localeCompare(right));
+  }
+
+  syncSelectionToVisibleMonth() {
+    const monthDateKeys = this.getMonthDateKeys();
+    const latestDateKey = monthDateKeys.length ? monthDateKeys[monthDateKeys.length - 1] : "";
+
+    if (this.selectedDateKey === latestDateKey) {
+      return;
+    }
+
+    this.selectedDateKey = latestDateKey;
+    this.onSelectDate(this.selectedDateKey, this.eventsByDate.get(this.selectedDateKey) || []);
+  }
+
   moveMonth(delta) {
     const next = new Date(this.currentYear, this.currentMonth + delta, 1);
     this.currentYear = next.getFullYear();
     this.currentMonth = next.getMonth();
+    this.syncSelectionToVisibleMonth();
     this.render();
   }
 
@@ -199,7 +234,7 @@ export class CalendarView {
             <p class="agenda-date">${label}</p>
             <p class="agenda-count">${events.length} screening${events.length === 1 ? "" : "s"}</p>
           </div>
-          <button type="button" class="agenda-open-btn">View</button>
+          <button type="button" class="agenda-open-btn">Select</button>
         </div>
       `;
     }).join("");
@@ -275,7 +310,6 @@ export class CalendarView {
       row.querySelector(".agenda-open-btn")?.addEventListener("click", () => {
         const dateKey = row.getAttribute("data-date-key") || "";
         if (dateKey) {
-          this.viewMode = "calendar";
           this.selectDate(dateKey);
         }
       });

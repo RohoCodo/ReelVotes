@@ -340,12 +340,27 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         calendarView.updateEvents(matchedEvents);
       }
 
-      const firstDateKey = matchedEvents
-        .map((event) => toLocalDateKey(event.screeningDateTime || event.id))
-        .find(Boolean);
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      const currentMonth = now.getMonth() + 1;
 
-      if (firstDateKey) {
-        calendarView.selectDate(firstDateKey);
+      const sortedDateKeys = Array.from(new Set(
+        matchedEvents
+          .map((event) => toLocalDateKey(event.screeningDateTime || event.id))
+          .filter(Boolean)
+      )).sort((left, right) => left.localeCompare(right));
+
+      const latestCurrentMonthDateKey = sortedDateKeys
+        .filter((dateKey) => {
+          const [year, month] = dateKey.split("-").map(Number);
+          return year === currentYear && month === currentMonth;
+        })
+        .pop();
+
+      const selectedDateKey = latestCurrentMonthDateKey || sortedDateKeys[sortedDateKeys.length - 1] || "";
+
+      if (selectedDateKey) {
+        calendarView.selectDate(selectedDateKey);
       }
     },
   });

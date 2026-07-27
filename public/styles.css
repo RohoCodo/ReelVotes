@@ -2671,6 +2671,65 @@ body {
     margin: 30px 0;
   }
 
+  .signup-info,
+  .signup-testimonials {
+    margin-top: 18px;
+    text-align: left;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.04);
+    padding: 14px 14px 12px;
+  }
+
+  .signup-info h2,
+  .signup-testimonials h2 {
+    margin: 0 0 8px;
+    font-size: 15px;
+    color: #ffdbe8;
+  }
+
+  .signup-info p {
+    margin: 0 0 10px;
+    color: #f3edf0;
+    line-height: 1.45;
+    font-size: 14px;
+  }
+
+  .signup-info ul {
+    margin: 0;
+    padding-left: 18px;
+  }
+
+  .signup-info li {
+    margin: 0 0 6px;
+    color: #dfd3d8;
+    line-height: 1.4;
+    font-size: 13px;
+  }
+
+  .signup-info li:last-child {
+    margin-bottom: 0;
+  }
+
+  .signup-testimonials {
+    margin-top: 4px;
+  }
+
+  .signup-testimonials blockquote {
+    margin: 0 0 10px;
+    padding: 10px 12px;
+    border-left: 3px solid rgba(255, 143, 196, 0.85);
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.22);
+    color: #f8f3f5;
+    font-size: 13px;
+    line-height: 1.45;
+  }
+
+  .signup-testimonials blockquote:last-child {
+    margin-bottom: 0;
+  }
+
   .email-step label {
     display: block;
     text-align: left;

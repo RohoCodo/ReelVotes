@@ -46,6 +46,15 @@ const ELIMINATION_ENABLED_EVENT_IDS = new Set([]);
 const DEFAULT_ELIMINATIONS_PER_NIGHT = 3;
 const LEGACY_ANON_EMAIL_SUFFIX = "@reelvotes.local";
 const EMAIL_OPTIONAL_EVENT_IDS = new Set([]);
+const WINNER_AUTOMATION_ENABLED = String(process.env.WINNER_AUTOMATION_ENABLED || "true").trim().toLowerCase() !== "false";
+const WINNER_BCC_BATCH_SIZE = Math.min(
+  150,
+  Math.max(25, Number(process.env.WINNER_BCC_BATCH_SIZE || 90) || 90),
+);
+const WINNER_ADMIN_EMAILS = [
+  "moses@thenewparkway.com",
+  "programming@thenewparkway.com",
+];
 const PRIVILEGED_ADMIN_EMAIL = "rt332@cornell.edu";
 const ADMIN_EMAILS = new Set([
   "rt332@cornell.edu",
@@ -1339,6 +1348,329 @@ async function queueAnnouncementEmails({
   return {queuedEmailCount, recipientCount: recipients.size};
 }
 
+function toValidNotificationEmail(value) {
+  try {
+    const normalized = sanitizeOptionalEmail(value);
+    if (!normalized) return null;
+    if (!isLikelyRealEmail(normalized)) return null;
+    return normalized;
+  } catch {
+    return null;
+  }
+}
+
+function getWinnerVoteThreshold(eventData = {}) {
+  const candidates = [
+    eventData?.successTargets?.minimumLeadingVotes,
+    eventData?.minimumLeadingVotes,
+    eventData?.votesNeeded,
+    eventData?.winningVoteThreshold,
+    eventData?.minimumVotesNeeded,
+  ];
+
+  for (const candidate of candidates) {
+    const parsed = Number(candidate);
+    if (Number.isFinite(parsed) && parsed >= 1) {
+      return Math.floor(parsed);
+    }
+  }
+
+  return null;
+}
+
+function getMovieStandingsFromSnapshot(moviesSnapshot) {
+  const standings = moviesSnapshot.docs
+    .map((movieDoc) => {
+      const movieData = movieDoc.data() || {};
+      return {
+        movieTitle: String(movieData.movie_title || "").trim(),
+        voteCount: Number(movieData.vote_count || 0),
+      };
+    })
+    .filter((row) => row.movieTitle)
+    .sort((a, b) => b.voteCount - a.voteCount || a.movieTitle.localeCompare(b.movieTitle));
+
+  return standings;
+}
+
+async function collectWinnerAudienceEmails(eventRef) {
+  const recipients = new Set();
+  const addEmail = (candidate) => {
+    const normalized = toValidNotificationEmail(candidate);
+    if (normalized) {
+      recipients.add(normalized);
+    }
+  };
+
+  const [
+    signupsSnapshot,
+    eventVotesSnapshot,
+    eventEmailKeysSnapshot,
+    allEventEmailKeysSnapshot,
+    allEventVotesSnapshot,
+  ] = await Promise.all([
+    db.collection("email_signups").get(),
+    eventRef.collection("votes").get(),
+    eventRef.collection("email_keys").get(),
+    db.collectionGroup("email_keys").get(),
+    db.collectionGroup("votes").get(),
+  ]);
+
+  signupsSnapshot.docs.forEach((signupDoc) => {
+    const signupData = signupDoc.data() || {};
+    addEmail(signupData.email || signupDoc.id);
+  });
+
+  eventVotesSnapshot.docs.forEach((voteDoc) => {
+    const voteData = voteDoc.data() || {};
+    addEmail(voteData.email);
+  });
+
+  eventEmailKeysSnapshot.docs.forEach((emailKeyDoc) => {
+    const emailKeyData = emailKeyDoc.data() || {};
+    addEmail(emailKeyData.email || emailKeyDoc.id);
+  });
+
+  allEventEmailKeysSnapshot.docs.forEach((emailKeyDoc) => {
+    const emailKeyData = emailKeyDoc.data() || {};
+    addEmail(emailKeyData.email || emailKeyDoc.id);
+  });
+
+  allEventVotesSnapshot.docs.forEach((voteDoc) => {
+    const voteData = voteDoc.data() || {};
+    addEmail(voteData.email);
+  });
+
+  return Array.from(recipients);
+}
+
+async function queueWinnerAnnouncementEmails({
+  eventId,
+  eventData,
+  winnerTitle,
+  winnerVoteCount,
+  threshold,
+  audienceEmails,
+}) {
+  const adminRecipients = WINNER_ADMIN_EMAILS
+    .map((email) => toValidNotificationEmail(email))
+    .filter(Boolean);
+
+  const uniqueAudience = Array.from(new Set(audienceEmails || []));
+  const bccAudience = uniqueAudience.filter((email) => !adminRecipients.includes(email));
+  const eventScreeningLabel = String(eventData.screeningLabel || eventData.screeningDateTime || eventId);
+  const voteUrl = buildVoteUrlFromScreeningDateTime(eventData.screeningDateTime || "");
+  const winnerKey = `${normalizeMovieTitle(winnerTitle)}__${winnerVoteCount}__${threshold}`;
+  const winnerKeyHash = hashValue(`${eventId}:${winnerKey}`).slice(0, 20);
+
+  const standingsSnapshot = await db.collection("events").doc(eventId).collection("movies").get();
+  const standings = getMovieStandingsFromSnapshot(standingsSnapshot).slice(0, 5);
+  const standingsText = standings.length
+    ? standings.map((row, index) => `${index + 1}. ${row.movieTitle} — ${row.voteCount}`).join("\n")
+    : "No standings available.";
+
+  if (adminRecipients.length > 0) {
+    const adminMailRef = db.collection("mail").doc(`winner_admin_${winnerKeyHash}`);
+    await adminMailRef.set({
+      to: adminRecipients,
+      message: {
+        subject: `ReelVotes winner reached — ${eventScreeningLabel}`,
+        text:
+          `Winner reached for event ${eventId}.\n\n` +
+          `Screening: ${eventScreeningLabel}\n` +
+          `Winning movie: ${winnerTitle}\n` +
+          `Winning votes: ${winnerVoteCount}\n` +
+          `Threshold: ${threshold}\n` +
+          `Audience email recipients (deduped): ${bccAudience.length}\n\n` +
+          `Current standings:\n${standingsText}\n\n` +
+          `Vote URL: ${voteUrl}`,
+      },
+      event_id: eventId,
+      type: "winner-announcement-admin",
+      winner_title: winnerTitle,
+      winner_vote_count: winnerVoteCount,
+      winner_threshold: threshold,
+      recipient_count: bccAudience.length,
+      created_at: admin.firestore.FieldValue.serverTimestamp(),
+    }, {merge: true});
+  }
+
+  const announcementSubject = `Screening confirmed: ${winnerTitle}`;
+  const announcementText =
+    `Great news — your voted screening has officially won.\n\n` +
+    `Screening: ${eventScreeningLabel}\n` +
+    `Winning movie: ${winnerTitle}\n` +
+    `Votes: ${winnerVoteCount}\n\n` +
+    `Details and updates: ${voteUrl}`;
+
+  let queuedAudienceEmailCount = 0;
+  const senderTo = adminRecipients[0] || "programming@thenewparkway.com";
+
+  for (let index = 0; index < bccAudience.length; index += WINNER_BCC_BATCH_SIZE) {
+    const batchRecipients = bccAudience.slice(index, index + WINNER_BCC_BATCH_SIZE);
+    const batchNumber = Math.floor(index / WINNER_BCC_BATCH_SIZE) + 1;
+    const audienceMailRef = db.collection("mail").doc(`winner_audience_${winnerKeyHash}_${batchNumber}`);
+
+    await audienceMailRef.set({
+      to: [senderTo],
+      bcc: batchRecipients,
+      message: {
+        subject: announcementSubject,
+        text: announcementText,
+      },
+      event_id: eventId,
+      type: "winner-announcement-audience",
+      winner_title: winnerTitle,
+      winner_vote_count: winnerVoteCount,
+      winner_threshold: threshold,
+      batch_number: batchNumber,
+      batch_size: batchRecipients.length,
+      created_at: admin.firestore.FieldValue.serverTimestamp(),
+    }, {merge: true});
+
+    queuedAudienceEmailCount += batchRecipients.length;
+  }
+
+  return {
+    adminRecipientCount: adminRecipients.length,
+    audienceRecipientCount: bccAudience.length,
+    queuedAudienceEmailCount,
+    winnerKey,
+  };
+}
+
+async function evaluateAndAnnounceEventWinner(eventId, {force = false, trigger = "system"} = {}) {
+  if (!WINNER_AUTOMATION_ENABLED) {
+    return {ok: true, eventId, status: "winner-automation-disabled"};
+  }
+
+  const eventRef = db.collection("events").doc(eventId);
+  const moviesRef = eventRef.collection("movies");
+
+  const decision = await db.runTransaction(async (transaction) => {
+    const [eventDoc, moviesSnapshot] = await Promise.all([
+      transaction.get(eventRef),
+      transaction.get(moviesRef),
+    ]);
+
+    if (!eventDoc.exists) {
+      return {shouldQueue: false, status: "event-not-found"};
+    }
+
+    const eventData = eventDoc.data() || {};
+    const voteStatus = sanitizeVoteStatus(eventData.voteStatus);
+    if (voteStatus !== "live" && !force) {
+      return {shouldQueue: false, status: "event-not-live"};
+    }
+
+    const threshold = getWinnerVoteThreshold(eventData);
+    if (!threshold) {
+      return {shouldQueue: false, status: "winner-threshold-missing"};
+    }
+
+    const standings = getMovieStandingsFromSnapshot(moviesSnapshot);
+    const winner = standings[0] || null;
+    if (!winner || winner.voteCount < threshold) {
+      return {
+        shouldQueue: false,
+        status: "threshold-not-met",
+        topMovieTitle: winner?.movieTitle || null,
+        topMovieVotes: winner?.voteCount || 0,
+        threshold,
+      };
+    }
+
+    const existingWinnerAnnouncement = eventData.winnerAnnouncement || {};
+    if (existingWinnerAnnouncement.sent === true && !force) {
+      return {
+        shouldQueue: false,
+        status: "winner-already-announced",
+        winnerTitle: existingWinnerAnnouncement.winnerTitle || null,
+      };
+    }
+
+    const winnerKey = `${normalizeMovieTitle(winner.movieTitle)}__${winner.voteCount}__${threshold}`;
+
+    transaction.set(eventRef, {
+      winnerAnnouncement: {
+        sent: true,
+        winnerTitle: winner.movieTitle,
+        winnerVoteCount: winner.voteCount,
+        threshold,
+        winnerKey,
+        sentAt: admin.firestore.FieldValue.serverTimestamp(),
+        trigger,
+      },
+      updated_at: admin.firestore.FieldValue.serverTimestamp(),
+      updated_by: `winner-automation:${trigger}`,
+    }, {merge: true});
+
+    return {
+      shouldQueue: true,
+      status: "winner-announcement-queued",
+      eventData,
+      winnerTitle: winner.movieTitle,
+      winnerVoteCount: winner.voteCount,
+      threshold,
+      winnerKey,
+    };
+  });
+
+  if (!decision.shouldQueue) {
+    return {
+      ok: true,
+      eventId,
+      ...decision,
+    };
+  }
+
+  const audienceEmails = await collectWinnerAudienceEmails(eventRef);
+  const queued = await queueWinnerAnnouncementEmails({
+    eventId,
+    eventData: decision.eventData || {},
+    winnerTitle: decision.winnerTitle,
+    winnerVoteCount: decision.winnerVoteCount,
+    threshold: decision.threshold,
+    audienceEmails,
+  });
+
+  await eventRef.set({
+    winnerAnnouncement: {
+      sent: true,
+      winnerTitle: decision.winnerTitle,
+      winnerVoteCount: decision.winnerVoteCount,
+      threshold: decision.threshold,
+      winnerKey: decision.winnerKey,
+      trigger,
+      adminRecipientCount: queued.adminRecipientCount,
+      audienceRecipientCount: queued.audienceRecipientCount,
+      queuedAudienceEmailCount: queued.queuedAudienceEmailCount,
+      queuedAt: admin.firestore.FieldValue.serverTimestamp(),
+    },
+    updated_at: admin.firestore.FieldValue.serverTimestamp(),
+    updated_by: `winner-automation:${trigger}`,
+  }, {merge: true});
+
+  logger.info("Winner automation announcement queued", {
+    eventId,
+    winnerTitle: decision.winnerTitle,
+    winnerVoteCount: decision.winnerVoteCount,
+    threshold: decision.threshold,
+    audienceRecipientCount: queued.audienceRecipientCount,
+    trigger,
+  });
+
+  return {
+    ok: true,
+    eventId,
+    status: "winner-announcement-queued",
+    winnerTitle: decision.winnerTitle,
+    winnerVoteCount: decision.winnerVoteCount,
+    threshold: decision.threshold,
+    audienceRecipientCount: queued.audienceRecipientCount,
+  };
+}
+
 function sanitizeClientId(clientId) {
   const normalizedClientId = String(clientId || "").trim();
   if (!normalizedClientId || normalizedClientId.length > 200) {
@@ -2356,6 +2688,57 @@ exports.deleteEventShowtime = onCall(async (request) => {
   };
 });
 
+exports.processWinnerAutomationForEvent = onCall(async (request) => {
+  const adminEmail = assertAdminEmail(request.data?.adminEmail);
+  const eventId = sanitizeEventId(request.data?.eventId);
+  const force = request.data?.force === true;
+
+  const result = await evaluateAndAnnounceEventWinner(eventId, {
+    force,
+    trigger: `manual-event:${adminEmail}`,
+  });
+
+  return {
+    ok: true,
+    eventId,
+    force,
+    result,
+  };
+});
+
+exports.processWinnerAutomationForAllEvents = onCall(async (request) => {
+  const adminEmail = assertAdminEmail(request.data?.adminEmail);
+  const force = request.data?.force === true;
+  const eventsSnapshot = await db.collection("events").get();
+  const results = [];
+
+  for (const eventDoc of eventsSnapshot.docs) {
+    const eventId = eventDoc.id;
+    try {
+      const result = await evaluateAndAnnounceEventWinner(eventId, {
+        force,
+        trigger: `manual-all:${adminEmail}`,
+      });
+      results.push({eventId, status: result.status, winnerTitle: result.winnerTitle || null});
+    } catch (error) {
+      logger.error("Winner automation scan failed for event", {
+        eventId,
+        error: error?.message || String(error),
+      });
+      results.push({eventId, status: "error", error: error?.message || "unknown"});
+    }
+  }
+
+  const queuedCount = results.filter((item) => item.status === "winner-announcement-queued").length;
+
+  return {
+    ok: true,
+    scanned: eventsSnapshot.size,
+    queuedCount,
+    results,
+  };
+});
+
 exports.setEventVoteStatus = onCall(async (request) => {
   const eventId = sanitizeEventId(request.data?.eventId);
   const adminEmail = assertAdminEmail(request.data?.adminEmail);
@@ -2648,7 +3031,7 @@ exports.submitVote = onCall(async (request) => {
     legacyMovieRef: eventRef.collection("movies").doc(requestedMovieTitle),
   }));
 
-  return db.runTransaction(async (transaction) => {
+  const voteResult = await db.runTransaction(async (transaction) => {
     const eventDoc = await transaction.get(eventRef);
     const eventData = eventDoc.exists ? (eventDoc.data() || {}) : {};
     const eventVoteStatus = String(eventData.voteStatus || "").trim().toLowerCase();
@@ -2914,6 +3297,19 @@ exports.submitVote = onCall(async (request) => {
       voteCount: movieTitles.length,
     };
   });
+
+  if (voteResult?.status === "recorded") {
+    try {
+      await evaluateAndAnnounceEventWinner(eventId, {trigger: "submit-vote"});
+    } catch (error) {
+      logger.error("Winner automation failed after vote", {
+        eventId,
+        error: error?.message || String(error),
+      });
+    }
+  }
+
+  return voteResult;
 });
 
 async function handleEmailSignup(request) {
