@@ -34,7 +34,7 @@
       },
       {
         "source": "/showtimes",
-        "destination": "/select-event.html",
+        "destination": "/showtimes/",
         "type": 302
       }
     ],
