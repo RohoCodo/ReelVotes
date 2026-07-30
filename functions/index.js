@@ -972,6 +972,39 @@ async function deleteCollectionDocuments(collectionRef, batchSize = 400) {
   return deletedCount;
 }
 
+async function copyCollectionDocuments(sourceCollectionRef, targetCollectionRef, mapDocData, batchSize = 350) {
+  const snapshot = await sourceCollectionRef.get();
+  if (snapshot.empty) {
+    return 0;
+  }
+
+  let copiedCount = 0;
+  let operationCount = 0;
+  let batch = db.batch();
+
+  for (const docSnapshot of snapshot.docs) {
+    const mappedData = typeof mapDocData === "function"
+      ? mapDocData(docSnapshot.data() || {}, docSnapshot.id)
+      : (docSnapshot.data() || {});
+
+    batch.set(targetCollectionRef.doc(docSnapshot.id), mappedData, {merge: true});
+    copiedCount += 1;
+    operationCount += 1;
+
+    if (operationCount >= batchSize) {
+      await batch.commit();
+      batch = db.batch();
+      operationCount = 0;
+    }
+  }
+
+  if (operationCount > 0) {
+    await batch.commit();
+  }
+
+  return copiedCount;
+}
+
 function sanitizeVoteStatus(voteStatusInput) {
   const normalizedVoteStatus = String(voteStatusInput || "not-started").trim().toLowerCase();
   if (!["not-started", "live", "ended"].includes(normalizedVoteStatus)) {
@@ -2400,6 +2433,131 @@ exports.createEventShowtime = onCall(async (request) => {
       voteWindowLabel,
       requireEmail,
       allowedMovies: movieTitles,
+    },
+  };
+});
+
+exports.updateEventShowtimeDateTime = onCall(async (request) => {
+  const sourceEventId = sanitizeEventId(request.data?.eventId);
+  const adminEmail = assertAdminEmail(request.data?.adminEmail);
+  const screeningDateTime = sanitizeScreeningDateTime(request.data?.screeningDateTime);
+
+  const targetEventId = buildShowtimeFirestoreId(screeningDateTime);
+  const screeningLabel = buildScreeningLabel(screeningDateTime);
+
+  if (sourceEventId === targetEventId) {
+    const sourceRef = db.collection("events").doc(sourceEventId);
+    const sourceDoc = await sourceRef.get();
+    if (!sourceDoc.exists) {
+      throw new HttpsError("not-found", "That showtime no longer exists.");
+    }
+
+    await sourceRef.set({
+      screeningDateTime,
+      screeningLabel,
+      updated_at: admin.firestore.FieldValue.serverTimestamp(),
+      updated_by: adminEmail,
+    }, {merge: true});
+
+    return {
+      ok: true,
+      eventId: sourceEventId,
+      unchangedEventId: true,
+      event: {
+        id: sourceEventId,
+        firestoreEventId: sourceEventId,
+        screeningDateTime,
+        screeningLabel,
+      },
+    };
+  }
+
+  const sourceRef = db.collection("events").doc(sourceEventId);
+  const targetRef = db.collection("events").doc(targetEventId);
+
+  const [sourceDoc, targetDoc] = await Promise.all([sourceRef.get(), targetRef.get()]);
+
+  if (!sourceDoc.exists) {
+    throw new HttpsError("not-found", "That showtime no longer exists.");
+  }
+
+  if (targetDoc.exists) {
+    throw new HttpsError("already-exists", `A showtime already exists for ${screeningLabel}.`);
+  }
+
+  const sourceData = sourceDoc.data() || {};
+  const voteStatus = sanitizeVoteStatus(sourceData.voteStatus || "not-started");
+  const voteWindowLabel = buildVoteWindowLabel(voteStatus);
+  const now = admin.firestore.FieldValue.serverTimestamp();
+
+  await targetRef.set({
+    ...sourceData,
+    screeningDateTime,
+    screeningLabel,
+    voteWindowLabel,
+    movedFromEventId: sourceEventId,
+    updated_at: now,
+    updated_by: adminEmail,
+  }, {merge: true});
+
+  const subcollections = await sourceRef.listCollections();
+  const copiedSubcollectionStats = [];
+
+  for (const subcollectionRef of subcollections) {
+    const targetSubcollectionRef = targetRef.collection(subcollectionRef.id);
+    const copiedCount = await copyCollectionDocuments(
+      subcollectionRef,
+      targetSubcollectionRef,
+      (docData) => {
+        const nextData = {...docData};
+        if (nextData.event_id === sourceEventId) {
+          nextData.event_id = targetEventId;
+        }
+        if (nextData.eventId === sourceEventId) {
+          nextData.eventId = targetEventId;
+        }
+        return nextData;
+      },
+    );
+
+    copiedSubcollectionStats.push({
+      name: subcollectionRef.id,
+      copiedCount,
+    });
+  }
+
+  for (const subcollectionRef of subcollections) {
+    await deleteCollectionDocuments(subcollectionRef);
+  }
+  await sourceRef.delete();
+
+  const copiedSubcollectionDocCount = copiedSubcollectionStats.reduce(
+    (sum, row) => sum + Number(row.copiedCount || 0),
+    0,
+  );
+
+  logger.info("Admin rescheduled showtime", {
+    sourceEventId,
+    targetEventId,
+    adminEmail,
+    screeningDateTime,
+    subcollectionCount: copiedSubcollectionStats.length,
+    copiedSubcollectionDocCount,
+  });
+
+  return {
+    ok: true,
+    eventId: targetEventId,
+    previousEventId: sourceEventId,
+    copiedSubcollectionStats,
+    copiedSubcollectionDocCount,
+    event: {
+      id: targetEventId,
+      firestoreEventId: targetEventId,
+      screeningDateTime,
+      screeningLabel,
+      voteStatus,
+      voteWindowLabel,
     },
   };
 });

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <!-- Google Tag Manager -->
+  <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  })(window,document,'script','dataLayer','GTM-MXXR4PXT');</script>
+  <!-- End Google Tag Manager -->
+  <title>Showtimes | ReelVotes</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="/styles.css?v=20260729-2" />
+  <link rel="icon" type="image/png" href="/icon.png" />
+</head>
+<body>
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-MXXR4PXT"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+
+<div class="overlay"></div>
+
+<div class="container">
+  <div class="card" style="max-width:760px; text-align:center;">
+    <nav class="site-nav" aria-label="Primary">
+      <div class="site-nav-left">
+        <a class="site-nav-brand" href="/index.html">ReelVotes</a>
+      </div>
+      <div class="site-nav-center" aria-label="Core navigation">
+        <a class="site-nav-tab active" href="/showtimes">Showtimes</a>
+        <a class="site-nav-tab" href="/suggest">Suggest a Movie</a>
+        <a class="site-nav-tab" href="/how-it-works">How It Works</a>
+        <a class="site-nav-tab" href="/chat/">Movie Chat</a>
+      </div>
+      <div class="site-nav-right">
+        <a class="site-nav-cta" href="/email-signup.html">Join Email List</a>
+        <details class="site-nav-profile">
+          <summary aria-label="Open profile menu">⚙</summary>
+          <div class="site-nav-dropdown" role="menu">
+            <a href="/reelsuccess.html" role="menuitem">ReelSuccess</a>
+            <a href="/admin.html" role="menuitem">Admin View</a>
+          </div>
+        </details>
+      </div>
+      <button id="navToggleBtn" class="nav-toggle" type="button" aria-label="Toggle navigation">☰</button>
+      <div id="siteNavDrawer" class="site-nav-drawer" aria-label="Mobile navigation">
+        <a class="active" href="/showtimes">Showtimes</a>
+        <a href="/suggest">Suggest a Movie</a>
+        <a href="/how-it-works">How It Works</a>
+        <a href="/chat/">Movie Chat</a>
+        <a href="/email-signup.html">Join Email List</a>
+      </div>
+    </nav>
+
+    <section class="info-box" style="text-align:center; margin-top:10px;">
+      <p class="showtimes-entry-kicker" style="margin-bottom:4px;">Showtimes</p>
+      <h1 style="margin-top:0;">Opening your current theater</h1>
+      <p class="subtitle" id="showtimesRouteMessage">Taking you to The New Parkway Theater now.</p>
+      <div class="showtimes-entry-actions" style="justify-content:center;">
+        <a id="continueShowtimesBtn" class="submit-btn" href="/select-event.html">Continue now</a>
+        <a class="secondary-btn" href="/select-event?theater=choose">Choose another theater</a>
+      </div>
+      <p class="subtitle" style="margin-top:12px; font-size:13px;">Tip: direct links can include a theater key, like <strong>?theater=PFR|The New Parkway Theater|Oakland, CA</strong>.</p>
+    </section>
+  </div>
+</div>
+
+<script src="/site-nav.js"></script>
+<script>
+  const DEFAULT_THEATER_KEY = "PFR|The New Parkway Theater|Oakland, CA";
+  const params = new URLSearchParams(window.location.search);
+  const requested = String(params.get("theater") || "").trim();
+  const chosenToken = requested || DEFAULT_THEATER_KEY;
+
+  const destination = new URL("/select-event.html", window.location.origin);
+  destination.searchParams.set("theater", chosenToken);
+
+  const continueBtn = document.getElementById("continueShowtimesBtn");
+  const routeMessage = document.getElementById("showtimesRouteMessage");
+
+  if (continueBtn) {
+    continueBtn.href = `${destination.pathname}${destination.search}`;
+  }
+
+  if (routeMessage && requested) {
+    routeMessage.textContent = "Opening your selected theater now.";
+  }
+
+  window.setTimeout(() => {
+    window.location.replace(destination.toString());
+  }, 900);
+</script>
+</body>
+</html>

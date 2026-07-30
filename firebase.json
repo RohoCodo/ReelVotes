@@ -36,6 +36,11 @@
         "source": "/showtimes",
         "destination": "/showtimes/",
         "type": 302
+      },
+      {
+        "source": "/select-event",
+        "destination": "/select-event.html",
+        "type": 302
       }
     ],
     "rewrites": [

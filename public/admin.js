@@ -19,6 +19,7 @@ const runEliminationRoundCallable = httpsCallable(functions, "runEliminationRoun
 const saveEventAdminSettingsCallable = httpsCallable(functions, "saveEventAdminSettings");
 const createEventShowtimeCallable = httpsCallable(functions, "createEventShowtime");
 const deleteEventShowtimeCallable = httpsCallable(functions, "deleteEventShowtime");
+const updateEventShowtimeDateTimeCallable = httpsCallable(functions, "updateEventShowtimeDateTime");
 const setEventVoteStatusCallable = httpsCallable(functions, "setEventVoteStatus");
 const getEventVoteStatsCallable = httpsCallable(functions, "getEventVoteStats");
 const rebuildEventMovieVoteCountsCallable = httpsCallable(functions, "rebuildEventMovieVoteCounts");
@@ -68,6 +69,11 @@ const adminSaveBtn = document.getElementById("adminSaveBtn");
 const adminSaveStatus = document.getElementById("adminSaveStatus");
 const adminDeleteBtn = document.getElementById("adminDeleteBtn");
 const adminDeleteStatus = document.getElementById("adminDeleteStatus");
+const adminRescheduleDateInput = document.getElementById("adminRescheduleDate");
+const adminRescheduleTimeInput = document.getElementById("adminRescheduleTime");
+const adminRescheduleBtn = document.getElementById("adminRescheduleBtn");
+const adminRescheduleStatus = document.getElementById("adminRescheduleStatus");
+const adminCurrentDateTime = document.getElementById("adminCurrentDateTime");
 const adminNewShowtimeDateInput = document.getElementById("adminNewShowtimeDate");
 const adminNewShowtimeTimeInput = document.getElementById("adminNewShowtimeTime");
 const adminNewVoteStatusSelect = document.getElementById("adminNewVoteStatus");
@@ -351,6 +357,39 @@ function setCreateStatus(message, isError = false) {
   if (!adminCreateStatus) return;
   adminCreateStatus.textContent = message;
   adminCreateStatus.style.color = isError ? "#ff6b6b" : "#bbb";
+}
+
+function setRescheduleStatus(message, isError = false) {
+  if (!adminRescheduleStatus) return;
+  adminRescheduleStatus.textContent = message;
+  adminRescheduleStatus.style.color = isError ? "#ff6b6b" : "#bbb";
+}
+
+function formatScreeningDateTimeLabel(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "—";
+  const parsed = new Date(raw);
+  if (Number.isNaN(parsed.getTime())) {
+    return raw;
+  }
+  return `${parsed.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric", year: "numeric" })} @ ${parsed.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`;
+}
+
+function parseLocalDateTimeParts(screeningDateTime) {
+  const raw = String(screeningDateTime || "").trim();
+  if (!raw.includes("T")) {
+    return { date: "", time: "" };
+  }
+
+  const [datePart, timePart] = raw.split("T");
+  const normalizedDate = /^\d{4}-\d{2}-\d{2}$/.test(datePart) ? datePart : "";
+  const normalizedTime = String(timePart || "").slice(0, 5);
+  const isValidTime = /^\d{2}:\d{2}$/.test(normalizedTime);
+
+  return {
+    date: normalizedDate,
+    time: isValidTime ? normalizedTime : "",
+  };
 }
 
 function collectMovieTitles(rawValue) {
@@ -853,6 +892,15 @@ async function loadAdminControlsForEvent(firestoreId) {
         : configuredRequireEmail;
     }
 
+    const runtimeScreeningDateTime = String(eventData.screeningDateTime || configuredEvent?.screeningDateTime || "").trim();
+    const { date: rescheduleDate, time: rescheduleTime } = parseLocalDateTimeParts(runtimeScreeningDateTime);
+    if (adminRescheduleDateInput) adminRescheduleDateInput.value = rescheduleDate;
+    if (adminRescheduleTimeInput) adminRescheduleTimeInput.value = rescheduleTime;
+    if (adminCurrentDateTime) {
+      adminCurrentDateTime.textContent = `Current: ${formatScreeningDateTimeLabel(runtimeScreeningDateTime)}`;
+    }
+    setRescheduleStatus("");
+
     const titles = moviesSnapshot.docs
       .map((movieDoc) => String(movieDoc.data()?.movie_title || movieDoc.id).trim())
       .filter(Boolean)
@@ -878,6 +926,67 @@ async function loadAdminControlsForEvent(firestoreId) {
       shouldAutoOpenEditForEmptySelection = false;
     }
     setSaveStatus("Could not load settings.", true);
+  }
+}
+
+async function rescheduleCurrentShowtime() {
+  if (!currentAdminEmail) {
+    setRescheduleStatus("Admin session missing. Refresh and sign in again.", true);
+    return;
+  }
+
+  if (!currentEventId) {
+    setRescheduleStatus("No showtime selected.", true);
+    return;
+  }
+
+  const showDate = String(adminRescheduleDateInput?.value || "").trim();
+  const showTime = String(adminRescheduleTimeInput?.value || "").trim();
+
+  if (!showDate) {
+    setRescheduleStatus("Select a show date.", true);
+    return;
+  }
+
+  if (!showTime) {
+    setRescheduleStatus("Select a show time.", true);
+    return;
+  }
+
+  if (adminRescheduleBtn) adminRescheduleBtn.disabled = true;
+  setRescheduleStatus("Updating showtime date/time...");
+
+  try {
+    const response = await updateEventShowtimeDateTimeCallable({
+      eventId: currentEventId,
+      adminEmail: currentAdminEmail,
+      screeningDateTime: `${showDate}T${showTime}`,
+    });
+
+    const updatedEvent = response?.data?.event || null;
+    currentEventId = String(response?.data?.eventId || updatedEvent?.firestoreEventId || currentEventId);
+
+    await refreshConfiguredEventsFromFirestore();
+
+    if (eventSelector) {
+      const selected = configuredEvents.find((event) => {
+        const resolvedId = EVENT_ID_ALIASES[event.id] || event.firestoreEventId || event.id;
+        return resolvedId === currentEventId;
+      });
+      if (selected) {
+        eventSelector.value = selected.id;
+      }
+    }
+
+    startLiveListener(currentEventId);
+    await loadAdminControlsForEvent(currentEventId);
+    setRescheduleStatus(`Updated to ${updatedEvent?.screeningLabel || currentEventId}.`);
+    setSaveStatus("Loaded rescheduled showtime.");
+  } catch (error) {
+    console.error("Failed rescheduling showtime:", error);
+    setRescheduleStatus(error?.message || "Failed updating showtime date/time.", true);
+  } finally {
+    if (adminRescheduleBtn) adminRescheduleBtn.disabled = false;
   }
 }
 
@@ -1187,6 +1296,10 @@ if (adminSaveBtn) {
 
 if (adminDeleteBtn) {
   adminDeleteBtn.addEventListener("click", deleteCurrentShowtime);
+}
+
+if (adminRescheduleBtn) {
+  adminRescheduleBtn.addEventListener("click", rescheduleCurrentShowtime);
 }
 
 if (adminCreateBtn) {

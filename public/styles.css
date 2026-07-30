@@ -1942,6 +1942,86 @@ body {
     gap: 8px;
   }
 
+  .showtimes-entry {
+    border-color: rgba(255, 79, 154, 0.45);
+    background: linear-gradient(160deg, rgba(255, 79, 154, 0.14), rgba(255, 255, 255, 0.05));
+    text-align: center;
+  }
+
+  .showtimes-entry p,
+  .showtimes-entry li,
+  .showtimes-entry h2 {
+    text-align: center;
+  }
+
+  .showtimes-entry-kicker {
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-size: 11px !important;
+    color: #ffb8d6 !important;
+    margin: 0 0 6px !important;
+    font-weight: 700;
+  }
+
+  .showtimes-entry-status {
+    margin: 10px 0 8px;
+  }
+
+  .showtimes-entry-help {
+    color: #f2d8e3 !important;
+    margin: 6px 0 10px !important;
+  }
+
+  .showtimes-entry-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin: 0 0 10px;
+  }
+
+  .showtimes-entry-actions .submit-btn,
+  .showtimes-entry-actions .secondary-btn {
+    width: auto;
+    margin: 0;
+    min-width: 152px;
+    text-align: center;
+    text-decoration: none;
+  }
+
+  .showtimes-entry-actions .submit-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .showtimes-entry-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 6px;
+  }
+
+  .showtimes-entry-list li {
+    color: #ead8df;
+    font-size: 12px;
+    line-height: 1.45;
+  }
+
+  @media (max-width: 700px) {
+    .showtimes-entry-actions {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr;
+    }
+
+    .showtimes-entry-actions .submit-btn,
+    .showtimes-entry-actions .secondary-btn {
+      width: 100%;
+    }
+  }
+
   .event-grid {
     display: grid;
     gap: 10px;
