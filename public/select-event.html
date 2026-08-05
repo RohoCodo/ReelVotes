@@ -1,23 +1,12 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <!-- Google Tag Manager -->
-  <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-  })(window,document,'script','dataLayer','GTM-MXXR4PXT');</script>
-  <!-- End Google Tag Manager -->
   <title>Showtimes | ReelVotes</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="styles.css?v=20260729-2" />
+  <link rel="stylesheet" href="styles.css?v=20260805-1" />
   <link rel="icon" type="image/png" href="/icon.png" />
 </head>
 <body>
-<!-- Google Tag Manager (noscript) -->
-<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-MXXR4PXT"
-height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-<!-- End Google Tag Manager (noscript) -->
 
 <div class="overlay"></div>
 
@@ -28,13 +17,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <a class="site-nav-brand" href="/index.html">ReelVotes</a>
       </div>
       <div class="site-nav-center" aria-label="Core navigation">
-        <a class="site-nav-tab active" href="/showtimes">Showtimes</a>
+        <a class="site-nav-tab active" href="/select-event.html">Showtimes</a>
         <a class="site-nav-tab" href="/suggest">Suggest a Movie</a>
         <a class="site-nav-tab" href="/how-it-works">How It Works</a>
         <a class="site-nav-tab" href="/chat/">Movie Chat</a>
       </div>
       <div class="site-nav-right">
-        <a class="site-nav-cta" href="/email-signup.html">Join Email List</a>
+        <a class="site-nav-cta" href="/email-signup.html">Get Voting Alerts</a>
         <details class="site-nav-profile">
           <summary aria-label="Open profile menu">⚙</summary>
           <div class="site-nav-dropdown" role="menu">
@@ -45,37 +34,19 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       </div>
       <button id="navToggleBtn" class="nav-toggle" type="button" aria-label="Toggle navigation">☰</button>
       <div id="siteNavDrawer" class="site-nav-drawer" aria-label="Mobile navigation">
-        <a class="active" href="/showtimes">Showtimes</a>
+        <a class="active" href="/select-event.html">Showtimes</a>
         <a href="/suggest">Suggest a Movie</a>
         <a href="/how-it-works">How It Works</a>
         <a href="/chat/">Movie Chat</a>
-        <a href="/email-signup.html">Join Email List</a>
+        <a href="/email-signup.html">Get Voting Alerts</a>
       </div>
     </nav>
 
     <h1>Showtimes</h1>
-    <p class="subtitle" style="margin-bottom:12px;">Pick a screening to start voting.</p>
-
-    <section id="showtimesEntry" class="info-box showtimes-entry" aria-live="polite">
-      <p class="showtimes-entry-kicker">Start here</p>
-      <h2 id="showtimesEntryTitle">Finding the current vote…</h2>
-      <p id="showtimesEntryStatus" class="showtimes-entry-status">
-        <span class="status-badge status-upcoming">Loading</span>
-      </p>
-      <p id="showtimesEntryHelp" class="subtitle showtimes-entry-help">Pick a theater below to see all screenings for your location.</p>
-      <div class="showtimes-entry-actions">
-        <a id="showtimesEntryVoteBtn" class="submit-btn" href="/index.html">Go to current vote</a>
-        <a class="secondary-btn" href="/email-signup.html">Get vote alerts</a>
-      </div>
-      <ul class="showtimes-entry-list" aria-label="How to vote quickly">
-        <li>1) Find your theater.</li>
-        <li>2) Pick a screening with a live or upcoming badge.</li>
-        <li>3) Open that screening and submit your ballot.</li>
-      </ul>
-    </section>
+    <p class="subtitle" style="margin-bottom:12px;">Find your theater, choose a screening, and vote on what should play next.</p>
 
     <div class="flow-grid">
-      <section id="theaterSelectionStep" class="info-box hidden">
+      <section class="info-box">
         <div class="step-header">
           <h2>1. Find your local theater</h2>
         </div>
@@ -84,11 +55,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
       <section id="calendarStep" class="info-box hidden">
         <div class="step-header">
-          <h2 id="calendarStepTitle">2. Choose a screening</h2>
-          <p class="subtitle" style="margin:8px 0 0;">
-            Need a different theater?
-            <a href="/select-event?theater=choose" class="app-link">Open theater selection</a>
-          </p>
+          <h2>2. Choose a screening</h2>
           <p class="subtitle" id="calendarStepSubtitle" style="margin:4px 0 0;"></p>
         </div>
         <div id="calendarMount"></div>
@@ -106,7 +73,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
   import { getFirestore, collection, getDocs, getDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
   import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-functions.js";
-  import { CalendarView, TheaterSearch, PetitionForm } from "/ui-components.js";
+  import { CalendarView, TheaterSearch, PetitionForm } from "/ui-components.js?v=20260805-1";
 
   const firebaseConfig = {
     apiKey: "AIzaSyDMa_twNQAZVrnLHUNNNsxk6aTa-9FrnSc",
@@ -125,16 +92,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   const reelSuccessListTheatersCallable = httpsCallable(functions, "reelSuccessListTheaters");
 
   const theaterSearchMount = document.getElementById("theaterSearchMount");
-  const theaterSelectionStep = document.getElementById("theaterSelectionStep");
   const calendarStep = document.getElementById("calendarStep");
-  const calendarStepTitle = document.getElementById("calendarStepTitle");
   const calendarMount = document.getElementById("calendarMount");
   const petitionMount = document.getElementById("petitionMount");
   const calendarStepSubtitle = document.getElementById("calendarStepSubtitle");
-  const showtimesEntryTitle = document.getElementById("showtimesEntryTitle");
-  const showtimesEntryStatus = document.getElementById("showtimesEntryStatus");
-  const showtimesEntryHelp = document.getElementById("showtimesEntryHelp");
-  const showtimesEntryVoteBtn = document.getElementById("showtimesEntryVoteBtn");
 
   function getEventSortTime(event) {
     const rawDateTime = String(event?.screeningDateTime || "").trim();
@@ -179,8 +140,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           showLiveVoteCounts: eventData.showLiveVoteCounts === true || existing.showLiveVoteCounts === true,
           theaterName: eventData.theaterName || existing.theaterName || "The New Parkway Theater",
           theaterCity: eventData.theaterCity || existing.theaterCity || "Oakland, CA",
-          theaterCode: eventData.theaterCode || existing.theaterCode || "",
-          theaterKey: eventData.theaterKey || existing.theaterKey || "",
           partnered: eventData.partnered !== false,
         });
       });
@@ -226,94 +185,20 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     }));
   }
 
-  function getFeaturedEvent(events) {
-    const sorted = [...events].sort((left, right) => getEventSortTime(right) - getEventSortTime(left));
-    const live = sorted.find((event) => event.status === "live" || event.voteStatus === "live");
-    if (live) return live;
-
-    const upcoming = sorted.find((event) => {
-      const status = String(event.status || event.voteStatus || "").trim().toLowerCase();
-      return status !== "ended";
-    });
-    if (upcoming) return upcoming;
-
-    return sorted[0] || null;
-  }
-
-  function formatFeaturedWhen(event) {
-    const raw = String(event?.screeningDateTime || "").trim();
-    const parsed = raw ? new Date(raw) : null;
-    if (!parsed || Number.isNaN(parsed.getTime())) {
-      return String(event?.screeningLabel || event?.id || "TBD");
-    }
-
-    return `${parsed.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" })} · ${parsed.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`;
-  }
-
-  function renderShowtimesEntry(events) {
-    if (!showtimesEntryTitle || !showtimesEntryStatus || !showtimesEntryHelp || !showtimesEntryVoteBtn) {
-      return;
-    }
-
-    const featured = getFeaturedEvent(events);
-    if (!featured) {
-      showtimesEntryTitle.textContent = "No screening selected yet";
-      showtimesEntryStatus.innerHTML = '<span class="status-badge status-upcoming">Upcoming</span>';
-      showtimesEntryHelp.textContent = "Search your theater below to browse available screenings.";
-      showtimesEntryVoteBtn.href = "/select-event.html";
-      showtimesEntryVoteBtn.textContent = "Browse showtimes";
-      return;
-    }
-
-    const label = String(featured.screeningLabel || featured.id || "Current screening").trim();
-    const status = String(featured.status || featured.voteStatus || "not-started").trim().toLowerCase();
-    const eventId = String(featured.id || featured.firestoreEventId || "").trim();
-
-    showtimesEntryTitle.textContent = `${label} · ${formatFeaturedWhen(featured)}`;
-
-    if (status === "live") {
-      showtimesEntryStatus.innerHTML = '<span class="status-badge status-live">Voting live</span>';
-      showtimesEntryHelp.textContent = "This screening is live now. Open it directly or pick a theater below.";
-      showtimesEntryVoteBtn.textContent = "Go to current vote";
-    } else if (status === "ended") {
-      showtimesEntryStatus.innerHTML = '<span class="status-badge status-ended">Voting ended</span>';
-      showtimesEntryHelp.textContent = "That vote is closed. Use the theater flow below to find the next open screening.";
-      showtimesEntryVoteBtn.textContent = "View results";
-    } else {
-      showtimesEntryStatus.innerHTML = '<span class="status-badge status-upcoming">Voting upcoming</span>';
-      showtimesEntryHelp.textContent = "Voting opens soon for this screening. Use the theater flow below to pick another event now.";
-      showtimesEntryVoteBtn.textContent = "Open screening";
-    }
-
-    showtimesEntryVoteBtn.href = eventId ? `/index.html?event=${encodeURIComponent(eventId)}` : "/index.html";
-  }
-
   function buildTheaters(events) {
     const byKey = new Map();
     events.forEach((event) => {
       const theaterName = String(event.theaterName || "The New Parkway Theater").trim();
       const theaterCity = String(event.theaterCity || "Oakland, CA").trim();
       const key = `${theaterName.toLowerCase()}|${theaterCity.toLowerCase()}`;
-      const theaterKey = String(event.theaterKey || "").trim();
-      const theaterCode = String(event.theaterCode || "").trim();
       if (!byKey.has(key)) {
         byKey.set(key, {
           id: key.replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""),
           name: theaterName,
           city: theaterCity,
-          theaterCode,
-          theaterKey,
           partnered: event.partnered !== false,
         });
-        return;
       }
-
-      const existing = byKey.get(key) || {};
-      byKey.set(key, {
-        ...existing,
-        theaterCode: existing.theaterCode || theaterCode,
-        theaterKey: existing.theaterKey || theaterKey,
-      });
     });
 
     if (!byKey.size) {
@@ -321,8 +206,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         id: "new-parkway-oakland",
         name: "The New Parkway Theater",
         city: "Oakland, CA",
-        theaterCode: "PFR",
-        theaterKey: "PFR|The New Parkway Theater|Oakland, CA",
         partnered: true,
       });
     }
@@ -336,104 +219,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-|-$/g, "");
-  }
-
-  function theaterSignature(name, city) {
-    return `${slug(name)}|${slug(city)}`;
-  }
-
-  function normalizeToken(value) {
-    return String(value || "").trim().toLowerCase();
-  }
-
-  function signatureFromCanonicalKey(value) {
-    const raw = String(value || "").trim();
-    if (!raw.includes("|")) {
-      return "";
-    }
-
-    const parts = raw.split("|").map((part) => String(part || "").trim()).filter(Boolean);
-    if (parts.length < 3) {
-      return "";
-    }
-
-    const name = parts[1] || "";
-    const city = parts.slice(2).join("|");
-    return theaterSignature(name, city);
-  }
-
-  function toTheaterUrlToken(theater) {
-    const canonicalKey = String(theater?.theaterKey || "").trim();
-    if (canonicalKey) return canonicalKey;
-
-    const signature = theaterSignature(theater?.name, theater?.city);
-    if (signature) return signature;
-
-    return String(theater?.id || "").trim();
-  }
-
-  function isTheaterChooserToken(token) {
-    const normalized = slug(token);
-    return normalized === "choose" || normalized === "all" || normalized === "search";
-  }
-
-  function findTheaterByToken(theaterToken, theaterList) {
-    const rawToken = String(theaterToken || "").trim();
-    if (!rawToken || isTheaterChooserToken(rawToken)) {
-      return null;
-    }
-
-    const normalizedRaw = normalizeToken(rawToken);
-    const normalizedSlug = slug(rawToken);
-    const keyDerivedSignature = signatureFromCanonicalKey(rawToken);
-
-    return theaterList.find((theater) => {
-      const canonicalKey = String(theater?.theaterKey || "").trim();
-      const signature = theaterSignature(theater?.name, theater?.city);
-      const legacyId = String(theater?.id || "").trim();
-
-      const candidates = [
-        canonicalKey,
-        normalizeToken(canonicalKey),
-        slug(canonicalKey),
-        signature,
-        normalizeToken(signature),
-        slug(signature),
-        legacyId,
-        normalizeToken(legacyId),
-        slug(legacyId),
-      ].filter(Boolean);
-
-      return candidates.includes(rawToken)
-        || candidates.includes(normalizedRaw)
-        || candidates.includes(normalizedSlug);
-    }) || theaterList.find((theater) => {
-      if (!keyDerivedSignature) {
-        return false;
-      }
-      return theaterSignature(theater?.name, theater?.city) === keyDerivedSignature;
-    }) || null;
-  }
-
-  function persistSelectedTheater(theater) {
-    const nextUrl = new URL(window.location.href);
-    const token = toTheaterUrlToken(theater);
-    if (token) {
-      nextUrl.searchParams.set("theater", token);
-    } else {
-      nextUrl.searchParams.delete("theater");
-    }
-
-    const nextHref = `${nextUrl.pathname}${nextUrl.search}${nextUrl.hash}`;
-    const currentHref = `${window.location.pathname}${window.location.search}${window.location.hash}`;
-    if (nextHref !== currentHref) {
-      window.history.replaceState({}, "", nextHref);
-    }
-  }
-
-  function hasExplicitTheaterRequest(token) {
-    const raw = String(token || "").trim();
-    return Boolean(raw) && !isTheaterChooserToken(raw);
   }
 
   function navigateToVote(event) {
@@ -457,13 +242,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
   const events = await loadMergedEvents();
   const eventsWithStatus = await hydrateEventStatuses(events);
-  renderShowtimesEntry(eventsWithStatus);
   const theaters = buildTheaters(eventsWithStatus);
-  const requestedTheaterToken = String(new URLSearchParams(window.location.search).get("theater") || "").trim();
-  const requestedChooserMode = isTheaterChooserToken(requestedTheaterToken);
-  if (!requestedChooserMode && showtimesEntryHelp) {
-    showtimesEntryHelp.innerHTML = 'Showing one theater\'s screenings. <a href="/select-event?theater=choose" class="app-link">Open theater selection</a> to switch.';
-  }
   const partneredTheaterKeys = new Set(
     theaters
       .filter((theater) => theater.partnered)
@@ -487,14 +266,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       const remoteTheaters = rows.map((row) => {
         const name = String(row?.theater_name || row?.theater_code || "Unknown Theater").trim();
         const city = String(row?.theater_city_state || row?.city || "").trim();
-        const theaterKey = String(row?.theater_key || "").trim();
         const key = `${slug(name)}|${slug(city)}`;
         return {
-          id: slug(theaterKey || `${name}-${city}`),
+          id: slug(row?.theater_key || `${name}-${city}`),
           name,
           city,
-          theaterCode: String(row?.theater_code || "").trim(),
-          theaterKey,
           partnered: partneredTheaterKeys.has(key),
         };
       });
@@ -511,7 +287,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       }
 
       const lowerQuery = trimmed.toLowerCase();
-      return Array.from(merged.values()).filter((theater) => [theater.name, theater.city, theater.id, theater.theaterCode, theater.theaterKey]
+      return Array.from(merged.values()).filter((theater) => [theater.name, theater.city, theater.id]
         .map((value) => String(value || "").toLowerCase())
         .some((value) => value.includes(lowerQuery)));
     } catch {
@@ -521,119 +297,72 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
   let calendarView = null;
 
-  function showCalendarForTheater(theater, options = {}) {
-    const shouldPersistSelection = options.persistSelection !== false;
-    const collapseTheaterSelection = options.collapseTheaterSelection === true;
-    if (!theater) {
-      calendarStep.classList.add("hidden");
-      return;
-    }
-
-    if (shouldPersistSelection) {
-      persistSelectedTheater(theater);
-    }
-
-    const matchedEvents = eventsWithStatus.filter((event) => {
-      const eventName = String(event.theaterName || "The New Parkway Theater").trim().toLowerCase();
-      const eventCity = String(event.theaterCity || "Oakland, CA").trim().toLowerCase();
-      return eventName === theater.name.toLowerCase() && eventCity === theater.city.toLowerCase();
-    });
-
-    if (!theater.partnered) {
-      calendarStep.classList.add("hidden");
-      showPetitionForm({ theaterName: theater.name, city: theater.city });
-      return;
-    }
-
-    if (collapseTheaterSelection) {
-      theaterSelectionStep?.classList.add("hidden");
-      if (calendarStepTitle) {
-        calendarStepTitle.textContent = "1. Choose a screening";
-      }
-    }
-
-    petitionMount.classList.add("hidden");
-    calendarStep.classList.remove("hidden");
-    calendarStepSubtitle.textContent = `${theater.name} · ${theater.city}`;
-
-    if (!calendarView) {
-      calendarView = new CalendarView({
-        mountEl: calendarMount,
-        events: matchedEvents,
-        onSelectDate: () => {},
-        onSelectScreening: (event) => navigateToVote(event),
+  const theaterSearch = new TheaterSearch({
+    mountEl: theaterSearchMount,
+    theaters,
+    onQueryChange: queryTheaterSuggestions,
+    onSelect: (theater) => {
+      const matchedEvents = eventsWithStatus.filter((event) => {
+        const eventName = String(event.theaterName || "The New Parkway Theater").trim().toLowerCase();
+        const eventCity = String(event.theaterCity || "Oakland, CA").trim().toLowerCase();
+        return eventName === theater.name.toLowerCase() && eventCity === theater.city.toLowerCase();
       });
-    } else {
-      calendarView.updateEvents(matchedEvents);
-    }
 
-    const now = new Date();
-    const currentYear = now.getFullYear();
-    const currentMonth = now.getMonth() + 1;
+      if (!theater.partnered) {
+        calendarStep.classList.add("hidden");
+        showPetitionForm({ theaterName: theater.name, city: theater.city });
+        return;
+      }
 
-    const sortedDateKeys = Array.from(new Set(
-      matchedEvents
-        .map((event) => toLocalDateKey(event.screeningDateTime || event.id))
-        .filter(Boolean)
-    )).sort((left, right) => left.localeCompare(right));
+      petitionMount.classList.add("hidden");
+      calendarStep.classList.remove("hidden");
+      calendarStepSubtitle.textContent = `${theater.name} · ${theater.city}`;
 
-    const latestCurrentMonthDateKey = sortedDateKeys
-      .filter((dateKey) => {
-        const [year, month] = dateKey.split("-").map(Number);
-        return year === currentYear && month === currentMonth;
-      })
-      .pop();
+      if (!calendarView) {
+        calendarView = new CalendarView({
+          mountEl: calendarMount,
+          events: matchedEvents,
+          onSelectDate: () => {},
+          onSelectScreening: (event) => navigateToVote(event),
+        });
+      } else {
+        calendarView.updateEvents(matchedEvents);
+      }
 
-    const selectedDateKey = latestCurrentMonthDateKey || sortedDateKeys[sortedDateKeys.length - 1] || "";
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      const currentMonth = now.getMonth() + 1;
 
-    if (selectedDateKey) {
-      calendarView.selectDate(selectedDateKey);
-    }
-  }
+      const sortedDateKeys = Array.from(new Set(
+        matchedEvents
+          .map((event) => toLocalDateKey(event.screeningDateTime || event.id))
+          .filter(Boolean)
+      )).sort((left, right) => left.localeCompare(right));
 
-  let theaterSearch = null;
+      const latestCurrentMonthDateKey = sortedDateKeys
+        .filter((dateKey) => {
+          const [year, month] = dateKey.split("-").map(Number);
+          return year === currentYear && month === currentMonth;
+        })
+        .pop();
+
+      const selectedDateKey = latestCurrentMonthDateKey || sortedDateKeys[sortedDateKeys.length - 1] || "";
+
+      if (selectedDateKey) {
+        calendarView.selectDate(selectedDateKey);
+      }
+    },
+  });
 
   const defaultTheater = theaters.find((theater) => String(theater.name || "").toLowerCase().includes("new parkway"))
     || theaters.find((theater) => theater.partnered)
     || theaters[0]
     || null;
 
-  const requestedTheater = findTheaterByToken(requestedTheaterToken, theaters);
-  const initialTheater = requestedTheater || (!requestedChooserMode ? defaultTheater : null);
-
-  if (requestedChooserMode) {
-    theaterSelectionStep?.classList.remove("hidden");
-    if (calendarStepTitle) {
-      calendarStepTitle.textContent = "2. Choose a screening";
-    }
-
-    theaterSearch = new TheaterSearch({
-      mountEl: theaterSearchMount,
-      theaters,
-      onQueryChange: queryTheaterSuggestions,
-      onSelect: (theater) => {
-        showCalendarForTheater(theater, {
-          persistSelection: true,
-          collapseTheaterSelection: true,
-        });
-      },
-    });
-
-    if (initialTheater) {
-      theaterSearch.selectedTheater = initialTheater;
-      theaterSearch.onSelect(initialTheater);
-      theaterSearch.render();
-    }
-  } else {
-    theaterSelectionStep?.classList.add("hidden");
-    petitionMount.classList.add("hidden");
-    if (calendarStepTitle) {
-      calendarStepTitle.textContent = "1. Choose a screening";
-    }
-
-    if (initialTheater) {
-      showCalendarForTheater(initialTheater, { persistSelection: hasExplicitTheaterRequest(requestedTheaterToken) });
-    }
+  if (defaultTheater) {
+    theaterSearch.selectedTheater = defaultTheater;
+    theaterSearch.onSelect(defaultTheater);
+    theaterSearch.render();
   }
 
 </script>

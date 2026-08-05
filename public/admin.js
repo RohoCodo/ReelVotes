@@ -18,8 +18,6 @@ const functions = getFunctions(app);
 const runEliminationRoundCallable = httpsCallable(functions, "runEliminationRound");
 const saveEventAdminSettingsCallable = httpsCallable(functions, "saveEventAdminSettings");
 const createEventShowtimeCallable = httpsCallable(functions, "createEventShowtime");
-const deleteEventShowtimeCallable = httpsCallable(functions, "deleteEventShowtime");
-const updateEventShowtimeDateTimeCallable = httpsCallable(functions, "updateEventShowtimeDateTime");
 const setEventVoteStatusCallable = httpsCallable(functions, "setEventVoteStatus");
 const getEventVoteStatsCallable = httpsCallable(functions, "getEventVoteStats");
 const rebuildEventMovieVoteCountsCallable = httpsCallable(functions, "rebuildEventMovieVoteCounts");
@@ -33,7 +31,6 @@ const ADMIN_EMAILS = new Set([
   "programming@thenewparkway.com",
   "nikki@thenewparkwaytheater.com"
 ]);
-const PRIVILEGED_ADMIN_EMAIL = "rt332@cornell.edu";
 
 // Alias map: date-based ID → Firestore event ID
 const EVENT_ID_ALIASES = { "2026-04-27": "newparkway1" };
@@ -67,13 +64,6 @@ const adminRequireEmailCheckbox = document.getElementById("adminRequireEmailChec
 const adminMoviesInput = document.getElementById("adminMoviesInput");
 const adminSaveBtn = document.getElementById("adminSaveBtn");
 const adminSaveStatus = document.getElementById("adminSaveStatus");
-const adminDeleteBtn = document.getElementById("adminDeleteBtn");
-const adminDeleteStatus = document.getElementById("adminDeleteStatus");
-const adminRescheduleDateInput = document.getElementById("adminRescheduleDate");
-const adminRescheduleTimeInput = document.getElementById("adminRescheduleTime");
-const adminRescheduleBtn = document.getElementById("adminRescheduleBtn");
-const adminRescheduleStatus = document.getElementById("adminRescheduleStatus");
-const adminCurrentDateTime = document.getElementById("adminCurrentDateTime");
 const adminNewShowtimeDateInput = document.getElementById("adminNewShowtimeDate");
 const adminNewShowtimeTimeInput = document.getElementById("adminNewShowtimeTime");
 const adminNewVoteStatusSelect = document.getElementById("adminNewVoteStatus");
@@ -85,56 +75,6 @@ let currentAdminEmail = null;
 let currentVoteStatus = "not-started";
 let currentUniqueVoterCount = null;
 let currentActiveVoteCount = null;
-const TMDB_API_KEY = "05e2d906f097b769ba4d7e8c7305accf";
-const TMDB_BASE_URL = "https://api.themoviedb.org/3";
-const adminMovieMetadataCache = new Map();
-
-function buildPosterUrl(posterPath, size = "w185") {
-  return posterPath ? `https://image.tmdb.org/t/p/${size}${posterPath}` : null;
-}
-
-async function searchTMDB(query) {
-  try {
-    const response = await fetch(
-      `${TMDB_BASE_URL}/search/movie?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}`
-    );
-    const data = await response.json();
-    return Array.isArray(data?.results) ? data.results : [];
-  } catch {
-    return [];
-  }
-}
-
-async function getMovieMetadataByTitle(title) {
-  const normalized = String(title || "").trim();
-  if (!normalized) return { poster: null, tmdbId: null };
-
-  const cacheKey = normalized.toLowerCase();
-  if (adminMovieMetadataCache.has(cacheKey)) {
-    const cached = adminMovieMetadataCache.get(cacheKey);
-    if (cached?.poster || cached?.tmdbId) {
-      return cached;
-    }
-  }
-
-  try {
-    const results = await searchTMDB(normalized);
-    const exact = results.find((row) => String(row?.title || "").trim().toLowerCase() === cacheKey) || null;
-    const withPoster = results.find((row) => Boolean(row?.poster_path)) || null;
-    const exactWithPoster = results.find((row) => String(row?.title || "").trim().toLowerCase() === cacheKey && row?.poster_path) || null;
-    const match = exactWithPoster || withPoster || exact || results[0] || null;
-    const metadata = {
-      poster: buildPosterUrl(match?.poster_path, "w185"),
-      tmdbId: match?.id || null,
-    };
-    if (metadata.poster || metadata.tmdbId) {
-      adminMovieMetadataCache.set(cacheKey, metadata);
-    }
-    return metadata;
-  } catch {
-    return { poster: null, tmdbId: null };
-  }
-}
 
 function normalizeVoteStatus(value) {
   const status = String(value || "").trim().toLowerCase();
@@ -165,8 +105,8 @@ function populateSelector() {
   eventSelector.innerHTML = "";
   if (configuredEvents.length === 0) {
     const opt = document.createElement("option");
-    opt.value = "";
-    opt.textContent = "No showtimes available";
+    opt.value = currentEventId;
+    opt.textContent = currentEventId;
     eventSelector.appendChild(opt);
     return;
   }
@@ -347,49 +287,10 @@ function setSaveStatus(message, isError = false) {
   adminSaveStatus.style.color = isError ? "#ff6b6b" : "#bbb";
 }
 
-function setDeleteStatus(message, isError = false) {
-  if (!adminDeleteStatus) return;
-  adminDeleteStatus.textContent = message;
-  adminDeleteStatus.style.color = isError ? "#ff6b6b" : "#bbb";
-}
-
 function setCreateStatus(message, isError = false) {
   if (!adminCreateStatus) return;
   adminCreateStatus.textContent = message;
   adminCreateStatus.style.color = isError ? "#ff6b6b" : "#bbb";
-}
-
-function setRescheduleStatus(message, isError = false) {
-  if (!adminRescheduleStatus) return;
-  adminRescheduleStatus.textContent = message;
-  adminRescheduleStatus.style.color = isError ? "#ff6b6b" : "#bbb";
-}
-
-function formatScreeningDateTimeLabel(value) {
-  const raw = String(value || "").trim();
-  if (!raw) return "—";
-  const parsed = new Date(raw);
-  if (Number.isNaN(parsed.getTime())) {
-    return raw;
-  }
-  return `${parsed.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric", year: "numeric" })} @ ${parsed.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`;
-}
-
-function parseLocalDateTimeParts(screeningDateTime) {
-  const raw = String(screeningDateTime || "").trim();
-  if (!raw.includes("T")) {
-    return { date: "", time: "" };
-  }
-
-  const [datePart, timePart] = raw.split("T");
-  const normalizedDate = /^\d{4}-\d{2}-\d{2}$/.test(datePart) ? datePart : "";
-  const normalizedTime = String(timePart || "").slice(0, 5);
-  const isValidTime = /^\d{2}:\d{2}$/.test(normalizedTime);
-
-  return {
-    date: normalizedDate,
-    time: isValidTime ? normalizedTime : "",
-  };
 }
 
 function collectMovieTitles(rawValue) {
@@ -555,10 +456,6 @@ function isAdminEmail(email) {
   return ADMIN_EMAILS.has(normalizeEmail(email));
 }
 
-function isPrivilegedAdminEmail(email) {
-  return normalizeEmail(email) === PRIVILEGED_ADMIN_EMAIL;
-}
-
 function setEliminationStatus(message, isError = false) {
   if (!eliminationStatusEl) return;
   eliminationStatusEl.textContent = message;
@@ -581,20 +478,10 @@ function updateEndVoteButton() {
   if (!endVoteBtn) return;
   const isEnded = currentVoteStatus === "ended";
   const isNotStarted = currentVoteStatus === "not-started";
-  const isPrivileged = isPrivilegedAdminEmail(currentAdminEmail);
-  const hideReopen = isEnded && !isPrivileged;
-  endVoteBtn.disabled = !currentAdminEmail || !currentEventId;
+  endVoteBtn.disabled = !currentAdminEmail;
   endVoteBtn.textContent = isNotStarted ? "Start vote" : (isEnded ? "Reopen vote" : "End vote");
-  endVoteBtn.style.display = hideReopen ? "none" : "";
   endVoteBtn.style.opacity = endVoteBtn.disabled ? "0.6" : "1";
   endVoteBtn.style.cursor = endVoteBtn.disabled ? "not-allowed" : "pointer";
-
-  if (runEliminationBtn) {
-    runEliminationBtn.style.display = isPrivileged ? "" : "none";
-  }
-  if (rebuildCountsBtn) {
-    rebuildCountsBtn.style.display = isPrivileged ? "" : "none";
-  }
 }
 
 async function endVoteNow() {
@@ -612,10 +499,6 @@ async function endVoteNow() {
   const nextVoteStatus = previousVoteStatus === "not-started"
     ? "live"
     : (previousVoteStatus === "ended" ? "live" : "ended");
-  if (previousVoteStatus === "ended" && !isPrivilegedAdminEmail(currentAdminEmail)) {
-    setVoteControlStatus(`Only ${PRIVILEGED_ADMIN_EMAIL} can reopen votes.`, true);
-    return;
-  }
   const confirmed = window.confirm(
     nextVoteStatus === "ended"
       ? "End voting for this event now? This will block new votes."
@@ -678,11 +561,6 @@ async function runEliminationRoundNow() {
     return;
   }
 
-  if (!isPrivilegedAdminEmail(currentAdminEmail)) {
-    setEliminationStatus(`Only ${PRIVILEGED_ADMIN_EMAIL} can run elimination rounds.`, true);
-    return;
-  }
-
   try {
     if (runEliminationBtn) {
       runEliminationBtn.disabled = true;
@@ -725,11 +603,6 @@ async function rebuildMovieCountsNow() {
 
   if (!currentEventId) {
     setRebuildCountsStatus("No event selected.", true);
-    return;
-  }
-
-  if (!isPrivilegedAdminEmail(currentAdminEmail)) {
-    setRebuildCountsStatus(`Only ${PRIVILEGED_ADMIN_EMAIL} can rebuild vote counts.`, true);
     return;
   }
 
@@ -778,7 +651,7 @@ async function rebuildMovieCountsNow() {
   }
 }
 
-async function renderMovies(movies) {
+function renderMovies(movies) {
   if (!adminList) return;
 
   adminList.innerHTML = "";
@@ -813,42 +686,15 @@ async function renderMovies(movies) {
   totalEl.innerHTML = `<span>Total votes: ${totalVotes}</span><span>Total people: ${totalPeople}</span>`;
   adminList.appendChild(totalEl);
 
-  const moviesWithMetadata = await Promise.all(movies.map(async (movie) => {
-    const title = movie.movie_title || movie.title || movie.id;
-    const metadata = await getMovieMetadataByTitle(title);
-    return {
-      ...movie,
-      title,
-      poster: movie.poster || movie.posterUrl || movie.poster_url || metadata.poster || null,
-    };
-  }));
-
-  moviesWithMetadata.forEach((movie) => {
+  movies.forEach((movie) => {
     const voteCount = movie.vote_count || 0;
     const percentage = maxVotes > 0 ? Math.round((voteCount / maxVotes) * 100) : 0;
-    const poster = movie.poster || null;
-    const title = movie.title || movie.movie_title || movie.id;
-    const safeTitle = String(title || "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#39;");
-    const safePoster = String(poster || "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#39;");
 
     const item = document.createElement("div");
     item.className = "chosen-movie";
     item.innerHTML = `
       <div class="chosen-movie-header">
-        ${poster
-          ? `<img class="chosen-movie-poster" src="${safePoster}" alt="${safeTitle} poster" loading="lazy" />`
-          : '<div class="chosen-movie-poster chosen-movie-poster-fallback" aria-hidden="true"></div>'}
-        <span class="admin-movie-title">${safeTitle}</span>
+        <span>${movie.movie_title || movie.title || movie.id}</span>
       </div>
       <div class="chosen-movie-bar">
         <div class="chosen-movie-fill" style="width: ${Math.min(percentage, 100)}%"></div>
@@ -892,15 +738,6 @@ async function loadAdminControlsForEvent(firestoreId) {
         : configuredRequireEmail;
     }
 
-    const runtimeScreeningDateTime = String(eventData.screeningDateTime || configuredEvent?.screeningDateTime || "").trim();
-    const { date: rescheduleDate, time: rescheduleTime } = parseLocalDateTimeParts(runtimeScreeningDateTime);
-    if (adminRescheduleDateInput) adminRescheduleDateInput.value = rescheduleDate;
-    if (adminRescheduleTimeInput) adminRescheduleTimeInput.value = rescheduleTime;
-    if (adminCurrentDateTime) {
-      adminCurrentDateTime.textContent = `Current: ${formatScreeningDateTimeLabel(runtimeScreeningDateTime)}`;
-    }
-    setRescheduleStatus("");
-
     const titles = moviesSnapshot.docs
       .map((movieDoc) => String(movieDoc.data()?.movie_title || movieDoc.id).trim())
       .filter(Boolean)
@@ -926,67 +763,6 @@ async function loadAdminControlsForEvent(firestoreId) {
       shouldAutoOpenEditForEmptySelection = false;
     }
     setSaveStatus("Could not load settings.", true);
-  }
-}
-
-async function rescheduleCurrentShowtime() {
-  if (!currentAdminEmail) {
-    setRescheduleStatus("Admin session missing. Refresh and sign in again.", true);
-    return;
-  }
-
-  if (!currentEventId) {
-    setRescheduleStatus("No showtime selected.", true);
-    return;
-  }
-
-  const showDate = String(adminRescheduleDateInput?.value || "").trim();
-  const showTime = String(adminRescheduleTimeInput?.value || "").trim();
-
-  if (!showDate) {
-    setRescheduleStatus("Select a show date.", true);
-    return;
-  }
-
-  if (!showTime) {
-    setRescheduleStatus("Select a show time.", true);
-    return;
-  }
-
-  if (adminRescheduleBtn) adminRescheduleBtn.disabled = true;
-  setRescheduleStatus("Updating showtime date/time...");
-
-  try {
-    const response = await updateEventShowtimeDateTimeCallable({
-      eventId: currentEventId,
-      adminEmail: currentAdminEmail,
-      screeningDateTime: `${showDate}T${showTime}`,
-    });
-
-    const updatedEvent = response?.data?.event || null;
-    currentEventId = String(response?.data?.eventId || updatedEvent?.firestoreEventId || currentEventId);
-
-    await refreshConfiguredEventsFromFirestore();
-
-    if (eventSelector) {
-      const selected = configuredEvents.find((event) => {
-        const resolvedId = EVENT_ID_ALIASES[event.id] || event.firestoreEventId || event.id;
-        return resolvedId === currentEventId;
-      });
-      if (selected) {
-        eventSelector.value = selected.id;
-      }
-    }
-
-    startLiveListener(currentEventId);
-    await loadAdminControlsForEvent(currentEventId);
-    setRescheduleStatus(`Updated to ${updatedEvent?.screeningLabel || currentEventId}.`);
-    setSaveStatus("Loaded rescheduled showtime.");
-  } catch (error) {
-    console.error("Failed rescheduling showtime:", error);
-    setRescheduleStatus(error?.message || "Failed updating showtime date/time.", true);
-  } finally {
-    if (adminRescheduleBtn) adminRescheduleBtn.disabled = false;
   }
 }
 
@@ -1086,106 +862,6 @@ async function createShowtime() {
     setCreateStatus(error?.message || "Failed creating showtime.", true);
   } finally {
     if (adminCreateBtn) adminCreateBtn.disabled = false;
-  }
-}
-
-function clearAdminViewForNoEvent() {
-  currentEventId = "";
-  currentVoteStatus = "not-started";
-  currentUniqueVoterCount = null;
-  currentActiveVoteCount = null;
-  latestMoviesForRender = [];
-
-  if (unsubscribeLive) { unsubscribeLive(); unsubscribeLive = null; }
-  if (unsubscribeVoterCount) { unsubscribeVoterCount(); unsubscribeVoterCount = null; }
-  if (voteStatsPollTimer) {
-    window.clearInterval(voteStatsPollTimer);
-    voteStatsPollTimer = null;
-  }
-
-  populateSelector();
-  updateEventLabel("");
-  updateEndVoteButton();
-  renderBallot([]);
-
-  if (adminMoviesInput) adminMoviesInput.value = "";
-  if (adminRequireEmailCheckbox) adminRequireEmailCheckbox.checked = true;
-  if (adminList) {
-    adminList.innerHTML = "";
-    const empty = document.createElement("div");
-    empty.className = "chosen-movie";
-    empty.textContent = "No showtime selected.";
-    adminList.appendChild(empty);
-  }
-  if (updatedAtEl) updatedAtEl.textContent = "";
-
-  setVoteControlStatus("No showtime selected.", true);
-  setSaveStatus("Select or create a showtime to edit.");
-}
-
-async function deleteCurrentShowtime() {
-  if (!currentAdminEmail) {
-    setDeleteStatus("Admin session missing. Refresh and sign in again.", true);
-    return;
-  }
-
-  if (!currentEventId) {
-    setDeleteStatus("No showtime selected.", true);
-    return;
-  }
-
-  const deletedEventId = currentEventId;
-  const event = resolveEvent(deletedEventId);
-  const label = event?.screeningLabel || event?.id || deletedEventId;
-  const confirmed = window.confirm(`Delete \"${label}\" permanently? This removes its movies and vote history.`);
-  if (!confirmed) {
-    return;
-  }
-
-  if (adminDeleteBtn) adminDeleteBtn.disabled = true;
-  setDeleteStatus("Deleting showtime...");
-
-  try {
-    await deleteEventShowtimeCallable({
-      eventId: deletedEventId,
-      adminEmail: currentAdminEmail,
-    });
-
-    const keptEvents = configuredEvents.filter((item) => {
-      const resolvedId = EVENT_ID_ALIASES[item.id] || item.firestoreEventId || item.id;
-      return resolvedId !== deletedEventId;
-    });
-    configuredEvents.splice(0, configuredEvents.length, ...keptEvents);
-
-    await refreshConfiguredEventsFromFirestore();
-
-    const nextEvent = configuredEvents.find((item) => {
-      const resolvedId = EVENT_ID_ALIASES[item.id] || item.firestoreEventId || item.id;
-      return resolvedId !== deletedEventId;
-    }) || null;
-
-    if (!nextEvent) {
-      clearAdminViewForNoEvent();
-      setDeleteStatus(`Deleted ${label}.`);
-      return;
-    }
-
-    currentEventId = EVENT_ID_ALIASES[nextEvent.id] || nextEvent.firestoreEventId || nextEvent.id;
-
-    if (eventSelector) {
-      eventSelector.value = nextEvent.id;
-    }
-
-    startLiveListener(currentEventId);
-    await loadAdminControlsForEvent(currentEventId);
-    setDeleteStatus(`Deleted ${label}.`);
-    setSaveStatus(`Loaded ${nextEvent.screeningLabel || nextEvent.id}.`);
-    showTab("edit");
-  } catch (error) {
-    console.error("Failed deleting showtime:", error);
-    setDeleteStatus(error?.message || "Failed deleting showtime.", true);
-  } finally {
-    if (adminDeleteBtn) adminDeleteBtn.disabled = false;
   }
 }
 
@@ -1294,14 +970,6 @@ if (adminSaveBtn) {
   adminSaveBtn.addEventListener("click", saveAdminControls);
 }
 
-if (adminDeleteBtn) {
-  adminDeleteBtn.addEventListener("click", deleteCurrentShowtime);
-}
-
-if (adminRescheduleBtn) {
-  adminRescheduleBtn.addEventListener("click", rescheduleCurrentShowtime);
-}
-
 if (adminCreateBtn) {
   adminCreateBtn.addEventListener("click", createShowtime);
 }
@@ -1379,12 +1047,15 @@ ensureAdminAccess()
     startLiveListener(currentEventId);
     loadAdminControlsForEvent(currentEventId);
     if (runEliminationBtn) {
+      runEliminationBtn.disabled = false;
       runEliminationBtn.addEventListener("click", runEliminationRoundNow);
     }
     if (rebuildCountsBtn) {
+      rebuildCountsBtn.disabled = false;
       rebuildCountsBtn.addEventListener("click", rebuildMovieCountsNow);
     }
     if (endVoteBtn) {
+      endVoteBtn.disabled = false;
       endVoteBtn.addEventListener("click", endVoteNow);
       updateEndVoteButton();
     }

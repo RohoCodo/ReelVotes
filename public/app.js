@@ -56,17 +56,13 @@ const movieMetadataCache = new Map();
 
 // Get event ID from URL parameters
 const urlParams = new URLSearchParams(window.location.search);
-let requestedEventId = urlParams.get("event");
+const requestedEventId = urlParams.get("event");
 const EVENT_ID_ALIASES = {
   "2026-04-27": "newparkway1"
 };
-let requestedEventDataId = EVENT_ID_ALIASES[requestedEventId] || requestedEventId;
+const requestedEventDataId = EVENT_ID_ALIASES[requestedEventId] || requestedEventId;
 if (window.REELVOTES_EVENT_PROMISE && typeof window.REELVOTES_EVENT_PROMISE.then === "function") {
   await window.REELVOTES_EVENT_PROMISE;
-  if (!requestedEventId) {
-    requestedEventId = new URLSearchParams(window.location.search).get("event") || "";
-    requestedEventDataId = EVENT_ID_ALIASES[requestedEventId] || requestedEventId;
-  }
 }
 const configuredEvents = window.REELVOTES_EVENTS || [];
 
@@ -1203,7 +1199,7 @@ async function buildUpcomingPreviewHtml() {
   const nextEventParam = String(nextEvent?.id || nextEvent?.firestoreEventId || "").trim();
   const nextVoteHref = nextEventParam
     ? `index.html?event=${encodeURIComponent(nextEventParam)}`
-    : "/showtimes";
+    : "select-event.html";
 
   const ballotTitles = Array.isArray(nextEvent?.allowedMovies)
     ? nextEvent.allowedMovies
@@ -2347,14 +2343,13 @@ async function getFirestoreVoteStatus(firestoreEventId) {
 // If no explicit event was requested, send user to showtimes list.
 // If the current event is ended, also send them to showtimes.
 async function redirectIfEndedWithoutExplicitRequest() {
-  const effectiveRequestedEventId = new URLSearchParams(window.location.search).get("event");
-  if (effectiveRequestedEventId || requestedEventId || selectedEvent?.id) {
+  if (requestedEventId) {
     // User explicitly picked this event; respect that choice.
     return;
   }
 
   // No event was requested — redirect to showtimes/event selector
-  window.location.replace('/showtimes');
+  window.location.replace('select-event.html');
 }
 
 // Initialize

@@ -1942,86 +1942,6 @@ body {
     gap: 8px;
   }
 
-  .showtimes-entry {
-    border-color: rgba(255, 79, 154, 0.45);
-    background: linear-gradient(160deg, rgba(255, 79, 154, 0.14), rgba(255, 255, 255, 0.05));
-    text-align: center;
-  }
-
-  .showtimes-entry p,
-  .showtimes-entry li,
-  .showtimes-entry h2 {
-    text-align: center;
-  }
-
-  .showtimes-entry-kicker {
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    font-size: 11px !important;
-    color: #ffb8d6 !important;
-    margin: 0 0 6px !important;
-    font-weight: 700;
-  }
-
-  .showtimes-entry-status {
-    margin: 10px 0 8px;
-  }
-
-  .showtimes-entry-help {
-    color: #f2d8e3 !important;
-    margin: 6px 0 10px !important;
-  }
-
-  .showtimes-entry-actions {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 8px;
-    margin: 0 0 10px;
-  }
-
-  .showtimes-entry-actions .submit-btn,
-  .showtimes-entry-actions .secondary-btn {
-    width: auto;
-    margin: 0;
-    min-width: 152px;
-    text-align: center;
-    text-decoration: none;
-  }
-
-  .showtimes-entry-actions .submit-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .showtimes-entry-list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: grid;
-    gap: 6px;
-  }
-
-  .showtimes-entry-list li {
-    color: #ead8df;
-    font-size: 12px;
-    line-height: 1.45;
-  }
-
-  @media (max-width: 700px) {
-    .showtimes-entry-actions {
-      width: 100%;
-      display: grid;
-      grid-template-columns: 1fr;
-    }
-
-    .showtimes-entry-actions .submit-btn,
-    .showtimes-entry-actions .secondary-btn {
-      width: 100%;
-    }
-  }
-
   .event-grid {
     display: grid;
     gap: 10px;
@@ -2751,63 +2671,51 @@ body {
     margin: 30px 0;
   }
 
-  .signup-info,
-  .signup-testimonials {
-    margin-top: 18px;
+  .signup-content-block {
+    margin-top: 12px;
     text-align: left;
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    border-radius: 14px;
-    background: rgba(255, 255, 255, 0.04);
-    padding: 14px 14px 12px;
   }
 
-  .signup-info h2,
-  .signup-testimonials h2 {
-    margin: 0 0 8px;
+  .signup-content-block h2 {
+    text-align: left;
     font-size: 15px;
-    color: #ffdbe8;
+    color: #ffe6f0;
   }
 
-  .signup-info p {
-    margin: 0 0 10px;
-    color: #f3edf0;
-    line-height: 1.45;
-    font-size: 14px;
+  .signup-content-block p,
+  .signup-content-block li {
+    text-align: left;
+    font-size: 13px;
+    line-height: 1.5;
   }
 
-  .signup-info ul {
-    margin: 0;
+  .signup-content-block ul {
+    margin: 10px 0 0;
     padding-left: 18px;
+    display: grid;
+    gap: 8px;
   }
 
-  .signup-info li {
-    margin: 0 0 6px;
-    color: #dfd3d8;
+  .email-signup-faq {
+    margin-top: 12px;
+    text-align: left;
+  }
+
+  .email-signup-faq h2 {
+    text-align: left;
+  }
+
+  .email-signup-faq summary {
+    display: block;
+    text-align: left;
+    font-size: 13px;
     line-height: 1.4;
-    font-size: 13px;
   }
 
-  .signup-info li:last-child {
-    margin-bottom: 0;
-  }
-
-  .signup-testimonials {
-    margin-top: 4px;
-  }
-
-  .signup-testimonials blockquote {
-    margin: 0 0 10px;
-    padding: 10px 12px;
-    border-left: 3px solid rgba(255, 143, 196, 0.85);
-    border-radius: 8px;
-    background: rgba(0, 0, 0, 0.22);
-    color: #f8f3f5;
-    font-size: 13px;
-    line-height: 1.45;
-  }
-
-  .signup-testimonials blockquote:last-child {
-    margin-bottom: 0;
+  .email-signup-faq p {
+    text-align: left;
+    font-size: 12px;
+    line-height: 1.5;
   }
 
   .email-step label {

@@ -47,13 +47,13 @@ if (form) {
       await addEmailSignupCallable({ email, eventId: EVENT_ID });
       emailInput.value = "";
       emailInput.blur();
-      setStatus("You're on the list! We'll email you when tickets drop.");
+      setStatus("You're on the list! We'll send alerts when votes open, winners are announced, and tickets go live.");
     } catch (error) {
       console.error("Email signup error:", error);
       setStatus("Could not save your email. Please try again.", true);
     } finally {
       submitBtn.disabled = false;
-      submitBtn.textContent = "Join the email list";
+      submitBtn.textContent = "Get Voting Alerts";
     }
   });
 }

@@ -26,23 +26,6 @@
       "**/.*",
       "**/node_modules/**"
     ],
-    "redirects": [
-      {
-        "source": "/live",
-        "destination": "/live.html",
-        "type": 302
-      },
-      {
-        "source": "/showtimes",
-        "destination": "/showtimes/",
-        "type": 302
-      },
-      {
-        "source": "/select-event",
-        "destination": "/select-event.html",
-        "type": 302
-      }
-    ],
     "rewrites": [
       {
         "source": "**",
