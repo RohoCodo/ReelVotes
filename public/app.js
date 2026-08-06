@@ -27,6 +27,18 @@ const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 const TMDB_TITLE_OVERRIDES = {
   "blade runner": { tmdbId: 78 }
 };
+const LOCAL_POSTER_FALLBACKS = {
+  "back to the future": "https://image.tmdb.org/t/p/w185/vN5B5WgYscRGcQpVhHl6p9DDTP0.jpg",
+  "jurassic park": "https://image.tmdb.org/t/p/w185/63viWuPfYQjRYLSZSZNq7dglJP5.jpg",
+  "blade runner": "https://image.tmdb.org/t/p/w185/63N9uy8nd9j7Eog2axPQ8lbr3Wj.jpg",
+  "in the mood for love": "https://image.tmdb.org/t/p/w185/iYypPT4bhqXfq1b6EnmxvRt6b2Y.jpg",
+  "mean girls": "https://image.tmdb.org/t/p/w185/2ZkuQXvVhh45uSvkBej4S7Ix1NJ.jpg",
+  "bring it on": "https://image.tmdb.org/t/p/w185/bnVby0qI0dS7YunbShP7mw68HY3.jpg",
+  "the notebook": "https://image.tmdb.org/t/p/w185/rNzQyW4f8B8cQeg7Dgj3n6eT5k9.jpg",
+  "blade": "https://image.tmdb.org/t/p/w185/oWT70TvbsmQaqyphCZpsnQR7R32.jpg",
+  "battle royale": "https://image.tmdb.org/t/p/w185/aLGKAQKgzWpJ6egyWzzC11jXBRJ.jpg",
+  "mad max: fury road": "https://image.tmdb.org/t/p/w185/ulcAi4dKpAjHwYGS08vNyx9H6I9.jpg",
+};
 
 // Restricted list - movies that cannot be voted for
 const RESTRICTED_MOVIES = new Set([]);
@@ -1309,6 +1321,10 @@ async function searchTMDB(query) {
     const response = await fetch(
       `${TMDB_BASE_URL}/search/movie?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}`
     );
+    if (!response.ok) {
+      console.warn("TMDB search non-200 response", { status: response.status, query });
+      return [];
+    }
     const data = await response.json();
     return data.results || [];
   } catch (error) {
@@ -1323,6 +1339,10 @@ async function getMovieDetails(movieId) {
     const response = await fetch(
       `${TMDB_BASE_URL}/movie/${movieId}?api_key=${TMDB_API_KEY}&append_to_response=credits,videos`
     );
+    if (!response.ok) {
+      console.warn("TMDB details non-200 response", { status: response.status, movieId });
+      return null;
+    }
     return await response.json();
   } catch (error) {
     console.error("Error fetching movie details:", error);
@@ -1378,12 +1398,17 @@ function normalizeMovieTitleForSearch(title) {
     .trim();
 }
 
+function getLocalPosterFallback(title) {
+  return LOCAL_POSTER_FALLBACKS[String(title || "").trim().toLowerCase()] || null;
+}
+
 async function getMovieMetadataByTitle(title) {
   const normalizedLookupTitle = normalizeMovieTitleForSearch(title);
+  const localPosterFallback = getLocalPosterFallback(normalizedLookupTitle);
   if (!normalizedLookupTitle) {
     return {
       tmdbId: null,
-      poster: null,
+      poster: localPosterFallback,
       starRating: null,
       trailerUrl: buildYouTubeTrailerSearchUrl(title),
     };
@@ -1431,7 +1456,7 @@ async function getMovieMetadataByTitle(title) {
     const match = exactWithPoster || withPoster || exact || results[0] || null;
     let metadata = {
       tmdbId: match?.id || null,
-      poster: buildPosterUrl(match?.poster_path, "w185"),
+      poster: buildPosterUrl(match?.poster_path, "w185") || localPosterFallback,
       starRating: formatStarRating(match?.vote_average),
       trailerUrl: buildYouTubeTrailerSearchUrl(normalizedLookupTitle),
     };
@@ -1452,7 +1477,7 @@ async function getMovieMetadataByTitle(title) {
     console.error("Error fetching movie metadata:", error);
     return {
       tmdbId: null,
-      poster: null,
+      poster: localPosterFallback,
       starRating: null,
       trailerUrl: buildYouTubeTrailerSearchUrl(title),
     };
