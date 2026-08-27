@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { navigate } from "astro:transitions/client";
 import { collection, getDocs } from "firebase/firestore";
 import { db, publicListTheaters, submitTheaterPetition } from "../lib/firebase";
 import { REELVOTES_EVENTS, type ConfiguredEvent } from "../lib/events-config";
@@ -292,7 +293,7 @@ export default function ShowtimesFlow() {
   }, [selectedTheater, eventsByDate]);
 
   function goToVote(event: MergedEvent) {
-    window.location.href = `/vote?event=${encodeURIComponent(event.firestoreEventId)}`;
+    navigate(`/vote?event=${encodeURIComponent(event.firestoreEventId)}`);
   }
 
   function moveMonth(delta: number) {

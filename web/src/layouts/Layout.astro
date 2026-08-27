@@ -1,4 +1,5 @@
 ---
+import { ClientRouter } from "astro:transitions";
 import Nav from "../components/Nav.astro";
 import Footer from "../components/Footer.astro";
 import "../styles/global.css";
@@ -23,6 +24,7 @@ const {
     <meta name="generator" content={Astro.generator} />
     <meta name="description" content={description} />
     <title>{title} · ReelVotes</title>
+    <ClientRouter />
   </head>
   <body class="min-h-screen bg-cream text-ink antialiased">
     <!--
@@ -44,27 +46,31 @@ const {
 
     <script>
       // Progressive-enhancement scroll reveal — see the `js-reveal` rules in
-      // global.css. Runs on every page; a no-op on pages with no
-      // [data-reveal] elements.
-      document.documentElement.classList.add("js-reveal");
+      // global.css. Re-runs after every view-transition navigation (Astro
+      // swaps the DOM without a full reload, so a plain top-level script
+      // would only ever fire once) via astro:page-load, which also fires
+      // on the very first load.
+      document.addEventListener("astro:page-load", () => {
+        document.documentElement.classList.add("js-reveal");
 
-      const revealTargets = document.querySelectorAll("[data-reveal]");
-      if (revealTargets.length > 0 && "IntersectionObserver" in window) {
-        const observer = new IntersectionObserver(
-          (entries) => {
-            for (const entry of entries) {
-              if (entry.isIntersecting) {
-                entry.target.classList.add("is-visible");
-                observer.unobserve(entry.target);
+        const revealTargets = document.querySelectorAll("[data-reveal]:not(.is-visible)");
+        if (revealTargets.length > 0 && "IntersectionObserver" in window) {
+          const observer = new IntersectionObserver(
+            (entries) => {
+              for (const entry of entries) {
+                if (entry.isIntersecting) {
+                  entry.target.classList.add("is-visible");
+                  observer.unobserve(entry.target);
+                }
               }
-            }
-          },
-          { threshold: 0.15, rootMargin: "0px 0px -40px 0px" }
-        );
-        revealTargets.forEach((el) => observer.observe(el));
-      } else {
-        revealTargets.forEach((el) => el.classList.add("is-visible"));
-      }
+            },
+            { threshold: 0.15, rootMargin: "0px 0px -40px 0px" }
+          );
+          revealTargets.forEach((el) => observer.observe(el));
+        } else {
+          revealTargets.forEach((el) => el.classList.add("is-visible"));
+        }
+      });
     </script>
   </body>
 </html>

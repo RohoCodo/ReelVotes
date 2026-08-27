@@ -79,24 +79,33 @@ const currentPath = Astro.url.pathname.replace(/\/$/, "") || "/";
 </header>
 
 <script>
-  const toggleBtn = document.getElementById("navToggleBtn");
-  const panel = document.getElementById("mobileNavPanel");
+  // Re-bound on every astro:page-load (fires on first load AND after every
+  // view-transition navigation) — with <ClientRouter /> swapping in fresh
+  // DOM per page, a plain top-level script here would only ever bind to
+  // the very first page's nav elements and silently go dead after that.
+  function initNavToggle() {
+    const toggleBtn = document.getElementById("navToggleBtn");
+    const panel = document.getElementById("mobileNavPanel");
+    if (!toggleBtn || !panel) return;
 
-  toggleBtn?.addEventListener("click", () => {
-    const isOpen = panel?.classList.toggle("flex");
-    panel?.classList.toggle("hidden");
-    toggleBtn.setAttribute("aria-expanded", isOpen ? "true" : "false");
-    toggleBtn.querySelector(".nav-icon-open")?.classList.toggle("hidden", isOpen);
-    toggleBtn.querySelector(".nav-icon-close")?.classList.toggle("hidden", !isOpen);
-  });
-
-  panel?.querySelectorAll("a").forEach((link) => {
-    link.addEventListener("click", () => {
-      panel.classList.add("hidden");
-      panel.classList.remove("flex");
-      toggleBtn?.setAttribute("aria-expanded", "false");
-      toggleBtn?.querySelector(".nav-icon-open")?.classList.remove("hidden");
-      toggleBtn?.querySelector(".nav-icon-close")?.classList.add("hidden");
+    toggleBtn.addEventListener("click", () => {
+      const isOpen = panel.classList.toggle("flex");
+      panel.classList.toggle("hidden");
+      toggleBtn.setAttribute("aria-expanded", isOpen ? "true" : "false");
+      toggleBtn.querySelector(".nav-icon-open")?.classList.toggle("hidden", isOpen);
+      toggleBtn.querySelector(".nav-icon-close")?.classList.toggle("hidden", !isOpen);
     });
-  });
+
+    panel.querySelectorAll("a").forEach((link) => {
+      link.addEventListener("click", () => {
+        panel.classList.add("hidden");
+        panel.classList.remove("flex");
+        toggleBtn.setAttribute("aria-expanded", "false");
+        toggleBtn.querySelector(".nav-icon-open")?.classList.remove("hidden");
+        toggleBtn.querySelector(".nav-icon-close")?.classList.add("hidden");
+      });
+    });
+  }
+
+  document.addEventListener("astro:page-load", initNavToggle);
 </script>
