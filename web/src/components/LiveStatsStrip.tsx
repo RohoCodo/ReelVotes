@@ -104,8 +104,8 @@ export default function LiveStatsStrip() {
         {stats === null
         ? Array.from({ length: 2 }).map((_, index) => (
             <div key={index} className="text-center">
-              <div className="mx-auto h-10 w-16 animate-pulse rounded bg-cream-soft sm:h-12 sm:w-20" />
-              <div className="mx-auto mt-2.5 h-3 w-24 animate-pulse rounded bg-cream-soft" />
+              <div className="skeleton mx-auto h-10 w-16 rounded sm:h-12 sm:w-20" />
+              <div className="skeleton mx-auto mt-2.5 h-3 w-24 rounded" />
             </div>
           ))
         : stats.map((stat) => <StatNumber key={stat.label} label={stat.label} value={stat.value} active={visible} />)}

@@ -44,6 +44,44 @@
     font-family: var(--font-display);
     letter-spacing: -0.01em;
   }
+
+  /* A consistent, brand-colored keyboard focus ring everywhere, replacing
+     inconsistent browser defaults — visible only for keyboard navigation. */
+  :focus-visible {
+    outline: 2px solid var(--color-marquee);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+}
+
+/* Shimmer skeleton loaders — a moving highlight sweep instead of a flat
+   pulse, used for async content (live stats, poster grids, calendars)
+   while real data is still in flight. */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background-color: var(--color-cream-soft);
+}
+
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+  animation: skeleton-shimmer 1.6s ease-in-out infinite;
+}
+
+@keyframes skeleton-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton::after {
+    animation: none;
+  }
 }
 
 /* Scroll-reveal: elements fade + rise into place as they enter the
@@ -54,7 +92,13 @@
 html.js-reveal [data-reveal] {
   opacity: 0;
   transform: translateY(16px);
-  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  /* `all`, not just opacity/transform: some [data-reveal] elements also
+     have their own hover transitions (border/shadow/background). Since
+     this rule is unlayered, it would otherwise always win the cascade
+     over Tailwind's layered `transition-*` utilities and silently swallow
+     those properties out of the transition, making hover changes snap
+     instead of animate. */
+  transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 html.js-reveal [data-reveal].is-visible {

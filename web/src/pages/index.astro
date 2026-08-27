@@ -100,7 +100,7 @@ const flow = [
       <div class="mt-14 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {flow.map((item, index) => (
           <div
-            class="relative rounded-2xl border border-line bg-cream p-6"
+            class="relative rounded-2xl border border-line bg-cream p-6 hover:-translate-y-1 hover:border-marquee/25 hover:bg-paper hover:shadow-[0_12px_28px_-12px_rgba(48,59,107,0.18)]"
             data-reveal
             style={`transition-delay: ${index * 90}ms`}
           >

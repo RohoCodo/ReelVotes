@@ -36,8 +36,8 @@ export default function RecentWinners() {
           {winners === null
             ? Array.from({ length: 4 }).map((_, index) => (
                 <div key={index} className="w-36 shrink-0 snap-start sm:w-44">
-                  <div className="aspect-[2/3] w-full animate-pulse rounded-xl bg-cream-soft" />
-                  <div className="mt-2.5 h-3.5 w-4/5 animate-pulse rounded bg-cream-soft" />
+                  <div className="skeleton aspect-[2/3] w-full rounded-xl" />
+                  <div className="skeleton mt-2.5 h-3.5 w-4/5 rounded" />
                 </div>
               ))
             : winners.map((winner) => (

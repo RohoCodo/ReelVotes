@@ -53,7 +53,7 @@ const faqs = [
     <div class="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-4">
       {steps.map((step, index) => (
         <div
-          class="rounded-2xl border border-line bg-cream-soft p-5 text-center"
+          class="rounded-2xl border border-line bg-cream-soft p-5 text-center hover:-translate-y-1 hover:border-marquee/25 hover:bg-paper hover:shadow-[0_12px_28px_-12px_rgba(48,59,107,0.18)]"
           data-reveal
           style={`transition-delay: ${index * 90}ms`}
         >
