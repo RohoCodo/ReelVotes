@@ -1346,6 +1346,43 @@ async function queueEliminationEmails(eventId, eliminatedTitles, emailSet) {
   await batch.commit();
 }
 
+async function queueTransactionalEmail({
+  to,
+  subject,
+  text,
+  html = "",
+  type = "transactional",
+  eventId = "unknown",
+  meta = {},
+}) {
+  const recipient = String(to || "").trim().toLowerCase();
+  if (!recipient || !subject || !text) {
+    return false;
+  }
+
+  // Skip invalid addresses silently for non-critical notifications.
+  try {
+    sanitizeEmail(recipient);
+  } catch {
+    return false;
+  }
+
+  await db.collection("mail").add({
+    to: [recipient],
+    message: {
+      subject,
+      text,
+      ...(html ? {html} : {}),
+    },
+    event_id: eventId,
+    type,
+    created_at: admin.firestore.FieldValue.serverTimestamp(),
+    ...meta,
+  });
+
+  return true;
+}
+
 async function runNightlyEliminationForEvent(eventId, {manual = false} = {}) {
   const eventRef = db.collection("events").doc(eventId);
 
@@ -2271,7 +2308,7 @@ exports.submitVote = onCall(async (request) => {
     legacyMovieRef: eventRef.collection("movies").doc(requestedMovieTitle),
   }));
 
-  return db.runTransaction(async (transaction) => {
+  const voteResult = await db.runTransaction(async (transaction) => {
     const eventDoc = await transaction.get(eventRef);
     const eventData = eventDoc.exists ? (eventDoc.data() || {}) : {};
     const eventVoteStatus = String(eventData.voteStatus || "").trim().toLowerCase();
@@ -2506,6 +2543,41 @@ exports.submitVote = onCall(async (request) => {
       });
     }
 
+    if (email) {
+      const screeningLabel = String(eventData.screeningLabel || eventId).trim();
+      const voteUrl = `https://reelvotes.com/?event=${encodeURIComponent(eventId)}`;
+      const detailsUrl = "https://reelvotes.com/showtimes";
+      const movieLine = movieTitles.map((title) => `• ${title}`).join("\n");
+      const voteWindowLabel = String(eventData.voteWindowLabel || "").trim();
+
+      const subject = `Vote confirmed: ${screeningLabel}`;
+      const text = [
+        `Thanks for voting in ReelVotes! Your ballot was received for ${screeningLabel}.`,
+        "",
+        "Your selections:",
+        movieLine,
+        "",
+        voteWindowLabel ? `Current status: ${voteWindowLabel}` : "Current status: Vote recorded.",
+        "",
+        "Next steps:",
+        "1) Voting continues until this ballot closes.",
+        "2) Winning title moves to licensing + theater approval.",
+        "3) Early tickets open to validate demand before final scheduling.",
+        "",
+        `Track this event: ${voteUrl}`,
+        `Browse showtimes: ${detailsUrl}`,
+      ].join("\n");
+
+      const mailRef = db.collection("mail").doc();
+      transaction.set(mailRef, {
+        to: [email],
+        message: {subject, text},
+        event_id: eventId,
+        type: "vote-confirmation",
+        created_at: admin.firestore.FieldValue.serverTimestamp(),
+      });
+    }
+
     canonicalMovieMeta.forEach((movieMeta) => {
       if (movieMeta.movieDoc.exists) {
         transaction.update(movieMeta.movieRef, {
@@ -2537,6 +2609,8 @@ exports.submitVote = onCall(async (request) => {
       voteCount: movieTitles.length,
     };
   });
+
+  return voteResult;
 });
 
 async function handleEmailSignup(request) {
@@ -2553,6 +2627,13 @@ async function handleEmailSignup(request) {
   const ipHash = hashValue(`email:${getRequesterIp(request)}`);
 
   const signupRef = db.collection("email_signups").doc(email);
+  const existingSignupDoc = await signupRef.get();
+
+  const lastConfirmationSentAt = existingSignupDoc.exists
+    ? existingSignupDoc.data()?.last_confirmation_sent_at
+    : null;
+  const shouldSendConfirmation = !lastConfirmationSentAt
+    || (Date.now() - lastConfirmationSentAt.toMillis()) > 1000 * 60 * 60 * 12;
 
   await signupRef.set({
     email,
@@ -2560,6 +2641,31 @@ async function handleEmailSignup(request) {
     ip_hash: ipHash,
     updated_at: admin.firestore.FieldValue.serverTimestamp(),
   }, {merge: true});
+
+  if (shouldSendConfirmation) {
+    await queueTransactionalEmail({
+      to: email,
+      subject: "You're in 🎬 ReelVotes alerts enabled",
+      text: [
+        "Thanks for joining ReelVotes alerts.",
+        "",
+        "You'll now get updates when:",
+        "• A new voting event opens",
+        "• A winning film is confirmed",
+        "• Tickets go live for a confirmed screening",
+        "",
+        "No filler. Just useful movie-night updates.",
+        "",
+        "See current showtimes: https://reelvotes.com/showtimes",
+      ].join("\n"),
+      type: "email-signup-confirmation",
+      eventId,
+    });
+
+    await signupRef.set({
+      last_confirmation_sent_at: admin.firestore.FieldValue.serverTimestamp(),
+    }, {merge: true});
+  }
 
   logger.info("Email signup recorded", {eventId, email});
 
