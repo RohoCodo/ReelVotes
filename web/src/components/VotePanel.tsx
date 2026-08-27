@@ -3,6 +3,7 @@ import { collection, doc, getDocs, limit, onSnapshot, query, where } from "fireb
 import { db, getVoteStatus, submitVote } from "../lib/firebase";
 import { getMovieMetadataByTitle, type MovieMetadata } from "../lib/tmdb";
 import { withTimeout } from "../lib/withTimeout";
+import { REELVOTES_EVENTS } from "../lib/events-config";
 
 const DEFAULT_ALLOWED_MOVIES = [
   "Back to the Future",
@@ -47,6 +48,21 @@ type Phase = "loading" | "no-event" | "not-started" | "voting" | "confirmation" 
 function resolveVoteStatus(raw: unknown): VoteStatus {
   const normalized = String(raw || "").trim().toLowerCase();
   if (normalized === "live" || normalized === "ended") return normalized;
+  return "not-started";
+}
+
+const legacyEndedEventIds = new Set(
+  REELVOTES_EVENTS.filter((event) => event.voteStatus === "ended").map((event) => event.firestoreEventId)
+);
+
+function resolveEffectiveVoteStatus(raw: unknown, eventId: string): VoteStatus {
+  const normalized = String(raw || "").trim().toLowerCase();
+  if (normalized === "live" || normalized === "ended" || normalized === "not-started") {
+    return normalized;
+  }
+  if (legacyEndedEventIds.has(eventId)) {
+    return "ended";
+  }
   return "not-started";
 }
 
@@ -305,7 +321,7 @@ export default function VotePanel() {
           ? data.allowedMovies.filter((title: unknown) => typeof title === "string" && title.trim().length > 0)
           : [];
         setEventDoc({
-          voteStatus: resolveVoteStatus(data.voteStatus),
+          voteStatus: resolveEffectiveVoteStatus(data.voteStatus, eventId),
           requireEmail: data.requireEmail !== false,
           showLiveVoteCounts: data.showLiveVoteCounts === true,
           screeningLabel: data.screeningLabel || "",
