@@ -1,0 +1,10 @@
+---
+import Layout from "../layouts/Layout.astro";
+import ChatRoom from "../components/ChatRoom.tsx";
+---
+
+<Layout title="Movie Chat" description="Join the post-screening chat room for your ReelVotes movie night.">
+  <section class="mx-auto max-w-3xl px-5 py-10 sm:px-8 sm:py-16">
+    <ChatRoom client:visible />
+  </section>
+</Layout>

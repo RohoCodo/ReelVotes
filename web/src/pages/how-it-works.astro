@@ -1,0 +1,100 @@
+---
+import Layout from "../layouts/Layout.astro";
+
+const steps = [
+  { icon: "📍", title: "Choose your theater", body: "Find your local participating theater." },
+  { icon: "🗳️", title: "Vote", body: "Pick the movie you want to see." },
+  { icon: "📲", title: "Invite friends", body: "Share the vote and help your favorite rise to the top." },
+  { icon: "🍿", title: "Movie night happens", body: "The winning film gets screened." },
+];
+
+const faqs = [
+  {
+    q: "Can I vote for multiple movies?",
+    a: "Yes. One ballot per person, and each ballot can include multiple movies.",
+  },
+  {
+    q: "Can I suggest a movie?",
+    a: "Yes — use Suggest a Movie to submit ideas for a future vote.",
+    linkHref: "/suggest",
+    linkLabel: "Suggest a Movie",
+  },
+  { q: "How are winners determined?", a: "The movie with the highest vote count wins that screening." },
+  {
+    q: "What if my theater isn't partnered?",
+    a: "Use the showtimes page to let us know. The team follows up on demand from your city.",
+    linkHref: "/showtimes",
+    linkLabel: "Showtimes",
+  },
+];
+---
+
+<Layout title="How it works" description="How ReelVotes turns community votes into real movie nights at independent theaters.">
+  <section class="mx-auto max-w-3xl px-5 py-14 sm:px-8 sm:py-20">
+    <h1 class="text-center font-display text-4xl font-semibold text-ink sm:text-5xl">How ReelVotes works</h1>
+    <p class="mt-4 text-center text-base text-ink-soft">Movie lovers decide what gets screened.</p>
+
+    <div class="mt-10 rounded-2xl border border-line bg-paper p-6">
+      <h2 class="font-display text-lg font-semibold text-ink">Voting rules</h2>
+      <p class="mt-2 text-sm leading-relaxed text-ink-soft">
+        Public poll. One vote per person. You may vote for as many movies as you want on that single ballot.
+      </p>
+    </div>
+
+    <div class="mt-4 rounded-2xl border border-line bg-paper p-6">
+      <h2 class="font-display text-lg font-semibold text-ink">The mission</h2>
+      <p class="mt-2 text-sm leading-relaxed text-ink-soft">
+        ReelVotes helps small theaters program movies you not only want to see, but that you will support by
+        buying a ticket if your movie is chosen. When you vote, you're saying you'll show up. That's how votes
+        become real screenings, and how the independent theaters you love can keep taking risks on great films.
+      </p>
+    </div>
+
+    <div class="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-4">
+      {steps.map((step, index) => (
+        <div
+          class="rounded-2xl border border-line bg-cream-soft p-5 text-center"
+          data-reveal
+          style={`transition-delay: ${index * 90}ms`}
+        >
+          <span class="text-2xl">{step.icon}</span>
+          <h3 class="mt-2 text-sm font-semibold text-ink">{step.title}</h3>
+          <p class="mt-1.5 text-xs leading-relaxed text-ink-soft">{step.body}</p>
+        </div>
+      ))}
+    </div>
+
+    <div class="mt-14" data-reveal>
+      <h2 class="text-center font-display text-2xl font-semibold text-ink">Frequently asked questions</h2>
+      <div class="mt-6 divide-y divide-line rounded-2xl border border-line bg-paper">
+        {faqs.map((item) => (
+          <details class="group p-5">
+            <summary class="cursor-pointer list-none text-sm font-semibold text-ink marker:content-none">
+              <span class="flex items-center justify-between gap-4">
+                {item.q}
+                <span class="shrink-0 text-ink-faint transition-transform group-open:rotate-45">+</span>
+              </span>
+            </summary>
+            <p class="mt-2.5 text-sm leading-relaxed text-ink-soft">
+              {item.a}{" "}
+              {item.linkHref && (
+                <a href={item.linkHref} class="font-semibold text-marquee hover:underline">
+                  {item.linkLabel}
+                </a>
+              )}
+            </p>
+          </details>
+        ))}
+      </div>
+    </div>
+
+    <div class="mt-12 text-center">
+      <a
+        href="/showtimes"
+        class="inline-block rounded-full bg-marquee px-7 py-3.5 text-sm font-semibold text-white shadow-md shadow-marquee/30 transition-transform hover:-translate-y-0.5"
+      >
+        See what's up for a vote
+      </a>
+    </div>
+  </section>
+</Layout>

@@ -1,0 +1,70 @@
+---
+import Nav from "../components/Nav.astro";
+import Footer from "../components/Footer.astro";
+import "../styles/global.css";
+
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const {
+  title,
+  description = "ReelVotes helps independent theaters program movie nights the community actually votes for — and shows up to.",
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/png" href="/icon.png" />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="description" content={description} />
+    <title>{title} · ReelVotes</title>
+  </head>
+  <body class="min-h-screen bg-cream text-ink antialiased">
+    <!--
+      Ambient background wash — fixed to the viewport (not clipped to any
+      one section), so it stays visible as a soft glow behind whatever
+      content is currently on screen, all the way down the page, instead
+      of cutting off hard at a section boundary.
+    -->
+    <div class="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+      <div class="absolute -top-24 right-[-10%] h-96 w-96 rounded-full bg-marquee/10 blur-3xl"></div>
+      <div class="absolute top-40 left-[-10%] h-80 w-80 rounded-full bg-rose/10 blur-3xl"></div>
+    </div>
+
+    <Nav />
+    <main>
+      <slot />
+    </main>
+    <Footer />
+
+    <script>
+      // Progressive-enhancement scroll reveal — see the `js-reveal` rules in
+      // global.css. Runs on every page; a no-op on pages with no
+      // [data-reveal] elements.
+      document.documentElement.classList.add("js-reveal");
+
+      const revealTargets = document.querySelectorAll("[data-reveal]");
+      if (revealTargets.length > 0 && "IntersectionObserver" in window) {
+        const observer = new IntersectionObserver(
+          (entries) => {
+            for (const entry of entries) {
+              if (entry.isIntersecting) {
+                entry.target.classList.add("is-visible");
+                observer.unobserve(entry.target);
+              }
+            }
+          },
+          { threshold: 0.15, rootMargin: "0px 0px -40px 0px" }
+        );
+        revealTargets.forEach((el) => observer.observe(el));
+      } else {
+        revealTargets.forEach((el) => el.classList.add("is-visible"));
+      }
+    </script>
+  </body>
+</html>

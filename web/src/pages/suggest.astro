@@ -1,0 +1,15 @@
+---
+import Layout from "../layouts/Layout.astro";
+import SuggestForm from "../components/SuggestForm.tsx";
+---
+
+<Layout title="Suggest a movie" description="Suggest a movie for a future ReelVotes community screening.">
+  <section class="mx-auto max-w-xl px-5 py-14 sm:px-8 sm:py-20">
+    <h1 class="text-center font-display text-4xl font-semibold text-ink sm:text-5xl">Suggest a movie</h1>
+    <p class="mt-4 text-center text-base text-ink-soft">Help shape future movie nights.</p>
+
+    <div class="mt-10 rounded-2xl border border-line bg-paper p-6 sm:p-8">
+      <SuggestForm client:visible />
+    </div>
+  </section>
+</Layout>

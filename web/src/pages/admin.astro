@@ -1,0 +1,10 @@
+---
+import Layout from "../layouts/Layout.astro";
+import AdminDashboard from "../components/AdminDashboard.tsx";
+---
+
+<Layout title="Admin" description="ReelVotes internal admin dashboard.">
+  <section class="mx-auto max-w-3xl px-5 py-10 sm:px-8 sm:py-16">
+    <AdminDashboard client:visible />
+  </section>
+</Layout>

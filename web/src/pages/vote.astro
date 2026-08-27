@@ -1,0 +1,17 @@
+---
+import Layout from "../layouts/Layout.astro";
+import VotePanel from "../components/VotePanel.tsx";
+---
+
+<Layout title="Vote" description="Cast your ballot for the next ReelVotes screening.">
+  <!--
+    Plain global script (not a bundler env var) so ops can rotate or enable
+    the Turnstile site key without a rebuild — mirrors the old site's
+    public/runtime-config.js.
+  -->
+  <script src="/runtime-config.js" is:inline></script>
+
+  <section class="mx-auto max-w-3xl px-5 py-10 sm:px-8 sm:py-16">
+    <VotePanel client:visible />
+  </section>
+</Layout>

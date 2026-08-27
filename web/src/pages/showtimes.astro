@@ -1,0 +1,17 @@
+---
+import Layout from "../layouts/Layout.astro";
+import ShowtimesFlow from "../components/ShowtimesFlow.tsx";
+---
+
+<Layout title="Showtimes" description="Find your theater, choose a screening, and vote on what should play next.">
+  <section class="mx-auto max-w-5xl px-5 py-14 sm:px-8 sm:py-20">
+    <h1 class="text-center font-display text-4xl font-semibold text-ink sm:text-5xl">Showtimes</h1>
+    <p class="mt-4 text-center text-base text-ink-soft">
+      Find your theater, choose a screening, and vote on what should play next.
+    </p>
+
+    <div class="mt-10">
+      <ShowtimesFlow client:visible />
+    </div>
+  </section>
+</Layout>

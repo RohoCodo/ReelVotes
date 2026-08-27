@@ -1,0 +1,71 @@
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&display=swap");
+@import "tailwindcss";
+
+@theme {
+  /* Warm, light neutrals */
+  --color-cream: #fbf9f5;
+  --color-cream-soft: #f4efe6;
+  --color-paper: #ffffff;
+  --color-line: #e9e2d4;
+  --color-line-soft: #f0eae0;
+
+  /* Ink (text) */
+  --color-ink: #211d18;
+  --color-ink-soft: #6c6459;
+  --color-ink-faint: #a49b8c;
+
+  /* Brand accent — deep indigo/navy, replacing the old neon cinematic red/pink */
+  --color-marquee: #303b6b;
+  --color-marquee-dark: #212a52;
+  --color-marquee-soft: #e9ebf6;
+  --color-rose: #7c89e8;
+  --color-gold: #b8860b;
+  --color-gold-soft: #fbf1da;
+  --color-emerald: #1f9d55;
+  --color-emerald-soft: #e9f8ef;
+
+  --font-display: "Fraunces", ui-serif, Georgia, serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--color-cream);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+  }
+}
+
+/* Scroll-reveal: elements fade + rise into place as they enter the
+   viewport (see the inline script in Layout.astro). The hidden starting
+   state only applies once the `js-reveal` class confirms the script is
+   actually running, so content never stays invisible if it fails to load
+   or JS is disabled — plain progressive enhancement. */
+html.js-reveal [data-reveal] {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+html.js-reveal [data-reveal].is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.js-reveal [data-reveal] {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}

@@ -1,0 +1,206 @@
+---
+import Layout from "../layouts/Layout.astro";
+import LiveStatsStrip from "../components/LiveStatsStrip.tsx";
+import RecentWinners from "../components/RecentWinners.tsx";
+
+const flow = [
+  {
+    step: "01",
+    title: "Theater adds a screening",
+    body: "A theater picks a date and a shortlist of movies. No code, no new software — ReelVotes handles the setup.",
+  },
+  {
+    step: "02",
+    title: "The community votes",
+    body: "Moviegoers pick from the shortlist. One ballot per person, cast for as many movies as they want to see.",
+  },
+  {
+    step: "03",
+    title: "A winner is chosen",
+    body: "The top vote-getter wins — and if a ticket threshold is set, the theater confirms before locking in the date.",
+  },
+  {
+    step: "04",
+    title: "Tickets go on sale",
+    body: "Voters get notified the moment tickets are live, so the people who asked for the movie are the ones who show up.",
+  },
+];
+---
+
+<Layout
+  title="Vote the next movie night"
+  description="ReelVotes lets moviegoers vote on what plays next at independent theaters — and turns real votes into real screenings."
+>
+  <!-- Hero -->
+  <section class="relative flex min-h-[calc(100dvh-65px)] flex-col justify-center">
+    <div class="mx-auto max-w-6xl px-5 py-16 sm:px-8">
+      <div class="mx-auto max-w-3xl text-center">
+        <span class="inline-flex items-center gap-2 rounded-full border border-line bg-paper px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-ink-soft">
+          Now programming with The New Parkway Theater
+        </span>
+
+        <h1 class="mt-6 font-display text-4xl font-semibold leading-[1.08] tracking-tight text-ink sm:text-6xl">
+          <span class="block">You pick the movie.</span>
+          <span class="block text-marquee">The theater shows up.</span>
+        </h1>
+
+        <p class="mx-auto mt-6 max-w-xl text-base leading-relaxed text-ink-soft sm:text-lg">
+          ReelVotes helps independent theaters program movie nights the community actually wants,
+          with votes real enough that a screening happens because you asked for it.
+        </p>
+
+        <div class="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
+          <a
+            href="/showtimes"
+            class="w-full rounded-full bg-marquee px-7 py-3.5 text-center text-sm font-semibold text-white shadow-md shadow-marquee/30 transition-transform hover:-translate-y-0.5 sm:w-auto"
+          >
+            Vote on tonight's pick
+          </a>
+          <a
+            href="/for-theaters"
+            class="w-full rounded-full border border-line bg-paper px-7 py-3.5 text-center text-sm font-semibold text-ink transition-colors hover:border-ink/30 sm:w-auto"
+          >
+            I run a theater
+          </a>
+        </div>
+
+        <div class="mt-16">
+          <LiveStatsStrip client:visible />
+        </div>
+      </div>
+    </div>
+
+    <a
+      href="#how-it-works"
+      aria-label="Scroll to how it works"
+      class="absolute inset-x-0 bottom-10 hidden justify-center sm:flex"
+    >
+      <span class="animate-bounce rounded-full border border-line bg-paper p-2 text-ink-faint transition-colors hover:text-marquee">
+        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 5v14M5 12l7 7 7-7" />
+        </svg>
+      </span>
+    </a>
+  </section>
+
+  <!-- How it works -->
+  <section id="how-it-works" class="scroll-mt-20 border-y border-line bg-paper">
+    <div class="mx-auto max-w-6xl px-5 py-16 sm:px-8 sm:py-24">
+      <div class="mx-auto max-w-2xl text-center" data-reveal>
+        <p class="text-xs font-semibold uppercase tracking-wide text-marquee">How it works</p>
+        <h2 class="mt-3 font-display text-3xl font-semibold text-ink sm:text-4xl">
+          From ballot to box office
+        </h2>
+        <p class="mt-4 text-base leading-relaxed text-ink-soft">
+          Every screening on ReelVotes follows the same simple flow — clear at every step who's
+          winning, whether the vote hit its threshold, and when tickets go live.
+        </p>
+      </div>
+
+      <div class="mt-14 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {flow.map((item, index) => (
+          <div
+            class="relative rounded-2xl border border-line bg-cream p-6"
+            data-reveal
+            style={`transition-delay: ${index * 90}ms`}
+          >
+            <span class="font-display text-3xl font-semibold text-marquee/25">{item.step}</span>
+            <h3 class="mt-3 text-base font-semibold text-ink">{item.title}</h3>
+            <p class="mt-2 text-sm leading-relaxed text-ink-soft">{item.body}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <RecentWinners client:visible />
+
+  <!-- Moviegoers vs Theaters -->
+  <section class="mx-auto max-w-6xl px-5 py-16 sm:px-8 sm:py-24">
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <div class="rounded-3xl border border-line bg-paper p-8 sm:p-10" data-reveal>
+        <p class="text-xs font-semibold uppercase tracking-wide text-marquee">For moviegoers</p>
+        <h3 class="mt-3 font-display text-2xl font-semibold text-ink sm:text-3xl">
+          A vote here means "I'll be there."
+        </h3>
+        <p class="mt-4 text-sm leading-relaxed text-ink-soft sm:text-base">
+          When you vote, you're telling a real theater you'll show up and buy a ticket if your pick
+          wins. That's how independent theaters can afford to take a chance on the films you actually
+          want to see, instead of only what's already guaranteed to sell.
+        </p>
+        <ul class="mt-6 space-y-3 text-sm text-ink-soft">
+          <li class="flex items-start gap-2.5">
+            <span class="mt-0.5 text-marquee">&#10003;</span>
+            Fast, mobile-friendly voting with posters, ratings, and trailers built in
+          </li>
+          <li class="flex items-start gap-2.5">
+            <span class="mt-0.5 text-marquee">&#10003;</span>
+            One ballot per person — no bots, no repeat votes
+          </li>
+          <li class="flex items-start gap-2.5">
+            <span class="mt-0.5 text-marquee">&#10003;</span>
+            Get notified the moment tickets are live
+          </li>
+        </ul>
+        <a href="/showtimes" class="mt-7 inline-block text-sm font-semibold text-marquee hover:underline">
+          See what's up for a vote &rarr;
+        </a>
+      </div>
+
+      <div class="rounded-3xl border border-line bg-ink p-8 sm:p-10" data-reveal style="transition-delay: 120ms">
+        <p class="text-xs font-semibold uppercase tracking-wide text-rose">For theaters</p>
+        <h3 class="mt-3 font-display text-2xl font-semibold text-white sm:text-3xl">
+          Program with demand, not guesswork.
+        </h3>
+        <p class="mt-4 text-sm leading-relaxed text-white/70 sm:text-base">
+          ReelVotes handles the movie data, the ballot, and the vote count — you set the shortlist,
+          the threshold, and the ticket link. A winning vote never books a screening on its own; you
+          stay in control of what actually plays.
+        </p>
+        <ul class="mt-6 space-y-3 text-sm text-white/70">
+          <li class="flex items-start gap-2.5">
+            <span class="mt-0.5 text-rose">&#10003;</span>
+            No code required to launch a vote
+          </li>
+          <li class="flex items-start gap-2.5">
+            <span class="mt-0.5 text-rose">&#10003;</span>
+            Movie posters, ratings, and trailers pulled automatically
+          </li>
+          <li class="flex items-start gap-2.5">
+            <span class="mt-0.5 text-rose">&#10003;</span>
+            Configurable vote and ticket-sale thresholds
+          </li>
+        </ul>
+        <a href="/for-theaters" class="mt-7 inline-block text-sm font-semibold text-rose hover:underline">
+          Learn how to partner &rarr;
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Final CTA -->
+  <section class="border-t border-line bg-cream-soft">
+    <div class="mx-auto max-w-3xl px-5 py-16 text-center sm:px-8 sm:py-20" data-reveal>
+      <h2 class="font-display text-3xl font-semibold text-ink sm:text-4xl">
+        Ready to pick the next movie night?
+      </h2>
+      <p class="mt-4 text-base leading-relaxed text-ink-soft">
+        Vote in under a minute, or join the email list to hear the moment a new ballot opens.
+      </p>
+      <div class="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+        <a
+          href="/showtimes"
+          class="w-full rounded-full bg-marquee px-7 py-3.5 text-center text-sm font-semibold text-white shadow-md shadow-marquee/30 transition-transform hover:-translate-y-0.5 sm:w-auto"
+        >
+          Vote now
+        </a>
+        <a
+          href="/email-signup"
+          class="w-full rounded-full border border-line bg-paper px-7 py-3.5 text-center text-sm font-semibold text-ink transition-colors hover:border-ink/30 sm:w-auto"
+        >
+          Join the email list
+        </a>
+      </div>
+    </div>
+  </section>
+</Layout>

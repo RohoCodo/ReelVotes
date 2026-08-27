@@ -1,0 +1,13 @@
+---
+import Layout from "../layouts/Layout.astro";
+import ReelSuccessDashboard from "../components/ReelSuccessDashboard.tsx";
+---
+
+<Layout
+  title="ReelSuccess"
+  description="Internal ReelVotes theater-analytics dashboard: movie recommendations from similar theaters, plus box-office gross uploads."
+>
+  <section class="mx-auto max-w-6xl px-5 py-10 sm:px-8 sm:py-16">
+    <ReelSuccessDashboard client:visible />
+  </section>
+</Layout>

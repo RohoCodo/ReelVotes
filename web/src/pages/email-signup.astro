@@ -1,0 +1,91 @@
+---
+import Layout from "../layouts/Layout.astro";
+import EmailSignupForm from "../components/EmailSignupForm.tsx";
+
+const faqs = [
+  {
+    q: "How often will I actually receive emails?",
+    a: "There's no fixed schedule. Emails go out only when a vote opens, a winner is confirmed, or tickets go live.",
+  },
+  {
+    q: "Will my email address be shared with theaters or other companies?",
+    a: "No. Your email is used only for ReelVotes voting and ticket alerts.",
+  },
+  {
+    q: "Can I get alerts for more than one theater at once?",
+    a: "Yes. One signup can cover activity across participating theaters you interact with.",
+  },
+  {
+    q: "What happens if I miss an email about a ticket release?",
+    a: "Some screenings have limited seats and can move quickly. Checking your inbox during active vote periods is best.",
+  },
+  {
+    q: "Can I resubscribe after unsubscribing?",
+    a: "Yes. Re-enter your email any time and you'll start receiving new alerts again.",
+  },
+];
+---
+
+<Layout
+  title="Get voting alerts"
+  description="Get ReelVotes alerts for new community movie votes, winners, and ticket drops at independent theaters."
+>
+  <section class="mx-auto max-w-2xl px-5 py-14 sm:px-8 sm:py-20">
+    <h1 class="text-center font-display text-4xl font-semibold text-ink sm:text-5xl">
+      Get voting alerts early
+    </h1>
+    <p class="mx-auto mt-4 max-w-lg text-center text-base leading-relaxed text-ink-soft">
+      Drop your email below to be first to know when a new community vote opens, when a winning film is
+      announced, and when tickets go live. No digging through the site, no missed windows.
+    </p>
+
+    <div class="mt-10 rounded-2xl border border-line bg-paper p-6 sm:p-8">
+      <EmailSignupForm client:visible />
+    </div>
+
+    <div class="mt-10 grid gap-4 sm:grid-cols-2">
+      <div class="rounded-2xl border border-line bg-cream-soft p-6">
+        <h2 class="font-display text-base font-semibold text-ink">What your alerts include</h2>
+        <p class="mt-2 text-sm leading-relaxed text-ink-soft">
+          Not a generic newsletter — every alert is tied to a real voting event, confirmed result, or live
+          ticket release.
+        </p>
+        <ul class="mt-3 space-y-2 text-sm text-ink-soft">
+          <li class="flex gap-2"><span class="text-marquee">&#8226;</span>New voting alerts when a fresh ballot opens</li>
+          <li class="flex gap-2"><span class="text-marquee">&#8226;</span>Winning film updates the moment a vote closes</li>
+          <li class="flex gap-2"><span class="text-marquee">&#8226;</span>Ticket release alerts for confirmed screenings</li>
+        </ul>
+      </div>
+
+      <div class="rounded-2xl border border-line bg-cream-soft p-6">
+        <h2 class="font-display text-base font-semibold text-ink">What it won't include</h2>
+        <ul class="mt-2 space-y-2 text-sm text-ink-soft">
+          <li class="flex gap-2"><span class="text-marquee">&#8226;</span>No daily promotions</li>
+          <li class="flex gap-2"><span class="text-marquee">&#8226;</span>No unrelated marketing</li>
+          <li class="flex gap-2"><span class="text-marquee">&#8226;</span>No filler content padding your inbox</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="mt-10">
+      <h2 class="text-center font-display text-2xl font-semibold text-ink">Frequently asked questions</h2>
+      <div class="mt-6 divide-y divide-line rounded-2xl border border-line bg-paper">
+        {faqs.map((item) => (
+          <details class="group p-5">
+            <summary class="cursor-pointer list-none text-sm font-semibold text-ink marker:content-none">
+              <span class="flex items-center justify-between gap-4">
+                {item.q}
+                <span class="shrink-0 text-ink-faint transition-transform group-open:rotate-45">+</span>
+              </span>
+            </summary>
+            <p class="mt-2.5 text-sm leading-relaxed text-ink-soft">{item.a}</p>
+          </details>
+        ))}
+      </div>
+    </div>
+
+    <p class="mt-10 text-center">
+      <a href="/showtimes" class="text-sm font-semibold text-marquee hover:underline">Browse current movie events &rarr;</a>
+    </p>
+  </section>
+</Layout>

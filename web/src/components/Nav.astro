@@ -1,0 +1,102 @@
+---
+const navLinks = [
+  { href: "/how-it-works", label: "How It Works" },
+  { href: "/showtimes", label: "Showtimes" },
+  { href: "/for-theaters", label: "For Theaters" },
+  { href: "/suggest", label: "Suggest a Movie" },
+  { href: "/chat", label: "Movie Chat" },
+];
+
+const currentPath = Astro.url.pathname.replace(/\/$/, "") || "/";
+---
+
+<header class="sticky top-0 z-50 border-b border-line/80 bg-cream/85 backdrop-blur-md">
+  <div class="mx-auto flex max-w-6xl items-center justify-between gap-6 px-5 py-4 sm:px-8">
+    <a href="/" class="flex items-center shrink-0">
+      <span class="font-display text-xl font-semibold tracking-tight text-ink">Reel<span class="text-marquee">Votes</span></span>
+    </a>
+
+    <nav class="hidden items-center gap-8 md:flex">
+      {navLinks.map((link) => (
+        <a
+          href={link.href}
+          class:list={[
+            "relative py-1.5 text-sm font-medium transition-colors hover:text-marquee",
+            currentPath === link.href
+              ? "text-marquee after:absolute after:inset-x-0 after:-bottom-[13px] after:h-0.5 after:rounded-full after:bg-marquee"
+              : "text-ink-soft",
+          ]}
+        >
+          {link.label}
+        </a>
+      ))}
+    </nav>
+
+    <div class="hidden items-center gap-3 md:flex">
+      <a
+        href="/showtimes"
+        class="rounded-full bg-marquee px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-marquee/30 transition-transform hover:-translate-y-0.5 hover:shadow-md hover:shadow-marquee/40"
+      >
+        Vote Now
+      </a>
+    </div>
+
+    <button
+      id="navToggleBtn"
+      type="button"
+      class="grid h-9 w-9 shrink-0 cursor-pointer place-items-center rounded-full border border-line text-ink md:hidden"
+      aria-label="Toggle menu"
+      aria-expanded="false"
+      aria-controls="mobileNavPanel"
+    >
+      <svg class="nav-icon-open h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+      <svg class="nav-icon-close hidden h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+
+    <div
+      id="mobileNavPanel"
+      class="fixed inset-x-0 top-[65px] z-40 hidden max-h-[calc(100vh-65px)] flex-col overflow-y-auto border-b border-line bg-cream px-5 py-5 shadow-lg md:hidden"
+    >
+      {navLinks.map((link) => (
+        <a
+          href={link.href}
+          class:list={[
+            "border-b border-line/60 py-3.5 text-base font-medium",
+            currentPath === link.href ? "text-marquee" : "text-ink",
+          ]}
+        >
+          {link.label}
+        </a>
+      ))}
+      <a
+        href="/showtimes"
+        class="mt-4 rounded-full bg-marquee px-5 py-3 text-center text-sm font-semibold text-white"
+      >
+        Vote Now
+      </a>
+    </div>
+  </div>
+</header>
+
+<script>
+  const toggleBtn = document.getElementById("navToggleBtn");
+  const panel = document.getElementById("mobileNavPanel");
+
+  toggleBtn?.addEventListener("click", () => {
+    const isOpen = panel?.classList.toggle("flex");
+    panel?.classList.toggle("hidden");
+    toggleBtn.setAttribute("aria-expanded", isOpen ? "true" : "false");
+    toggleBtn.querySelector(".nav-icon-open")?.classList.toggle("hidden", isOpen);
+    toggleBtn.querySelector(".nav-icon-close")?.classList.toggle("hidden", !isOpen);
+  });
+
+  panel?.querySelectorAll("a").forEach((link) => {
+    link.addEventListener("click", () => {
+      panel.classList.add("hidden");
+      panel.classList.remove("flex");
+      toggleBtn?.setAttribute("aria-expanded", "false");
+      toggleBtn?.querySelector(".nav-icon-open")?.classList.remove("hidden");
+      toggleBtn?.querySelector(".nav-icon-close")?.classList.add("hidden");
+    });
+  });
+</script>

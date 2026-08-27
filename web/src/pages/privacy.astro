@@ -1,0 +1,122 @@
+---
+import Layout from "../layouts/Layout.astro";
+---
+
+<Layout title="Privacy policy" description="ReelVotes privacy policy.">
+  <section class="mx-auto max-w-2xl px-5 py-14 sm:px-8 sm:py-20">
+    <h1 class="font-display text-3xl font-semibold text-ink sm:text-4xl">Privacy Policy</h1>
+    <p class="mt-2 text-sm text-ink-faint"><strong class="text-ink-soft">Last updated:</strong> March 31, 2026</p>
+
+    <div class="prose-copy mt-8 space-y-6 text-sm leading-relaxed text-ink-soft">
+      <p>
+        This Privacy Policy explains how ReelVotes ("we", "us", or "our") collects, uses, and protects
+        information when you use our voting experience for movie nights and related events (the "Service").
+      </p>
+
+      <section>
+        <h2 class="font-display text-lg font-semibold text-ink">1. Information We Collect</h2>
+        <p class="mt-2">When you use ReelVotes, we may collect:</p>
+        <ul class="mt-2 list-disc space-y-2 pl-5">
+          <li><strong class="text-ink">Voting session information:</strong> A random browser identifier stored on your device so we can limit repeat voting from the same browser for the same event.</li>
+          <li><strong class="text-ink">Voting information:</strong> The movie you vote for and details about the event you are voting in.</li>
+          <li><strong class="text-ink">Usage data:</strong> Basic technical information such as your browser type, device type, and general interaction data with the Service (e.g., pages viewed, click events). This may be collected via Firebase or your browser, along with limited network metadata used for abuse prevention.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 class="font-display text-lg font-semibold text-ink">2. How We Use Your Information</h2>
+        <p class="mt-2">We use the information we collect to:</p>
+        <ul class="mt-2 list-disc space-y-2 pl-5">
+          <li>Associate your vote with a browser identifier so the same browser cannot easily vote multiple times in the same event.</li>
+          <li>Record and count votes to determine results for the event.</li>
+          <li>Prevent duplicate or fraudulent voting.</li>
+          <li>Improve and operate the Service, including debugging and analytics.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 class="font-display text-lg font-semibold text-ink">3. Legal Basis and Consent</h2>
+        <p class="mt-2">
+          Where required by law, we process your personal data based on your consent, which you provide when
+          you choose to use the Service and submit a vote. You can choose not to participate, but in that case
+          you may not be able to cast a vote.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="font-display text-lg font-semibold text-ink">4. Data Sharing and Third Parties</h2>
+        <p class="mt-2">
+          We do not sell your personal information. We may share or store data with third-party service
+          providers solely to operate the Service:
+        </p>
+        <ul class="mt-2 list-disc space-y-2 pl-5">
+          <li><strong class="text-ink">Firebase (Google Cloud):</strong> We use Firebase for hosting, databases, and cloud functions.</li>
+          <li><strong class="text-ink">Cloudflare Turnstile:</strong> We may use Turnstile to distinguish real visitors from automated abuse during vote submission.</li>
+          <li><strong class="text-ink">TMDB (The Movie Database):</strong> We fetch movie metadata such as posters and titles; your personal data is not sent to TMDB, only movie queries.</li>
+        </ul>
+        <p class="mt-2">These providers process data on our behalf under their own privacy policies and security practices.</p>
+      </section>
+
+      <section>
+        <h2 class="font-display text-lg font-semibold text-ink">5. Data Retention</h2>
+        <p class="mt-2">
+          We retain voting records (browser identifier hash + chosen movie + event) for as long as reasonably
+          necessary to administer the event, verify results, and maintain basic records, unless a longer
+          retention period is required or permitted by law. We may aggregate or anonymize data for analytical
+          or historical purposes.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="font-display text-lg font-semibold text-ink">6. Your Choices and Rights</h2>
+        <p class="mt-2">Depending on your location, you may have rights such as:</p>
+        <ul class="mt-2 list-disc space-y-2 pl-5">
+          <li>Accessing the personal data we hold about you.</li>
+          <li>Requesting correction of inaccurate information.</li>
+          <li>Requesting deletion of your personal data, where applicable.</li>
+          <li>Objecting to or restricting certain types of processing.</li>
+        </ul>
+        <p class="mt-2">
+          To exercise any of these rights, contact us using the details below. We may need to verify your
+          identity before responding to your request.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="font-display text-lg font-semibold text-ink">7. Data Security</h2>
+        <p class="mt-2">
+          We use reasonable technical and organizational measures to protect your information, including
+          relying on Firebase security controls. However, no online service is 100% secure, and we cannot
+          guarantee absolute security of your data.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="font-display text-lg font-semibold text-ink">8. Children</h2>
+        <p class="mt-2">
+          ReelVotes is intended for use by adults participating in events, and is not directed to children
+          under the age of 13. If you believe we have collected personal data from a child, please contact us
+          so we can investigate and delete it where appropriate.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="font-display text-lg font-semibold text-ink">9. Changes to This Policy</h2>
+        <p class="mt-2">
+          We may update this Privacy Policy from time to time. When we do, we will change the "Last updated"
+          date at the top of this page. Your continued use of the Service after changes are posted means you
+          accept the updated policy.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="font-display text-lg font-semibold text-ink">10. Contact Us</h2>
+        <p class="mt-2">If you have questions about this Privacy Policy or how your data is handled, you can contact:</p>
+        <p class="mt-2">Email: <a href="mailto:rtrocks722@gmail.com" class="font-semibold text-marquee hover:underline">rtrocks722@gmail.com</a></p>
+        <p class="mt-2">Support page: <a href="/support" class="font-semibold text-marquee hover:underline">reelvotes.com/support</a></p>
+      </section>
+    </div>
+
+    <a href="/" class="mt-10 inline-block text-sm font-semibold text-marquee hover:underline">&larr; Back to ReelVotes</a>
+  </section>
+</Layout>
