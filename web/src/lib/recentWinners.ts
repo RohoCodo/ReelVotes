@@ -17,6 +17,12 @@ interface EventDoc {
   screeningDateTime?: unknown;
 }
 
+function normalizeVoteStatus(raw: unknown): "ended" | "live" | "not-started" | "unknown" {
+  const value = String(raw || "").trim().toLowerCase();
+  if (value === "ended" || value === "live" || value === "not-started") return value;
+  return "unknown";
+}
+
 function getWinnerVoteCount(movie: Record<string, unknown>): number {
   const raw = movie.vote_count ?? movie.voteCount ?? movie.votes ?? 0;
   const numeric = Number(raw);
@@ -65,13 +71,12 @@ async function fetchRecentWinners(): Promise<WinnerCard[]> {
   // Fetch all events (no orderBy so we don't exclude legacy docs missing
   // screeningDateTime), then sort client-side and keep every ended poll.
   const eventsSnapshot = await getDocs(collection(db, "events"));
-  const endedEvents = eventsSnapshot.docs
+  const eventsByDate = eventsSnapshot.docs
     .map((docSnap): EventDoc => ({ id: docSnap.id, ...docSnap.data() }))
-    .filter((event) => event.voteStatus === "ended")
     .sort((a, b) => toSortTimestamp(b.screeningDateTime) - toSortTimestamp(a.screeningDateTime));
 
   const results = await Promise.all(
-    endedEvents.map(async (event): Promise<WinnerCard | null> => {
+    eventsByDate.map(async (event): Promise<WinnerCard | null> => {
       const moviesSnapshot = await getDocs(collection(db, "events", event.id, "movies"));
       const movies = moviesSnapshot.docs.map((docSnap) => docSnap.data() as Record<string, unknown>);
       if (movies.length === 0) return null;
@@ -79,6 +84,13 @@ async function fetchRecentWinners(): Promise<WinnerCard[]> {
       const winner = movies.reduce((top, current) =>
         getWinnerVoteCount(current) > getWinnerVoteCount(top) ? current : top
       );
+      const winnerVotes = getWinnerVoteCount(winner);
+      const voteStatus = normalizeVoteStatus(event.voteStatus);
+      const isLegacyEnded = voteStatus === "unknown" && winnerVotes > 0;
+      if (voteStatus !== "ended" && !isLegacyEnded) {
+        return null;
+      }
+
       const movieTitle = getWinnerTitle(winner);
       if (!movieTitle) return null;
 
@@ -88,7 +100,7 @@ async function fetchRecentWinners(): Promise<WinnerCard[]> {
         movieTitle,
         poster: getWinnerPoster(winner) || metadata.poster,
         theaterName: String(event.theaterName || "The New Parkway Theater"),
-        voteCount: getWinnerVoteCount(winner),
+        voteCount: winnerVotes,
       };
     })
   );
