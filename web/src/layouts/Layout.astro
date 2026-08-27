@@ -19,6 +19,20 @@ const {
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <!-- Google Tag Manager -->
+    <script is:inline>
+      (function (w, d, s, l, i) {
+        w[l] = w[l] || [];
+        w[l].push({ "gtm.start": new Date().getTime(), event: "gtm.js" });
+        var f = d.getElementsByTagName(s)[0],
+          j = d.createElement(s),
+          dl = l != "dataLayer" ? "&l=" + l : "";
+        j.async = true;
+        j.src = "https://www.googletagmanager.com/gtm.js?id=" + i + dl;
+        f.parentNode.insertBefore(j, f);
+      })(window, document, "script", "dataLayer", "GTM-MXXR4PXT");
+    </script>
+    <!-- End Google Tag Manager -->
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/png" href="/icon.png" />
     <meta name="generator" content={Astro.generator} />
@@ -27,6 +41,15 @@ const {
     <ClientRouter />
   </head>
   <body class="min-h-screen bg-cream text-ink antialiased">
+    <!-- Google Tag Manager (noscript) -->
+    <noscript
+      ><iframe
+        src="https://www.googletagmanager.com/ns.html?id=GTM-MXXR4PXT"
+        height="0"
+        width="0"
+        style="display:none;visibility:hidden"></iframe></noscript
+    >
+    <!-- End Google Tag Manager (noscript) -->
     <!--
       Ambient background wash — fixed to the viewport (not clipped to any
       one section), so it stays visible as a soft glow behind whatever
@@ -45,6 +68,21 @@ const {
     <Footer />
 
     <script>
+      // GTM's own gtm.js event covers the very first (hard) page load, but
+      // <ClientRouter/> swaps the DOM for every later navigation without a
+      // full reload — GTM would never see those as pageviews otherwise. Push
+      // a virtual pageview for every load after the first.
+      let isFirstLoad = true;
+      document.addEventListener("astro:page-load", () => {
+        if (isFirstLoad) {
+          isFirstLoad = false;
+        } else {
+          const w = window as unknown as { dataLayer?: Record<string, unknown>[] };
+          w.dataLayer = w.dataLayer || [];
+          w.dataLayer.push({ event: "virtualPageview", page_path: location.pathname + location.search });
+        }
+      });
+
       // Progressive-enhancement scroll reveal — see the `js-reveal` rules in
       // global.css. Re-runs after every view-transition navigation (Astro
       // swaps the DOM without a full reload, so a plain top-level script

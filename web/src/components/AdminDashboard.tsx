@@ -952,7 +952,7 @@ function ConfirmModal({
 }) {
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 px-5"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-5"
       onClick={(event) => {
         if (event.target === event.currentTarget) onCancel();
       }}

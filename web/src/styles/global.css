@@ -2,27 +2,27 @@
 @import "tailwindcss";
 
 @theme {
-  /* Warm, light neutrals */
-  --color-cream: #fbf9f5;
-  --color-cream-soft: #f4efe6;
-  --color-paper: #ffffff;
-  --color-line: #e9e2d4;
-  --color-line-soft: #f0eae0;
+  /* Dark cinema — velvet charcoal, warm not cold */
+  --color-cream: #171310;
+  --color-cream-soft: #1e1914;
+  --color-paper: #262019;
+  --color-line: #3d3327;
+  --color-line-soft: #2f271f;
 
-  /* Ink (text) */
-  --color-ink: #211d18;
-  --color-ink-soft: #6c6459;
-  --color-ink-faint: #a49b8c;
+  /* Ink (text) — inverted: warm off-white on the dark ground above */
+  --color-ink: #f6efe4;
+  --color-ink-soft: #cabfae;
+  --color-ink-faint: #8d8071;
 
-  /* Brand accent — deep indigo/navy, replacing the old neon cinematic red/pink */
-  --color-marquee: #303b6b;
-  --color-marquee-dark: #212a52;
-  --color-marquee-soft: #e9ebf6;
-  --color-rose: #7c89e8;
-  --color-gold: #b8860b;
-  --color-gold-soft: #fbf1da;
-  --color-emerald: #1f9d55;
-  --color-emerald-soft: #e9f8ef;
+  /* Brand accent — vivid marquee red, with gold as the "marquee bulb" secondary */
+  --color-marquee: #ff3d54;
+  --color-marquee-dark: #d42a3f;
+  --color-marquee-soft: #3d1820;
+  --color-rose: #ffcf6b;
+  --color-gold: #d4a017;
+  --color-gold-soft: #3a2c12;
+  --color-emerald: #2ecc71;
+  --color-emerald-soft: #163625;
 
   --font-display: "Fraunces", ui-serif, Georgia, serif;
   --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
