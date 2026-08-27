@@ -32,10 +32,10 @@ export default function RecentWinners() {
           </p>
         </div>
 
-        <div className="mt-12 -mx-5 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-2 sm:-mx-8 sm:px-8">
+        <div className="mt-12 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
           {winners === null
             ? Array.from({ length: 4 }).map((_, index) => (
-                <div key={index} className="w-36 shrink-0 snap-start sm:w-44">
+                <div key={index}>
                   <div className="skeleton aspect-[2/3] w-full rounded-xl" />
                   <div className="skeleton mt-2.5 h-3.5 w-4/5 rounded" />
                 </div>
@@ -44,7 +44,7 @@ export default function RecentWinners() {
                 <a
                   key={winner.eventId}
                   href={`/vote?event=${encodeURIComponent(winner.eventId)}`}
-                  className="group w-36 shrink-0 snap-start sm:w-44"
+                  className="group"
                 >
                   <div className="relative aspect-[2/3] w-full overflow-hidden rounded-xl bg-cream-soft shadow-sm transition-transform duration-300 group-hover:-translate-y-1.5 group-hover:shadow-lg">
                     {winner.poster ? (

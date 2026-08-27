@@ -54,6 +54,26 @@ function movieKey(title: string): string {
   return String(title || "").trim().toLowerCase();
 }
 
+function readMovieTitle(data: Record<string, unknown>): string {
+  return String(data.movie_title || data.title || data.movieTitle || "").trim();
+}
+
+function readMovieVoteCount(data: Record<string, unknown>): number {
+  const numeric = Number(data.vote_count ?? data.voteCount ?? data.votes ?? 0);
+  return Number.isFinite(numeric) ? numeric : 0;
+}
+
+function readMoviePoster(data: Record<string, unknown>): string | null {
+  const poster = data.poster || data.posterUrl || data.poster_url || null;
+  return poster ? String(poster) : null;
+}
+
+function readMovieTmdbId(data: Record<string, unknown>): number | null {
+  const raw = data.tmdb_id ?? data.tmdbId ?? null;
+  const numeric = Number(raw);
+  return Number.isFinite(numeric) && numeric > 0 ? numeric : null;
+}
+
 function generateClientId(): string {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
     return crypto.randomUUID();
@@ -241,6 +261,16 @@ export default function VotePanel() {
     };
   }, []);
 
+  // Absolute fallback so the UI never appears stuck on "Loading the ballot…"
+  // if hydration/network behavior is unexpectedly degraded.
+  useEffect(() => {
+    if (phase !== "loading") return;
+    const timeoutId = window.setTimeout(() => {
+      setPhase((current) => (current === "loading" ? "no-event" : current));
+    }, 15000);
+    return () => window.clearTimeout(timeoutId);
+  }, [phase]);
+
   // --- Subscribe to the event document so status changes reflect live. ---
   useEffect(() => {
     if (!eventId) return;
@@ -308,14 +338,15 @@ export default function VotePanel() {
       if (!snapshot) return [];
       const rows: RuntimeMovie[] = [];
       snapshot.forEach((movieDoc) => {
-        const data = movieDoc.data() || {};
-        if (!data.movie_title) return;
+        const data = (movieDoc.data() || {}) as Record<string, unknown>;
+        const title = readMovieTitle(data);
+        if (!title) return;
         rows.push({
-          title: String(data.movie_title),
-          voteCount: Number(data.vote_count || 0),
+          title,
+          voteCount: readMovieVoteCount(data),
           eliminated: data.eliminated === true,
-          poster: data.poster || null,
-          tmdbId: data.tmdb_id || null,
+          poster: readMoviePoster(data),
+          tmdbId: readMovieTmdbId(data),
         });
       });
       setMovies(rows);
