@@ -1,4 +1,4 @@
-import { collection, getDocs, limit, orderBy, query } from "firebase/firestore/lite";
+import { collection, getDocs, orderBy, query } from "firebase/firestore/lite";
 import { dbLite as db } from "./firebase-lite";
 import { getMovieMetadataByTitle } from "./tmdb";
 
@@ -22,15 +22,15 @@ interface EventDoc {
 let cachedWinnersPromise: Promise<WinnerCard[]> | null = null;
 
 async function fetchRecentWinners(): Promise<WinnerCard[]> {
-  // Fetch by date (a single-field index, always available) and filter to
-  // "ended" client-side, rather than a where()+orderBy() combo that would
-  // need a new composite index deployed to the production Firestore project.
-  const recentEventsQuery = query(collection(db, "events"), orderBy("screeningDateTime", "desc"), limit(20));
+  // Fetch all events ordered by date (single-field index) and filter to
+  // "ended" client-side, so we avoid requiring a new composite index.
+  // This keeps the "Picked by the audience" rail complete with every
+  // winning movie from ended polls.
+  const recentEventsQuery = query(collection(db, "events"), orderBy("screeningDateTime", "desc"));
   const eventsSnapshot = await getDocs(recentEventsQuery);
   const endedEvents = eventsSnapshot.docs
     .map((docSnap): EventDoc => ({ id: docSnap.id, ...docSnap.data() }))
-    .filter((event) => event.voteStatus === "ended")
-    .slice(0, 6);
+    .filter((event) => event.voteStatus === "ended");
 
   const results = await Promise.all(
     endedEvents.map(async (event): Promise<WinnerCard | null> => {
