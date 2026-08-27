@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { submitMovieSuggestion } from "../lib/firebase";
+import { submitMovieSuggestion } from "../lib/firebase-core";
 
 export default function SuggestForm() {
   const [status, setStatus] = useState<"idle" | "submitting" | "done" | "error">("idle");

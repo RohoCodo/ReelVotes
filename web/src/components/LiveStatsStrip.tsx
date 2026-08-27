@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { collection, getCountFromServer, query, where } from "firebase/firestore";
-import { db } from "../lib/firebase";
+import { collection, getDocs } from "firebase/firestore/lite";
+import { dbLite as db } from "../lib/firebase-lite";
 
 interface Stat {
   label: string;
@@ -52,15 +52,18 @@ export default function LiveStatsStrip() {
 
     (async () => {
       try {
-        const [screeningsCount, endedCount] = await Promise.all([
-          getCountFromServer(collection(db, "events")),
-          getCountFromServer(query(collection(db, "events"), where("voteStatus", "==", "ended"))),
-        ]);
+        // A plain getDocs + counting client-side, rather than
+        // getCountFromServer's aggregate-query API — that API isn't
+        // available in firebase/firestore/lite, and at this scale (a
+        // handful of events for one theater) fetching them all is cheap
+        // and keeps this component on the much lighter lite SDK.
+        const snapshot = await getDocs(collection(db, "events"));
+        const endedCount = snapshot.docs.filter((docSnap) => docSnap.data().voteStatus === "ended").length;
 
         if (cancelled) return;
         setStats([
-          { label: "Screenings hosted", value: screeningsCount.data().count },
-          { label: "Community votes completed", value: endedCount.data().count },
+          { label: "Screenings hosted", value: snapshot.size },
+          { label: "Community votes completed", value: endedCount },
         ]);
       } catch (error) {
         console.error("[LiveStatsStrip] Could not load stats:", error);

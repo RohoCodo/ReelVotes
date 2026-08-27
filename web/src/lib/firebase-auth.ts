@@ -1,5 +1,5 @@
 import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "firebase/auth";
-import { firebaseApp } from "./firebase";
+import { firebaseApp } from "./firebase-core";
 
 // Split out of firebase.ts so pages that never sign anyone in (vote, chat,
 // suggest, etc.) don't pull the Auth SDK into their bundle.

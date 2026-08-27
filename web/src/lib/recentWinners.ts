@@ -1,5 +1,5 @@
-import { collection, getDocs, limit, orderBy, query } from "firebase/firestore";
-import { db } from "./firebase";
+import { collection, getDocs, limit, orderBy, query } from "firebase/firestore/lite";
+import { dbLite as db } from "./firebase-lite";
 import { getMovieMetadataByTitle } from "./tmdb";
 
 export interface WinnerCard {

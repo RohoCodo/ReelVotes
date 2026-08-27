@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { navigate } from "astro:transitions/client";
-import { collection, getDocs } from "firebase/firestore";
-import { db, publicListTheaters, submitTheaterPetition } from "../lib/firebase";
+import { collection, getDocs } from "firebase/firestore/lite";
+import { publicListTheaters, submitTheaterPetition } from "../lib/firebase-core";
+import { dbLite as db } from "../lib/firebase-lite";
 import { REELVOTES_EVENTS, type ConfiguredEvent } from "../lib/events-config";
 import { withTimeout } from "../lib/withTimeout";
 

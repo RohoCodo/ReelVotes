@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { addEmailSignup } from "../lib/firebase";
+import { addEmailSignup } from "../lib/firebase-core";
 
 interface Props {
   eventId?: string;
