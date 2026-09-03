@@ -2,29 +2,31 @@
 import Layout from "../layouts/Layout.astro";
 
 const steps = [
-  { icon: "📍", title: "Choose your theater", body: "Find your local participating theater." },
-  { icon: "🗳️", title: "Vote", body: "Pick the movie you want to see." },
-  { icon: "📲", title: "Invite friends", body: "Share the vote and help your favorite rise to the top." },
-  { icon: "🍿", title: "Movie night happens", body: "The winning film gets screened." },
+  { icon: "🎬", title: "Start or join a campaign", body: "Campaigns are built around a theme and exactly 3 ranked movie choices." },
+  { icon: "🤝", title: "Support level", body: "Tap I'd Watch This for interest or Back This Screening to commit to buying a ticket." },
+  { icon: "✅", title: "Rights check at 70%", body: "When demand hits the trigger, theaters check licensing in priority order." },
+  { icon: "🍿", title: "Funded to screening", body: "If rights are confirmed and backing reaches 100%, the screening gets scheduled." },
 ];
 
 const faqs = [
   {
-    q: "Can I vote for multiple movies?",
-    a: "Yes. One ballot per person, and each ballot can include multiple movies.",
+    q: "How many movies are in a campaign?",
+    a: "Exactly three ranked choices are required in every campaign (Choice 1, 2, and 3).",
   },
   {
-    q: "Can I suggest a movie?",
-    a: "Yes — use Suggest a Movie to submit ideas for a future vote.",
-    linkHref: "/suggest",
-    linkLabel: "Suggest a Movie",
+    q: "When does the theater check licensing?",
+    a: "The theater licensing check is triggered once a campaign reaches about 70% of threshold in either backing or interest.",
   },
-  { q: "How are winners determined?", a: "The movie with the highest vote count wins that screening." },
+  {
+    q: "When is my card charged for backing?",
+    a: "Backing starts as a pre-authorization. It is only captured if the campaign fully funds and rights are confirmed.",
+  },
+  { q: "What if none of the three movies are available?", a: "The campaign closes and cards are not captured." },
   {
     q: "What if my theater isn't partnered?",
-    a: "Use the showtimes page to let us know. The team follows up on demand from your city.",
+    a: "Use the Screenings page to let us know. The team follows up on demand from your city.",
     linkHref: "/showtimes",
-    linkLabel: "Showtimes",
+    linkLabel: "Screenings",
   },
 ];
 ---
@@ -32,21 +34,22 @@ const faqs = [
 <Layout title="How it works" description="How ReelVotes turns community votes into real movie nights at independent theaters.">
   <section class="mx-auto max-w-3xl px-5 py-14 sm:px-8 sm:py-20">
     <h1 class="text-center font-display text-4xl font-semibold text-ink sm:text-5xl">How ReelVotes works</h1>
-    <p class="mt-4 text-center text-base text-ink-soft">Movie lovers decide what gets screened.</p>
+    <p class="mt-4 text-center text-base text-ink-soft">Campaign-driven demand decides what gets screened.</p>
 
     <div class="mt-10 rounded-2xl border border-line bg-paper p-6">
-      <h2 class="font-display text-lg font-semibold text-ink">Voting rules</h2>
+      <h2 class="font-display text-lg font-semibold text-ink">Campaign rules</h2>
       <p class="mt-2 text-sm leading-relaxed text-ink-soft">
-        Public poll. One vote per person. You may vote for as many movies as you want on that single ballot.
+        Every campaign has 3 ranked films, a Backing threshold, and an I'd Watch This threshold. Rights are checked after strong demand,
+        and screenings only finalize when rights are confirmed and funding is complete.
       </p>
     </div>
 
     <div class="mt-4 rounded-2xl border border-line bg-paper p-6">
       <h2 class="font-display text-lg font-semibold text-ink">The mission</h2>
       <p class="mt-2 text-sm leading-relaxed text-ink-soft">
-        ReelVotes helps small theaters program movies you not only want to see, but that you will support by
-        buying a ticket if your movie is chosen. When you vote, you're saying you'll show up. That's how votes
-        become real screenings, and how the independent theaters you love can keep taking risks on great films.
+        ReelVotes helps independent theaters replace guesswork with validated demand. Community interest and committed backing
+        are tracked separately so campaigns reflect both excitement and real ticket intent. That means more reliable programming,
+        lower risk for theaters, and better odds your community actually gets the movies it rallies around.
       </p>
     </div>
 
@@ -93,7 +96,7 @@ const faqs = [
         href="/showtimes"
         class="inline-block rounded-full bg-marquee px-7 py-3.5 text-sm font-semibold text-white shadow-md shadow-marquee/30 transition-transform hover:-translate-y-0.5"
       >
-        See what's up for a vote
+        Browse live and past screenings
       </a>
     </div>
   </section>

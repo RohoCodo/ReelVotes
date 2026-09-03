@@ -28,9 +28,18 @@ export const addEmailSignup = httpsCallable(functions, "addEmailSignup");
 export const submitVote = httpsCallable(functions, "submitVote");
 export const getVoteStatus = httpsCallable(functions, "getVoteStatus");
 export const submitTheaterPetition = httpsCallable(functions, "submitTheaterPetition");
+export const submitTheaterRegistration = httpsCallable(functions, "submitTheaterRegistration");
+export const createCampaign = httpsCallable(functions, "createCampaign");
+export const publicListCampaigns = httpsCallable(functions, "publicListCampaigns");
+export const publicListDeadTimeSlots = httpsCallable(functions, "publicListDeadTimeSlots");
+export const upsertCampaignSupport = httpsCallable(functions, "upsertCampaignSupport");
+export const upsertCampaignMovieVote = httpsCallable(functions, "upsertCampaignMovieVote");
+export const adminSetCampaignStatus = httpsCallable(functions, "adminSetCampaignStatus");
 export const publicListTheaters = httpsCallable(functions, "publicListTheaters");
 export const joinMovieChatRoom = httpsCallable(functions, "joinMovieChatRoom");
 export const sendMovieChatMessage = httpsCallable(functions, "sendMovieChatMessage");
+export const joinCampaignDiscussion = httpsCallable(functions, "joinCampaignDiscussion");
+export const sendCampaignDiscussionMessage = httpsCallable(functions, "sendCampaignDiscussionMessage");
 
 // --- ReelSuccess (internal theater-analytics dashboard) --------------------
 export const reelSuccessSyncAccess = httpsCallable(functions, "reelSuccessSyncAccess");

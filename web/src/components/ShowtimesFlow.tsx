@@ -148,7 +148,11 @@ function buildTheaters(events: MergedEvent[]): Theater[] {
   return Array.from(byKey.values());
 }
 
-export default function ShowtimesFlow() {
+export default function ShowtimesFlow({
+  hideTheaterSelection = false,
+}: {
+  hideTheaterSelection?: boolean;
+}) {
   const [loading, setLoading] = useState(true);
   const [events, setEvents] = useState<MergedEvent[]>([]);
   const [baseTheaters, setBaseTheaters] = useState<Theater[]>([]);
@@ -312,8 +316,9 @@ export default function ShowtimesFlow() {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-      <section className="rounded-2xl border border-line bg-paper p-5 sm:p-6">
+    <div className={`grid grid-cols-1 gap-6 ${hideTheaterSelection ? "" : "lg:grid-cols-2"}`}>
+      {!hideTheaterSelection && (
+        <section className="rounded-2xl border border-line bg-paper p-5 sm:p-6">
         <h2 className="font-display text-lg font-semibold text-ink">1. Find your local theater</h2>
         <div className="mt-4">
           {selectedTheater ? (
@@ -396,9 +401,10 @@ export default function ShowtimesFlow() {
             </>
           )}
         </div>
-      </section>
+        </section>
+      )}
 
-      {selectedTheater && !selectedTheater.partnered && (
+      {!hideTheaterSelection && selectedTheater && !selectedTheater.partnered && (
         <PetitionSection
           prefillName={selectedTheater.id === "custom-request" ? "" : ""}
           prefillTheaterName={selectedTheater.name}
@@ -407,29 +413,35 @@ export default function ShowtimesFlow() {
       )}
 
       {selectedTheater && selectedTheater.partnered && (
-        <section className="rounded-2xl border border-line bg-paper p-5 sm:p-6">
-          <h2 className="font-display text-lg font-semibold text-ink">2. Choose a screening</h2>
+        <section className={`rounded-2xl border border-line bg-paper p-5 sm:p-6 ${hideTheaterSelection ? "mx-auto w-full max-w-5xl" : ""}`}>
+          <h2 className="font-display text-lg font-semibold text-ink">{hideTheaterSelection ? "Screening calendar" : "2. Choose a screening"}</h2>
           <p className="mt-1 text-xs text-ink-soft">
             {selectedTheater.name} · {selectedTheater.city}
           </p>
+
+          {hideTheaterSelection && (
+            <div className="mt-4">
+              <DayScreenings dateKey={selectedDateKey} events={eventsByDate.get(selectedDateKey) || []} onSelect={goToVote} />
+            </div>
+          )}
 
           <div className="mt-4 flex items-center justify-between">
             <button
               type="button"
               onClick={() => moveMonth(-1)}
               aria-label="Previous month"
-              className="grid h-8 w-8 place-items-center rounded-full border border-line text-ink transition-colors hover:border-ink/30"
+              className={`grid place-items-center rounded-full border border-line text-ink transition-colors hover:border-ink/30 ${hideTheaterSelection ? "h-7 w-7 text-sm" : "h-8 w-8"}`}
             >
               ←
             </button>
-            <h3 className="text-sm font-semibold text-ink">
+            <h3 className={`${hideTheaterSelection ? "text-xs" : "text-sm"} font-semibold text-ink`}>
               {new Date(currentYear, currentMonth, 1).toLocaleDateString([], { month: "long", year: "numeric" })}
             </h3>
             <button
               type="button"
               onClick={() => moveMonth(1)}
               aria-label="Next month"
-              className="grid h-8 w-8 place-items-center rounded-full border border-line text-ink transition-colors hover:border-ink/30"
+              className={`grid place-items-center rounded-full border border-line text-ink transition-colors hover:border-ink/30 ${hideTheaterSelection ? "h-7 w-7 text-sm" : "h-8 w-8"}`}
             >
               →
             </button>
@@ -463,6 +475,7 @@ export default function ShowtimesFlow() {
               eventsByDate={eventsByDate}
               selectedDateKey={selectedDateKey}
               onSelectDate={setSelectedDateKey}
+              compact={false}
             />
           ) : (
             <AgendaList
@@ -473,9 +486,17 @@ export default function ShowtimesFlow() {
             />
           )}
 
-          <div className="mt-5">
-            <DayScreenings dateKey={selectedDateKey} events={eventsByDate.get(selectedDateKey) || []} onSelect={goToVote} />
-          </div>
+          {!hideTheaterSelection && (
+            <div className="mt-5">
+              <DayScreenings dateKey={selectedDateKey} events={eventsByDate.get(selectedDateKey) || []} onSelect={goToVote} />
+            </div>
+          )}
+        </section>
+      )}
+
+      {hideTheaterSelection && (!selectedTheater || !selectedTheater.partnered) && (
+        <section className="rounded-2xl border border-line bg-paper p-5 sm:p-6">
+          <p className="text-sm text-ink-soft">No partnered theater calendar is available right now.</p>
         </section>
       )}
     </div>
@@ -488,12 +509,14 @@ function CalendarGrid({
   eventsByDate,
   selectedDateKey,
   onSelectDate,
+  compact = false,
 }: {
   year: number;
   month: number;
   eventsByDate: Map<string, MergedEvent[]>;
   selectedDateKey: string;
   onSelectDate: (dateKey: string) => void;
+  compact?: boolean;
 }) {
   const firstDay = new Date(year, month, 1);
   const startWeekday = firstDay.getDay();
@@ -514,7 +537,7 @@ function CalendarGrid({
         disabled={!hasEvents}
         onClick={() => onSelectDate(dateKey)}
         aria-label={`${dateKey}${hasEvents ? ", has screenings" : ""}`}
-        className={`flex aspect-square flex-col items-center justify-center gap-0.5 rounded-lg text-xs transition-colors ${
+        className={`flex aspect-square flex-col items-center justify-center gap-0.5 transition-colors ${compact ? "rounded-md text-[10px]" : "rounded-lg text-xs"} ${
           !hasEvents
             ? "text-ink-faint/50"
             : isSelected
@@ -530,7 +553,7 @@ function CalendarGrid({
 
   return (
     <div className="mt-3">
-      <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-semibold uppercase text-ink-faint">
+      <div className={`grid grid-cols-7 text-center font-semibold uppercase text-ink-faint ${compact ? "gap-0.5 text-[9px]" : "gap-1 text-[10px]"}`}>
         <span>Sun</span>
         <span>Mon</span>
         <span>Tue</span>
@@ -539,7 +562,7 @@ function CalendarGrid({
         <span>Fri</span>
         <span>Sat</span>
       </div>
-      <div className="mt-1 grid grid-cols-7 gap-1">{cells}</div>
+      <div className={`mt-1 grid grid-cols-7 ${compact ? "gap-0.5" : "gap-1"}`}>{cells}</div>
     </div>
   );
 }

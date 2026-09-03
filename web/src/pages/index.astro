@@ -2,6 +2,7 @@
 import Layout from "../layouts/Layout.astro";
 import LiveStatsStrip from "../components/LiveStatsStrip.tsx";
 import RecentWinners from "../components/RecentWinners.tsx";
+import CampaignExplorer from "../components/CampaignExplorer";
 
 const flow = [
   {
@@ -115,6 +116,24 @@ const flow = [
 
   <RecentWinners client:visible />
 
+  <section class="border-t border-line bg-paper">
+    <div class="mx-auto max-w-6xl px-5 py-16 sm:px-8 sm:py-24">
+      <div class="mx-auto max-w-2xl text-center" data-reveal>
+        <p class="text-xs font-semibold uppercase tracking-wide text-marquee">The Reel Community</p>
+        <h2 class="mt-3 font-display text-3xl font-semibold text-ink sm:text-4xl">Active campaigns</h2>
+        <p class="mt-4 text-base leading-relaxed text-ink-soft">
+          Fans propose three ranked movies. If momentum crosses 70%, the theater checks availability and moves the campaign forward.
+        </p>
+      </div>
+      <div class="mt-12" data-reveal>
+        <CampaignExplorer compact client:load />
+      </div>
+      <div class="mt-8 text-center" data-reveal>
+        <a href="/campaigns" class="text-sm font-semibold text-marquee hover:underline">View all campaigns &rarr;</a>
+      </div>
+    </div>
+  </section>
+
   <!-- Moviegoers vs Theaters -->
   <section class="mx-auto max-w-6xl px-5 py-16 sm:px-8 sm:py-24">
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -185,20 +204,14 @@ const flow = [
         Ready to pick the next movie night?
       </h2>
       <p class="mt-4 text-base leading-relaxed text-ink-soft">
-        Vote in under a minute, or join the email list to hear the moment a new ballot opens.
+        Sign in to start supporting campaigns and shaping your local screenings.
       </p>
       <div class="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
         <a
-          href="/showtimes"
+          href="/create"
           class="w-full rounded-full bg-marquee px-7 py-3.5 text-center text-sm font-semibold text-white shadow-md shadow-marquee/30 transition-transform hover:-translate-y-0.5 sm:w-auto"
         >
-          Vote now
-        </a>
-        <a
-          href="/email-signup"
-          class="w-full rounded-full border border-line bg-paper px-7 py-3.5 text-center text-sm font-semibold text-ink transition-colors hover:border-ink/30 sm:w-auto"
-        >
-          Join the email list
+          Sign In
         </a>
       </div>
     </div>

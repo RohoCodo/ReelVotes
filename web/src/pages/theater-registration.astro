@@ -1,0 +1,25 @@
+---
+import Layout from "../layouts/Layout.astro";
+import TheaterRegistrationForm from "../components/TheaterRegistrationForm.tsx";
+---
+
+<Layout
+  title="Theater partner registration"
+  description="Private ReelVotes partner onboarding form for independent theaters."
+>
+  <section class="mx-auto max-w-4xl px-5 py-14 sm:px-8 sm:py-20">
+    <span class="mx-auto block w-fit rounded-full border border-line bg-paper px-4 py-1.5 text-center text-xs font-semibold uppercase tracking-wide text-ink-soft">
+      Partner onboarding
+    </span>
+    <h1 class="mt-4 text-center font-display text-4xl font-semibold text-ink sm:text-5xl">
+      Submit your theater
+    </h1>
+    <p class="mx-auto mt-4 max-w-2xl text-center text-sm leading-relaxed text-ink-soft sm:text-base">
+      Share your venue details, Community Screening Slots, and programming economics so we can configure campaigns around your theater-approved windows.
+    </p>
+
+    <div class="mt-10 rounded-2xl border border-line bg-paper p-6 sm:p-8">
+      <TheaterRegistrationForm client:visible />
+    </div>
+  </section>
+</Layout>

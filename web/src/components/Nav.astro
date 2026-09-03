@@ -1,12 +1,13 @@
 ---
 const primaryLinks = [
+  { href: "/campaigns", label: "Campaigns" },
+  { href: "/showtimes", label: "Screenings" },
+  { href: "/join", label: "Join List" },
   { href: "/how-it-works", label: "How It Works" },
-  { href: "/showtimes", label: "Showtimes" },
   { href: "/for-theaters", label: "For Theaters" },
 ];
 
 const utilityLinks = [
-  { href: "/suggest", label: "Suggest a Movie" },
   { href: "/support", label: "Support" },
   { href: "/privacy", label: "Privacy Policy" },
 ];
@@ -15,7 +16,7 @@ const currentPath = Astro.url.pathname.replace(/\/$/, "") || "/";
 const allMobileLinks = [
   ...primaryLinks,
   { href: "/chat", label: "Movie Chat" },
-  { href: "/email-signup", label: "Join Email List" },
+  { href: "/create", label: "Sign In" },
   ...utilityLinks,
 ];
 ---
@@ -60,16 +61,11 @@ const allMobileLinks = [
         Movie Chat
       </a>
       <a
-        href="/email-signup"
-        class="rounded-full border border-line px-4 py-2 text-sm font-semibold text-ink-soft transition-colors hover:border-marquee hover:text-marquee"
+        href="/create"
+        data-auth-button="true"
+        class="rounded-full border border-marquee bg-marquee px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-marquee-dark"
       >
-        Join Email List
-      </a>
-      <a
-        href="/showtimes"
-        class="rounded-full bg-marquee px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-marquee/30 transition-transform hover:-translate-y-0.5 hover:shadow-md hover:shadow-marquee/40"
-      >
-        Vote Now
+        Sign In
       </a>
     </div>
 
@@ -120,6 +116,7 @@ const allMobileLinks = [
     {allMobileLinks.map((link) => (
       <a
         href={link.href}
+        data-auth-button={link.href === "/create" && link.label === "Sign In" ? "true" : undefined}
         class:list={[
           "border-b border-line/60 py-3.5 text-base font-medium",
           currentPath === link.href ? "text-marquee" : "text-ink",
@@ -128,16 +125,12 @@ const allMobileLinks = [
         {link.label}
       </a>
     ))}
-    <a
-      href="/showtimes"
-      class="mt-4 rounded-full bg-marquee px-5 py-3 text-center text-sm font-semibold text-white"
-    >
-      Vote Now
-    </a>
   </div>
 </header>
 
 <script>
+  import { auth, onAuthStateChanged, signInWithGoogle, signOut } from "../lib/firebase-auth";
+
   // Re-bound on every astro:page-load (fires on first load AND after every
   // view-transition navigation) — with <ClientRouter /> swapping in fresh
   // DOM per page, a plain top-level script here would only ever bind to
@@ -166,5 +159,53 @@ const allMobileLinks = [
     });
   }
 
+  let authUnsubscribe = null;
+
+  function initNavAuthButtons() {
+    const buttons = Array.from(document.querySelectorAll('a[data-auth-button="true"]'));
+    if (buttons.length === 0) return;
+
+    const setSignedOut = () => {
+      buttons.forEach((button) => {
+        button.textContent = "Sign In";
+        button.setAttribute("href", "#");
+        button.onclick = async (event) => {
+          event.preventDefault();
+          try {
+            await signInWithGoogle();
+          } catch (error) {
+            console.error("Sign in failed:", error);
+          }
+        };
+      });
+    };
+
+    const setSignedIn = () => {
+      buttons.forEach((button) => {
+        button.textContent = "Sign Out";
+        button.setAttribute("href", "#");
+        button.onclick = async (event) => {
+          event.preventDefault();
+          try {
+            await signOut(auth);
+          } catch (error) {
+            console.error("Sign out failed:", error);
+          }
+        };
+      });
+    };
+
+    authUnsubscribe?.();
+    authUnsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setSignedIn();
+      } else {
+        setSignedOut();
+      }
+    });
+  }
+
   document.addEventListener("astro:page-load", initNavToggle);
+  document.addEventListener("astro:page-load", initNavAuthButtons);
+  initNavAuthButtons();
 </script>

@@ -1,0 +1,33 @@
+---
+import Layout from "../layouts/Layout.astro";
+import CreateCampaignForm from "../components/CreateCampaignForm";
+import { CAMPAIGN_MOVIE_CHOICES_REQUIRED, LICENSING_TRIGGER_PERCENTAGE } from "../lib/campaign-policy";
+---
+
+<Layout title="Create campaign" description="Launch a campaign with three ranked movie choices for theater review.">
+  <section class="mx-auto max-w-3xl px-5 py-14 sm:px-8 sm:py-20">
+    <div class="text-center" data-reveal>
+      <p class="text-xs font-semibold uppercase tracking-wide text-marquee">Create</p>
+      <h1 class="mt-3 font-display text-4xl font-semibold text-ink sm:text-5xl">Create a campaign</h1>
+      <p class="mt-4 text-base leading-relaxed text-ink-soft">
+        Propose exactly {CAMPAIGN_MOVIE_CHOICES_REQUIRED} ranked movies and attach the campaign to a specific
+        theater-submitted dead-time day/time slot in your local area. The theater checks availability when either
+        threshold reaches {LICENSING_TRIGGER_PERCENTAGE}%.
+      </p>
+    </div>
+
+    <div class="mt-10 rounded-2xl border border-gold/35 bg-gold-soft/30 p-5 text-sm text-ink-soft" data-reveal>
+      <p class="font-semibold text-ink">Licensing note</p>
+      <p class="mt-2">
+        Licensing is not pre-verified by the platform. The partner theater checks your three choices once demand crosses the licensing trigger.
+      </p>
+      <p class="mt-2">
+        For replacement campaigns, existing Votes support can be automatically carried over.
+      </p>
+    </div>
+
+    <div data-reveal>
+      <CreateCampaignForm client:load />
+    </div>
+  </section>
+</Layout>

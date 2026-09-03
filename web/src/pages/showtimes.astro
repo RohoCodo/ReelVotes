@@ -1,17 +1,155 @@
 ---
 import Layout from "../layouts/Layout.astro";
-import ShowtimesFlow from "../components/ShowtimesFlow.tsx";
+import CampaignExplorer from "../components/CampaignExplorer.tsx";
 ---
 
-<Layout title="Showtimes" description="Find your theater, choose a screening, and vote on what should play next.">
+<Layout title="Screenings" description="View past and future scheduled screenings and vote on what should play next.">
   <section class="mx-auto max-w-5xl px-5 py-14 sm:px-8 sm:py-20">
-    <h1 class="text-center font-display text-4xl font-semibold text-ink sm:text-5xl">Showtimes</h1>
+    <div class="mx-auto mb-5 flex w-fit items-center gap-2 rounded-full border border-line bg-paper p-1.5">
+      <a
+        href="/screenings-calendar"
+        aria-label="Open screenings calendar"
+        title="Open calendar view"
+        class="inline-flex items-center gap-1 rounded-full border border-line px-3 py-1.5 text-xs font-semibold text-ink-soft transition-colors hover:border-marquee hover:text-marquee"
+      >
+        <span aria-hidden="true">📅</span>
+        <span>Calendar</span>
+      </a>
+      <button
+        type="button"
+        id="screeningsTabPrevious"
+        data-target="previous"
+        class="rounded-full px-4 py-1.5 text-xs font-semibold text-ink-soft transition-colors hover:text-marquee"
+      >
+        Previous
+      </button>
+      <button
+        type="button"
+        id="screeningsTabFuture"
+        data-target="future"
+        class="rounded-full bg-marquee px-4 py-1.5 text-xs font-semibold text-white"
+      >
+        Future
+      </button>
+    </div>
+
+    <h1 class="text-center font-display text-4xl font-semibold text-ink sm:text-5xl">Screenings</h1>
     <p class="mt-4 text-center text-base text-ink-soft">
-      Find your theater, choose a screening, and vote on what should play next.
+      Explore locked-in upcoming screenings and browse previous audience-picked screenings.
     </p>
 
-    <div class="mt-10">
-      <ShowtimesFlow client:visible />
+    <div id="screeningsFuturePanel" class="mt-12 border-t border-line pt-10">
+      <h2 class="text-center font-display text-3xl font-semibold text-ink sm:text-4xl">Locked-in future screenings</h2>
+      <p class="mx-auto mt-3 max-w-2xl text-center text-sm leading-relaxed text-ink-soft">
+        These campaigns have moved into scheduling/confirmation and are on track for theatrical showtime.
+      </p>
+      <div class="mt-8">
+        <CampaignExplorer
+          layout="feed"
+          statusFilter={["scheduled", "confirmed", "screening"]}
+          showCreateButton={true}
+          readOnly={true}
+          client:visible
+        />
+      </div>
     </div>
+
+    <div id="screeningsPreviousPanel" class="mt-12 hidden border-t border-line pt-10">
+      <h2 class="text-center font-display text-3xl font-semibold text-ink sm:text-4xl">Previous screenings</h2>
+      <p class="mx-auto mt-3 max-w-2xl text-center text-sm leading-relaxed text-ink-soft">
+        Past Campaigns can be viewed here
+      </p>
+      <div class="mt-8">
+        <CampaignExplorer layout="feed" mode="historical-votes" showCreateButton={true} readOnly={true} client:visible />
+      </div>
+    </div>
+
+    <script is:inline>
+      function initScreeningsTabs() {
+        const futureBtn = document.getElementById("screeningsTabFuture");
+        const previousBtn = document.getElementById("screeningsTabPrevious");
+        const futurePanel = document.getElementById("screeningsFuturePanel");
+        const previousPanel = document.getElementById("screeningsPreviousPanel");
+        if (!futureBtn || !previousBtn || !futurePanel || !previousPanel) return;
+
+        const hasExplicitHash = window.location.hash === "#future" || window.location.hash === "#previous";
+
+        function hasFutureScreenings() {
+          // Campaign cards render as <article>; if none are present and the empty
+          // state is visible, default to previous screenings.
+          if (futurePanel.querySelector("article")) return true;
+          const panelText = (futurePanel.textContent || "").toLowerCase();
+          if (panelText.includes("no campaigns match your search right now")) return false;
+          return null;
+        }
+
+        function chooseInitialTab() {
+          if (window.location.hash === "#previous") return "previous";
+          if (window.location.hash === "#future") return "future";
+          const hasFuture = hasFutureScreenings();
+          return hasFuture === false ? "previous" : "future";
+        }
+
+        if (futureBtn.dataset.bound === "true") {
+          activate(chooseInitialTab());
+          return;
+        }
+
+        function activate(tab) {
+          const isFuture = tab === "future";
+
+          futurePanel.classList.toggle("hidden", !isFuture);
+          previousPanel.classList.toggle("hidden", isFuture);
+
+          futureBtn.classList.toggle("bg-marquee", isFuture);
+          futureBtn.classList.toggle("text-white", isFuture);
+          futureBtn.classList.toggle("text-ink-soft", !isFuture);
+
+          previousBtn.classList.toggle("bg-marquee", !isFuture);
+          previousBtn.classList.toggle("text-white", !isFuture);
+          previousBtn.classList.toggle("text-ink-soft", isFuture);
+
+          futureBtn.setAttribute("aria-selected", isFuture ? "true" : "false");
+          previousBtn.setAttribute("aria-selected", isFuture ? "false" : "true");
+        }
+
+        futureBtn.addEventListener("click", () => activate("future"));
+        previousBtn.addEventListener("click", () => activate("previous"));
+
+        futureBtn.addEventListener("click", () => {
+          if (window.location.hash !== "#future") {
+            window.history.replaceState({}, "", `${window.location.pathname}#future`);
+          }
+        });
+
+        previousBtn.addEventListener("click", () => {
+          if (window.location.hash !== "#previous") {
+            window.history.replaceState({}, "", `${window.location.pathname}#previous`);
+          }
+        });
+
+        futureBtn.dataset.bound = "true";
+        previousBtn.dataset.bound = "true";
+
+        activate(chooseInitialTab());
+
+        // Future/previous campaign blocks hydrate client-side, so re-check once
+        // data has rendered and auto-switch only if the user did not explicitly
+        // choose a hash tab.
+        if (!hasExplicitHash && "MutationObserver" in window) {
+          const observer = new MutationObserver(() => {
+            const hasFuture = hasFutureScreenings();
+            if (hasFuture === null) return;
+            activate(hasFuture ? "future" : "previous");
+            observer.disconnect();
+          });
+          observer.observe(futurePanel, { childList: true, subtree: true });
+          window.setTimeout(() => observer.disconnect(), 5000);
+        }
+      }
+
+      document.addEventListener("astro:page-load", initScreeningsTabs);
+      initScreeningsTabs();
+    </script>
   </section>
 </Layout>

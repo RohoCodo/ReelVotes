@@ -14,7 +14,7 @@ import {
   reelSuccessSetAccess,
   reelSuccessListAccess,
 } from "../lib/firebase";
-import { auth, googleProvider, onAuthStateChanged, signInWithPopup, signOut } from "../lib/firebase-auth";
+import { auth, isPopupSignInCancellation, onAuthStateChanged, signInWithGoogle, signOut } from "../lib/firebase-auth";
 
 // A placeholder eventId used only to ping an admin-gated callable on load,
 // to determine whether the signed-in user has admin access. getEventVoteStats
@@ -84,8 +84,11 @@ export default function AdminDashboard() {
   async function handleSignIn() {
     setSignInError("");
     try {
-      await signInWithPopup(auth, googleProvider);
+      await signInWithGoogle();
     } catch (error) {
+      if (isPopupSignInCancellation(error)) {
+        return;
+      }
       console.error("Admin sign-in failed:", error);
       setSignInError(getErrorMessage(error));
     }

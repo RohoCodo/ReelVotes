@@ -3,9 +3,17 @@ import { addEmailSignup } from "../lib/firebase-core";
 
 interface Props {
   eventId?: string;
+  submitLabel?: string;
+  helperText?: string;
+  successMessage?: string;
 }
 
-export default function EmailSignupForm({ eventId = "newparkway1" }: Props) {
+export default function EmailSignupForm({
+  eventId = "website",
+  submitLabel = "Join email list",
+  helperText = "Unsubscribe anytime. Alerts are focused on real voting activity and ticket releases.",
+  successMessage = "You're on the list! We'll email you when votes open, winners are announced, and tickets go live.",
+}: Props) {
   const [status, setStatus] = useState<"idle" | "submitting" | "done" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -52,14 +60,14 @@ export default function EmailSignupForm({ eventId = "newparkway1" }: Props) {
         disabled={status === "submitting"}
         className="whitespace-nowrap rounded-full bg-marquee px-6 py-3.5 text-sm font-semibold text-white transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {status === "submitting" ? "Joining…" : "Get voting alerts"}
+        {status === "submitting" ? "Joining…" : submitLabel}
       </button>
       <p className="sm:col-span-2 text-xs text-ink-faint">
-        Unsubscribe anytime. Alerts are focused on real voting activity and ticket releases.
+        {helperText}
       </p>
       {status === "done" && (
         <p className="sm:col-span-2 text-sm font-medium text-emerald">
-          You're on the list! We'll email you when votes open, winners are announced, and tickets go live.
+          {successMessage}
         </p>
       )}
       {status === "error" && <p className="sm:col-span-2 text-sm text-red-600">{errorMessage}</p>}

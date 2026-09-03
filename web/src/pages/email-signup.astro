@@ -5,7 +5,7 @@ import EmailSignupForm from "../components/EmailSignupForm.tsx";
 const faqs = [
   {
     q: "How often will I actually receive emails?",
-    a: "There's no fixed schedule. Emails go out only when a vote opens, a winner is confirmed, or tickets go live.",
+    a: "There's no fixed schedule. Emails go out when something meaningful happens: a new campaign gains momentum, a vote winner is confirmed, or tickets go live.",
   },
   {
     q: "Will my email address be shared with theaters or other companies?",
@@ -13,7 +13,7 @@ const faqs = [
   },
   {
     q: "Can I get alerts for more than one theater at once?",
-    a: "Yes. One signup can cover activity across participating theaters you interact with.",
+    a: "Yes. One signup can cover updates across participating theaters and campaigns you engage with.",
   },
   {
     q: "What happens if I miss an email about a ticket release?",
@@ -27,20 +27,26 @@ const faqs = [
 ---
 
 <Layout
-  title="Get voting alerts"
-  description="Get ReelVotes alerts for new community movie votes, winners, and ticket drops at independent theaters."
+  title="Join the email list"
+  description="Join the ReelVotes email list for campaign momentum alerts, winning movie updates, and ticket drops."
 >
   <section class="mx-auto max-w-2xl px-5 py-14 sm:px-8 sm:py-20">
     <h1 class="text-center font-display text-4xl font-semibold text-ink sm:text-5xl">
-      Get voting alerts early
+      Join the ReelVotes email list
     </h1>
     <p class="mx-auto mt-4 max-w-lg text-center text-base leading-relaxed text-ink-soft">
-      Drop your email below to be first to know when a new community vote opens, when a winning film is
-      announced, and when tickets go live. No digging through the site, no missed windows.
+      Get the updates that matter: campaign momentum, winner confirmations, and ticket drops. No daily spam,
+      no generic newsletter filler.
     </p>
 
     <div class="mt-10 rounded-2xl border border-line bg-paper p-6 sm:p-8">
-      <EmailSignupForm client:visible />
+      <EmailSignupForm
+        eventId="email-signup-page"
+        submitLabel="Join email list"
+        helperText="Unsubscribe anytime. We only send important campaign, winner, and ticket updates."
+        successMessage="You're in. Watch for updates on top campaigns and live ticket drops."
+        client:visible
+      />
     </div>
 
     <div class="mt-10 grid gap-4 sm:grid-cols-2">
@@ -51,8 +57,8 @@ const faqs = [
           ticket release.
         </p>
         <ul class="mt-3 space-y-2 text-sm text-ink-soft">
-          <li class="flex gap-2"><span class="text-marquee">&#8226;</span>New voting alerts when a fresh ballot opens</li>
-          <li class="flex gap-2"><span class="text-marquee">&#8226;</span>Winning film updates the moment a vote closes</li>
+          <li class="flex gap-2"><span class="text-marquee">&#8226;</span>Campaign momentum alerts when demand climbs</li>
+          <li class="flex gap-2"><span class="text-marquee">&#8226;</span>Winning film updates when outcomes lock in</li>
           <li class="flex gap-2"><span class="text-marquee">&#8226;</span>Ticket release alerts for confirmed screenings</li>
         </ul>
       </div>
@@ -61,7 +67,7 @@ const faqs = [
         <h2 class="font-display text-base font-semibold text-ink">What it won't include</h2>
         <ul class="mt-2 space-y-2 text-sm text-ink-soft">
           <li class="flex gap-2"><span class="text-marquee">&#8226;</span>No daily promotions</li>
-          <li class="flex gap-2"><span class="text-marquee">&#8226;</span>No unrelated marketing</li>
+          <li class="flex gap-2"><span class="text-marquee">&#8226;</span>No unrelated blasts</li>
           <li class="flex gap-2"><span class="text-marquee">&#8226;</span>No filler content padding your inbox</li>
         </ul>
       </div>

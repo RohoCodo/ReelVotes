@@ -32,6 +32,14 @@ export interface MovieMetadata {
   trailerUrl: string;
 }
 
+export interface MovieSearchResult {
+  tmdbId: number;
+  title: string;
+  releaseDate: string | null;
+  poster: string | null;
+  starRating: string | null;
+}
+
 const movieMetadataCache = new Map<string, MovieMetadata>();
 
 function buildPosterUrl(posterPath: string | null | undefined, size = "w185"): string | null {
@@ -199,6 +207,33 @@ export async function getMovieMetadataByTitle(title: string): Promise<MovieMetad
       trailerUrl: buildYouTubeTrailerSearchUrl(title),
     };
   }
+}
+
+export async function searchMoviesByQuery(query: string, limit = 8): Promise<MovieSearchResult[]> {
+  const normalizedQuery = normalizeMovieTitleForSearch(query);
+  if (normalizedQuery.length < 2) return [];
+
+  const rawResults = await searchTMDB(normalizedQuery);
+  const deduped = new Map<string, MovieSearchResult>();
+
+  rawResults.forEach((item: any) => {
+    const tmdbId = Number(item?.id || 0);
+    const title = String(item?.title || "").trim();
+    if (!tmdbId || !title) return;
+    const releaseDate = item?.release_date ? String(item.release_date) : null;
+    const dedupeKey = `${title.toLowerCase()}|${releaseDate || ""}`;
+    if (deduped.has(dedupeKey)) return;
+
+    deduped.set(dedupeKey, {
+      tmdbId,
+      title,
+      releaseDate,
+      poster: buildPosterUrl(item?.poster_path, "w185"),
+      starRating: formatStarRating(item?.vote_average),
+    });
+  });
+
+  return Array.from(deduped.values()).slice(0, Math.max(1, limit));
 }
 
 export { buildYouTubeTrailerSearchUrl };

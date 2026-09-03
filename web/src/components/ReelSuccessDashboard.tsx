@@ -12,7 +12,7 @@ import {
   reelSuccessFinalizeGrossUpload,
   reelSuccessDeleteGrossUpload,
 } from "../lib/firebase";
-import { auth, googleProvider, signInWithPopup, onAuthStateChanged, signOut } from "../lib/firebase-auth";
+import { auth, signInWithGoogle, onAuthStateChanged, signOut } from "../lib/firebase-auth";
 import { storage } from "../lib/firebase-storage";
 import { getMovieMetadataByTitle, type MovieMetadata } from "../lib/tmdb";
 import { withTimeout } from "../lib/withTimeout";
@@ -185,7 +185,7 @@ export default function ReelSuccessDashboard() {
   async function handleSignIn() {
     setSignInError("");
     try {
-      await signInWithPopup(auth, googleProvider);
+      await signInWithGoogle();
     } catch (error: any) {
       console.error("Sign-in failed:", error);
       setSignInError(error?.message || "Sign in failed. Please try again.");

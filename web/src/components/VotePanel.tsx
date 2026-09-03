@@ -27,6 +27,7 @@ interface EventDoc {
   screeningLabel: string;
   screeningDateTime: string;
   allowedMovies: string[];
+  winningMovie: string;
 }
 
 interface RuntimeMovie {
@@ -68,6 +69,15 @@ function resolveEffectiveVoteStatus(raw: unknown, eventId: string): VoteStatus {
 
 function movieKey(title: string): string {
   return String(title || "").trim().toLowerCase();
+}
+
+function comparableTitle(value: string): string {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function readMovieTitle(data: Record<string, unknown>): string {
@@ -299,6 +309,7 @@ export default function VotePanel() {
       screeningLabel: "",
       screeningDateTime: "",
       allowedMovies: DEFAULT_ALLOWED_MOVIES,
+      winningMovie: "",
     };
 
     // If the realtime subscription hasn't delivered a first snapshot within
@@ -327,6 +338,7 @@ export default function VotePanel() {
           screeningLabel: data.screeningLabel || "",
           screeningDateTime: data.screeningDateTime || "",
           allowedMovies: allowedMovies.length > 0 ? allowedMovies : DEFAULT_ALLOWED_MOVIES,
+          winningMovie: String(data.winningMovie || data.selectedMovieTitle || "").trim(),
         });
       },
       (error) => {
@@ -576,6 +588,14 @@ export default function VotePanel() {
     void doSubmit(email);
   }
 
+  function handleBackToPreviousScreen() {
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      window.history.back();
+      return;
+    }
+    window.location.assign("/showtimes");
+  }
+
   // --- Render -------------------------------------------------------------
 
   if (phase === "loading") {
@@ -603,15 +623,81 @@ export default function VotePanel() {
   }
 
   if (phase === "ended-results") {
+    const ranked = [...movies].sort((a, b) => b.voteCount - a.voteCount);
+    const topThree = ranked.slice(0, 3);
+    const selectedMovie =
+      eventDoc?.winningMovie && topThree.some((movie) => comparableTitle(movie.title) === comparableTitle(eventDoc.winningMovie))
+        ? eventDoc.winningMovie
+        : topThree[0]?.title || "";
+
     return (
       <div className="mx-auto max-w-2xl">
         <header className="text-center">
           <div className="text-3xl" aria-hidden="true">🏁</div>
           <h2 className="mt-2 font-display text-2xl font-semibold text-ink">Voting Ended</h2>
-          <p className="mt-1 text-sm text-ink-soft">Final rankings are in for this screening.</p>
+          <p className="mt-1 text-sm text-ink-soft">Top 3 movies are now locked in for this screening.</p>
         </header>
-        <div className="mt-8">
-          <Leaderboard movies={movies} title="Final Results" />
+
+        {topThree.length > 0 ? (
+          <div className="mt-8 rounded-2xl border border-line bg-cream p-3">
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-ink-faint">Final campaign ranking</p>
+              {selectedMovie ? (
+                <p className="text-xs text-ink-soft">
+                  Selected: <span className="font-semibold text-ink">{selectedMovie}</span>
+                </p>
+              ) : null}
+            </div>
+
+            <div className="grid grid-cols-3 gap-2.5">
+              {topThree.map((movie, index) => {
+                const poster = movie.poster || metadata[movieKey(movie.title)]?.poster || null;
+                const isSelected = comparableTitle(movie.title) === comparableTitle(selectedMovie);
+                return (
+                  <div
+                    key={movie.title}
+                    className={`overflow-hidden rounded-xl border bg-paper ${isSelected ? "border-emerald/60 ring-2 ring-emerald/35" : "border-line"}`}
+                  >
+                    <div className="relative aspect-[2/3] bg-gradient-to-br from-cream to-cream-soft">
+                      {poster ? (
+                        <img src={poster} alt={`${movie.title} poster`} className="h-full w-full object-cover" loading="lazy" />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center px-2 text-center text-[11px] font-semibold leading-snug text-ink-soft">
+                          {movie.title}
+                        </div>
+                      )}
+                      <span className={`absolute left-1.5 top-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${index === 0 ? "bg-marquee/90 text-white" : index === 1 ? "bg-gold/80 text-ink" : "bg-ink/75 text-cream"}`}>
+                        #{index + 1}
+                      </span>
+                      {isSelected && (
+                        <span className="absolute right-1.5 top-1.5 rounded-full bg-emerald px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                          Selected
+                        </span>
+                      )}
+                    </div>
+                    <div className="space-y-1 p-2">
+                      <p className="line-clamp-2 text-[11px] font-semibold leading-tight text-ink">{movie.title}</p>
+                      <p className="text-[10px] text-ink-faint">{movie.voteCount} votes</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          <div className="mt-8">
+            <Leaderboard movies={movies} title="Final Results" />
+          </div>
+        )}
+
+        <div className="mt-6 text-center">
+          <button
+            type="button"
+            onClick={handleBackToPreviousScreen}
+            className="inline-flex items-center rounded-full border border-line bg-paper px-5 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-marquee hover:text-marquee"
+          >
+            ← Back
+          </button>
         </div>
       </div>
     );

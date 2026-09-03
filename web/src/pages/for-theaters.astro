@@ -3,20 +3,20 @@ import Layout from "../layouts/Layout.astro";
 
 const process = [
   {
-    title: "Community vote (5–7 days)",
-    body: "Audiences vote on upcoming films from a curated selection.",
+    title: "Theater onboarding & setup",
+    body: "Theater partners submit venue details, dead-time windows, ticket pricing, and payout setup so each campaign can run on theater-approved terms.",
   },
   {
-    title: "Licensing & confirmation (a few days)",
-    body: "You secure the licensing for the winning title. Your theater always has final approval before anything is scheduled.",
+    title: "Campaign launch with 3 ranked films",
+    body: "Fans submit a themed campaign with exactly three ranked movie choices. Campaigns open with Rights Pending and move forward only as demand proves out.",
   },
   {
-    title: "Test ticket sales period",
-    body: "We open early ticket sales to validate demand. A minimum threshold is set by your theater to ensure the screening is financially viable.",
+    title: "Dual-threshold demand validation",
+    body: "Each campaign tracks both committed backers and broader watch interest. At ~70% progress, theaters receive an automated licensing-check request.",
   },
   {
-    title: "Scheduling the screening",
-    body: "If the sales threshold is met, we schedule the screening for a date you select in advance — typically a few weeks out.",
+    title: "Confirmation, screening, reconciliation",
+    body: "Once rights and thresholds are met, the theater confirms scheduling. After showtime, ticket proceeds are reconciled with the agreed 75/25 net-profit split.",
   },
 ];
 ---
@@ -31,6 +31,7 @@ const process = [
     </h1>
     <p class="mx-auto mt-4 max-w-xl text-center text-base leading-relaxed text-ink-soft">
       We run a structured process designed to reduce risk and ensure demand before a screening is scheduled.
+      If a qualified screening underperforms, ReelVotes covers the downside.
     </p>
 
     <ol class="mt-10 grid gap-4">
@@ -55,19 +56,19 @@ const process = [
       <div class="rounded-2xl border border-line bg-cream-soft p-6">
         <h2 class="font-display text-lg font-semibold text-ink">Marketing responsibilities</h2>
         <ul class="mt-3 space-y-2.5 text-sm leading-relaxed text-ink-soft">
-          <li class="flex gap-2"><span class="text-marquee">&#8226;</span>We promote the voting process and drive audience participation.</li>
-          <li class="flex gap-2"><span class="text-marquee">&#8226;</span>We help promote the test ticket sales period to help reach your minimum threshold.</li>
-          <li class="flex gap-2"><span class="text-marquee">&#8226;</span>Your theater continues to market the screening through your normal channels.</li>
+          <li class="flex gap-2"><span class="text-marquee">&#8226;</span>We run campaign discovery and drive local audience participation.</li>
+          <li class="flex gap-2"><span class="text-marquee">&#8226;</span>We help push campaigns from interest to committed backing.</li>
+          <li class="flex gap-2"><span class="text-marquee">&#8226;</span>Your theater keeps normal control of local promotion and final schedule decisions.</li>
         </ul>
       </div>
 
       <div class="rounded-2xl border border-line bg-cream-soft p-6">
         <h2 class="font-display text-lg font-semibold text-ink">How selections are determined</h2>
         <ul class="mt-3 space-y-2.5 text-sm leading-relaxed text-ink-soft">
-          <li class="flex gap-2"><span class="text-marquee">&#8226;</span>Community-submitted suggestions for themed or open votes.</li>
-          <li class="flex gap-2"><span class="text-marquee">&#8226;</span>Our ReelSuccess tool, which selects films based on performance data at similar theaters.</li>
-          <li class="flex gap-2"><span class="text-marquee">&#8226;</span>Curated lists based on what's performed well at comparable venues.</li>
-          <li class="flex gap-2"><span class="text-marquee">&#8226;</span>Full theater control — you can provide or approve every film selection.</li>
+          <li class="flex gap-2"><span class="text-marquee">&#8226;</span>Each campaign includes exactly 3 ranked movie choices.</li>
+          <li class="flex gap-2"><span class="text-marquee">&#8226;</span>Rights checks trigger after demand reaches threshold milestones.</li>
+          <li class="flex gap-2"><span class="text-marquee">&#8226;</span>Studios/distributors are checked in priority order (Choice 1, 2, then 3).</li>
+          <li class="flex gap-2"><span class="text-marquee">&#8226;</span>If no title clears, campaign closes with no customer charge capture.</li>
         </ul>
       </div>
     </div>
@@ -77,22 +78,20 @@ const process = [
       <p class="mt-2 text-sm text-ink-soft">Your theater retains full control over:</p>
       <ul class="mt-3 space-y-2.5 text-sm leading-relaxed text-ink-soft">
         <li class="flex gap-2"><span class="text-marquee">&#8226;</span>Which films are eligible for screening.</li>
-        <li class="flex gap-2"><span class="text-marquee">&#8226;</span>Final approval of any scheduled movie night.</li>
-        <li class="flex gap-2"><span class="text-marquee">&#8226;</span>What dates and times screenings occur.</li>
-        <li class="flex gap-2"><span class="text-marquee">&#8226;</span>Control over ticket pricing.</li>
+        <li class="flex gap-2"><span class="text-marquee">&#8226;</span>Final rights confirmation and go/no-go decisions.</li>
+        <li class="flex gap-2"><span class="text-marquee">&#8226;</span>What dates and dead-time windows screenings occur.</li>
+        <li class="flex gap-2"><span class="text-marquee">&#8226;</span>Ticket pricing and in-venue operations.</li>
       </ul>
-      <p class="mt-4 text-xs text-ink-faint">All screenings are subject to licensing availability and approval.</p>
+      <p class="mt-4 text-xs text-ink-faint">Revenue model: 75% theater / 25% ReelVotes net profit split after licensing fee, with theater keeping 100% concession revenue.</p>
     </div>
 
     <div class="mt-10 rounded-2xl border border-gold/35 bg-paper p-8 text-center shadow-[0_0_40px_-12px_rgba(255,207,107,0.25)]" data-reveal>
       <h2 class="font-display text-2xl font-semibold text-ink">Ready to partner with ReelVotes?</h2>
       <p class="mx-auto mt-3 max-w-md text-sm leading-relaxed text-ink-soft">
-        Submit your theater and screening details through our intake form to get started.
+        Submit your theater details, dead times, and pricing through our partner onboarding form.
       </p>
       <a
-        href="https://docs.google.com/forms/d/14KjwcZz1aS9keqQkdDddJEeagq-ipTcBGL8mbXe3UxE/viewform"
-        target="_blank"
-        rel="noopener noreferrer"
+        href="/theater-registration"
         class="mt-6 inline-block rounded-full bg-marquee px-7 py-3.5 text-sm font-semibold text-white shadow-md shadow-marquee/30 transition-transform hover:-translate-y-0.5"
       >
         Submit your theater
