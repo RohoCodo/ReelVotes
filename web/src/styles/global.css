@@ -115,9 +115,11 @@ html.js-reveal [data-reveal].is-visible {
 }
 
 /* Date range picker (react-day-picker) — align with ReelVotes dark + marquee palette. */
-.rv-date-picker {
-  --rdp-accent-color: var(--color-marquee);
-  --rdp-accent-background-color: rgba(255, 61, 84, 0.16);
+.rv-date-picker.rdp-root {
+  --rdp-accent-color: var(--color-marquee) !important;
+  --rdp-accent-background-color: rgba(255, 61, 84, 0.16) !important;
+  --rdp-range_middle-color: var(--color-ink) !important;
+  --rdp-range_middle-background-color: rgba(255, 61, 84, 0.16) !important;
 }
 
 .rv-date-picker .rdp-caption_label,
@@ -128,6 +130,10 @@ html.js-reveal [data-reveal].is-visible {
 .rv-date-picker .rdp-day_button {
   color: var(--color-ink);
   border-radius: 9999px;
+  border: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .rv-date-picker .rdp-day_button:hover {
@@ -144,9 +150,12 @@ html.js-reveal [data-reveal].is-visible {
 .rv-date-picker .rdp-selected .rdp-day_button,
 .rv-date-picker .rdp-range_start .rdp-day_button,
 .rv-date-picker .rdp-range_end .rdp-day_button {
-  background: var(--color-marquee);
-  color: #fff;
+  background: var(--color-marquee) !important;
+  color: #fff !important;
   font-weight: 700;
+  border: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
 }
 
 .rv-date-picker .rdp-range_middle {
@@ -154,8 +163,16 @@ html.js-reveal [data-reveal].is-visible {
 }
 
 .rv-date-picker .rdp-range_middle .rdp-day_button {
-  color: var(--color-ink);
-  background: transparent;
+  color: var(--color-ink) !important;
+  background: transparent !important;
+}
+
+.rv-date-picker .rdp-day_button:focus,
+.rv-date-picker .rdp-day_button:focus-visible,
+.rv-date-picker .rdp-day:focus,
+.rv-date-picker .rdp-day:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 .rv-date-picker .rdp-button_previous,
@@ -173,5 +190,6 @@ html.js-reveal [data-reveal].is-visible {
 
 .rv-date-picker .rdp-button_previous svg,
 .rv-date-picker .rdp-button_next svg {
-  fill: currentColor;
+  fill: none;
+  stroke: currentColor;
 }

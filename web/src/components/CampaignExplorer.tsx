@@ -203,6 +203,7 @@ export default function CampaignExplorer({
   const [search, setSearch] = useState("");
   const [selectedRange, setSelectedRange] = useState<DateRange | undefined>(undefined);
   const [showDateFilter, setShowDateFilter] = useState(false);
+  const [datePickerMonths, setDatePickerMonths] = useState(1);
   const [authUser, setAuthUser] = useState<User | null | undefined>(undefined);
   const [pendingById, setPendingById] = useState<Record<string, boolean>>({});
   const [pendingVoteById, setPendingVoteById] = useState<Record<string, boolean>>({});
@@ -339,6 +340,17 @@ export default function CampaignExplorer({
       document.removeEventListener("touchstart", onDocPointerDown);
     };
   }, [showDateFilter]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const media = window.matchMedia("(min-width: 640px)");
+    const syncMonths = () => setDatePickerMonths(media.matches ? 2 : 1);
+    syncMonths();
+
+    const onChange = () => syncMonths();
+    media.addEventListener("change", onChange);
+    return () => media.removeEventListener("change", onChange);
+  }, []);
 
   async function handleSupport(campaign: CampaignSummary, level: "interested" | "backing" | "none") {
     setActionError("");
@@ -565,7 +577,8 @@ export default function CampaignExplorer({
                       mode="range"
                       selected={selectedRange}
                       onSelect={setSelectedRange}
-                      numberOfMonths={1}
+                      numberOfMonths={datePickerMonths}
+                      pagedNavigation
                       showOutsideDays
                       className="rv-date-picker text-sm"
                     />
