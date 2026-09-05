@@ -19,6 +19,7 @@
     "astro": "^7.2.7",
     "firebase": "^12.18.0",
     "react": "^19.2.8",
+    "react-day-picker": "^9.11.1",
     "react-dom": "^19.2.8",
     "tailwindcss": "^4.3.3"
   },

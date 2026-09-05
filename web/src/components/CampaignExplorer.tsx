@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type UIEvent } from "react";
 import { createPortal } from "react-dom";
 import type { User } from "firebase/auth";
+import { DayPicker, type DateRange } from "react-day-picker";
+import "react-day-picker/dist/style.css";
 import { getCampaignSummaries, rankCampaignChoices, type CampaignSummary } from "../lib/campaigns";
 import { adminSetCampaignStatus, upsertCampaignMovieVote, upsertCampaignSupport } from "../lib/firebase";
 import { auth, isPopupSignInCancellation, onAuthStateChanged, signInWithGoogle } from "../lib/firebase-auth";
@@ -130,6 +132,21 @@ function campaignTitleWithTheater(campaign: CampaignSummary): string {
   return `${title} @ ${theater}`;
 }
 
+function campaignTitleWithoutTheater(campaign: CampaignSummary): string {
+  const rawTitle = String(campaign.title || "").trim();
+  const theater = getDisplayTheaterName(campaign);
+  if (!rawTitle || !theater) return rawTitle;
+
+  const suffix = `@ ${theater}`;
+  const lowerRaw = rawTitle.toLowerCase();
+  const lowerSuffix = suffix.toLowerCase();
+  if (lowerRaw.endsWith(lowerSuffix)) {
+    return rawTitle.slice(0, rawTitle.length - suffix.length).trim();
+  }
+
+  return rawTitle;
+}
+
 function campaignDateKey(campaign: CampaignSummary): string {
   const direct = String(campaign.deadTimeSlot?.screeningDateTime || campaign.screeningDateTime || "").trim();
   if (direct) {
@@ -144,6 +161,25 @@ function campaignDateKey(campaign: CampaignSummary): string {
     }
   }
   return "";
+}
+
+function toDateKey(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+function formatRangeLabel(range: DateRange | undefined): string {
+  if (!range?.from && !range?.to) return "Dates";
+  const formatter = new Intl.DateTimeFormat(undefined, {month: "short", day: "numeric"});
+  if (range?.from && !range?.to) {
+    return formatter.format(range.from);
+  }
+  if (range?.from && range?.to) {
+    return `${formatter.format(range.from)} - ${formatter.format(range.to)}`;
+  }
+  return "Dates";
 }
 
 export default function CampaignExplorer({
@@ -165,7 +201,7 @@ export default function CampaignExplorer({
 }) {
   const [campaigns, setCampaigns] = useState<CampaignSummary[] | null>(null);
   const [search, setSearch] = useState("");
-  const [selectedDate, setSelectedDate] = useState("");
+  const [selectedRange, setSelectedRange] = useState<DateRange | undefined>(undefined);
   const [showDateFilter, setShowDateFilter] = useState(false);
   const [authUser, setAuthUser] = useState<User | null | undefined>(undefined);
   const [pendingById, setPendingById] = useState<Record<string, boolean>>({});
@@ -184,6 +220,7 @@ export default function CampaignExplorer({
   const [showFloatingCreate, setShowFloatingCreate] = useState(false);
   const feedContainerRef = useRef<HTMLDivElement | null>(null);
   const floatingCreateTriggerRef = useRef<HTMLDivElement | null>(null);
+  const datePickerRef = useRef<HTMLDivElement | null>(null);
   const isFeedLayout = layout === "feed" && !compact;
 
   function handleCarouselScroll(campaignId: string, event: UIEvent<HTMLDivElement>) {
@@ -284,6 +321,24 @@ export default function CampaignExplorer({
       window.visualViewport?.removeEventListener("scroll", updateFloatingCta);
     };
   }, [isFeedLayout, showCreateButton]);
+
+  useEffect(() => {
+    if (!showDateFilter) return;
+
+    const onDocPointerDown = (event: MouseEvent | TouchEvent) => {
+      const target = event.target as Node | null;
+      if (!target) return;
+      if (datePickerRef.current?.contains(target)) return;
+      setShowDateFilter(false);
+    };
+
+    document.addEventListener("mousedown", onDocPointerDown);
+    document.addEventListener("touchstart", onDocPointerDown, {passive: true});
+    return () => {
+      document.removeEventListener("mousedown", onDocPointerDown);
+      document.removeEventListener("touchstart", onDocPointerDown);
+    };
+  }, [showDateFilter]);
 
   async function handleSupport(campaign: CampaignSummary, level: "interested" | "backing" | "none") {
     setActionError("");
@@ -434,13 +489,18 @@ export default function CampaignExplorer({
   const visible = useMemo(() => {
     if (!campaigns) return null;
     const q = search.trim().toLowerCase();
-    const dateFilter = String(selectedDate || "").trim();
+    const start = selectedRange?.from ? toDateKey(selectedRange.from) : "";
+    const end = selectedRange?.to
+      ? toDateKey(selectedRange.to)
+      : (selectedRange?.from ? toDateKey(selectedRange.from) : "");
     const allowedStatuses = statusFilter ? new Set(statusFilter) : null;
     const rows = campaigns.filter((campaign) => {
       if (allowedStatuses && !allowedStatuses.has(campaign.status)) return false;
-      if (dateFilter) {
+      if (start || end) {
         const candidateDate = campaignDateKey(campaign);
-        if (!candidateDate || candidateDate !== dateFilter) return false;
+        if (!candidateDate) return false;
+        if (start && candidateDate < start) return false;
+        if (end && candidateDate > end) return false;
       }
       if (!q) return true;
       return (
@@ -450,7 +510,7 @@ export default function CampaignExplorer({
       );
     });
     return compact ? rows.slice(0, 3) : rows;
-  }, [campaigns, compact, search, selectedDate, statusFilter]);
+  }, [campaigns, compact, search, selectedRange, statusFilter]);
 
   if (visible === null) {
     return (
@@ -478,47 +538,55 @@ export default function CampaignExplorer({
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Search campaigns, movies, or markets"
-              className="w-full min-w-0 flex-1 rounded-xl border border-line bg-paper px-4 py-3 text-sm text-ink outline-none transition-colors focus:border-marquee"
+              className="w-full min-w-0 flex-1 rounded-xl border border-line bg-paper px-4 py-3 text-base text-ink outline-none transition-colors focus:border-marquee sm:text-sm"
             />
-            <div className="relative shrink-0">
+            <div className="relative shrink-0" ref={datePickerRef}>
               <button
                 type="button"
                 onClick={() => setShowDateFilter((prev) => !prev)}
-                className={`inline-flex items-center justify-center gap-2 rounded-xl border px-3 py-3 text-sm font-medium transition-colors ${selectedDate ? "border-marquee text-marquee" : "border-line text-ink-soft hover:border-marquee hover:text-marquee"}`}
-                aria-label="Filter campaigns by date"
+                className={`inline-flex items-center justify-center gap-2 rounded-xl border px-3 py-3 text-sm font-medium transition-colors ${selectedRange?.from ? "border-marquee text-marquee" : "border-line text-ink-soft hover:border-marquee hover:text-marquee"}`}
+                aria-label="Filter campaigns by date range"
               >
                 <span aria-hidden="true">📅</span>
-                <span>{selectedDate ? selectedDate : "Date"}</span>
+                <span>{formatRangeLabel(selectedRange)}</span>
               </button>
+
               {showDateFilter && (
-                <div className="absolute right-0 z-20 mt-2 w-72 max-w-[90vw] rounded-xl border border-line bg-paper p-3 shadow-[0_12px_28px_-12px_rgba(48,59,107,0.25)]">
-                  <label className="block text-[11px] font-semibold uppercase tracking-wide text-ink-faint" htmlFor="campaignDateFilter">
-                    Specific date
-                  </label>
-                  <input
-                    id="campaignDateFilter"
-                    type="date"
-                    value={selectedDate}
-                    onChange={(event) => setSelectedDate(event.target.value)}
-                    className="mt-2 w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm text-ink outline-none transition-colors focus:border-marquee"
+                <>
+                  <button
+                    type="button"
+                    className="fixed inset-0 z-20 bg-black/20 sm:hidden"
+                    onClick={() => setShowDateFilter(false)}
+                    aria-label="Close date range picker"
                   />
-                  <div className="mt-3 flex items-center justify-between gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setSelectedDate("")}
-                      className="rounded-lg border border-line px-3 py-1.5 text-xs font-semibold text-ink-soft transition-colors hover:border-marquee hover:text-marquee"
-                    >
-                      Clear
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setShowDateFilter(false)}
-                      className="rounded-lg bg-marquee px-3 py-1.5 text-xs font-semibold text-white"
-                    >
-                      Done
-                    </button>
+                  <div className="fixed inset-x-3 top-28 z-30 rounded-2xl border border-line bg-paper p-3 shadow-[0_20px_40px_-16px_rgba(0,0,0,0.55)] sm:absolute sm:right-0 sm:top-[calc(100%+8px)] sm:inset-x-auto sm:w-[21rem] sm:rounded-xl">
+                    <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-ink-faint">Choose date range</p>
+                    <DayPicker
+                      mode="range"
+                      selected={selectedRange}
+                      onSelect={setSelectedRange}
+                      numberOfMonths={1}
+                      showOutsideDays
+                      className="text-sm"
+                    />
+                    <div className="mt-2 flex items-center justify-between gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedRange(undefined)}
+                        className="rounded-lg border border-line px-3 py-1.5 text-xs font-semibold text-ink-soft transition-colors hover:border-marquee hover:text-marquee"
+                      >
+                        Clear
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowDateFilter(false)}
+                        className="rounded-lg bg-marquee px-3 py-1.5 text-xs font-semibold text-white"
+                      >
+                        Done
+                      </button>
+                    </div>
                   </div>
-                </div>
+                </>
               )}
             </div>
           </div>
@@ -551,6 +619,7 @@ export default function CampaignExplorer({
               const canVoteAtAll = !isHistoricalVoteCampaign && !readOnly;
               const canVote = canVoteAtAll;
               const leadLabel = readOnly ? "Winner" : "Leading";
+              const displayTheater = getDisplayTheaterName(campaign);
               const totalVotes = rankedChoices.reduce((sum, choice) => sum + Math.max(0, Number(choice.voteCount || 0)), 0);
               const showReserveChip = readOnly ? reservationCount > 0 : true;
               const showVotesChip = totalVotes > 0;
@@ -574,7 +643,7 @@ export default function CampaignExplorer({
                       {String(username || "rv").slice(0, 1).toUpperCase()}
                     </span>
                     <div className="min-w-0 pt-0.5">
-                      <p className="line-clamp-1 text-[15px] font-semibold leading-tight text-ink">{displayTitle}</p>
+                      <p className="line-clamp-1 text-[15px] font-semibold leading-tight text-ink">{readOnly ? campaignTitleWithoutTheater(campaign) : displayTitle}</p>
                       <div className="mt-0.5 flex items-center gap-2">
                         <p className="truncate text-xs leading-tight text-ink-faint">Date: {campaign.dateWindowLabel}</p>
                         <span className={`shrink-0 whitespace-nowrap rounded-full border px-2.5 py-1 text-[10px] font-semibold ${statusTone[campaign.status] || statusTone.active}`}>
@@ -585,8 +654,11 @@ export default function CampaignExplorer({
                   </div>
 
                   <div className="mt-2.5 overflow-hidden rounded-2xl border border-line bg-cream p-2.5">
-                    <div className="mb-2 flex items-center justify-end gap-2 px-1">
-                      <p className="text-[11px] text-ink-soft">{leadLabel}: <span className="font-semibold text-ink">{chosenMovie}</span></p>
+                    <div className="mb-2 flex items-center justify-start gap-2 px-1">
+                      <p className="text-[11px] text-ink-soft">
+                        {leadLabel}
+                        {readOnly && displayTheater ? ` @ ${displayTheater}` : ""}: <span className="font-semibold text-ink">{chosenMovie}</span>
+                      </p>
                     </div>
 
                     <div
@@ -838,6 +910,7 @@ export default function CampaignExplorer({
             const canVoteAtAll = !isHistoricalVoteCampaign && !readOnly;
             const canVoteNow = canVoteAtAll;
             const leadLabel = readOnly ? "Winner" : "Leading";
+            const displayTheater = getDisplayTheaterName(campaign);
             const prefersSelectedMovie =
               isHistoricalVoteCampaign || ["completed", "confirmed", "screening"].includes(String(campaign.status || ""));
             const highlightedComparable = comparableTitle(
@@ -855,7 +928,7 @@ export default function CampaignExplorer({
                   <span className="text-xs text-ink-faint">{campaign.market}</span>
                 </div>
 
-                <h3 className="mt-3 font-display text-2xl font-semibold text-ink">{displayTitle}</h3>
+                <h3 className="mt-3 font-display text-2xl font-semibold text-ink">{readOnly ? campaignTitleWithoutTheater(campaign) : displayTitle}</h3>
                 <p className="mt-1 text-sm text-ink-soft">Date: {campaign.dateWindowLabel}</p>
                 {campaign.createdByEmail && (
                   <p className="mt-1 text-xs text-ink-faint">Created by {campaign.createdByEmail}</p>
@@ -864,7 +937,7 @@ export default function CampaignExplorer({
                 <div className="mt-4 rounded-2xl border border-line bg-cream p-3">
                   <div className="mb-3 flex items-center justify-between gap-2">
                     <p className="text-xs font-semibold uppercase tracking-wide text-ink-faint">Community Vote</p>
-                    <p className="text-xs text-ink-soft">{leadLabel}: <span className="font-semibold text-ink">{chosenMovie}</span></p>
+                    <p className="text-xs text-ink-soft">{leadLabel}{readOnly && displayTheater ? ` @ ${displayTheater}` : ""}: <span className="font-semibold text-ink">{chosenMovie}</span></p>
                   </div>
 
                   <div className="grid grid-cols-3 gap-2.5">
