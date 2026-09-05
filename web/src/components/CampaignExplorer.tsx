@@ -567,7 +567,7 @@ export default function CampaignExplorer({
                       onSelect={setSelectedRange}
                       numberOfMonths={1}
                       showOutsideDays
-                      className="text-sm"
+                      className="rv-date-picker text-sm"
                     />
                     <div className="mt-2 flex items-center justify-between gap-2">
                       <button
