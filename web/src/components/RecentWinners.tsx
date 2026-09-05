@@ -27,7 +27,7 @@ export default function RecentWinners() {
           <p className="text-xs font-semibold uppercase tracking-wide text-marquee">Real votes, real winners</p>
           <h2 className="mt-3 font-display text-3xl font-semibold text-ink sm:text-4xl">Picked by the audience</h2>
           <p className="mt-4 text-base leading-relaxed text-ink-soft">
-            These movies didn't just win a poll — they filled seats. Every poster below is a screening the
+            These are previous winners — they filled seats. Every poster below is a screening the
             community actually voted into a theater.
           </p>
         </div>

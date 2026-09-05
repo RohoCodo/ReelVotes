@@ -58,12 +58,12 @@ export default function LiveStatsStrip() {
         // handful of events for one theater) fetching them all is cheap
         // and keeps this component on the much lighter lite SDK.
         const snapshot = await getDocs(collection(db, "events"));
-        const endedCount = snapshot.docs.filter((docSnap) => docSnap.data().voteStatus === "ended").length;
+        const votesHeldCount = snapshot.docs.filter((docSnap) => docSnap.data().voteStatus === "ended").length;
 
         if (cancelled) return;
         setStats([
-          { label: "Screenings hosted", value: snapshot.size },
-          { label: "Community votes completed", value: endedCount },
+          { label: "Screenings hosted", value: votesHeldCount },
+          { label: "Community votes held", value: votesHeldCount },
         ]);
       } catch (error) {
         console.error("[LiveStatsStrip] Could not load stats:", error);

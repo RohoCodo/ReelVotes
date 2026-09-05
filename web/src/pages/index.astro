@@ -7,30 +7,30 @@ import CampaignExplorer from "../components/CampaignExplorer";
 const flow = [
   {
     step: "01",
-    title: "Theater adds a screening",
-    body: "A theater picks a date and a shortlist of movies. No code, no new software — ReelVotes handles the setup.",
+    title: "Theater adds available dates",
+    body: "A theater picks dates and times of movies. No code, no new software, just a simple form.",
   },
   {
     step: "02",
     title: "The community votes",
-    body: "Moviegoers pick from the shortlist. One ballot per person, cast for as many movies as they want to see.",
+    body: "Moviegoers pick three movies for campaigns. The people vote!",
   },
   {
     step: "03",
     title: "A winner is chosen",
-    body: "The top vote-getter wins — and if a ticket threshold is set, the theater confirms before locking in the date.",
+    body: "The top vote-getter wins — and if they reach the vote/reservation threshold , the theater confirms before locking in the date.",
   },
   {
     step: "04",
     title: "Tickets go on sale",
-    body: "Voters get notified the moment tickets are live, so the people who asked for the movie are the ones who show up.",
+    body: "Voters get notified the moment tickets are live, so the people who asked for the movie are the ones who show up. Those that reserve get their tickets first!",
   },
 ];
 ---
 
 <Layout
   title="Vote the next movie night"
-  description="ReelVotes lets moviegoers vote on what plays next at independent theaters — and turns real votes into real screenings."
+  description="ReelVotes lets moviegoers Choose what plays next at independent theaters — and turns real votes into real screenings."
 >
   <!-- Hero -->
   <section class="relative flex min-h-[calc(100dvh-65px)] flex-col justify-center">
@@ -41,13 +41,13 @@ const flow = [
         </span>
 
         <h1 class="mt-6 font-display text-4xl font-semibold leading-[1.08] tracking-tight text-ink sm:text-6xl">
-          <span class="block">You pick the movie.</span>
-          <span class="block text-marquee">The theater screens it!</span>
+          <span class="block">You pick three movies.</span>
+          <span class="block text-marquee">The people show demand</span>
+          <span class="block">A local theater screens the top licensable movie!</span>
         </h1>
 
         <p class="mx-auto mt-6 max-w-xl text-base leading-relaxed text-ink-soft sm:text-lg">
-          ReelVotes helps independent theaters program movie nights the community actually wants,
-          with votes real enough that a screening happens because you asked for it.
+            ReelVotes gives the people the power to choose. You pick three movies, share the campaign with friends, and the people vote/reserve tickets. Once there is enough demand, a local theater will check the licensability of the films. They will then screen the film! 
         </p>
 
         <div class="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
@@ -55,13 +55,13 @@ const flow = [
             href="/showtimes"
             class="w-full rounded-full bg-marquee px-7 py-3.5 text-center text-sm font-semibold text-white shadow-md shadow-marquee/30 transition-transform hover:-translate-y-0.5 sm:w-auto"
           >
-            Vote on tonight's pick
+            See local campaigns!
           </a>
           <a
             href="/for-theaters"
             class="w-full rounded-full border border-line bg-paper px-7 py-3.5 text-center text-sm font-semibold text-ink transition-colors hover:border-ink/30 sm:w-auto"
           >
-            I run a theater
+            See secured screenings!
           </a>
         </div>
 
@@ -93,8 +93,7 @@ const flow = [
           From ballot to box office
         </h2>
         <p class="mt-4 text-base leading-relaxed text-ink-soft">
-          Every screening on ReelVotes follows the same simple flow — clear at every step who's
-          winning, whether the vote hit its threshold, and when tickets go live.
+          Every screening on ReelVotes follows the same simple flow — people propose three movies, a movie wins, if reservations or votes hit their threshold, the screening is secured. Then reserved tickets are given when available and tickets go live.
         </p>
       </div>
 
@@ -162,7 +161,7 @@ const flow = [
           </li>
         </ul>
         <a href="/showtimes" class="mt-7 inline-block text-sm font-semibold text-marquee hover:underline">
-          See what's up for a vote &rarr;
+          See what movies are up for votes &rarr;
         </a>
       </div>
 
