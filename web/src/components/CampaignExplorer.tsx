@@ -472,7 +472,7 @@ export default function CampaignExplorer({
 
       {!compact && showSearch && (
         <div className={isFeedLayout ? "mx-auto mb-5 w-full max-w-2xl" : "mb-5"}>
-          <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center">
+          <div className="flex items-center gap-2">
             <input
               type="search"
               value={search}
@@ -480,18 +480,18 @@ export default function CampaignExplorer({
               placeholder="Search campaigns, movies, or markets"
               className="w-full min-w-0 flex-1 rounded-xl border border-line bg-paper px-4 py-3 text-sm text-ink outline-none transition-colors focus:border-marquee"
             />
-            <div className="relative w-full sm:w-auto">
+            <div className="relative shrink-0">
               <button
                 type="button"
                 onClick={() => setShowDateFilter((prev) => !prev)}
-                className={`inline-flex w-full items-center justify-center gap-2 rounded-xl border px-3 py-3 text-sm font-medium transition-colors sm:w-auto ${selectedDate ? "border-marquee text-marquee" : "border-line text-ink-soft hover:border-marquee hover:text-marquee"}`}
+                className={`inline-flex items-center justify-center gap-2 rounded-xl border px-3 py-3 text-sm font-medium transition-colors ${selectedDate ? "border-marquee text-marquee" : "border-line text-ink-soft hover:border-marquee hover:text-marquee"}`}
                 aria-label="Filter campaigns by date"
               >
                 <span aria-hidden="true">📅</span>
                 <span>{selectedDate ? selectedDate : "Date"}</span>
               </button>
               {showDateFilter && (
-                <div className="absolute inset-x-0 z-20 mt-2 w-full rounded-xl border border-line bg-paper p-3 shadow-[0_12px_28px_-12px_rgba(48,59,107,0.25)] sm:inset-x-auto sm:right-0 sm:w-72">
+                <div className="absolute right-0 z-20 mt-2 w-72 max-w-[90vw] rounded-xl border border-line bg-paper p-3 shadow-[0_12px_28px_-12px_rgba(48,59,107,0.25)]">
                   <label className="block text-[11px] font-semibold uppercase tracking-wide text-ink-faint" htmlFor="campaignDateFilter">
                     Specific date
                   </label>
@@ -550,7 +550,10 @@ export default function CampaignExplorer({
               const isHistoricalVoteCampaign = campaign.origin === "historical-vote";
               const canVoteAtAll = !isHistoricalVoteCampaign && !readOnly;
               const canVote = canVoteAtAll;
+              const leadLabel = readOnly ? "Winner" : "Leading";
               const totalVotes = rankedChoices.reduce((sum, choice) => sum + Math.max(0, Number(choice.voteCount || 0)), 0);
+              const showReserveChip = readOnly ? reservationCount > 0 : true;
+              const showVotesChip = totalVotes > 0;
               const username = campaign.createdByEmail
                 ? String(campaign.createdByEmail).split("@")[0]
                 : handle;
@@ -566,23 +569,24 @@ export default function CampaignExplorer({
 
               return (
                 <article key={campaign.id} className="snap-start snap-always flex scroll-mt-24 flex-col rounded-2xl border border-line bg-paper p-3 sm:p-4">
-                  <div className="grid grid-cols-[auto_1fr_auto] items-start gap-x-2.5 gap-y-0.5">
+                  <div className="flex min-w-0 items-start gap-2.5">
                     <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-marquee/15 text-xs font-semibold text-marquee">
                       {String(username || "rv").slice(0, 1).toUpperCase()}
                     </span>
                     <div className="min-w-0 pt-0.5">
                       <p className="line-clamp-1 text-[15px] font-semibold leading-tight text-ink">{displayTitle}</p>
-                      <p className="mt-0.5 truncate text-xs leading-tight text-ink-faint">Date: {campaign.dateWindowLabel}</p>
+                      <div className="mt-0.5 flex items-center gap-2">
+                        <p className="truncate text-xs leading-tight text-ink-faint">Date: {campaign.dateWindowLabel}</p>
+                        <span className={`shrink-0 whitespace-nowrap rounded-full border px-2.5 py-1 text-[10px] font-semibold ${statusTone[campaign.status] || statusTone.active}`}>
+                          {statusLabel[campaign.status] || campaign.status}
+                        </span>
+                      </div>
                     </div>
-                    <span className={`shrink-0 self-start whitespace-nowrap rounded-full border px-2.5 py-1 text-[10px] font-semibold ${statusTone[campaign.status] || statusTone.active}`}>
-                      {statusLabel[campaign.status] || campaign.status}
-                    </span>
                   </div>
 
                   <div className="mt-2.5 overflow-hidden rounded-2xl border border-line bg-cream p-2.5">
-                    <div className="mb-2 flex items-center justify-between gap-2 px-1">
-                      <p className="line-clamp-1 text-xs font-semibold text-ink">{displayTitle}</p>
-                      <p className="text-[11px] text-ink-soft">Leading: <span className="font-semibold text-ink">{chosenMovie}</span></p>
+                    <div className="mb-2 flex items-center justify-end gap-2 px-1">
+                      <p className="text-[11px] text-ink-soft">{leadLabel}: <span className="font-semibold text-ink">{chosenMovie}</span></p>
                     </div>
 
                     <div
@@ -713,22 +717,26 @@ export default function CampaignExplorer({
                   </div>
 
                   <div className="mt-3">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex min-w-0 items-center gap-2">
-                        <button
-                          type="button"
-                          disabled={supportPending || isHistoricalVoteCampaign || readOnly}
-                          onClick={() => handleSupport(campaign, "backing")}
-                          className={`rounded-full border px-2.5 py-1.5 text-[10px] font-semibold whitespace-nowrap transition-colors ${campaign.viewerSupport === "backing" ? "border-rose bg-rose/10 text-rose" : "border-line text-ink-soft hover:border-rose hover:text-rose"}`}
-                        >
-                          {supportPending && campaign.viewerSupport !== "backing" ? "Saving…" : `🎟️ Reserve ${reservationCount}/${reservationThreshold}`}
-                        </button>
-                        <span className="inline-flex items-center gap-1 rounded-full border border-marquee/35 bg-marquee/10 px-2.5 py-1.5 text-[10px] font-semibold whitespace-nowrap text-marquee">
-                          🗳️ Votes {totalVotes.toLocaleString()}/{votingThreshold}
-                        </span>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex min-w-0 flex-wrap items-center gap-2">
+                        {showReserveChip && (
+                          <button
+                            type="button"
+                            disabled={supportPending || isHistoricalVoteCampaign || readOnly}
+                            onClick={() => handleSupport(campaign, "backing")}
+                            className={`rounded-full border px-2.5 py-1.5 text-[10px] font-semibold whitespace-nowrap transition-colors ${campaign.viewerSupport === "backing" ? "border-rose bg-rose/10 text-rose" : "border-line text-ink-soft hover:border-rose hover:text-rose"}`}
+                          >
+                            {supportPending && campaign.viewerSupport !== "backing" ? "Saving…" : `🎟️ Reserve ${reservationCount}/${reservationThreshold}`}
+                          </button>
+                        )}
+                        {showVotesChip && (
+                          <span className="inline-flex items-center gap-1 rounded-full border border-marquee/35 bg-marquee/10 px-2.5 py-1.5 text-[10px] font-semibold whitespace-nowrap text-marquee">
+                            🗳️ Votes {totalVotes.toLocaleString()}/{votingThreshold}
+                          </span>
+                        )}
                       </div>
 
-                      <div className="flex items-center gap-2">
+                      <div className="ml-auto flex shrink-0 items-center gap-2">
                         <button
                           type="button"
                           onClick={() => {
@@ -829,6 +837,7 @@ export default function CampaignExplorer({
             const isHistoricalVoteCampaign = campaign.origin === "historical-vote";
             const canVoteAtAll = !isHistoricalVoteCampaign && !readOnly;
             const canVoteNow = canVoteAtAll;
+            const leadLabel = readOnly ? "Winner" : "Leading";
             const prefersSelectedMovie =
               isHistoricalVoteCampaign || ["completed", "confirmed", "screening"].includes(String(campaign.status || ""));
             const highlightedComparable = comparableTitle(
@@ -855,7 +864,7 @@ export default function CampaignExplorer({
                 <div className="mt-4 rounded-2xl border border-line bg-cream p-3">
                   <div className="mb-3 flex items-center justify-between gap-2">
                     <p className="text-xs font-semibold uppercase tracking-wide text-ink-faint">Community Vote</p>
-                    <p className="text-xs text-ink-soft">Leading: <span className="font-semibold text-ink">{chosenMovie}</span></p>
+                    <p className="text-xs text-ink-soft">{leadLabel}: <span className="font-semibold text-ink">{chosenMovie}</span></p>
                   </div>
 
                   <div className="grid grid-cols-3 gap-2.5">
