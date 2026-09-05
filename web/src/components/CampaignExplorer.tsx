@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type UIEvent } from "react";
 import { createPortal } from "react-dom";
 import type { User } from "firebase/auth";
 import { getCampaignSummaries, rankCampaignChoices, type CampaignSummary } from "../lib/campaigns";
@@ -177,6 +177,7 @@ export default function CampaignExplorer({
   const [adminNoteById, setAdminNoteById] = useState<Record<string, string>>({});
   const [bookmarkedById, setBookmarkedById] = useState<Record<string, boolean>>({});
   const [discussionOpenById, setDiscussionOpenById] = useState<Record<string, boolean>>({});
+  const [activeChoiceByCampaignId, setActiveChoiceByCampaignId] = useState<Record<string, number>>({});
   const [actionError, setActionError] = useState("");
   const [canRenderFloatingCreate, setCanRenderFloatingCreate] = useState(false);
   const [floatingCreateRight, setFloatingCreateRight] = useState(16);
@@ -184,6 +185,17 @@ export default function CampaignExplorer({
   const feedContainerRef = useRef<HTMLDivElement | null>(null);
   const floatingCreateTriggerRef = useRef<HTMLDivElement | null>(null);
   const isFeedLayout = layout === "feed" && !compact;
+
+  function handleCarouselScroll(campaignId: string, event: UIEvent<HTMLDivElement>) {
+    const container = event.currentTarget;
+    const viewportWidth = container.clientWidth || 1;
+    const nextIndex = Math.max(0, Math.round(container.scrollLeft / viewportWidth));
+    setActiveChoiceByCampaignId((prev) => (
+      prev[campaignId] === nextIndex
+        ? prev
+        : { ...prev, [campaignId]: nextIndex }
+    ));
+  }
 
   function formatCount(value: number): string {
     if (!Number.isFinite(value) || value <= 0) return "0";
@@ -554,27 +566,100 @@ export default function CampaignExplorer({
 
               return (
                 <article key={campaign.id} className="snap-start snap-always flex scroll-mt-24 flex-col rounded-2xl border border-line bg-paper p-3 sm:p-4">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex min-w-0 items-center gap-2.5">
-                      <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-marquee/15 text-xs font-semibold text-marquee">
-                        {String(username || "rv").slice(0, 1).toUpperCase()}
-                      </span>
-                      <div className="min-w-0">
-                        <p className="line-clamp-1 text-sm font-semibold text-ink">{displayTitle}</p>
-                        <p className="truncate text-[11px] text-ink-faint">Date: {campaign.dateWindowLabel}</p>
-                      </div>
+                  <div className="grid grid-cols-[auto_1fr_auto] items-start gap-x-2.5 gap-y-0.5">
+                    <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-marquee/15 text-xs font-semibold text-marquee">
+                      {String(username || "rv").slice(0, 1).toUpperCase()}
+                    </span>
+                    <div className="min-w-0 pt-0.5">
+                      <p className="line-clamp-1 text-[15px] font-semibold leading-tight text-ink">{displayTitle}</p>
+                      <p className="mt-0.5 truncate text-xs leading-tight text-ink-faint">Date: {campaign.dateWindowLabel}</p>
                     </div>
-                    <span className={`shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-semibold ${statusTone[campaign.status] || statusTone.active}`}>
+                    <span className={`shrink-0 self-start whitespace-nowrap rounded-full border px-2.5 py-1 text-[10px] font-semibold ${statusTone[campaign.status] || statusTone.active}`}>
                       {statusLabel[campaign.status] || campaign.status}
                     </span>
                   </div>
 
-                  <div className="mt-3 overflow-hidden rounded-2xl border border-line bg-cream p-2">
+                  <div className="mt-2.5 overflow-hidden rounded-2xl border border-line bg-cream p-2.5">
                     <div className="mb-2 flex items-center justify-between gap-2 px-1">
                       <p className="line-clamp-1 text-xs font-semibold text-ink">{displayTitle}</p>
                       <p className="text-[11px] text-ink-soft">Leading: <span className="font-semibold text-ink">{chosenMovie}</span></p>
                     </div>
-                    <div className="grid grid-cols-3 gap-2">
+
+                    <div
+                      onScroll={(event) => handleCarouselScroll(campaign.id, event)}
+                      className="flex snap-x snap-mandatory overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:hidden"
+                    >
+                      {rankedChoices.map((choice, idx) => {
+                        const currentRank = idx + 1;
+                        const statusText = availabilityTagText(choice.availabilityStatus);
+                        const statusClass = availabilityClass(choice.availabilityStatus);
+                        const isVoted = votedCampaignMovieId === choice.campaignMovieId;
+                        const isHighlighted = comparableTitle(choice.title) === highlightedComparable;
+
+                        return (
+                          <div key={`${campaign.id}-feed-mobile-${choice.campaignMovieId}`} className="w-full shrink-0 snap-center px-1 py-0.5">
+                            <div className="mx-auto max-w-[210px]">
+                              <div
+                                className={`group relative overflow-hidden rounded-xl border text-left ${
+                                  isHighlighted ? "border-emerald/60 ring-2 ring-emerald/30" : "border-line"
+                                }`}
+                              >
+                                <div className="relative aspect-[2/3] w-full bg-gradient-to-br from-cream to-cream-soft">
+                                  {choice.posterUrl ? (
+                                    <img src={choice.posterUrl} alt={`${choice.title} poster`} className="h-full w-full object-cover" loading="lazy" />
+                                  ) : (
+                                    <div className="flex h-full w-full items-center justify-center px-2 text-center text-[11px] font-semibold leading-snug text-ink-soft">
+                                      {choice.title}
+                                    </div>
+                                  )}
+                                  <span className={`absolute left-2 top-2 rounded-full px-2 py-0.5 text-[10px] font-semibold ${rankBadgeClass(currentRank)}`}>
+                                    #{currentRank}
+                                  </span>
+                                  <span className={`absolute right-2 top-2 rounded-full px-2 py-0.5 text-[10px] font-medium ${statusClass}`}>
+                                    {statusText}
+                                  </span>
+                                  <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-2 pb-2 pt-8 text-xs font-medium text-white/95">
+                                    {choice.voteCount} votes
+                                  </span>
+                                </div>
+                              </div>
+
+                              {canVote && (
+                                <button
+                                  type="button"
+                                  disabled={votePending || isVoted || !canVote}
+                                  onClick={() => handleVote(campaign, choice.campaignMovieId)}
+                                  className={`mt-2.5 w-full rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                                    isVoted
+                                      ? "border-emerald/60 bg-emerald/10 text-emerald"
+                                      : "border-line bg-paper text-ink-soft hover:border-marquee hover:text-marquee"
+                                  }`}
+                                >
+                                  {isVoted ? "Voted ✓" : votePending ? "Saving…" : "Vote"}
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {rankedChoices.length > 1 && (
+                      <div className="mt-2 flex items-center justify-center gap-1.5 sm:hidden" aria-label="Movie carousel pagination">
+                        {rankedChoices.map((choice, idx) => {
+                          const activeIndex = Math.max(0, Math.min(rankedChoices.length - 1, activeChoiceByCampaignId[campaign.id] ?? 0));
+                          const isActive = idx === activeIndex;
+                          return (
+                            <span
+                              key={`${campaign.id}-dot-${choice.campaignMovieId}`}
+                              className={`inline-flex h-1.5 w-1.5 rounded-full ${isActive ? "bg-ink" : "bg-line"}`}
+                            />
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    <div className="hidden grid-cols-3 gap-2 sm:grid">
                       {rankedChoices.map((choice, idx) => {
                         const currentRank = idx + 1;
                         const statusText = availabilityTagText(choice.availabilityStatus);
@@ -584,7 +669,7 @@ export default function CampaignExplorer({
 
                         return (
                           <div
-                            key={`${campaign.id}-feed-${choice.campaignMovieId}`}
+                            key={`${campaign.id}-feed-desktop-${choice.campaignMovieId}`}
                             className={`group relative min-h-0 overflow-hidden rounded-xl border text-left ${
                               isHighlighted ? "border-emerald/60 ring-2 ring-emerald/30" : "border-line"
                             }`}

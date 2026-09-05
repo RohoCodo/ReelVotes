@@ -258,12 +258,12 @@ export default function CreateCampaignForm() {
     }
 
     if (!selectedDeadTimeSlot || !selectedDeadTimeSlotId || !selectedDeadTimeLabel) {
-      setErrorMessage("Please select a dead-time day/time slot from local theaters.");
+      setErrorMessage("Please select an available day/time screening slot from local theaters.");
       return;
     }
 
     if (!selectedDeadTimeSlot.screeningDateTime) {
-      setErrorMessage("Selected dead-time slot must include a screening date/time.");
+      setErrorMessage("Selected screening slot must include a screening date/time.");
       return;
     }
 
@@ -366,6 +366,7 @@ export default function CreateCampaignForm() {
                 placeholder="Search city (e.g., Oakland, CA)"
                 className="mt-2 w-full rounded-xl border border-line bg-cream px-4 py-3 text-sm text-ink outline-none transition-colors focus:border-marquee"
               />
+              <p className="mt-3 text-xs text-ink-faint">1. Pick your city first.</p>
               {showCitySuggestions && (
                 <div className="mt-2 rounded-xl border border-line bg-cream p-2">
                   {citySearchLoading ? (
@@ -408,7 +409,7 @@ export default function CreateCampaignForm() {
                 className="mt-2 w-full rounded-xl border border-line bg-cream px-4 py-3 text-sm text-ink outline-none transition-colors focus:border-marquee"
               >
                 {deadTimeLoading ? (
-                  <option value="">Loading local theater dead-time slots…</option>
+                  <option value="">Loading local theater screening slots…</option>
                 ) : deadTimeSlots.filter((slot) => Boolean(slot.screeningDateTime)).length > 0 ? (
                   deadTimeSlots.filter((slot) => Boolean(slot.screeningDateTime)).map((slot) => (
                     <option key={slot.slotId} value={slot.slotId}>
@@ -416,7 +417,7 @@ export default function CreateCampaignForm() {
                     </option>
                   ))
                 ) : (
-                  <option value="">No dead-time slots found for this city yet</option>
+                  <option value="">No screening slots found for this city yet</option>
                 )}
               </select>
               <p className="mt-3 text-xs text-ink-faint">
@@ -425,7 +426,9 @@ export default function CreateCampaignForm() {
                     Campaign slot: <strong className="text-ink">{selectedDeadTimeLabel}</strong>
                   </>
                 ) : (
-                  "Pick your city first, then choose a theater-submitted dead-time slot with a date/time."
+                  <>
+                    <span className="block">2. Choose a theater-submitted screening slot with a date/time.</span>
+                  </>
                 )}
               </p>
             </div>
@@ -526,7 +529,7 @@ export default function CreateCampaignForm() {
                 <option value="">No theater options for this city yet</option>
               )}
             </select>
-            <p className="mt-2 text-xs text-ink-faint">Options are theaters in this city that currently have dead-time slots.</p>
+            <p className="mt-2 text-xs text-ink-faint">Options are theaters in this city that currently have screening slots.</p>
           </div>
 
           <div className="rounded-2xl border border-line bg-paper p-5">
@@ -542,7 +545,7 @@ export default function CreateCampaignForm() {
               </div>
             ) : (
               <p className="mt-2 text-sm leading-relaxed text-ink-soft">
-                Threshold will auto-fill when the selected theater has both ticket price and licensing fee saved on its dead-time slot.
+                Threshold will auto-fill when the selected theater has both ticket price and licensing fee saved on its screening slot.
               </p>
             )}
           </div>
