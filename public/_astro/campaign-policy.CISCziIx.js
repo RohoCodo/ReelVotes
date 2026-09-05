@@ -1,0 +1,1 @@
+function e(e){return Math.max(0,Math.ceil(Number(e||0)*2))}function t(e){return Math.max(1,Math.ceil(Number(e||0)*70/100))}export{t as n,e as t};

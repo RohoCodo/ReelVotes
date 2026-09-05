@@ -1,0 +1,1 @@
+function e(e,t,n,r=`async task`){return new Promise(i=>{let a=!1,o=window.setTimeout(()=>{a||(a=!0,console.warn(`[reelvotes] ${r} timed out after ${t}ms; using fallback.`),i(n))},t);e.then(e=>{a||(a=!0,window.clearTimeout(o),i(e))}).catch(e=>{a||(a=!0,window.clearTimeout(o),console.warn(`[reelvotes] ${r} failed; using fallback.`,e),i(n))})})}export{e as t};

@@ -41,6 +41,8 @@ const ELIMINATION_SCHEDULE = "0 2 * * *";
 const ELIMINATION_TIMEZONE = "America/Los_Angeles";
 const SCREENING_WORKFLOW_SWEEP_SCHEDULE = "every 15 minutes";
 const SCREENING_WORKFLOW_TIMEZONE = "America/Los_Angeles";
+const CAMPAIGN_NOTIFICATION_SWEEP_SCHEDULE = "every 15 minutes";
+const CAMPAIGN_NOTIFICATION_TIMEZONE = "America/Los_Angeles";
 const ELIMINATION_ENABLED_EVENT_IDS = new Set([]);
 const DEFAULT_ELIMINATIONS_PER_NIGHT = 3;
 const LEGACY_ANON_EMAIL_SUFFIX = "@reelvotes.local";
@@ -88,6 +90,12 @@ const TRANSITIONAL_WORKFLOW_STATES = new Set([
   WORKFLOW_STATUS.PRESALE,
   WORKFLOW_STATUS.CONFIRMED,
 ]);
+
+const CAMPAIGN_REPLACEMENT_POLICY = Object.freeze({
+  autoCarryInterestOnReplacement: true,
+  autoCarryBackingOnReplacement: false,
+  maxSupportersToCarry: 300,
+});
 
 function readJsonFileSafe(filePath) {
   if (!fs.existsSync(filePath)) {
@@ -859,6 +867,28 @@ function sanitizeParticipantId(participantId) {
   return normalizedParticipantId;
 }
 
+function sanitizeCampaignId(campaignId) {
+  return sanitizeTextField(campaignId, {required: true, maxLength: 120});
+}
+
+function sanitizeOptionalCampaignMovieId(campaignMovieId) {
+  const normalized = sanitizeTextField(campaignMovieId, {required: false, maxLength: 120});
+  return normalized || null;
+}
+
+function buildCampaignDiscussionThreadId(campaignId) {
+  const normalized = String(campaignId || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .slice(0, 100);
+  if (!normalized) {
+    throw new HttpsError("invalid-argument", "A valid campaignId is required.");
+  }
+  return `campaign_${normalized}`;
+}
+
 function sanitizeMovieTitles(movieTitlesInput) {
   const rawTitles = Array.isArray(movieTitlesInput)
     ? movieTitlesInput
@@ -1383,6 +1413,138 @@ async function queueTransactionalEmail({
   return true;
 }
 
+async function processCampaignNotificationsOnce() {
+  const queueSnap = await db.collection("campaign_notifications")
+    .where("status", "==", "queued")
+    .orderBy("created_at", "asc")
+    .limit(20)
+    .get();
+
+  if (queueSnap.empty) {
+    return {
+      scanned: 0,
+      sent: 0,
+      failed: 0,
+    };
+  }
+
+  let sent = 0;
+  let failed = 0;
+
+  for (const notifDoc of queueSnap.docs) {
+    const notifRef = notifDoc.ref;
+    const notifData = notifDoc.data() || {};
+    const campaignId = sanitizeTextField(notifData.campaignId, {required: false, maxLength: 120});
+
+    try {
+      const claimed = await db.runTransaction(async (tx) => {
+        const fresh = await tx.get(notifRef);
+        const freshData = fresh.exists ? (fresh.data() || {}) : {};
+        if (!fresh.exists || freshData.status !== "queued") {
+          return false;
+        }
+        tx.set(notifRef, {
+          status: "processing",
+          processing_started_at: admin.firestore.FieldValue.serverTimestamp(),
+        }, {merge: true});
+        return true;
+      });
+
+      if (!claimed) {
+        continue;
+      }
+
+      if (!campaignId) {
+        throw new Error("Missing campaignId on notification.");
+      }
+
+      const campaignRef = db.collection("campaigns").doc(campaignId);
+      const campaignSnap = await campaignRef.get();
+      if (!campaignSnap.exists) {
+        throw new Error(`Campaign not found for notification: ${campaignId}`);
+      }
+
+      const campaign = campaignSnap.data() || {};
+      const organizerEmail = normalizeEmail(campaign?.organizer?.email);
+      const title = String(campaign.title || "Untitled campaign");
+      const market = String(campaign.market || "Unknown market");
+      const preferredTheaters = Array.isArray(campaign.preferredTheaters)
+        ? campaign.preferredTheaters.map((value) => String(value || "").trim()).filter(Boolean)
+        : [];
+      const theatersLabel = preferredTheaters.length > 0
+        ? preferredTheaters.join(", ")
+        : "No preferred theaters specified";
+      const status = String(campaign.status || "active");
+      const counts = campaign.counts && typeof campaign.counts === "object" ? campaign.counts : {};
+      const thresholds = campaign.thresholds && typeof campaign.thresholds === "object" ? campaign.thresholds : {};
+
+      const recipients = new Set([...ADMIN_EMAILS]);
+      if (organizerEmail) recipients.add(organizerEmail);
+
+      const sentEmails = [];
+      for (const recipient of recipients) {
+        const queued = await queueTransactionalEmail({
+          to: recipient,
+          subject: `Campaign reached theater-check: ${title}`,
+          text: [
+            "A community campaign reached the theater-check threshold.",
+            "",
+            `Campaign: ${title}`,
+            `Campaign ID: ${campaignId}`,
+            `Market: ${market}`,
+            `Preferred theaters: ${theatersLabel}`,
+            `Status: ${status}`,
+            `Interested: ${toNonNegativeInt(counts.interested, 0)}`,
+            `Backing: ${toNonNegativeInt(counts.backing, 0)}`,
+            `Trigger backing: ${toNonNegativeInt(thresholds.licensingTriggerBacking, 0)}`,
+            `Trigger interested: ${toNonNegativeInt(thresholds.licensingTriggerInterested, 0)}`,
+            "",
+            "Please review licensing availability and update campaign status.",
+            "Admin: https://reelvotes.com/admin",
+            "Campaigns: https://reelvotes.com/campaigns",
+          ].join("\n"),
+          type: "campaign-theater-check-trigger",
+          eventId: campaignId,
+          meta: {
+            campaign_id: campaignId,
+          },
+        });
+        if (queued) {
+          sentEmails.push(recipient);
+        }
+      }
+
+      await notifRef.set({
+        status: "sent",
+        sent_at: admin.firestore.FieldValue.serverTimestamp(),
+        recipients: sentEmails,
+        updated_at: admin.firestore.FieldValue.serverTimestamp(),
+      }, {merge: true});
+
+      sent += 1;
+    } catch (error) {
+      failed += 1;
+      logger.error("Failed to process campaign notification", {
+        notificationId: notifDoc.id,
+        campaignId,
+        error: error?.message || String(error),
+      });
+      await notifRef.set({
+        status: "failed",
+        error_message: String(error?.message || error || "unknown-error").slice(0, 500),
+        failed_at: admin.firestore.FieldValue.serverTimestamp(),
+        updated_at: admin.firestore.FieldValue.serverTimestamp(),
+      }, {merge: true});
+    }
+  }
+
+  return {
+    scanned: queueSnap.size,
+    sent,
+    failed,
+  };
+}
+
 async function runNightlyEliminationForEvent(eventId, {manual = false} = {}) {
   const eventRef = db.collection("events").doc(eventId);
 
@@ -1558,6 +1720,25 @@ exports.processScreeningTransitions = onSchedule({
   const summary = await processScreeningTransitionsOnce();
   logger.info("processScreeningTransitions completed", summary);
   return summary;
+});
+
+exports.processCampaignNotifications = onSchedule({
+  schedule: CAMPAIGN_NOTIFICATION_SWEEP_SCHEDULE,
+  timeZone: CAMPAIGN_NOTIFICATION_TIMEZONE,
+}, async () => {
+  const startedAt = Date.now();
+  try {
+    const summary = await processCampaignNotificationsOnce();
+    logger.info("Campaign notifications sweep completed", {
+      ...summary,
+      durationMs: Date.now() - startedAt,
+    });
+  } catch (error) {
+    logger.error("Campaign notifications sweep failed", {
+      durationMs: Date.now() - startedAt,
+      error: error?.message || String(error),
+    });
+  }
 });
 
 exports.runEliminationRound = onCall(async (request) => {
@@ -2690,6 +2871,1202 @@ function sanitizeTextField(value, {required = false, maxLength = 500} = {}) {
   return text.slice(0, maxLength);
 }
 
+function normalizeCampaignKey(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function buildCampaignSlug(title) {
+  const slug = normalizeCampaignKey(title).slice(0, 80);
+  if (!slug) {
+    throw new HttpsError("invalid-argument", "A campaign title is required.");
+  }
+  return slug;
+}
+
+function sanitizeCampaignChoices(rawChoices) {
+  if (!Array.isArray(rawChoices) || rawChoices.length !== 3) {
+    throw new HttpsError("invalid-argument", "Exactly three ranked movie choices are required.");
+  }
+
+  const seen = new Set();
+  const parsed = rawChoices.map((raw, index) => {
+    const title = sanitizeTextField(raw, {required: true, maxLength: 200});
+    const key = normalizeMovieTitle(title);
+    if (seen.has(key)) {
+      throw new HttpsError("invalid-argument", "Movie choices must be unique.");
+    }
+    seen.add(key);
+    return {
+      rank: index + 1,
+      title,
+      licensing: "unconfirmed",
+    };
+  });
+
+  return parsed;
+}
+
+function sanitizeCampaignMovieAvailabilityStatus(value) {
+  const status = String(value || "").trim().toLowerCase();
+  if (
+    status === "not-checked" ||
+    status === "awaiting-theater-check" ||
+    status === "available" ||
+    status === "unavailable"
+  ) {
+    return status;
+  }
+  return "not-checked";
+}
+
+function buildCampaignMovieId(title, originalPosition) {
+  const base = movieDocId(title) || `choice_${Number(originalPosition) || 1}`;
+  return `cm_${Number(originalPosition) || 1}_${base}`.slice(0, 120);
+}
+
+function normalizeCampaignMovieRecord(campaignId, raw, fallbackPosition) {
+  if (!raw || typeof raw !== "object") return null;
+  const row = raw;
+  const title = sanitizeTextField(row.title, {required: true, maxLength: 200});
+  const originalPosition = Number(row.originalPosition || row.rank || fallbackPosition || 1);
+  if (![1, 2, 3].includes(originalPosition)) {
+    return null;
+  }
+  const campaignMovieId = sanitizeTextField(
+    row.campaignMovieId || row.id || buildCampaignMovieId(title, originalPosition),
+    {required: true, maxLength: 120},
+  );
+  const movieId = sanitizeTextField(row.movieId || movieDocId(title), {required: true, maxLength: 120});
+  const voteCount = toNonNegativeInt(row.voteCount ?? row.vote_count, 0);
+  const availabilityStatus = sanitizeCampaignMovieAvailabilityStatus(
+    row.availabilityStatus || row.availability || row.licensing,
+  );
+
+  return {
+    campaignMovieId,
+    campaignId,
+    movieId,
+    title,
+    voteCount,
+    originalPosition,
+    availabilityStatus,
+    createdAt: row.createdAt || null,
+    updatedAt: row.updatedAt || null,
+    posterUrl: row.posterUrl || row.posterURL || row.poster_path || row.posterPath || null,
+  };
+}
+
+function rankCampaignMovies(campaignMovies) {
+  return [...campaignMovies].sort((a, b) => {
+    const voteDiff = toNonNegativeInt(b.voteCount, 0) - toNonNegativeInt(a.voteCount, 0);
+    if (voteDiff !== 0) return voteDiff;
+    return toNonNegativeInt(a.originalPosition, 0) - toNonNegativeInt(b.originalPosition, 0);
+  });
+}
+
+function coerceCampaignMoviesFromData(campaignId, campaignData) {
+  const fromCampaignMovies = Array.isArray(campaignData?.campaignMovies) ? campaignData.campaignMovies : null;
+  const source = fromCampaignMovies || (Array.isArray(campaignData?.choices) ? campaignData.choices : []);
+
+  const parsed = source
+    .map((row, index) => normalizeCampaignMovieRecord(campaignId, row || {}, index + 1))
+    .filter(Boolean);
+
+  if (parsed.length !== 3) {
+    throw new HttpsError("failed-precondition", "Campaign must contain exactly three campaign movies.");
+  }
+
+  const byPosition = new Map(parsed.map((row) => [row.originalPosition, row]));
+  if (byPosition.size !== 3 || !byPosition.has(1) || !byPosition.has(2) || !byPosition.has(3)) {
+    throw new HttpsError("failed-precondition", "Campaign movies must have original positions 1, 2, and 3.");
+  }
+
+  const byId = new Set(parsed.map((row) => row.campaignMovieId));
+  if (byId.size !== 3) {
+    throw new HttpsError("failed-precondition", "Campaign movie ids must be unique.");
+  }
+
+  return parsed.sort((a, b) => a.originalPosition - b.originalPosition);
+}
+
+function toLegacyChoiceFromCampaignMovie(campaignMovie) {
+  return {
+    rank: campaignMovie.originalPosition,
+    title: campaignMovie.title,
+    licensing:
+      campaignMovie.availabilityStatus === "available"
+        ? "available"
+        : campaignMovie.availabilityStatus === "unavailable"
+          ? "unavailable"
+          : "unconfirmed",
+    voteCount: toNonNegativeInt(campaignMovie.voteCount, 0),
+  };
+}
+
+function sanitizePreferredTheaters(rawTheaters) {
+  if (!Array.isArray(rawTheaters)) {
+    return [];
+  }
+
+  const deduped = [];
+  const seen = new Set();
+  rawTheaters.forEach((raw) => {
+    const name = sanitizeTextField(raw, {required: false, maxLength: 160});
+    if (!name) return;
+    const key = normalizeCampaignKey(name);
+    if (seen.has(key)) return;
+    seen.add(key);
+    deduped.push(name);
+  });
+
+  return deduped.slice(0, 10);
+}
+
+function buildDeadTimeSlotId(rawValue) {
+  const normalized = String(rawValue || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 160);
+  return normalized;
+}
+
+function sanitizeDeadTimeSlotId(value) {
+  const slotId = buildDeadTimeSlotId(value);
+  if (!slotId) {
+    throw new HttpsError("invalid-argument", "A dead-time slot selection is required.");
+  }
+  return slotId;
+}
+
+function normalizeDeadTimeLabel({theaterName, dayOfWeek, timeLabel, screeningDateTime}) {
+  const parts = [];
+  if (theaterName) parts.push(String(theaterName).trim());
+
+  const dayTime = [String(dayOfWeek || "").trim(), String(timeLabel || "").trim()].filter(Boolean).join(" ");
+  if (dayTime) {
+    parts.push(dayTime);
+  } else if (screeningDateTime) {
+    parts.push(String(screeningDateTime).trim());
+  }
+
+  return parts.join(" • ").slice(0, 220);
+}
+
+function sanitizeCurrencyField(value) {
+  if (value === null || value === undefined || value === "") return null;
+  const n = Number(value);
+  if (!Number.isFinite(n) || n <= 0) return null;
+  return Number(n.toFixed(2));
+}
+
+function deriveBackingThresholdFromEconomics({ticketPrice, licensingFee}) {
+  const ticket = sanitizeCurrencyField(ticketPrice);
+  const licensing = sanitizeCurrencyField(licensingFee);
+  if (!ticket || !licensing) {
+    return null;
+  }
+  return sanitizeBackingThreshold(Math.ceil(licensing / ticket));
+}
+
+function normalizeDeadTimeSlotRecord(rawSlot, defaults = {}) {
+  if (!rawSlot || typeof rawSlot !== "object") {
+    return null;
+  }
+
+  const theaterKey = sanitizeTextField(rawSlot.theaterKey || rawSlot.theater_key || defaults.theaterKey, {
+    required: false,
+    maxLength: 200,
+  });
+  const theaterName = sanitizeTextField(rawSlot.theaterName || rawSlot.theater_name || defaults.theaterName, {
+    required: false,
+    maxLength: 200,
+  });
+  const market = sanitizeTextField(
+    rawSlot.market || rawSlot.theater_city_state || rawSlot.city || defaults.market,
+    {required: false, maxLength: 160},
+  );
+  const dayOfWeek = sanitizeTextField(rawSlot.dayOfWeek || rawSlot.day || defaults.dayOfWeek, {
+    required: false,
+    maxLength: 24,
+  });
+  const timeLabel = sanitizeTextField(rawSlot.timeLabel || rawSlot.time || rawSlot.startTime || defaults.timeLabel, {
+    required: false,
+    maxLength: 40,
+  });
+  const screeningDateTime = sanitizeTextField(rawSlot.screeningDateTime || defaults.screeningDateTime, {
+    required: false,
+    maxLength: 40,
+  });
+  const ticketPrice = sanitizeCurrencyField(
+    rawSlot.ticketPrice || rawSlot.ticket_price || rawSlot.avgTicketPrice || defaults.ticketPrice,
+  );
+  const licensingFee = sanitizeCurrencyField(
+    rawSlot.licensingFee || rawSlot.licenseFee || rawSlot.licensing_fee || rawSlot.license_fee || defaults.licensingFee,
+  );
+
+  const hasDayOrTime = Boolean(dayOfWeek || timeLabel || screeningDateTime);
+  if (!hasDayOrTime) {
+    return null;
+  }
+
+  const providedSlotId = rawSlot.slotId || rawSlot.slot_id || rawSlot.id || "";
+  const fallbackIdSeed = [
+    theaterKey,
+    theaterName,
+    market,
+    dayOfWeek,
+    timeLabel,
+    screeningDateTime,
+  ]
+    .filter(Boolean)
+    .join("-");
+  const slotId = buildDeadTimeSlotId(providedSlotId || fallbackIdSeed);
+  if (!slotId) {
+    return null;
+  }
+
+  const generatedLabel = normalizeDeadTimeLabel({
+    theaterName,
+    dayOfWeek,
+    timeLabel,
+    screeningDateTime,
+  });
+  const label = sanitizeTextField(rawSlot.label || generatedLabel, {required: false, maxLength: 220}) || generatedLabel;
+
+  return {
+    slotId,
+    theaterKey,
+    theaterName,
+    market,
+    dayOfWeek,
+    timeLabel,
+    screeningDateTime,
+    label,
+    ticketPrice,
+    licensingFee,
+  };
+}
+
+async function listPublicDeadTimeSlots({marketQuery = "", limit = 120} = {}) {
+  const snapshot = await db.collection("theater_dead_times").limit(600).get();
+  const rows = [];
+  const seen = new Set();
+
+  snapshot.forEach((docSnap) => {
+    const data = docSnap.data() || {};
+    const docEnabled = data.enabled !== false && data.active !== false;
+    if (!docEnabled) {
+      return;
+    }
+
+    const defaults = {
+      theaterKey: data.theaterKey || data.theater_key || "",
+      theaterName: data.theaterName || data.theater_name || "",
+      market: data.market || data.theater_city_state || data.city || "",
+      dayOfWeek: data.dayOfWeek || data.day || "",
+      timeLabel: data.timeLabel || data.time || data.startTime || "",
+      screeningDateTime: data.screeningDateTime || "",
+      ticketPrice: data.ticketPrice || data.ticket_price || data.avgTicketPrice || null,
+      licensingFee: data.licensingFee || data.licenseFee || data.licensing_fee || data.license_fee || null,
+    };
+
+    const sourceSlots = Array.isArray(data.slots) && data.slots.length > 0
+      ? data.slots
+      : [data];
+
+    sourceSlots.forEach((slot, index) => {
+      const slotEnabled = slot?.enabled !== false && slot?.active !== false;
+      if (!slotEnabled) return;
+      const normalized = normalizeDeadTimeSlotRecord(slot, {
+        ...defaults,
+        slotId: `${docSnap.id}-${index + 1}`,
+      });
+      if (!normalized) return;
+      if (seen.has(normalized.slotId)) return;
+      seen.add(normalized.slotId);
+      rows.push(normalized);
+    });
+  });
+
+  const normalizedMarketQuery = normalizeSearchQuery(marketQuery);
+  const filtered = normalizedMarketQuery
+    ? rows.filter((row) => {
+      const haystack = [row.market, row.theaterName, row.theaterKey, row.label]
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(normalizedMarketQuery);
+    })
+    : rows;
+
+  filtered.sort((a, b) => {
+    const marketSort = String(a.market || "").localeCompare(String(b.market || ""));
+    if (marketSort !== 0) return marketSort;
+    const theaterSort = String(a.theaterName || "").localeCompare(String(b.theaterName || ""));
+    if (theaterSort !== 0) return theaterSort;
+    return String(a.label || "").localeCompare(String(b.label || ""));
+  });
+
+  return filtered.slice(0, limit);
+}
+
+function sanitizeBackingThreshold(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) {
+    return 75;
+  }
+  return Math.max(10, Math.min(1000, Math.ceil(n)));
+}
+
+function toMillisSafe(value) {
+  if (!value) return 0;
+  if (typeof value === "number") return value;
+  if (typeof value === "string") {
+    const parsed = Date.parse(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+  if (value && typeof value.toMillis === "function") {
+    return value.toMillis();
+  }
+  if (typeof value?.seconds === "number") {
+    return value.seconds * 1000 + Math.floor((value.nanoseconds || 0) / 1000000);
+  }
+  return 0;
+}
+
+function sanitizeCampaignSupportLevel(value) {
+  const level = String(value || "").trim().toLowerCase();
+  if (level === "interested" || level === "backing" || level === "none") {
+    return level;
+  }
+  throw new HttpsError("invalid-argument", "Support level must be interested, backing, or none.");
+}
+
+function levelToSupportFlags(level) {
+  return {
+    interested: level === "interested" || level === "backing",
+    backing: level === "backing",
+  };
+}
+
+function toNonNegativeInt(value, fallback = 0) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.max(0, Math.floor(parsed));
+}
+
+function computeCampaignStatusAfterSupport(currentStatus, counts, thresholds) {
+  const current = String(currentStatus || "active");
+  const triggerBacking = toNonNegativeInt(thresholds?.licensingTriggerBacking, 0);
+  const triggerInterested = toNonNegativeInt(thresholds?.licensingTriggerInterested, 0);
+  const backingReady = triggerBacking > 0 && counts.backing >= triggerBacking;
+  const interestedReady = triggerInterested > 0 && counts.interested >= triggerInterested;
+
+  if ((current === "active" || current === "licensing-pending") && (backingReady || interestedReady)) {
+    return "theater-check";
+  }
+
+  return current;
+}
+
+function sanitizeCampaignStatus(value) {
+  const status = String(value || "").trim().toLowerCase();
+  const allowed = new Set([
+    "draft",
+    "active",
+    "licensing-pending",
+    "theater-check",
+    "movie-available",
+    "tipped",
+    "scheduled",
+    "confirmed",
+    "screening",
+    "completed",
+    "suspended",
+    "expired",
+    "cancelled",
+  ]);
+  if (!allowed.has(status)) {
+    throw new HttpsError("invalid-argument", "Invalid campaign status.");
+  }
+  return status;
+}
+
+function sanitizeMovieAvailabilityPatch(raw) {
+  if (!raw || typeof raw !== "object") return {};
+  const patch = {};
+  Object.entries(raw).forEach(([campaignMovieId, status]) => {
+    const key = sanitizeTextField(campaignMovieId, {required: true, maxLength: 120});
+    patch[key] = sanitizeCampaignMovieAvailabilityStatus(status);
+  });
+  return patch;
+}
+
+function sanitizeCampaignLicensingStatus(value) {
+  const status = String(value || "").trim().toLowerCase();
+  if (!status) return "";
+  if (status === "not-confirmed" || status === "checking" || status === "available" || status === "unavailable") {
+    return status;
+  }
+  throw new HttpsError("invalid-argument", "Invalid licensing status.");
+}
+
+exports.createCampaign = onCall(async (request) => {
+  const uid = request.auth?.uid || "";
+  const authEmail = normalizeEmail(request.auth?.token?.email);
+  if (!uid) {
+    throw new HttpsError("unauthenticated", "Sign in is required to create a campaign.");
+  }
+
+  const title = sanitizeTextField(request.data?.title, {required: true, maxLength: 160});
+  const market = sanitizeTextField(request.data?.market, {required: true, maxLength: 120});
+  const deadTimeSlotId = sanitizeDeadTimeSlotId(request.data?.deadTimeSlotId);
+  const requestedBackingThreshold = sanitizeBackingThreshold(request.data?.backingThreshold);
+  const interestedThreshold = backingThreshold * 2;
+  const licensingTriggerPercentage = 70;
+  const licensingTriggerBacking = Math.ceil((backingThreshold * licensingTriggerPercentage) / 100);
+  const licensingTriggerInterested = Math.ceil((interestedThreshold * licensingTriggerPercentage) / 100);
+
+  const choices = sanitizeCampaignChoices(request.data?.choices);
+  const preferredTheatersInput = sanitizePreferredTheaters(request.data?.preferredTheaters);
+  const replacedCampaignId = sanitizeTextField(request.data?.replacedCampaignId, {required: false, maxLength: 120});
+  const notifyPreviousSupporters = request.data?.notifyPreviousSupporters !== false;
+
+  const availableDeadTimeSlots = await listPublicDeadTimeSlots({
+    marketQuery: market,
+    limit: 600,
+  });
+  const selectedDeadTimeSlot = availableDeadTimeSlots.find((slot) => slot.slotId === deadTimeSlotId);
+  if (!selectedDeadTimeSlot) {
+    throw new HttpsError(
+      "invalid-argument",
+      "Choose a valid day/time dead-time slot from theaters in your selected local market.",
+    );
+  }
+
+  const screeningDateTime = sanitizeScreeningDateTime(selectedDeadTimeSlot.screeningDateTime);
+  const backingThreshold = deriveBackingThresholdFromEconomics(selectedDeadTimeSlot) || requestedBackingThreshold;
+
+  const dateWindowLabel = sanitizeTextField(
+    request.data?.dateWindowLabel || selectedDeadTimeSlot.label,
+    {required: true, maxLength: 120},
+  );
+
+  const preferredTheaters = sanitizePreferredTheaters([
+    selectedDeadTimeSlot.theaterName,
+    ...preferredTheatersInput,
+  ]);
+
+  const slugBase = buildCampaignSlug(title);
+  const campaignRef = db.collection("campaigns").doc();
+  const campaignId = campaignRef.id;
+  const slug = `${slugBase}-${campaignId.slice(0, 6)}`;
+  const now = admin.firestore.FieldValue.serverTimestamp();
+  const campaignMovies = choices.map((choice) => ({
+    campaignMovieId: buildCampaignMovieId(choice.title, choice.rank),
+    campaignId,
+    movieId: movieDocId(choice.title),
+    title: choice.title,
+    voteCount: 0,
+    originalPosition: choice.rank,
+    availabilityStatus: "not-checked",
+    createdAt: now,
+    updatedAt: now,
+    posterUrl: null,
+  }));
+  let replacementSupportersCarried = 0;
+  const replacementSupporterEmails = new Set();
+  let replacedCampaignTitle = "";
+
+  const payload = {
+    slug,
+    title,
+    market,
+    dateWindowLabel,
+    preferredTheaters,
+    screeningDateTime,
+    deadTimeSlot: {
+      slotId: selectedDeadTimeSlot.slotId,
+      theaterKey: selectedDeadTimeSlot.theaterKey || null,
+      theaterName: selectedDeadTimeSlot.theaterName || null,
+      market: selectedDeadTimeSlot.market || null,
+      dayOfWeek: selectedDeadTimeSlot.dayOfWeek || null,
+      timeLabel: selectedDeadTimeSlot.timeLabel || null,
+      screeningDateTime,
+      label: selectedDeadTimeSlot.label || null,
+      ticketPrice: sanitizeCurrencyField(selectedDeadTimeSlot.ticketPrice),
+      licensingFee: sanitizeCurrencyField(selectedDeadTimeSlot.licensingFee),
+    },
+    status: "active",
+    selectedMovieTitle: null,
+    choices,
+    campaignMovies,
+    counts: {
+      interested: 0,
+      backing: 0,
+    },
+    thresholds: {
+      backing: backingThreshold,
+      interested: interestedThreshold,
+      licensingTriggerPercentage,
+      licensingTriggerBacking,
+      licensingTriggerInterested,
+    },
+    licensing: {
+      status: "not-confirmed",
+      checkedAt: null,
+      checkedByTheater: null,
+    },
+    organizer: {
+      uid,
+      email: authEmail,
+    },
+    replacement: {
+      replacedCampaignId: replacedCampaignId || null,
+      notifyPreviousSupporters,
+      carriedInterestedCount: 0,
+    },
+    created_at: now,
+    updated_at: now,
+  };
+
+  const batch = db.batch();
+
+  if (replacedCampaignId) {
+    const replacedRef = db.collection("campaigns").doc(replacedCampaignId);
+    const replacedDoc = await replacedRef.get();
+    if (!replacedDoc.exists) {
+      throw new HttpsError("not-found", "replacedCampaignId does not exist.");
+    }
+
+    const replacedData = replacedDoc.data() || {};
+    replacedCampaignTitle = String(replacedData.title || "").trim();
+
+    const shouldReadSupporters = CAMPAIGN_REPLACEMENT_POLICY.autoCarryInterestOnReplacement || notifyPreviousSupporters;
+    const supportersSnapshot = shouldReadSupporters
+      ? await replacedRef.collection("supporters")
+        .where("interested", "==", true)
+        .limit(CAMPAIGN_REPLACEMENT_POLICY.maxSupportersToCarry)
+        .get()
+      : null;
+
+    if (CAMPAIGN_REPLACEMENT_POLICY.autoCarryInterestOnReplacement && supportersSnapshot) {
+      supportersSnapshot.forEach((supporterDoc) => {
+        const supporterData = supporterDoc.data() || {};
+        const supporterUid = String(supporterData.uid || supporterDoc.id || "").trim();
+        if (!supporterUid) return;
+
+        const supporterEmail = normalizeEmail(supporterData.email || "");
+        if (supporterEmail) replacementSupporterEmails.add(supporterEmail);
+        batch.set(campaignRef.collection("supporters").doc(supporterDoc.id), {
+          uid: supporterUid,
+          email: supporterEmail || null,
+          level: "interested",
+          interested: true,
+          backing: false,
+          carriedFromCampaignId: replacedCampaignId,
+          created_at: now,
+          updated_at: now,
+        }, {merge: true});
+        replacementSupportersCarried += 1;
+      });
+    } else if (notifyPreviousSupporters && supportersSnapshot) {
+      supportersSnapshot.forEach((supporterDoc) => {
+        const supporterData = supporterDoc.data() || {};
+        const supporterEmail = normalizeEmail(supporterData.email || "");
+        if (supporterEmail) replacementSupporterEmails.add(supporterEmail);
+      });
+    }
+
+    payload.counts.interested = replacementSupportersCarried;
+    payload.replacement.carriedInterestedCount = replacementSupportersCarried;
+
+    batch.set(replacedRef, {
+      replacement: {
+        replacedByCampaignId: campaignId,
+      },
+      updated_at: now,
+    }, {merge: true});
+  }
+
+  batch.set(campaignRef, payload);
+
+  campaignMovies.forEach((campaignMovie) => {
+    batch.set(campaignRef.collection("campaign_movies").doc(campaignMovie.campaignMovieId), {
+      ...campaignMovie,
+      created_at: now,
+      updated_at: now,
+    }, {merge: true});
+  });
+
+  await batch.commit();
+
+  let replacementNotificationsQueued = 0;
+  if (replacedCampaignId && notifyPreviousSupporters && replacementSupporterEmails.size > 0) {
+    const oldLabel = replacedCampaignTitle || replacedCampaignId;
+    const subject = `New replacement campaign is live: ${title}`;
+
+    for (const email of replacementSupporterEmails) {
+      const queued = await queueTransactionalEmail({
+        to: email,
+        subject,
+        text: [
+          "A new replacement campaign is now live on ReelVotes.",
+          "",
+          `Previous campaign: ${oldLabel}`,
+          `New campaign: ${title}`,
+          `Market: ${market}`,
+          `Window: ${dateWindowLabel}`,
+          "",
+          "You were carried as an interested supporter.",
+          "Review and update your support:",
+          `https://reelvotes.com/campaigns`,
+          "",
+          `Campaign ID: ${campaignId}`,
+        ].join("\n"),
+        type: "campaign-replacement-announcement",
+        eventId: campaignId,
+        meta: {
+          campaign_id: campaignId,
+          replaced_campaign_id: replacedCampaignId,
+        },
+      });
+
+      if (queued) {
+        replacementNotificationsQueued += 1;
+      }
+    }
+
+    await campaignRef.set({
+      replacement: {
+        notifiedPreviousSupporterCount: replacementNotificationsQueued,
+        notifiedPreviousSupportersAt: admin.firestore.FieldValue.serverTimestamp(),
+      },
+      updated_at: admin.firestore.FieldValue.serverTimestamp(),
+    }, {merge: true});
+  }
+
+  logger.info("Campaign created", {
+    campaignId,
+    slug,
+    organizerUid: uid,
+    organizerEmail: authEmail,
+    market,
+    backingThreshold,
+    replacementSupportersCarried,
+    replacementNotificationsQueued,
+    deadTimeSlotId: selectedDeadTimeSlot.slotId,
+  });
+
+  return {
+    ok: true,
+    campaign: {
+      id: campaignId,
+      ...payload,
+    },
+    replacement: {
+      supportersCarried: replacementSupportersCarried,
+      notificationsQueued: replacementNotificationsQueued,
+    },
+  };
+});
+
+exports.publicListDeadTimeSlots = onCall(async (request) => {
+  const market = sanitizeTextField(request.data?.market, {required: false, maxLength: 120});
+  const query = sanitizeTextField(request.data?.query, {required: false, maxLength: 120});
+  const limit = sanitizePositiveInt(request.data?.limit, 120, 600);
+
+  const slots = await listPublicDeadTimeSlots({
+    marketQuery: market || query,
+    limit,
+  });
+
+  return {
+    ok: true,
+    total: slots.length,
+    slots,
+  };
+});
+
+exports.publicListCampaigns = onCall(async (request) => {
+  const query = normalizeSearchQuery(request.data?.query);
+  const limit = sanitizePositiveInt(request.data?.limit, 50, 200);
+  const uid = request.auth?.uid || "";
+
+  const snapshot = await db.collection("campaigns").get();
+  const rows = snapshot.docs.map((docSnap) => {
+    const data = docSnap.data() || {};
+    let campaignMovies = [];
+    try {
+      campaignMovies = coerceCampaignMoviesFromData(docSnap.id, data);
+    } catch {
+      campaignMovies = [];
+    }
+    const rankedMovies = campaignMovies.length === 3 ? rankCampaignMovies(campaignMovies) : [];
+    const replacement = data.replacement && typeof data.replacement === "object"
+      ? data.replacement
+      : {};
+    return {
+      id: docSnap.id,
+      slug: data.slug || docSnap.id,
+      title: data.title || "",
+      market: data.market || "",
+      dateWindowLabel: data.dateWindowLabel || "",
+      screeningDateTime: data.screeningDateTime || "",
+      deadTimeSlot: data.deadTimeSlot || null,
+      status: data.status || "active",
+      selectedMovieTitle: data.selectedMovieTitle || rankedMovies[0]?.title || null,
+      preferredTheaters: Array.isArray(data.preferredTheaters) ? data.preferredTheaters : [],
+      choices: campaignMovies.map((movie) => toLegacyChoiceFromCampaignMovie(movie)),
+      campaignMovies,
+      counts: data.counts || {interested: 0, backing: 0},
+      thresholds: data.thresholds || {},
+      replacement: {
+        replacedCampaignId: replacement.replacedCampaignId || null,
+        replacedByCampaignId: replacement.replacedByCampaignId || null,
+        notifyPreviousSupporters: replacement.notifyPreviousSupporters !== false,
+        carriedInterestedCount: toNonNegativeInt(replacement.carriedInterestedCount, 0),
+        notifiedPreviousSupporterCount: toNonNegativeInt(replacement.notifiedPreviousSupporterCount, 0),
+        notifiedPreviousSupportersAt: replacement.notifiedPreviousSupportersAt || null,
+      },
+      createdAtMillis: toMillisSafe(data.created_at),
+    };
+  });
+
+  const filtered = rows.filter((row) => {
+    if (!query) return true;
+    const haystack = [
+      row.title,
+      row.market,
+      row.dateWindowLabel,
+      ...(Array.isArray(row.choices) ? row.choices.map((choice) => String(choice?.title || "")) : []),
+    ]
+      .join(" ")
+      .toLowerCase();
+    return haystack.includes(query);
+  });
+
+  filtered.sort((a, b) => b.createdAtMillis - a.createdAtMillis);
+
+  const page = filtered.slice(0, limit);
+  const latestVoteSnapshots = await Promise.all(
+    page.map((row) =>
+      db
+        .collection("campaigns")
+        .doc(row.id)
+        .collection("movie_votes")
+        .orderBy("updatedAt", "desc")
+        .limit(1)
+        .get()
+        .catch(async () =>
+          db
+            .collection("campaigns")
+            .doc(row.id)
+            .collection("movie_votes")
+            .orderBy("createdAt", "desc")
+            .limit(1)
+            .get(),
+        ),
+    ),
+  );
+
+  for (let i = 0; i < page.length; i += 1) {
+    const latestVoteSnap = latestVoteSnapshots[i];
+    const latestVoteData = latestVoteSnap && !latestVoteSnap.empty ? latestVoteSnap.docs[0].data() || {} : {};
+    const likedByEmailRaw = normalizeEmail(latestVoteData.userEmail || latestVoteData.email || "");
+    page[i].likedByEmail = isLikelyRealEmail(likedByEmailRaw) ? likedByEmailRaw : null;
+  }
+
+  if (uid) {
+    const supportDocs = await Promise.all(
+      page.map((row) => db.collection("campaigns").doc(row.id).collection("supporters").doc(uid).get()),
+    );
+    const voteDocs = await Promise.all(
+      page.map((row) => db.collection("campaigns").doc(row.id).collection("movie_votes").doc(uid).get()),
+    );
+    for (let i = 0; i < page.length; i += 1) {
+      const supportData = supportDocs[i].exists ? supportDocs[i].data() || {} : {};
+      const level = String(supportData.level || "").trim().toLowerCase();
+      page[i].viewerSupport = level === "backing" || level === "interested" ? level : null;
+
+      const voteData = voteDocs[i].exists ? voteDocs[i].data() || {} : {};
+      page[i].viewerMovieVoteCampaignMovieId = sanitizeTextField(voteData.campaignMovieId, {
+        required: false,
+        maxLength: 120,
+      }) || null;
+    }
+  }
+
+  return {
+    ok: true,
+    total: filtered.length,
+    campaigns: page,
+  };
+});
+
+exports.upsertCampaignMovieVote = onCall(async (request) => {
+  const uid = request.auth?.uid || "";
+  const email = normalizeEmail(request.auth?.token?.email);
+  if (!uid) {
+    throw new HttpsError("unauthenticated", "Sign in is required to vote.");
+  }
+
+  const campaignId = sanitizeTextField(request.data?.campaignId, {required: true, maxLength: 120});
+  const campaignMovieId = sanitizeTextField(request.data?.campaignMovieId, {required: true, maxLength: 120});
+
+  const campaignRef = db.collection("campaigns").doc(campaignId);
+  const voteRef = campaignRef.collection("movie_votes").doc(uid);
+
+  const txResult = await db.runTransaction(async (tx) => {
+    const [campaignSnap, voteSnap] = await Promise.all([
+      tx.get(campaignRef),
+      tx.get(voteRef),
+    ]);
+
+    if (!campaignSnap.exists) {
+      throw new HttpsError("not-found", "Campaign not found.");
+    }
+
+    const campaignData = campaignSnap.data() || {};
+    const status = String(campaignData.status || "active").trim().toLowerCase();
+    if (["completed", "expired", "cancelled", "confirmed", "screening"].includes(status)) {
+      throw new HttpsError("failed-precondition", "Voting is closed for this campaign.");
+    }
+
+    const campaignMovies = coerceCampaignMoviesFromData(campaignId, campaignData);
+    const targetIndex = campaignMovies.findIndex((movie) => movie.campaignMovieId === campaignMovieId);
+    if (targetIndex < 0) {
+      throw new HttpsError("invalid-argument", "Invalid campaign movie id.");
+    }
+
+    const now = admin.firestore.FieldValue.serverTimestamp();
+    const nowIso = new Date().toISOString();
+    const existingVote = voteSnap.exists ? voteSnap.data() || {} : {};
+    const previousCampaignMovieId = sanitizeTextField(existingVote.campaignMovieId, {required: false, maxLength: 120});
+
+    if (previousCampaignMovieId !== campaignMovieId) {
+      if (previousCampaignMovieId) {
+        const previousIndex = campaignMovies.findIndex((movie) => movie.campaignMovieId === previousCampaignMovieId);
+        if (previousIndex >= 0) {
+          campaignMovies[previousIndex] = {
+            ...campaignMovies[previousIndex],
+            voteCount: Math.max(0, toNonNegativeInt(campaignMovies[previousIndex].voteCount, 0) - 1),
+            updatedAt: nowIso,
+          };
+          tx.set(
+            campaignRef.collection("campaign_movies").doc(campaignMovies[previousIndex].campaignMovieId),
+            {
+              voteCount: campaignMovies[previousIndex].voteCount,
+              updatedAt: now,
+              updated_at: now,
+            },
+            {merge: true},
+          );
+        }
+      }
+
+      campaignMovies[targetIndex] = {
+        ...campaignMovies[targetIndex],
+        voteCount: toNonNegativeInt(campaignMovies[targetIndex].voteCount, 0) + 1,
+        updatedAt: nowIso,
+      };
+      tx.set(
+        campaignRef.collection("campaign_movies").doc(campaignMovies[targetIndex].campaignMovieId),
+        {
+          voteCount: campaignMovies[targetIndex].voteCount,
+          updatedAt: now,
+          updated_at: now,
+        },
+        {merge: true},
+      );
+    }
+
+    const ranked = rankCampaignMovies(campaignMovies);
+    const leaderTitle = ranked[0]?.title || null;
+
+    tx.set(campaignRef, {
+      campaignMovies,
+      choices: campaignMovies.map((movie) => toLegacyChoiceFromCampaignMovie(movie)),
+      selectedMovieTitle: leaderTitle,
+      updated_at: now,
+    }, {merge: true});
+
+    const createdAt = voteSnap.exists ? (voteSnap.data() || {}).createdAt || now : now;
+    tx.set(voteRef, {
+      voteId: voteRef.id,
+      userId: uid,
+      userEmail: email || null,
+      campaignId,
+      campaignMovieId,
+      createdAt,
+      updatedAt: now,
+    }, {merge: true});
+
+    return {
+      campaignId,
+      campaignMovieId,
+      previousCampaignMovieId: previousCampaignMovieId || null,
+      selectedMovieTitle: leaderTitle,
+      campaignMovies,
+    };
+  });
+
+  return {
+    ok: true,
+    ...txResult,
+  };
+});
+
+exports.upsertCampaignSupport = onCall(async (request) => {
+  const uid = request.auth?.uid || "";
+  const email = normalizeEmail(request.auth?.token?.email);
+  if (!uid) {
+    throw new HttpsError("unauthenticated", "Sign in is required to support a campaign.");
+  }
+
+  const campaignId = sanitizeTextField(request.data?.campaignId, {required: true, maxLength: 120});
+  const level = sanitizeCampaignSupportLevel(request.data?.level);
+
+  const campaignRef = db.collection("campaigns").doc(campaignId);
+  const supporterRef = campaignRef.collection("supporters").doc(uid);
+  const triggerLogRef = db.collection("campaign_notifications").doc(`${campaignId}_theater_check`);
+
+  const txResult = await db.runTransaction(async (tx) => {
+    const [campaignSnap, supporterSnap, triggerLogSnap] = await Promise.all([
+      tx.get(campaignRef),
+      tx.get(supporterRef),
+      tx.get(triggerLogRef),
+    ]);
+
+    if (!campaignSnap.exists) {
+      throw new HttpsError("not-found", "Campaign not found.");
+    }
+
+    const campaignData = campaignSnap.data() || {};
+    const currentStatus = String(campaignData.status || "active");
+    const thresholds = campaignData.thresholds && typeof campaignData.thresholds === "object"
+      ? campaignData.thresholds
+      : {};
+    const counts = campaignData.counts && typeof campaignData.counts === "object"
+      ? campaignData.counts
+      : {};
+
+    const oldLevelRaw = supporterSnap.exists ? String((supporterSnap.data() || {}).level || "none") : "none";
+    const oldLevel = oldLevelRaw === "backing" || oldLevelRaw === "interested" ? oldLevelRaw : "none";
+    const oldFlags = levelToSupportFlags(oldLevel);
+    const newFlags = levelToSupportFlags(level);
+
+    const currentInterested = toNonNegativeInt(counts.interested, 0);
+    const currentBacking = toNonNegativeInt(counts.backing, 0);
+
+    const nextCounts = {
+      interested: Math.max(0, currentInterested + Number(newFlags.interested) - Number(oldFlags.interested)),
+      backing: Math.max(0, currentBacking + Number(newFlags.backing) - Number(oldFlags.backing)),
+    };
+
+    const nextStatus = computeCampaignStatusAfterSupport(currentStatus, nextCounts, thresholds);
+    const justTriggeredTheaterCheck = nextStatus === "theater-check" && currentStatus !== "theater-check";
+    const now = admin.firestore.FieldValue.serverTimestamp();
+    let campaignMoviesOnTrigger = null;
+    if (justTriggeredTheaterCheck) {
+      try {
+        const campaignMovies = coerceCampaignMoviesFromData(campaignId, campaignData);
+        campaignMoviesOnTrigger = campaignMovies.map((movie) => ({
+          ...movie,
+          availabilityStatus:
+            movie.availabilityStatus === "not-checked" ? "awaiting-theater-check" : movie.availabilityStatus,
+          updatedAt: now,
+        }));
+      } catch (error) {
+        logger.warn("Could not update campaign movie availability statuses on trigger", {
+          campaignId,
+          error: error?.message || String(error),
+        });
+      }
+    }
+
+    tx.set(campaignRef, {
+      counts: nextCounts,
+      status: nextStatus,
+      updated_at: now,
+      ...(campaignMoviesOnTrigger
+        ? {
+          campaignMovies: campaignMoviesOnTrigger,
+          choices: campaignMoviesOnTrigger.map((movie) => toLegacyChoiceFromCampaignMovie(movie)),
+        }
+        : {}),
+      workflow: justTriggeredTheaterCheck ? {theaterCheckTriggeredAt: now} : campaignData.workflow || {},
+    }, {merge: true});
+
+    if (campaignMoviesOnTrigger) {
+      campaignMoviesOnTrigger.forEach((movie) => {
+        tx.set(campaignRef.collection("campaign_movies").doc(movie.campaignMovieId), {
+          availabilityStatus: movie.availabilityStatus,
+          updatedAt: now,
+          updated_at: now,
+        }, {merge: true});
+      });
+    }
+
+    if (level === "none") {
+      if (supporterSnap.exists) {
+        tx.delete(supporterRef);
+      }
+    } else {
+      const supporterCreatedAt = supporterSnap.exists
+        ? (supporterSnap.data() || {}).created_at || now
+        : now;
+      tx.set(supporterRef, {
+        uid,
+        email,
+        level,
+        interested: newFlags.interested,
+        backing: newFlags.backing,
+        created_at: supporterCreatedAt,
+        updated_at: now,
+      }, {merge: true});
+    }
+
+    if (justTriggeredTheaterCheck && !triggerLogSnap.exists) {
+      tx.set(triggerLogRef, {
+        campaignId,
+        type: "theater-check-trigger",
+        status: "queued",
+        created_at: now,
+        payload: {
+          market: String(campaignData.market || ""),
+          title: String(campaignData.title || ""),
+          preferredTheaters: Array.isArray(campaignData.preferredTheaters) ? campaignData.preferredTheaters : [],
+        },
+      });
+    }
+
+    return {
+      campaignId,
+      status: nextStatus,
+      counts: nextCounts,
+      viewerSupport: level === "none" ? null : level,
+      justTriggeredTheaterCheck,
+    };
+  });
+
+  logger.info("Campaign support updated", {
+    campaignId,
+    uid,
+    level,
+    status: txResult.status,
+    counts: txResult.counts,
+    justTriggeredTheaterCheck: txResult.justTriggeredTheaterCheck,
+  });
+
+  return {
+    ok: true,
+    ...txResult,
+  };
+});
+
+exports.adminSetCampaignStatus = onCall(async (request) => {
+  const uid = request.auth?.uid || "";
+  const authEmail = normalizeEmail(request.auth?.token?.email);
+  if (!uid || !authEmail) {
+    throw new HttpsError("unauthenticated", "Sign in is required.");
+  }
+  if (!ADMIN_EMAILS.has(authEmail)) {
+    throw new HttpsError("permission-denied", "Admin access denied.");
+  }
+
+  const campaignId = sanitizeTextField(request.data?.campaignId, {required: true, maxLength: 120});
+  const status = sanitizeCampaignStatus(request.data?.status);
+  const selectedMovieTitle = sanitizeTextField(request.data?.selectedMovieTitle, {required: false, maxLength: 200});
+  const licensingStatus = sanitizeCampaignLicensingStatus(request.data?.licensingStatus);
+  const movieAvailabilityPatch = sanitizeMovieAvailabilityPatch(request.data?.movieAvailabilityByCampaignMovieId);
+  const note = sanitizeTextField(request.data?.note, {required: false, maxLength: 800});
+
+  const campaignRef = db.collection("campaigns").doc(campaignId);
+  const campaignDoc = await campaignRef.get();
+  if (!campaignDoc.exists) {
+    throw new HttpsError("not-found", "Campaign not found.");
+  }
+
+  const now = admin.firestore.FieldValue.serverTimestamp();
+  let campaignMoviesPatch = null;
+  if (Object.keys(movieAvailabilityPatch).length > 0) {
+    const existingCampaignMovies = coerceCampaignMoviesFromData(campaignId, campaignDoc.data() || {});
+    campaignMoviesPatch = existingCampaignMovies.map((movie) => {
+      const nextStatus = movieAvailabilityPatch[movie.campaignMovieId];
+      if (!nextStatus) return movie;
+      return {
+        ...movie,
+        availabilityStatus: nextStatus,
+        updatedAt: now,
+      };
+    });
+  }
+
+  const patch = {
+    status,
+    updated_at: now,
+    updated_by: authEmail,
+    ...(selectedMovieTitle ? {selectedMovieTitle} : {}),
+    ...(campaignMoviesPatch
+      ? {
+        campaignMovies: campaignMoviesPatch,
+        choices: campaignMoviesPatch.map((movie) => toLegacyChoiceFromCampaignMovie(movie)),
+      }
+      : {}),
+    ...(licensingStatus ? {licensing: {status: licensingStatus, checkedAt: now, checkedByTheater: authEmail}} : {}),
+  };
+
+  await campaignRef.set(patch, {merge: true});
+
+  if (campaignMoviesPatch) {
+    const batch = db.batch();
+    campaignMoviesPatch.forEach((movie) => {
+      batch.set(campaignRef.collection("campaign_movies").doc(movie.campaignMovieId), {
+        availabilityStatus: movie.availabilityStatus,
+        updatedAt: now,
+        updated_at: now,
+      }, {merge: true});
+    });
+    await batch.commit();
+  }
+
+  if (note) {
+    await campaignRef.collection("admin_updates").add({
+      note,
+      status,
+      selectedMovieTitle: selectedMovieTitle || null,
+      licensingStatus: licensingStatus || null,
+      movieAvailabilityByCampaignMovieId: Object.keys(movieAvailabilityPatch).length > 0 ? movieAvailabilityPatch : null,
+      created_at: now,
+      created_by: authEmail,
+    });
+  }
+
+  logger.info("Admin set campaign status", {
+    campaignId,
+    status,
+    selectedMovieTitle: selectedMovieTitle || null,
+    licensingStatus: licensingStatus || null,
+    adminEmail: authEmail,
+  });
+
+  return {
+    ok: true,
+    campaignId,
+    status,
+    selectedMovieTitle: selectedMovieTitle || null,
+    licensingStatus: licensingStatus || null,
+    updatedBy: authEmail,
+  };
+});
+
 exports.submitMovieSuggestion = onCall(async (request) => {
   const title = sanitizeTextField(request.data?.title, {required: true, maxLength: 200});
   const yearRaw = sanitizeTextField(request.data?.year, {maxLength: 4});
@@ -2758,6 +4135,181 @@ exports.submitTheaterPetition = onCall(async (request) => {
     ok: true,
     petitionId: docRef.id,
     emailedTheater: payload.theater_email_status === "pending",
+  };
+});
+
+exports.submitTheaterRegistration = onCall(async (request) => {
+  const contactName = sanitizeTextField(request.data?.contactName, {required: true, maxLength: 120});
+  const contactRole = sanitizeTextField(request.data?.contactRole, {required: true, maxLength: 120});
+  const contactEmail = sanitizeEmail(request.data?.contactEmail);
+  const contactPhone = sanitizeTextField(request.data?.contactPhone, {required: false, maxLength: 40});
+
+  const theaterName = sanitizeTextField(request.data?.theaterName, {required: true, maxLength: 200});
+  const ticketingEmail = sanitizeEmail(request.data?.ticketingEmail);
+  const addressLine1 = sanitizeTextField(request.data?.addressLine1, {required: true, maxLength: 200});
+  const addressLine2 = sanitizeTextField(request.data?.addressLine2, {required: false, maxLength: 200});
+  const city = sanitizeTextField(request.data?.city, {required: true, maxLength: 120});
+  const state = sanitizeTextField(request.data?.state, {required: true, maxLength: 120});
+  const postalCode = sanitizeTextField(request.data?.postalCode, {required: true, maxLength: 24});
+  const country = sanitizeTextField(request.data?.country, {required: true, maxLength: 80});
+
+  const websiteInput = sanitizeTextField(request.data?.website, {required: false, maxLength: 240});
+  const website = websiteInput ? websiteInput.replace(/\/+$/g, "") : "";
+  if (website && !/^https?:\/\/.+/i.test(website)) {
+    throw new HttpsError("invalid-argument", "Website must begin with http:// or https://.");
+  }
+
+  function sanitizeOptionalInt(value, maxValue = 100000) {
+    if (value === null || value === undefined || value === "") return null;
+    const n = Number(value);
+    if (!Number.isFinite(n) || n < 0) {
+      throw new HttpsError("invalid-argument", "Numeric fields must be positive numbers.");
+    }
+    return Math.min(Math.floor(n), maxValue);
+  }
+
+  const numberOfScreens = sanitizeOptionalInt(request.data?.numberOfScreens, 1000);
+  const seatingCapacity = sanitizeOptionalInt(request.data?.seatingCapacity, 1000000);
+  const averageTicketPrice = sanitizeCurrencyField(request.data?.averageTicketPrice);
+  const typicalLicensingFee = sanitizeCurrencyField(request.data?.typicalLicensingFee);
+  const programmingNotes = sanitizeTextField(request.data?.programmingNotes, {required: false, maxLength: 2000});
+  const consentToContact = request.data?.consentToContact === true;
+
+  if (!consentToContact) {
+    throw new HttpsError("invalid-argument", "Consent to contact is required.");
+  }
+
+  const ipHash = hashValue(`theater-registration:${getRequesterIp(request)}`);
+  const rateLimitRef = db.collection("theater_partner_registration_rate_limits").doc(ipHash);
+
+  await db.runTransaction(async (transaction) => {
+    const rateLimitDoc = await transaction.get(rateLimitRef);
+    const lastAttemptAt = rateLimitDoc.exists ? rateLimitDoc.data()?.last_attempt_at : null;
+    if (lastAttemptAt && Date.now() - lastAttemptAt.toMillis() < 60 * 1000) {
+      throw new HttpsError("resource-exhausted", "Please wait about a minute before submitting again.");
+    }
+
+    transaction.set(rateLimitRef, {
+      last_attempt_at: admin.firestore.FieldValue.serverTimestamp(),
+      updated_at: admin.firestore.FieldValue.serverTimestamp(),
+    }, {merge: true});
+  });
+
+  const market = [city, state].filter(Boolean).join(", ");
+  const rawSlotRows = Array.isArray(request.data?.communityScreeningSlots)
+    ? request.data.communityScreeningSlots.slice(0, 40)
+    : [];
+  const communityScreeningSlots = [];
+
+  rawSlotRows.forEach((rawSlot, index) => {
+    if (!rawSlot || typeof rawSlot !== "object") return;
+
+    const hasInput = Boolean(
+      String(rawSlot.dayOfWeek || "").trim() ||
+      String(rawSlot.timeLabel || "").trim() ||
+      String(rawSlot.screeningDateTime || "").trim() ||
+      String(rawSlot.label || "").trim(),
+    );
+    if (!hasInput) return;
+
+    const normalized = normalizeDeadTimeSlotRecord(
+      {
+        ...rawSlot,
+        slotId: rawSlot.slotId || `partner-${index + 1}`,
+      },
+      {
+        theaterName,
+        market,
+      },
+    );
+
+    if (!normalized) return;
+
+    const notes = sanitizeTextField(rawSlot.notes, {required: false, maxLength: 300});
+    communityScreeningSlots.push({
+      ...normalized,
+      notes: notes || null,
+    });
+  });
+
+  if (communityScreeningSlots.length === 0) {
+    throw new HttpsError("invalid-argument", "At least one Community Screening Slot is required.");
+  }
+
+  const rawStudioRows = Array.isArray(request.data?.licensingByStudio)
+    ? request.data.licensingByStudio.slice(0, 30)
+    : [];
+  const licensingByStudio = [];
+
+  rawStudioRows.forEach((rawStudio) => {
+    if (!rawStudio || typeof rawStudio !== "object") return;
+    const studio = sanitizeTextField(rawStudio.studio || rawStudio.distributor, {
+      required: false,
+      maxLength: 160,
+    });
+    const licensingFee = sanitizeCurrencyField(rawStudio.licensingFee || rawStudio.fee);
+    const notes = sanitizeTextField(rawStudio.notes, {required: false, maxLength: 300});
+
+    if (!studio && !licensingFee && !notes) {
+      return;
+    }
+    if (!studio) {
+      throw new HttpsError("invalid-argument", "Each licensing row needs a studio/distributor name.");
+    }
+
+    licensingByStudio.push({
+      studio,
+      licensingFee,
+      notes: notes || null,
+    });
+  });
+
+  const docRef = await db.collection("theater_partner_registrations").add({
+    status: "new",
+    source: "web",
+    contact: {
+      name: contactName,
+      role: contactRole,
+      email: contactEmail,
+      phone: contactPhone || null,
+    },
+    theater: {
+      name: theaterName,
+      ticketingEmail,
+      website: website || null,
+      addressLine1,
+      addressLine2: addressLine2 || null,
+      city,
+      state,
+      postalCode,
+      country,
+      market,
+      numberOfScreens,
+      seatingCapacity,
+    },
+    economics: {
+      averageTicketPrice,
+      typicalLicensingFee,
+      licensingByStudio,
+    },
+    communityScreeningSlots,
+    notes: programmingNotes || null,
+    consentToContact,
+    ip_hash: ipHash,
+    created_at: admin.firestore.FieldValue.serverTimestamp(),
+    updated_at: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  logger.info("Theater registration submitted", {
+    registrationId: docRef.id,
+    theaterName,
+    market,
+    slotCount: communityScreeningSlots.length,
+  });
+
+  return {
+    ok: true,
+    registrationId: docRef.id,
   };
 });
 
@@ -2902,6 +4454,180 @@ exports.sendMovieChatMessage = onCall(async (request) => {
     ok: true,
     threadId,
     messageId: messageRef.id,
+  };
+});
+
+exports.joinCampaignDiscussion = onCall(async (request) => {
+  const uid = request.auth?.uid || "";
+  const authEmail = normalizeEmail(request.auth?.token?.email);
+  if (!uid) {
+    throw new HttpsError("unauthenticated", "Sign in is required to join campaign discussion.");
+  }
+
+  const campaignId = sanitizeCampaignId(request.data?.campaignId);
+  const campaignRef = db.collection("campaigns").doc(campaignId);
+  const campaignDoc = await campaignRef.get();
+  if (!campaignDoc.exists) {
+    throw new HttpsError("not-found", "Campaign not found.");
+  }
+
+  const campaignData = campaignDoc.data() || {};
+  const threadId = buildCampaignDiscussionThreadId(campaignId);
+  const threadRef = db.collection("threads").doc(threadId);
+  const memberRef = threadRef.collection("members").doc(uid);
+  const displayName = sanitizeTextField(
+    request.auth?.token?.name || request.auth?.token?.email || "",
+    {required: false, maxLength: 40},
+  ) || "Member";
+
+  await db.runTransaction(async (transaction) => {
+    const threadDoc = await transaction.get(threadRef);
+    const now = admin.firestore.FieldValue.serverTimestamp();
+
+    if (!threadDoc.exists) {
+      transaction.set(threadRef, {
+        threadId,
+        threadType: "campaign-discussion",
+        campaignId,
+        campaignTitle: String(campaignData.title || "Untitled campaign").slice(0, 200),
+        codeRequired: false,
+        messageCount: 0,
+        createdAt: now,
+        updatedAt: now,
+        createdBy: uid,
+      });
+    } else {
+      transaction.set(threadRef, {
+        updatedAt: now,
+      }, {merge: true});
+    }
+
+    transaction.set(memberRef, {
+      participantId: uid,
+      userId: uid,
+      email: authEmail || null,
+      displayName,
+      joinedAt: now,
+      updatedAt: now,
+      verifiedByAuth: true,
+    }, {merge: true});
+  });
+
+  return {
+    ok: true,
+    threadId,
+    campaignId,
+  };
+});
+
+exports.sendCampaignDiscussionMessage = onCall(async (request) => {
+  const uid = request.auth?.uid || "";
+  const authEmail = normalizeEmail(request.auth?.token?.email);
+  if (!uid) {
+    throw new HttpsError("unauthenticated", "Sign in is required to comment.");
+  }
+
+  const campaignId = sanitizeCampaignId(request.data?.campaignId);
+  const campaignMovieId = sanitizeOptionalCampaignMovieId(request.data?.campaignMovieId);
+  const text = sanitizeTextField(request.data?.body || request.data?.text, {required: true, maxLength: 500});
+
+  const campaignRef = db.collection("campaigns").doc(campaignId);
+  const threadId = buildCampaignDiscussionThreadId(campaignId);
+  const threadRef = db.collection("threads").doc(threadId);
+  const memberRef = threadRef.collection("members").doc(uid);
+  const messageRef = threadRef.collection("messages").doc();
+
+  await db.runTransaction(async (transaction) => {
+    const [campaignDoc, threadDoc, memberDoc] = await Promise.all([
+      transaction.get(campaignRef),
+      transaction.get(threadRef),
+      transaction.get(memberRef),
+    ]);
+
+    if (!campaignDoc.exists) {
+      throw new HttpsError("not-found", "Campaign not found.");
+    }
+
+    const campaignData = campaignDoc.data() || {};
+    const campaignMovies = coerceCampaignMoviesFromData(campaignId, campaignData);
+    if (campaignMovieId && !campaignMovies.some((movie) => movie.campaignMovieId === campaignMovieId)) {
+      throw new HttpsError("invalid-argument", "Invalid campaignMovieId.");
+    }
+
+    const now = admin.firestore.FieldValue.serverTimestamp();
+    const nowMillis = Date.now();
+    const displayName = sanitizeTextField(
+      request.auth?.token?.name || request.auth?.token?.email || "",
+      {required: false, maxLength: 40},
+    ) || "Member";
+
+    if (memberDoc.exists) {
+      const memberData = memberDoc.data() || {};
+      const lastSentAt = memberData.lastSentAt;
+      if (
+        lastSentAt &&
+        typeof lastSentAt.toMillis === "function" &&
+        nowMillis - lastSentAt.toMillis() < 1200
+      ) {
+        throw new HttpsError("resource-exhausted", "You are sending messages too quickly.");
+      }
+    }
+
+    if (!threadDoc.exists) {
+      transaction.set(threadRef, {
+        threadId,
+        threadType: "campaign-discussion",
+        campaignId,
+        campaignTitle: String(campaignData.title || "Untitled campaign").slice(0, 200),
+        codeRequired: false,
+        messageCount: 0,
+        createdAt: now,
+        updatedAt: now,
+        createdBy: uid,
+      });
+    }
+
+    transaction.set(messageRef, {
+      threadId,
+      threadType: "campaign-discussion",
+      campaignId,
+      campaignMovieId: campaignMovieId || null,
+      participantId: uid,
+      userId: uid,
+      userEmail: authEmail || null,
+      displayName,
+      text,
+      body: text,
+      createdAt: now,
+      createdAtClient: nowMillis,
+      updatedAt: now,
+    });
+
+    const existingCount = threadDoc.exists ? Number((threadDoc.data() || {}).messageCount || 0) : 0;
+    transaction.set(threadRef, {
+      updatedAt: now,
+      lastMessageAt: now,
+      lastMessagePreview: text.slice(0, 120),
+      messageCount: existingCount + 1,
+    }, {merge: true});
+
+    transaction.set(memberRef, {
+      participantId: uid,
+      userId: uid,
+      email: authEmail || null,
+      displayName,
+      joinedAt: memberDoc.exists ? (memberDoc.data() || {}).joinedAt || now : now,
+      updatedAt: now,
+      lastSentAt: now,
+      verifiedByAuth: true,
+    }, {merge: true});
+  });
+
+  return {
+    ok: true,
+    campaignId,
+    threadId,
+    commentId: messageRef.id,
   };
 });
 
