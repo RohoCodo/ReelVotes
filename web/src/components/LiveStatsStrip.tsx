@@ -1,10 +1,26 @@
 import { useEffect, useRef, useState } from "react";
 import { collection, getDocs } from "firebase/firestore/lite";
 import { dbLite as db } from "../lib/firebase-lite";
+import { REELVOTES_EVENTS } from "../lib/events-config";
 
 interface Stat {
   label: string;
   value: number;
+}
+
+async function withTimeout<T>(promise: Promise<T>, timeoutMs: number, fallback: T): Promise<T> {
+  return await new Promise<T>((resolve) => {
+    const timer = window.setTimeout(() => resolve(fallback), timeoutMs);
+    promise
+      .then((value) => {
+        window.clearTimeout(timer);
+        resolve(value);
+      })
+      .catch(() => {
+        window.clearTimeout(timer);
+        resolve(fallback);
+      });
+  });
 }
 
 function useCountUp(target: number, active: boolean, durationMs = 900) {
@@ -51,23 +67,33 @@ export default function LiveStatsStrip() {
     let cancelled = false;
 
     (async () => {
+      const fallbackScreeningsHosted = REELVOTES_EVENTS.filter((event) => event.voteStatus === "ended").length;
       try {
-        // A plain getDocs + counting client-side, rather than
-        // getCountFromServer's aggregate-query API — that API isn't
-        // available in firebase/firestore/lite, and at this scale (a
-        // handful of events for one theater) fetching them all is cheap
-        // and keeps this component on the much lighter lite SDK.
-        const snapshot = await getDocs(collection(db, "events"));
-        const votesHeldCount = snapshot.docs.filter((docSnap) => docSnap.data().voteStatus === "ended").length;
+        const timeoutMs = 8000;
+        const [eventsSnap] = await Promise.all([
+          withTimeout(getDocs(collection(db, "events")), timeoutMs, null),
+        ]);
+
+        const votesHeldCount =
+          eventsSnap
+            ? eventsSnap.docs.filter((docSnap) => docSnap.data().voteStatus === "ended").length
+            : fallbackScreeningsHosted;
+        const screeningsHosted = votesHeldCount;
+        const campaignCount = votesHeldCount;
 
         if (cancelled) return;
         setStats([
-          { label: "Screenings hosted", value: votesHeldCount },
-          { label: "Community votes held", value: votesHeldCount },
+          { label: "Campaigns", value: campaignCount },
+          { label: "Screenings hosted", value: screeningsHosted },
         ]);
       } catch (error) {
         console.error("[LiveStatsStrip] Could not load stats:", error);
-        if (!cancelled) setStats([]);
+        if (!cancelled) {
+          setStats([
+            { label: "Campaigns", value: fallbackScreeningsHosted },
+            { label: "Screenings hosted", value: fallbackScreeningsHosted },
+          ]);
+        }
       }
     })();
 
@@ -91,8 +117,6 @@ export default function LiveStatsStrip() {
     observer.observe(el);
     return () => observer.disconnect();
   }, []);
-
-  if (stats !== null && stats.length === 0) return null;
 
   return (
     <div className="flex flex-col items-center gap-4">

@@ -381,10 +381,12 @@ function normalizeLegacyChoices(raw: unknown): CampaignMovieChoice[] {
             ? "unavailable"
             : "not-checked";
       if (!title || ![1, 2, 3].includes(originalPosition)) return null;
+      const movieId = toComparableMovieTitle(title).replace(/\s+/g, "_");
+      const baseId = movieId || `choice_${originalPosition}`;
       return {
-        campaignMovieId: `${toComparableMovieTitle(title).replace(/\s+/g, "_") || `choice_${idx + 1}`}_${originalPosition}`,
+        campaignMovieId: `cm_${originalPosition}_${baseId}`,
         campaignId: "",
-        movieId: toComparableMovieTitle(title).replace(/\s+/g, "_"),
+        movieId,
         title,
         voteCount: Math.max(0, Number(row.voteCount ?? row.vote_count ?? 0)),
         originalPosition: originalPosition as 1 | 2 | 3,

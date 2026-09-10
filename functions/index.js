@@ -50,6 +50,7 @@ const EMAIL_OPTIONAL_EVENT_IDS = new Set([]);
 const PRIVILEGED_ADMIN_EMAIL = "rt332@cornell.edu";
 const ADMIN_EMAILS = new Set([
   "rt332@cornell.edu",
+  "rohan@reelvotes.com",
   "moses@thenewparkway.com",
   "programming@thenewparkway.com",
   "nikki@thenewparkwaytheater.com",
@@ -2993,6 +2994,27 @@ function coerceCampaignMoviesFromData(campaignId, campaignData) {
   return parsed.sort((a, b) => a.originalPosition - b.originalPosition);
 }
 
+function resolveCampaignMovieIndex(campaignMovies, requestedCampaignMovieId) {
+  const requestedId = sanitizeTextField(requestedCampaignMovieId, {required: true, maxLength: 120});
+  const directIndex = campaignMovies.findIndex((movie) => movie.campaignMovieId === requestedId);
+  if (directIndex >= 0) return directIndex;
+
+  // Backward compatibility: older clients sent ids like "movie_title_2".
+  const legacySuffixMatch = requestedId.match(/_(\d)$/);
+  const legacyPosition = legacySuffixMatch ? Number(legacySuffixMatch[1]) : null;
+  const legacyMoviePart = legacySuffixMatch ? requestedId.slice(0, requestedId.lastIndexOf("_")) : "";
+  const legacyMovieCompact = normalizeMovieTitleCompact(legacyMoviePart.replace(/_/g, " "));
+
+  return campaignMovies.findIndex((movie) => {
+    if (movie.movieId === requestedId) return true;
+    if (legacyPosition && Number(movie.originalPosition) !== legacyPosition) return false;
+    if (!legacyMovieCompact) return false;
+    const movieIdCompact = normalizeMovieTitleCompact(String(movie.movieId || "").replace(/_/g, " "));
+    const titleCompact = normalizeMovieTitleCompact(movie.title || "");
+    return movieIdCompact === legacyMovieCompact || titleCompact === legacyMovieCompact;
+  });
+}
+
 function toLegacyChoiceFromCampaignMovie(campaignMovie) {
   return {
     rank: campaignMovie.originalPosition,
@@ -3043,6 +3065,34 @@ function sanitizeDeadTimeSlotId(value) {
     throw new HttpsError("invalid-argument", "A dead-time slot selection is required.");
   }
   return slotId;
+}
+
+function sanitizeCampaignDate(value, fieldName) {
+  const normalized = String(value || "").trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(normalized)) {
+    throw new HttpsError("invalid-argument", `${fieldName} must be YYYY-MM-DD.`);
+  }
+  const parsed = new Date(`${normalized}T00:00:00Z`);
+  if (Number.isNaN(parsed.getTime())) {
+    throw new HttpsError("invalid-argument", `${fieldName} is invalid.`);
+  }
+  return normalized;
+}
+
+function assertMinimumTwoWeekDateRange(startDate, endDate) {
+  const startMs = Date.parse(`${startDate}T00:00:00Z`);
+  const endMs = Date.parse(`${endDate}T00:00:00Z`);
+  if (!Number.isFinite(startMs) || !Number.isFinite(endMs) || endMs < startMs) {
+    throw new HttpsError("invalid-argument", "Campaign date range is invalid.");
+  }
+  const dayCount = Math.floor((endMs - startMs) / 86400000) + 1;
+  if (dayCount < 14) {
+    throw new HttpsError("invalid-argument", "Campaign date range must be at least 2 weeks.");
+  }
+}
+
+function buildDateRangeWindowLabel(startDate, endDate) {
+  return `${startDate} - ${endDate}`;
 }
 
 function normalizeDeadTimeLabel({theaterName, dayOfWeek, timeLabel, screeningDateTime}) {
@@ -3326,42 +3376,90 @@ exports.createCampaign = onCall(async (request) => {
 
   const title = sanitizeTextField(request.data?.title, {required: true, maxLength: 160});
   const market = sanitizeTextField(request.data?.market, {required: true, maxLength: 120});
-  const deadTimeSlotId = sanitizeDeadTimeSlotId(request.data?.deadTimeSlotId);
+  const deadTimeSlotIdRaw = sanitizeTextField(request.data?.deadTimeSlotId, {required: false, maxLength: 160});
   const requestedBackingThreshold = sanitizeBackingThreshold(request.data?.backingThreshold);
-  const interestedThreshold = backingThreshold * 2;
-  const licensingTriggerPercentage = 70;
-  const licensingTriggerBacking = Math.ceil((backingThreshold * licensingTriggerPercentage) / 100);
-  const licensingTriggerInterested = Math.ceil((interestedThreshold * licensingTriggerPercentage) / 100);
 
   const choices = sanitizeCampaignChoices(request.data?.choices);
   const preferredTheatersInput = sanitizePreferredTheaters(request.data?.preferredTheaters);
   const replacedCampaignId = sanitizeTextField(request.data?.replacedCampaignId, {required: false, maxLength: 120});
   const notifyPreviousSupporters = request.data?.notifyPreviousSupporters !== false;
 
-  const availableDeadTimeSlots = await listPublicDeadTimeSlots({
-    marketQuery: market,
-    limit: 600,
-  });
-  const selectedDeadTimeSlot = availableDeadTimeSlots.find((slot) => slot.slotId === deadTimeSlotId);
-  if (!selectedDeadTimeSlot) {
-    throw new HttpsError(
-      "invalid-argument",
-      "Choose a valid day/time dead-time slot from theaters in your selected local market.",
-    );
+  let dateRangeStart = "";
+  let dateRangeEnd = "";
+  let screeningDateTime = null;
+  let deadTimeSlotPayload = null;
+  let preferredTheaters = preferredTheatersInput;
+  let backingThreshold = requestedBackingThreshold;
+
+  if (deadTimeSlotIdRaw) {
+    const deadTimeSlotId = sanitizeDeadTimeSlotId(deadTimeSlotIdRaw);
+    const availableDeadTimeSlots = await listPublicDeadTimeSlots({
+      marketQuery: market,
+      limit: 600,
+    });
+    const selectedDeadTimeSlot = availableDeadTimeSlots.find((slot) => slot.slotId === deadTimeSlotId);
+    if (!selectedDeadTimeSlot) {
+      throw new HttpsError(
+        "invalid-argument",
+        "Choose a valid day/time dead-time slot from theaters in your selected local market.",
+      );
+    }
+
+    screeningDateTime = sanitizeScreeningDateTime(selectedDeadTimeSlot.screeningDateTime);
+    backingThreshold = deriveBackingThresholdFromEconomics(selectedDeadTimeSlot) || requestedBackingThreshold;
+
+    const [datePart] = String(screeningDateTime).split("T");
+    dateRangeStart = datePart;
+    dateRangeEnd = datePart;
+
+    preferredTheaters = sanitizePreferredTheaters([
+      selectedDeadTimeSlot.theaterName,
+      ...preferredTheatersInput,
+    ]);
+
+    deadTimeSlotPayload = {
+      slotId: selectedDeadTimeSlot.slotId,
+      theaterKey: selectedDeadTimeSlot.theaterKey || null,
+      theaterName: selectedDeadTimeSlot.theaterName || null,
+      market: selectedDeadTimeSlot.market || null,
+      dayOfWeek: selectedDeadTimeSlot.dayOfWeek || null,
+      timeLabel: selectedDeadTimeSlot.timeLabel || null,
+      screeningDateTime,
+      label: selectedDeadTimeSlot.label || null,
+      ticketPrice: sanitizeCurrencyField(selectedDeadTimeSlot.ticketPrice),
+      licensingFee: sanitizeCurrencyField(selectedDeadTimeSlot.licensingFee),
+      dateRangeStart,
+      dateRangeEnd,
+    };
+  } else {
+    dateRangeStart = sanitizeCampaignDate(request.data?.dateRangeStart, "dateRangeStart");
+    dateRangeEnd = sanitizeCampaignDate(request.data?.dateRangeEnd, "dateRangeEnd");
+    assertMinimumTwoWeekDateRange(dateRangeStart, dateRangeEnd);
+
+    deadTimeSlotPayload = {
+      slotId: null,
+      theaterKey: null,
+      theaterName: null,
+      market,
+      dayOfWeek: null,
+      timeLabel: null,
+      screeningDateTime: null,
+      label: null,
+      ticketPrice: null,
+      licensingFee: null,
+      dateRangeStart,
+      dateRangeEnd,
+    };
   }
 
-  const screeningDateTime = sanitizeScreeningDateTime(selectedDeadTimeSlot.screeningDateTime);
-  const backingThreshold = deriveBackingThresholdFromEconomics(selectedDeadTimeSlot) || requestedBackingThreshold;
-
   const dateWindowLabel = sanitizeTextField(
-    request.data?.dateWindowLabel || selectedDeadTimeSlot.label,
+    request.data?.dateWindowLabel || buildDateRangeWindowLabel(dateRangeStart, dateRangeEnd),
     {required: true, maxLength: 120},
   );
-
-  const preferredTheaters = sanitizePreferredTheaters([
-    selectedDeadTimeSlot.theaterName,
-    ...preferredTheatersInput,
-  ]);
+  const interestedThreshold = backingThreshold * 2;
+  const licensingTriggerPercentage = 70;
+  const licensingTriggerBacking = Math.ceil((backingThreshold * licensingTriggerPercentage) / 100);
+  const licensingTriggerInterested = Math.ceil((interestedThreshold * licensingTriggerPercentage) / 100);
 
   const slugBase = buildCampaignSlug(title);
   const campaignRef = db.collection("campaigns").doc();
@@ -3390,19 +3488,13 @@ exports.createCampaign = onCall(async (request) => {
     market,
     dateWindowLabel,
     preferredTheaters,
-    screeningDateTime,
-    deadTimeSlot: {
-      slotId: selectedDeadTimeSlot.slotId,
-      theaterKey: selectedDeadTimeSlot.theaterKey || null,
-      theaterName: selectedDeadTimeSlot.theaterName || null,
-      market: selectedDeadTimeSlot.market || null,
-      dayOfWeek: selectedDeadTimeSlot.dayOfWeek || null,
-      timeLabel: selectedDeadTimeSlot.timeLabel || null,
-      screeningDateTime,
-      label: selectedDeadTimeSlot.label || null,
-      ticketPrice: sanitizeCurrencyField(selectedDeadTimeSlot.ticketPrice),
-      licensingFee: sanitizeCurrencyField(selectedDeadTimeSlot.licensingFee),
+    screeningDateTime: screeningDateTime || null,
+    campaignWindow: {
+      startDate: dateRangeStart,
+      endDate: dateRangeEnd,
+      requiredDays: deadTimeSlotIdRaw ? 1 : 14,
     },
+    deadTimeSlot: deadTimeSlotPayload,
     status: "active",
     selectedMovieTitle: null,
     choices,
@@ -3619,6 +3711,7 @@ exports.publicListCampaigns = onCall(async (request) => {
       market: data.market || "",
       dateWindowLabel: data.dateWindowLabel || "",
       screeningDateTime: data.screeningDateTime || "",
+      campaignWindow: data.campaignWindow || null,
       deadTimeSlot: data.deadTimeSlot || null,
       status: data.status || "active",
       selectedMovieTitle: data.selectedMovieTitle || rankedMovies[0]?.title || null,
@@ -3740,35 +3833,55 @@ exports.upsertCampaignMovieVote = onCall(async (request) => {
     }
 
     const campaignMovies = coerceCampaignMoviesFromData(campaignId, campaignData);
-    const targetIndex = campaignMovies.findIndex((movie) => movie.campaignMovieId === campaignMovieId);
+    const targetIndex = resolveCampaignMovieIndex(campaignMovies, campaignMovieId);
     if (targetIndex < 0) {
       throw new HttpsError("invalid-argument", "Invalid campaign movie id.");
     }
+    const canonicalCampaignMovieId = campaignMovies[targetIndex].campaignMovieId;
 
     const now = admin.firestore.FieldValue.serverTimestamp();
     const nowIso = new Date().toISOString();
     const existingVote = voteSnap.exists ? voteSnap.data() || {} : {};
     const previousCampaignMovieId = sanitizeTextField(existingVote.campaignMovieId, {required: false, maxLength: 120});
+    const previousIndex = previousCampaignMovieId
+      ? resolveCampaignMovieIndex(campaignMovies, previousCampaignMovieId)
+      : -1;
+    const previousCanonicalCampaignMovieId = previousIndex >= 0
+      ? campaignMovies[previousIndex].campaignMovieId
+      : (previousCampaignMovieId || null);
 
-    if (previousCampaignMovieId !== campaignMovieId) {
-      if (previousCampaignMovieId) {
-        const previousIndex = campaignMovies.findIndex((movie) => movie.campaignMovieId === previousCampaignMovieId);
-        if (previousIndex >= 0) {
-          campaignMovies[previousIndex] = {
-            ...campaignMovies[previousIndex],
-            voteCount: Math.max(0, toNonNegativeInt(campaignMovies[previousIndex].voteCount, 0) - 1),
-            updatedAt: nowIso,
-          };
-          tx.set(
-            campaignRef.collection("campaign_movies").doc(campaignMovies[previousIndex].campaignMovieId),
-            {
-              voteCount: campaignMovies[previousIndex].voteCount,
-              updatedAt: now,
-              updated_at: now,
-            },
-            {merge: true},
-          );
-        }
+    if (previousCanonicalCampaignMovieId === canonicalCampaignMovieId) {
+      campaignMovies[targetIndex] = {
+        ...campaignMovies[targetIndex],
+        voteCount: Math.max(0, toNonNegativeInt(campaignMovies[targetIndex].voteCount, 0) - 1),
+        updatedAt: nowIso,
+      };
+      tx.set(
+        campaignRef.collection("campaign_movies").doc(campaignMovies[targetIndex].campaignMovieId),
+        {
+          voteCount: campaignMovies[targetIndex].voteCount,
+          updatedAt: now,
+          updated_at: now,
+        },
+        {merge: true},
+      );
+      tx.delete(voteRef);
+    } else {
+      if (previousIndex >= 0) {
+        campaignMovies[previousIndex] = {
+          ...campaignMovies[previousIndex],
+          voteCount: Math.max(0, toNonNegativeInt(campaignMovies[previousIndex].voteCount, 0) - 1),
+          updatedAt: nowIso,
+        };
+        tx.set(
+          campaignRef.collection("campaign_movies").doc(campaignMovies[previousIndex].campaignMovieId),
+          {
+            voteCount: campaignMovies[previousIndex].voteCount,
+            updatedAt: now,
+            updated_at: now,
+          },
+          {merge: true},
+        );
       }
 
       campaignMovies[targetIndex] = {
@@ -3797,21 +3910,23 @@ exports.upsertCampaignMovieVote = onCall(async (request) => {
       updated_at: now,
     }, {merge: true});
 
-    const createdAt = voteSnap.exists ? (voteSnap.data() || {}).createdAt || now : now;
-    tx.set(voteRef, {
-      voteId: voteRef.id,
-      userId: uid,
-      userEmail: email || null,
-      campaignId,
-      campaignMovieId,
-      createdAt,
-      updatedAt: now,
-    }, {merge: true});
+    if (previousCanonicalCampaignMovieId !== canonicalCampaignMovieId) {
+      const createdAt = voteSnap.exists ? (voteSnap.data() || {}).createdAt || now : now;
+      tx.set(voteRef, {
+        voteId: voteRef.id,
+        userId: uid,
+        userEmail: email || null,
+        campaignId,
+        campaignMovieId: canonicalCampaignMovieId,
+        createdAt,
+        updatedAt: now,
+      }, {merge: true});
+    }
 
     return {
       campaignId,
-      campaignMovieId,
-      previousCampaignMovieId: previousCampaignMovieId || null,
+      campaignMovieId: previousCanonicalCampaignMovieId === canonicalCampaignMovieId ? null : canonicalCampaignMovieId,
+      previousCampaignMovieId: previousCanonicalCampaignMovieId,
       selectedMovieTitle: leaderTitle,
       campaignMovies,
     };

@@ -8,10 +8,12 @@ import { getCampaignSummaries, rankCampaignChoices, type CampaignSummary } from 
 import { adminSetCampaignStatus, upsertCampaignMovieVote, upsertCampaignSupport } from "../lib/firebase";
 import { auth, isPopupSignInCancellation, onAuthStateChanged, signInWithGoogle } from "../lib/firebase-auth";
 import { dbLite } from "../lib/firebase-lite";
+import { getMovieMetadataByTitle } from "../lib/tmdb";
 import CampaignDiscussionInline from "./CampaignDiscussionInline";
 
 const ADMIN_EMAILS = new Set([
   "rt332@cornell.edu",
+  "rohan@reelvotes.com",
   "moses@thenewparkway.com",
   "programming@thenewparkway.com",
   "nikki@thenewparkwaytheater.com",
@@ -275,16 +277,64 @@ export default function CampaignExplorer({
     }
   }
 
+  async function openTrailerSearch(movieTitle: string) {
+    const title = String(movieTitle || "").trim();
+    if (!title) return;
+
+    try {
+      const metadata = await getMovieMetadataByTitle(title);
+      const trailerUrl = String(metadata?.trailerUrl || "").trim();
+
+      if (trailerUrl.includes("youtube.com/watch")) {
+        const parsed = new URL(trailerUrl);
+        parsed.searchParams.set("autoplay", "1");
+        parsed.searchParams.set("rel", "0");
+        window.open(parsed.toString(), "_blank", "noopener,noreferrer");
+        return;
+      }
+
+      // Bias fallback search toward highly viewed uploads.
+      const query = `${title} official trailer most viewed`;
+      const url = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}&sp=CAMSAhAB`;
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch {
+      const query = `${title} official trailer most viewed`;
+      const url = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}&sp=CAMSAhAB`;
+      window.open(url, "_blank", "noopener,noreferrer");
+    }
+  }
+
   useEffect(() => {
     let cancelled = false;
+    const timeoutMs = 8000;
+    const timeoutHandle = window.setTimeout(() => {
+      if (!cancelled) {
+        console.warn("[CampaignExplorer] Campaign load timed out; showing empty state.");
+        setCampaigns([]);
+      }
+    }, timeoutMs);
+
     getCampaignSummaries({
       includeHistoricalVotes: mode === "historical-votes",
       historicalVotesOnly: mode === "historical-votes",
-    }).then((rows) => {
-      if (!cancelled) setCampaigns(rows);
-    });
+    })
+      .then((rows) => {
+        if (!cancelled) {
+          window.clearTimeout(timeoutHandle);
+          setCampaigns(rows);
+        }
+      })
+      .catch((error) => {
+        console.error("[CampaignExplorer] Could not load campaigns:", error);
+        if (!cancelled) {
+          window.clearTimeout(timeoutHandle);
+          setCampaigns([]);
+        }
+      });
+
     return () => {
       cancelled = true;
+      window.clearTimeout(timeoutHandle);
     };
   }, [mode]);
 
@@ -502,6 +552,7 @@ export default function CampaignExplorer({
 
   async function handleVote(campaign: CampaignSummary, campaignMovieId: string) {
     setActionError("");
+    const previousVotedCampaignMovieId = campaign.viewerMovieVoteCampaignMovieId;
 
     if (!authUser) {
       try {
@@ -516,38 +567,83 @@ export default function CampaignExplorer({
     }
 
     setPendingVoteById((prev) => ({ ...prev, [campaign.id]: true }));
+
+    // Optimistic UI switch so the selected vote updates immediately.
+    setCampaigns((prev) => {
+      if (!prev) return prev;
+      return prev.map((row) =>
+        row.id === campaign.id
+          ? {
+              ...row,
+              viewerMovieVoteCampaignMovieId: campaignMovieId,
+            }
+          : row,
+      );
+    });
+
     try {
       const response: any = await upsertCampaignMovieVote({ campaignId: campaign.id, campaignMovieId });
       const returnedMovies = Array.isArray(response?.data?.campaignMovies) ? response.data.campaignMovies : null;
+      const responseData = response?.data || {};
+      const canonicalCampaignMovieId = Object.prototype.hasOwnProperty.call(responseData, "campaignMovieId")
+        ? (responseData.campaignMovieId ? String(responseData.campaignMovieId) : null)
+        : campaignMovieId;
       const selectedMovieTitle = response?.data?.selectedMovieTitle ? String(response.data.selectedMovieTitle) : null;
-      const chosenChoice = campaign.choices.find((choice) => choice.campaignMovieId === campaignMovieId);
-      const reserveTitle = selectedMovieTitle || chosenChoice?.title || "this movie";
 
+      setCampaigns((prev) => {
+        if (!prev) return prev;
+        return prev.map((row) =>
+          {
+            if (row.id !== campaign.id) return row;
+
+            let nextChoices = row.choices;
+            if (returnedMovies) {
+              const byId = new Map(
+                returnedMovies
+                  .map((movie: any) => [String(movie?.campaignMovieId || ""), movie] as const)
+                  .filter(([id]) => Boolean(id)),
+              );
+              const byPosition = new Map(
+                returnedMovies
+                  .map((movie: any) => [Number(movie?.originalPosition || 0), movie] as const)
+                  .filter(([position]) => position > 0),
+              );
+
+              nextChoices = row.choices.map((choice) => {
+                const matched = byId.get(choice.campaignMovieId) || byPosition.get(choice.originalPosition) || null;
+                if (!matched) return choice;
+                return {
+                  ...choice,
+                  ...matched,
+                  // Keep any existing poster if backend payload omits it.
+                  posterUrl: choice.posterUrl || matched.posterUrl || null,
+                };
+              });
+            }
+
+            return {
+              ...row,
+              choices: nextChoices,
+              selectedMovieTitle,
+              viewerMovieVoteCampaignMovieId: canonicalCampaignMovieId,
+            };
+          },
+        );
+      });
+    } catch (error) {
+      setActionError(String((error as any)?.message || "Could not submit vote right now."));
+      // Roll back optimistic update on failure.
       setCampaigns((prev) => {
         if (!prev) return prev;
         return prev.map((row) =>
           row.id === campaign.id
             ? {
                 ...row,
-                choices: returnedMovies || row.choices,
-                selectedMovieTitle,
-                viewerMovieVoteCampaignMovieId: campaignMovieId,
+                viewerMovieVoteCampaignMovieId: previousVotedCampaignMovieId || null,
               }
             : row,
         );
       });
-
-      // A movie vote implies "I'd watch this" interest.
-      await handleSupport(campaign, "interested");
-
-      const wantsReservation = window.confirm(
-        `Reserve a ticket in advance for the current winning movie (${reserveTitle})?`,
-      );
-      if (wantsReservation) {
-        await handleSupport(campaign, "backing");
-      }
-    } catch (error) {
-      setActionError(String((error as any)?.message || "Could not submit vote right now."));
     } finally {
       setPendingVoteById((prev) => ({ ...prev, [campaign.id]: false }));
     }
@@ -773,18 +869,31 @@ export default function CampaignExplorer({
                               </div>
 
                               {canVote && (
-                                <button
-                                  type="button"
-                                  disabled={votePending || isVoted || !canVote}
-                                  onClick={() => handleVote(campaign, choice.campaignMovieId)}
-                                  className={`mt-2.5 w-full rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
-                                    isVoted
-                                      ? "border-emerald/60 bg-emerald/10 text-emerald"
-                                      : "border-line bg-paper text-ink-soft hover:border-marquee hover:text-marquee"
-                                  }`}
-                                >
-                                  {isVoted ? "Voted ✓" : votePending ? "Saving…" : "Vote"}
-                                </button>
+                                <div className="mt-2.5 grid grid-cols-[1fr_auto] gap-2">
+                                  <button
+                                    type="button"
+                                    disabled={votePending || !canVote}
+                                    onClick={() => handleVote(campaign, choice.campaignMovieId)}
+                                    className={`w-full rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                                      isVoted
+                                        ? "border-emerald/60 bg-emerald/10 text-emerald"
+                                        : "border-line bg-paper text-ink-soft hover:border-marquee hover:text-marquee"
+                                    }`}
+                                  >
+                                    {isVoted ? "Voted ✓" : votePending ? "Saving…" : "Vote"}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => openTrailerSearch(choice.title)}
+                                    aria-label={`Watch trailer for ${choice.title}`}
+                                    className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-line text-ink-soft transition-colors hover:border-marquee hover:text-marquee"
+                                  >
+                                    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8">
+                                      <rect x="3" y="5" width="18" height="14" rx="3" />
+                                      <path d="M10 9v6l5-3-5-3z" fill="currentColor" stroke="none" />
+                                    </svg>
+                                  </button>
+                                </div>
                               )}
                             </div>
                           </div>
@@ -840,18 +949,31 @@ export default function CampaignExplorer({
                                 {choice.voteCount} votes
                               </span>
                               {canVote && (
-                                <button
-                                  type="button"
-                                  disabled={votePending || isVoted || !canVote}
-                                  onClick={() => handleVote(campaign, choice.campaignMovieId)}
-                                  className={`absolute right-1.5 bottom-1.5 rounded-full border px-2 py-1 text-[10px] font-semibold transition-colors ${
-                                    isVoted
-                                      ? "border-emerald/60 bg-emerald/90 text-white"
-                                      : "border-white/70 bg-black/55 text-white hover:border-marquee hover:text-marquee"
-                                  }`}
-                                >
-                                  {isVoted ? "Voted ✓" : votePending ? "Saving…" : "Vote"}
-                                </button>
+                                <div className="absolute right-1.5 bottom-1.5 flex items-center gap-1.5">
+                                  <button
+                                    type="button"
+                                    onClick={() => openTrailerSearch(choice.title)}
+                                    aria-label={`Watch trailer for ${choice.title}`}
+                                    className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/70 bg-black/55 text-white transition-colors hover:border-marquee hover:text-marquee"
+                                  >
+                                    <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.8">
+                                      <rect x="3" y="5" width="18" height="14" rx="3" />
+                                      <path d="M10 9v6l5-3-5-3z" fill="currentColor" stroke="none" />
+                                    </svg>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    disabled={votePending || !canVote}
+                                    onClick={() => handleVote(campaign, choice.campaignMovieId)}
+                                    className={`rounded-full border px-2 py-1 text-[10px] font-semibold transition-colors ${
+                                      isVoted
+                                        ? "border-emerald/60 bg-emerald/90 text-white"
+                                        : "border-white/70 bg-black/55 text-white hover:border-marquee hover:text-marquee"
+                                    }`}
+                                  >
+                                    {isVoted ? "Voted ✓" : votePending ? "Saving…" : "Vote"}
+                                  </button>
+                                </div>
                               )}
                             </div>
                           </div>
@@ -867,10 +989,14 @@ export default function CampaignExplorer({
                           <button
                             type="button"
                             disabled={supportPending || isHistoricalVoteCampaign || readOnly}
-                            onClick={() => handleSupport(campaign, "backing")}
+                            onClick={() => handleSupport(campaign, campaign.viewerSupport === "backing" ? "none" : "backing")}
                             className={`rounded-full border px-2.5 py-1.5 text-[10px] font-semibold whitespace-nowrap transition-colors ${campaign.viewerSupport === "backing" ? "border-rose bg-rose/10 text-rose" : "border-line text-ink-soft hover:border-rose hover:text-rose"}`}
                           >
-                            {supportPending && campaign.viewerSupport !== "backing" ? "Saving…" : `🎟️ Reserve ${reservationCount}/${reservationThreshold}`}
+                            {supportPending
+                              ? "Saving…"
+                              : campaign.viewerSupport === "backing"
+                                ? `🎟️ Unreserve ${reservationCount}/${reservationThreshold}`
+                                : `🎟️ Reserve ${reservationCount}/${reservationThreshold}`}
                           </button>
                         )}
                         {showVotesChip && (
@@ -1070,18 +1196,31 @@ export default function CampaignExplorer({
                             <p className="line-clamp-2 text-[11px] font-semibold leading-tight text-ink">{choice.title}</p>
                             <p className="text-[11px] text-ink-soft">{choice.voteCount} votes</p>
                             {canVoteAtAll && (
-                              <button
-                                type="button"
-                                disabled={votePending || isVoted || !canVoteNow}
-                                onClick={() => handleVote(campaign, choice.campaignMovieId)}
-                                className={`mt-1 w-full rounded-full border px-2 py-1 text-[10px] font-semibold transition-colors ${
-                                  isVoted
-                                    ? "border-emerald/50 bg-emerald/10 text-emerald"
-                                    : "border-line text-ink-soft hover:border-marquee hover:text-marquee"
-                                }`}
-                              >
-                                {isVoted ? "Voted ✓" : votePending ? "Saving…" : "Vote"}
-                              </button>
+                              <div className="mt-1 grid grid-cols-[1fr_auto] gap-1.5">
+                                <button
+                                  type="button"
+                                  disabled={votePending || !canVoteNow}
+                                  onClick={() => handleVote(campaign, choice.campaignMovieId)}
+                                  className={`w-full rounded-full border px-2 py-1 text-[10px] font-semibold transition-colors ${
+                                    isVoted
+                                      ? "border-emerald/50 bg-emerald/10 text-emerald"
+                                      : "border-line text-ink-soft hover:border-marquee hover:text-marquee"
+                                  }`}
+                                >
+                                  {isVoted ? "Voted ✓" : votePending ? "Saving…" : "Vote"}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => openTrailerSearch(choice.title)}
+                                  aria-label={`Watch trailer for ${choice.title}`}
+                                  className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-line text-ink-soft transition-colors hover:border-marquee hover:text-marquee"
+                                >
+                                  <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.8">
+                                    <rect x="3" y="5" width="18" height="14" rx="3" />
+                                    <path d="M10 9v6l5-3-5-3z" fill="currentColor" stroke="none" />
+                                  </svg>
+                                </button>
+                              </div>
                             )}
                           </div>
                         </div>
@@ -1124,10 +1263,14 @@ export default function CampaignExplorer({
                     <button
                       type="button"
                       disabled={supportPending}
-                      onClick={() => handleSupport(campaign, "backing")}
+                      onClick={() => handleSupport(campaign, campaign.viewerSupport === "backing" ? "none" : "backing")}
                       className={`rounded-full border px-3.5 py-2 text-xs font-semibold transition-colors ${campaign.viewerSupport === "backing" ? "border-rose bg-rose/10 text-rose" : "border-line text-ink-soft hover:border-rose hover:text-rose"}`}
                     >
-                      {supportPending && campaign.viewerSupport !== "backing" ? "Saving…" : `🎟️ Reserve ${reservationCount}/${reservationThreshold}`}
+                      {supportPending
+                        ? "Saving…"
+                        : campaign.viewerSupport === "backing"
+                          ? `🎟️ Unreserve ${reservationCount}/${reservationThreshold}`
+                          : `🎟️ Reserve ${reservationCount}/${reservationThreshold}`}
                     </button>
                     {campaign.viewerSupport && (
                       <button
