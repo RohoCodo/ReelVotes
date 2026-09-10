@@ -16,7 +16,6 @@ const currentPath = Astro.url.pathname.replace(/\/$/, "") || "/";
 const allMobileLinks = [
   ...primaryLinks,
   { href: "/chat", label: "Movie Chat" },
-  { href: "/create", label: "Sign In" },
   ...utilityLinks,
 ];
 ---
@@ -66,6 +65,17 @@ const allMobileLinks = [
         class="rounded-full border border-marquee bg-marquee px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-marquee-dark"
       >
         Sign In
+      </a>
+      <a
+        href="/account"
+        data-account-link="true"
+        class="hidden inline-flex h-10 w-10 items-center justify-center rounded-full border border-line bg-paper text-ink-soft transition-colors hover:border-marquee hover:text-marquee"
+        aria-label="Account"
+      >
+        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 21a8 8 0 0 0-16 0" />
+          <circle cx="12" cy="8" r="4" />
+        </svg>
       </a>
     </div>
 
@@ -125,11 +135,25 @@ const allMobileLinks = [
         {link.label}
       </a>
     ))}
+    <a
+      href="/create"
+      data-auth-button="true"
+      class="border-b border-line/60 py-3.5 text-base font-medium text-ink"
+    >
+      Sign In
+    </a>
+    <a
+      href="/account"
+      data-account-link="true"
+      class="hidden border-b border-line/60 py-3.5 text-base font-medium text-ink"
+    >
+      Account
+    </a>
   </div>
 </header>
 
 <script>
-  import { auth, onAuthStateChanged, signInWithGoogle, signOut } from "../lib/firebase-auth";
+  import { auth, onAuthStateChanged, signInWithGoogle } from "../lib/firebase-auth";
 
   // Re-bound on every astro:page-load (fires on first load AND after every
   // view-transition navigation) — with <ClientRouter /> swapping in fresh
@@ -163,12 +187,14 @@ const allMobileLinks = [
 
   function initNavAuthButtons() {
     const buttons = Array.from(document.querySelectorAll('a[data-auth-button="true"]'));
-    if (buttons.length === 0) return;
+    const accountLinks = Array.from(document.querySelectorAll('a[data-account-link="true"]'));
+    if (buttons.length === 0 && accountLinks.length === 0) return;
 
     const setSignedOut = () => {
       buttons.forEach((button) => {
         button.textContent = "Sign In";
         button.setAttribute("href", "#");
+        button.classList.remove("hidden");
         button.onclick = async (event) => {
           event.preventDefault();
           try {
@@ -178,20 +204,20 @@ const allMobileLinks = [
           }
         };
       });
+
+      accountLinks.forEach((link) => {
+        link.classList.add("hidden");
+      });
     };
 
     const setSignedIn = () => {
       buttons.forEach((button) => {
-        button.textContent = "Sign Out";
-        button.setAttribute("href", "#");
-        button.onclick = async (event) => {
-          event.preventDefault();
-          try {
-            await signOut(auth);
-          } catch (error) {
-            console.error("Sign out failed:", error);
-          }
-        };
+        button.classList.add("hidden");
+      });
+
+      accountLinks.forEach((link) => {
+        link.classList.remove("hidden");
+        link.setAttribute("href", "/account");
       });
     };
 

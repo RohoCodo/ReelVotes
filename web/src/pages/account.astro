@@ -1,0 +1,20 @@
+---
+import Layout from "../layouts/Layout.astro";
+import AccountPanel from "../components/AccountPanel";
+---
+
+<Layout title="Account" description="Manage your ReelVotes account and sign-out status.">
+  <section class="mx-auto max-w-2xl px-5 py-14 sm:px-8 sm:py-20">
+    <div class="text-center" data-reveal>
+      <p class="text-xs font-semibold uppercase tracking-wide text-marquee">Account</p>
+      <h1 class="mt-3 font-display text-4xl font-semibold text-ink sm:text-5xl">Your ReelVotes account</h1>
+      <p class="mt-4 text-base leading-relaxed text-ink-soft">
+        Manage your sign-in status and account access in one place.
+      </p>
+    </div>
+
+    <div class="mt-8" data-reveal>
+      <AccountPanel client:load />
+    </div>
+  </section>
+</Layout>

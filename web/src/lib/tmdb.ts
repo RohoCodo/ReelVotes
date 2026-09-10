@@ -111,6 +111,36 @@ async function searchTMDB(query: string): Promise<any[]> {
   }
 }
 
+async function searchTMDBPeopleKnownMovies(query: string, limit = 8): Promise<any[]> {
+  try {
+    const response = await fetch(
+      `${TMDB_BASE_URL}/search/person?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}`,
+    );
+    if (!response.ok) return [];
+    const data = await response.json();
+    const people = Array.isArray(data?.results) ? data.results : [];
+    const deduped = new Map<number, any>();
+
+    for (const person of people) {
+      const knownFor = Array.isArray(person?.known_for) ? person.known_for : [];
+      for (const item of knownFor) {
+        if (String(item?.media_type || "").toLowerCase() !== "movie") continue;
+        const movieId = Number(item?.id || 0);
+        const movieTitle = String(item?.title || "").trim();
+        if (!movieId || !movieTitle || deduped.has(movieId)) continue;
+        deduped.set(movieId, item);
+        if (deduped.size >= Math.max(1, limit * 3)) break;
+      }
+      if (deduped.size >= Math.max(1, limit * 3)) break;
+    }
+
+    return Array.from(deduped.values());
+  } catch (error) {
+    console.error("TMDB author search error:", error);
+    return [];
+  }
+}
+
 async function getMovieDetails(movieId: number): Promise<any | null> {
   try {
     const response = await fetch(
@@ -213,7 +243,10 @@ export async function searchMoviesByQuery(query: string, limit = 8): Promise<Mov
   const normalizedQuery = normalizeMovieTitleForSearch(query);
   if (normalizedQuery.length < 2) return [];
 
-  const rawResults = await searchTMDB(normalizedQuery);
+  const primaryResults = await searchTMDB(normalizedQuery);
+  const rawResults = primaryResults.length > 0
+    ? primaryResults
+    : await searchTMDBPeopleKnownMovies(normalizedQuery, limit);
   const deduped = new Map<string, MovieSearchResult>();
 
   rawResults.forEach((item: any) => {

@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useRef, useState, type UIEvent } from "react";
 import { createPortal } from "react-dom";
 import type { User } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore/lite";
 import { DayPicker, type DateRange } from "react-day-picker";
 import "react-day-picker/dist/style.css";
 import { getCampaignSummaries, rankCampaignChoices, type CampaignSummary } from "../lib/campaigns";
 import { adminSetCampaignStatus, upsertCampaignMovieVote, upsertCampaignSupport } from "../lib/firebase";
 import { auth, isPopupSignInCancellation, onAuthStateChanged, signInWithGoogle } from "../lib/firebase-auth";
+import { dbLite } from "../lib/firebase-lite";
 import CampaignDiscussionInline from "./CampaignDiscussionInline";
 
 const ADMIN_EMAILS = new Set([
@@ -160,6 +162,10 @@ function campaignDateKey(campaign: CampaignSummary): string {
       return `${y}-${m}-${d}`;
     }
   }
+  const windowStart = String(campaign.campaignWindow?.startDate || campaign.deadTimeSlot?.dateRangeStart || "").trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(windowStart)) {
+    return windowStart;
+  }
   return "";
 }
 
@@ -180,6 +186,16 @@ function formatRangeLabel(range: DateRange | undefined): string {
     return `${formatter.format(range.from)} - ${formatter.format(range.to)}`;
   }
   return "Dates";
+}
+
+function buildCampaignDiscussionThreadId(campaignId: string): string {
+  const normalized = String(campaignId || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .slice(0, 100);
+  return `campaign_${normalized || "campaign"}`;
 }
 
 export default function CampaignExplorer({
@@ -214,6 +230,7 @@ export default function CampaignExplorer({
   const [adminNoteById, setAdminNoteById] = useState<Record<string, string>>({});
   const [bookmarkedById, setBookmarkedById] = useState<Record<string, boolean>>({});
   const [discussionOpenById, setDiscussionOpenById] = useState<Record<string, boolean>>({});
+  const [historicalCommentCountById, setHistoricalCommentCountById] = useState<Record<string, number>>({});
   const [activeChoiceByCampaignId, setActiveChoiceByCampaignId] = useState<Record<string, number>>({});
   const [actionError, setActionError] = useState("");
   const [canRenderFloatingCreate, setCanRenderFloatingCreate] = useState(false);
@@ -275,6 +292,46 @@ export default function CampaignExplorer({
     const unsubscribe = onAuthStateChanged(auth, (user) => setAuthUser(user));
     return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (!campaigns) {
+      setHistoricalCommentCountById({});
+      return;
+    }
+
+    const historicalCampaigns = campaigns.filter((campaign) => campaign.origin === "historical-vote");
+    if (historicalCampaigns.length === 0) {
+      setHistoricalCommentCountById({});
+      return;
+    }
+
+    let cancelled = false;
+    Promise.all(
+      historicalCampaigns.map(async (campaign) => {
+        const threadId = buildCampaignDiscussionThreadId(campaign.id);
+        const threadSnap = await getDoc(doc(dbLite, "threads", threadId));
+        const threadData = threadSnap.exists() ? threadSnap.data() : null;
+        return [campaign.id, Math.max(0, Number(threadData?.messageCount || 0))] as const;
+      }),
+    )
+      .then((pairs) => {
+        if (cancelled) return;
+        const next: Record<string, number> = {};
+        pairs.forEach(([campaignId, count]) => {
+          next[campaignId] = count;
+        });
+        setHistoricalCommentCountById(next);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setHistoricalCommentCountById({});
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [campaigns]);
 
   useEffect(() => {
     setCanRenderFloatingCreate(true);
@@ -648,6 +705,8 @@ export default function CampaignExplorer({
               );
               const commentsAnchorId = `campaign-comments-${campaign.id}`;
               const isDiscussionOpen = Boolean(discussionOpenById[campaign.id]);
+              const historicalCommentCount = Math.max(0, Number(historicalCommentCountById[campaign.id] || 0));
+              const canOpenComments = !isHistoricalVoteCampaign || historicalCommentCount > 0;
 
               return (
                 <article key={campaign.id} className="snap-start snap-always flex scroll-mt-24 flex-col rounded-2xl border border-line bg-paper p-3 sm:p-4">
@@ -822,24 +881,26 @@ export default function CampaignExplorer({
                       </div>
 
                       <div className="ml-auto flex shrink-0 items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setDiscussionOpenById((prev) => ({
-                              ...prev,
-                              [campaign.id]: !prev[campaign.id],
-                            }));
-                            window.setTimeout(() => {
-                              document.getElementById(commentsAnchorId)?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-                            }, 60);
-                          }}
-                          aria-label={isDiscussionOpen ? "Hide comments" : "Open comments"}
-                          className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-line text-ink-soft transition-colors hover:border-marquee hover:text-marquee"
-                        >
-                          <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8">
-                            <path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5 8.3 8.3 0 0 1-3.8-.9L3 21l1.9-5.7a8.3 8.3 0 0 1-.9-3.8A8.5 8.5 0 1 1 21 11.5z" />
-                          </svg>
-                        </button>
+                        {canOpenComments && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setDiscussionOpenById((prev) => ({
+                                ...prev,
+                                [campaign.id]: !prev[campaign.id],
+                              }));
+                              window.setTimeout(() => {
+                                document.getElementById(commentsAnchorId)?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+                              }, 60);
+                            }}
+                            aria-label={isDiscussionOpen ? "Hide comments" : "Open comments"}
+                            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-line text-ink-soft transition-colors hover:border-marquee hover:text-marquee"
+                          >
+                            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8">
+                              <path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5 8.3 8.3 0 0 1-3.8-.9L3 21l1.9-5.7a8.3 8.3 0 0 1-.9-3.8A8.5 8.5 0 1 1 21 11.5z" />
+                            </svg>
+                          </button>
+                        )}
                         <button
                           type="button"
                           onClick={() => handleShare(campaign)}
@@ -868,14 +929,23 @@ export default function CampaignExplorer({
                       </div>
                     </div>
 
-                    {!isHistoricalVoteCampaign && (
+                    {canOpenComments && (
                       <div id={commentsAnchorId}>
                         {isDiscussionOpen ? (
-                          <CampaignDiscussionInline
-                            campaignId={campaign.id}
-                            choices={rankedChoices}
-                            variant="full"
-                          />
+                          isHistoricalVoteCampaign ? (
+                            <CampaignDiscussionInline
+                              campaignId={campaign.id}
+                              choices={rankedChoices}
+                              variant="preview"
+                              previewLimit={10}
+                            />
+                          ) : (
+                            <CampaignDiscussionInline
+                              campaignId={campaign.id}
+                              choices={rankedChoices}
+                              variant="full"
+                            />
+                          )
                         ) : (
                           <CampaignDiscussionInline
                             campaignId={campaign.id}

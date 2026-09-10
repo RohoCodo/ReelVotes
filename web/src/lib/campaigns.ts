@@ -39,6 +39,11 @@ export interface CampaignSummary {
   preferredTheaters: string[];
   dateWindowLabel: string;
   screeningDateTime?: string | null;
+  campaignWindow?: {
+    startDate: string | null;
+    endDate: string | null;
+    requiredDays: number;
+  } | null;
   deadTimeSlot?: {
     slotId: string;
     theaterKey: string | null;
@@ -48,6 +53,8 @@ export interface CampaignSummary {
     timeLabel: string | null;
     screeningDateTime: string | null;
     label: string | null;
+    dateRangeStart?: string | null;
+    dateRangeEnd?: string | null;
   } | null;
   status: CampaignStatus;
   selectedMovieTitle: string | null;
@@ -445,6 +452,17 @@ function buildCampaignSummary(id: string, data: Record<string, unknown>): Campai
       : [],
     dateWindowLabel: String(data.dateWindowLabel || "Date window TBD").trim(),
     screeningDateTime: data.screeningDateTime ? String(data.screeningDateTime).trim() : null,
+    campaignWindow: data.campaignWindow && typeof data.campaignWindow === "object"
+      ? {
+          startDate: (data.campaignWindow as Record<string, unknown>).startDate
+            ? String((data.campaignWindow as Record<string, unknown>).startDate).trim()
+            : null,
+          endDate: (data.campaignWindow as Record<string, unknown>).endDate
+            ? String((data.campaignWindow as Record<string, unknown>).endDate).trim()
+            : null,
+          requiredDays: Math.max(1, Number((data.campaignWindow as Record<string, unknown>).requiredDays || 5)),
+        }
+      : null,
     deadTimeSlot: data.deadTimeSlot && typeof data.deadTimeSlot === "object"
       ? {
           slotId: String((data.deadTimeSlot as Record<string, unknown>).slotId || "").trim(),
@@ -468,6 +486,12 @@ function buildCampaignSummary(id: string, data: Record<string, unknown>): Campai
             : null,
           label: (data.deadTimeSlot as Record<string, unknown>).label
             ? String((data.deadTimeSlot as Record<string, unknown>).label).trim()
+            : null,
+          dateRangeStart: (data.deadTimeSlot as Record<string, unknown>).dateRangeStart
+            ? String((data.deadTimeSlot as Record<string, unknown>).dateRangeStart).trim()
+            : null,
+          dateRangeEnd: (data.deadTimeSlot as Record<string, unknown>).dateRangeEnd
+            ? String((data.deadTimeSlot as Record<string, unknown>).dateRangeEnd).trim()
             : null,
         }
       : null,

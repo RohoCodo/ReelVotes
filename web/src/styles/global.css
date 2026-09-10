@@ -193,3 +193,26 @@ html.js-reveal [data-reveal].is-visible {
   fill: none;
   stroke: currentColor;
 }
+
+.rv-date-picker.rv-date-picker-two-months .rdp-months {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0.75rem;
+  overflow-x: auto;
+}
+
+.rv-date-picker.rv-date-picker-two-months .rdp-month {
+  flex: 0 0 auto;
+}
+
+.rv-select-inset-arrow {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%23cabfae' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 7 5 6 5-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-size: 1rem 1rem;
+  background-position: right 0.4rem center;
+  padding-left: 1rem;
+  padding-right: 2.4rem;
+}

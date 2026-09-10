@@ -132,72 +132,76 @@ export default function TheaterRegistrationForm() {
     <form onSubmit={handleSubmit} className="grid gap-6">
       <section className="grid gap-4">
         <h3 className="font-display text-xl font-semibold text-ink">Contact</h3>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
+        <div className="rounded-2xl border border-line bg-cream-soft p-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
             <label htmlFor="contactName" className="mb-1.5 block text-sm font-medium text-ink">Full name</label>
             <input id="contactName" name="contactName" type="text" required className="w-full rounded-xl border border-line bg-paper px-4 py-3 text-sm text-ink outline-none focus:border-marquee" />
-          </div>
-          <div>
+            </div>
+            <div>
             <label htmlFor="contactRole" className="mb-1.5 block text-sm font-medium text-ink">Role</label>
             <input id="contactRole" name="contactRole" type="text" required placeholder="Programming manager" className="w-full rounded-xl border border-line bg-paper px-4 py-3 text-sm text-ink outline-none focus:border-marquee" />
-          </div>
-          <div>
+            </div>
+            <div>
             <label htmlFor="contactEmail" className="mb-1.5 block text-sm font-medium text-ink">Work email</label>
             <input id="contactEmail" name="contactEmail" type="email" required className="w-full rounded-xl border border-line bg-paper px-4 py-3 text-sm text-ink outline-none focus:border-marquee" />
-          </div>
-          <div>
+            </div>
+            <div>
             <label htmlFor="contactPhone" className="mb-1.5 block text-sm font-medium text-ink">Phone (optional)</label>
             <input id="contactPhone" name="contactPhone" type="tel" className="w-full rounded-xl border border-line bg-paper px-4 py-3 text-sm text-ink outline-none focus:border-marquee" />
+            </div>
           </div>
         </div>
       </section>
 
       <section className="grid gap-4">
         <h3 className="font-display text-xl font-semibold text-ink">Theater details</h3>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="sm:col-span-2">
+        <div className="rounded-2xl border border-line bg-cream-soft p-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="sm:col-span-2">
             <label htmlFor="theaterName" className="mb-1.5 block text-sm font-medium text-ink">Theater name</label>
             <input id="theaterName" name="theaterName" type="text" required className="w-full rounded-xl border border-line bg-paper px-4 py-3 text-sm text-ink outline-none focus:border-marquee" />
-          </div>
-          <div>
+            </div>
+            <div>
             <label htmlFor="website" className="mb-1.5 block text-sm font-medium text-ink">Website (optional)</label>
             <input id="website" name="website" type="url" placeholder="https://" className="w-full rounded-xl border border-line bg-paper px-4 py-3 text-sm text-ink outline-none focus:border-marquee" />
-          </div>
-          <div>
+            </div>
+            <div>
             <label htmlFor="ticketingEmail" className="mb-1.5 block text-sm font-medium text-ink">Ticketing / programming email</label>
             <input id="ticketingEmail" name="ticketingEmail" type="email" required className="w-full rounded-xl border border-line bg-paper px-4 py-3 text-sm text-ink outline-none focus:border-marquee" />
-          </div>
-          <div className="sm:col-span-2">
+            </div>
+            <div className="sm:col-span-2">
             <label htmlFor="addressLine1" className="mb-1.5 block text-sm font-medium text-ink">Address line 1</label>
             <input id="addressLine1" name="addressLine1" type="text" required className="w-full rounded-xl border border-line bg-paper px-4 py-3 text-sm text-ink outline-none focus:border-marquee" />
-          </div>
-          <div className="sm:col-span-2">
+            </div>
+            <div className="sm:col-span-2">
             <label htmlFor="addressLine2" className="mb-1.5 block text-sm font-medium text-ink">Address line 2 (optional)</label>
             <input id="addressLine2" name="addressLine2" type="text" className="w-full rounded-xl border border-line bg-paper px-4 py-3 text-sm text-ink outline-none focus:border-marquee" />
-          </div>
-          <div>
+            </div>
+            <div>
             <label htmlFor="city" className="mb-1.5 block text-sm font-medium text-ink">City</label>
             <input id="city" name="city" type="text" required className="w-full rounded-xl border border-line bg-paper px-4 py-3 text-sm text-ink outline-none focus:border-marquee" />
-          </div>
-          <div>
+            </div>
+            <div>
             <label htmlFor="state" className="mb-1.5 block text-sm font-medium text-ink">State / region</label>
             <input id="state" name="state" type="text" required className="w-full rounded-xl border border-line bg-paper px-4 py-3 text-sm text-ink outline-none focus:border-marquee" />
-          </div>
-          <div>
+            </div>
+            <div>
             <label htmlFor="postalCode" className="mb-1.5 block text-sm font-medium text-ink">Postal code</label>
             <input id="postalCode" name="postalCode" type="text" required className="w-full rounded-xl border border-line bg-paper px-4 py-3 text-sm text-ink outline-none focus:border-marquee" />
-          </div>
-          <div>
+            </div>
+            <div>
             <label htmlFor="country" className="mb-1.5 block text-sm font-medium text-ink">Country</label>
             <input id="country" name="country" type="text" required defaultValue="USA" className="w-full rounded-xl border border-line bg-paper px-4 py-3 text-sm text-ink outline-none focus:border-marquee" />
-          </div>
-          <div>
+            </div>
+            <div>
             <label htmlFor="numberOfScreens" className="mb-1.5 block text-sm font-medium text-ink">Number of screens (optional)</label>
             <input id="numberOfScreens" name="numberOfScreens" type="number" min={0} className="w-full rounded-xl border border-line bg-paper px-4 py-3 text-sm text-ink outline-none focus:border-marquee" />
-          </div>
-          <div>
+            </div>
+            <div>
             <label htmlFor="seatingCapacity" className="mb-1.5 block text-sm font-medium text-ink">Total seating capacity (optional)</label>
             <input id="seatingCapacity" name="seatingCapacity" type="number" min={0} className="w-full rounded-xl border border-line bg-paper px-4 py-3 text-sm text-ink outline-none focus:border-marquee" />
+            </div>
           </div>
         </div>
       </section>
