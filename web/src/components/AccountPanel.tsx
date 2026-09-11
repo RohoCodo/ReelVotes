@@ -1,16 +1,99 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { User } from "firebase/auth";
+import { collection, onSnapshot } from "firebase/firestore";
+import { db } from "../lib/firebase";
+import { getCampaignSummaries, type CampaignSummary } from "../lib/campaigns";
 import { auth, onAuthStateChanged, signInWithGoogle, signOut } from "../lib/firebase-auth";
+
+type BookmarkedCampaignRecord = {
+  campaignId: string;
+  slug: string;
+  title: string;
+  market: string;
+  dateWindowLabel: string;
+  status: string;
+  bookmarkedAtMs: number;
+};
+
+type AccountTab = "campaigns" | "moviemarks" | "votes" | "reservations";
+
+type CampaignListItem = {
+  campaignId: string;
+  title: string;
+  market: string;
+  dateWindowLabel: string;
+  status: string;
+  href: string;
+  subtitle: string;
+};
+
+function tabButtonClass(active: boolean): string {
+  return active
+    ? "bg-marquee text-white shadow-sm"
+    : "text-ink-soft hover:text-marquee";
+}
 
 export default function AccountPanel() {
   const [authUser, setAuthUser] = useState<User | null | undefined>(undefined);
   const [pending, setPending] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [campaigns, setCampaigns] = useState<CampaignSummary[]>([]);
+  const [bookmarkedCampaigns, setBookmarkedCampaigns] = useState<BookmarkedCampaignRecord[]>([]);
+  const [activeTab, setActiveTab] = useState<AccountTab>("campaigns");
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => setAuthUser(user));
     return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (!authUser) {
+      setBookmarkedCampaigns([]);
+      return;
+    }
+
+    const bookmarksRef = collection(db, "userProfiles", authUser.uid, "bookmarks");
+    const unsubscribe = onSnapshot(
+      bookmarksRef,
+      (snapshot) => {
+        const next = snapshot.docs
+          .map((bookmarkDoc) => bookmarkDoc.data() as BookmarkedCampaignRecord)
+          .filter((record) => Boolean(record?.campaignId))
+          .sort((left, right) => (right.bookmarkedAtMs || 0) - (left.bookmarkedAtMs || 0));
+        setBookmarkedCampaigns(next);
+      },
+      () => {
+        setBookmarkedCampaigns([]);
+      },
+    );
+
+    return () => unsubscribe();
+  }, [authUser]);
+
+  useEffect(() => {
+    if (!authUser) {
+      setCampaigns([]);
+      return;
+    }
+
+    let cancelled = false;
+
+    getCampaignSummaries()
+      .then((rows) => {
+        if (!cancelled) {
+          setCampaigns(rows);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setCampaigns([]);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [authUser]);
 
   async function handleSignIn() {
     setPending(true);
@@ -36,6 +119,63 @@ export default function AccountPanel() {
     }
   }
 
+  const userEmail = String(authUser?.email || "").toLowerCase();
+  const yourCampaigns = useMemo(() => {
+    return campaigns
+      .filter((campaign) => String(campaign.createdByEmail || "").toLowerCase() === userEmail)
+      .map((campaign) => toListItem(campaign, "Created by you"));
+  }, [campaigns, userEmail]);
+
+  const movieVotes = useMemo(() => {
+    return campaigns
+      .filter((campaign) => Boolean(campaign.viewerMovieVoteCampaignMovieId))
+      .map((campaign) => toListItem(campaign, campaign.viewerMovieVoteCampaignMovieId ? "Movie vote saved" : ""));
+  }, [campaigns]);
+
+  const reservations = useMemo(() => {
+    return campaigns
+      .filter((campaign) => campaign.viewerSupport === "backing")
+      .map((campaign) => toListItem(campaign, "Reservation saved"));
+  }, [campaigns]);
+
+  const moviemarks = useMemo(() => {
+    return bookmarkedCampaigns.map((campaign) => ({
+      campaignId: campaign.campaignId,
+      title: campaign.title,
+      market: campaign.market,
+      dateWindowLabel: campaign.dateWindowLabel,
+      status: campaign.status,
+      href: `/campaigns#${campaign.campaignId}`,
+      subtitle: "Bookmarked campaign",
+    }));
+  }, [bookmarkedCampaigns]);
+
+  const tabCounts: Record<AccountTab, number> = {
+    campaigns: yourCampaigns.length,
+    moviemarks: moviemarks.length,
+    votes: movieVotes.length,
+    reservations: reservations.length,
+  };
+
+  const tabItems = {
+    campaigns: yourCampaigns,
+    moviemarks,
+    votes: movieVotes,
+    reservations,
+  }[activeTab];
+
+  function toListItem(campaign: CampaignSummary, subtitle: string): CampaignListItem {
+    return {
+      campaignId: campaign.id,
+      title: campaign.title,
+      market: campaign.market,
+      dateWindowLabel: campaign.dateWindowLabel,
+      status: campaign.status,
+      href: `/campaigns#${campaign.id}`,
+      subtitle,
+    };
+  }
+
   if (authUser === undefined) {
     return (
       <div className="rounded-2xl border border-line bg-paper p-6">
@@ -49,16 +189,82 @@ export default function AccountPanel() {
     <div className="rounded-2xl border border-line bg-paper p-6">
       {authUser ? (
         <>
-          <p className="text-xs font-semibold uppercase tracking-wide text-ink-faint">Signed in</p>
-          <h2 className="mt-2 font-display text-2xl font-semibold text-ink">Your account</h2>
-          <p className="mt-2 text-sm text-ink-soft">{authUser.displayName || authUser.email || "ReelVotes member"}</p>
-          {authUser.email && <p className="mt-1 text-xs text-ink-faint">{authUser.email}</p>}
+          <div className="text-center">
+            <p className="text-xs font-semibold uppercase tracking-wide text-ink-faint">Signed in</p>
+            <h2 className="mt-2 font-display text-2xl font-semibold text-ink">Your account</h2>
+            <p className="mt-2 text-sm text-ink-soft">{authUser.displayName || authUser.email || "ReelVotes member"}</p>
+            {authUser.email && <p className="mt-1 text-xs text-ink-faint">{authUser.email}</p>}
+          </div>
+
+          <div className="mt-6 border-t border-line pt-5">
+            <div className="mx-auto flex w-full max-w-full flex-nowrap items-center gap-1 overflow-x-auto rounded-full border border-line bg-paper p-1.5 shadow-[0_1px_0_rgba(255,255,255,0.02)_inset] sm:w-fit sm:justify-center">
+              <button type="button" onClick={() => setActiveTab("campaigns")} className={`inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-[11px] font-semibold transition-colors sm:px-4 sm:text-xs ${tabButtonClass(activeTab === "campaigns")}`}>
+                <span aria-hidden="true">📁</span>
+                <span>Campaigns</span>
+                <span className="rounded-full bg-cream/40 px-1.5 py-0.5 text-[10px] font-semibold leading-none">{tabCounts.campaigns}</span>
+              </button>
+              <button type="button" onClick={() => setActiveTab("moviemarks")} className={`inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-[11px] font-semibold transition-colors sm:px-4 sm:text-xs ${tabButtonClass(activeTab === "moviemarks")}`}>
+                <span aria-hidden="true">🎬</span>
+                <span>Moviemarks</span>
+                <span className="rounded-full bg-cream/40 px-1.5 py-0.5 text-[10px] font-semibold leading-none">{tabCounts.moviemarks}</span>
+              </button>
+              <button type="button" onClick={() => setActiveTab("votes")} className={`inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-[11px] font-semibold transition-colors sm:px-4 sm:text-xs ${tabButtonClass(activeTab === "votes")}`}>
+                <span aria-hidden="true">🗳️</span>
+                <span>Votes</span>
+                <span className="rounded-full bg-cream/40 px-1.5 py-0.5 text-[10px] font-semibold leading-none">{tabCounts.votes}</span>
+              </button>
+              <button type="button" onClick={() => setActiveTab("reservations")} className={`inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-[11px] font-semibold transition-colors sm:px-4 sm:text-xs ${tabButtonClass(activeTab === "reservations")}`}>
+                <span aria-hidden="true">🎟️</span>
+                <span>Reservations</span>
+                <span className="rounded-full bg-cream/40 px-1.5 py-0.5 text-[10px] font-semibold leading-none">{tabCounts.reservations}</span>
+              </button>
+            </div>
+
+            <div className="mt-4 rounded-3xl border border-line bg-cream p-4 shadow-[0_1px_0_rgba(255,255,255,0.02)_inset]">
+              <div className="flex items-center justify-between gap-3">
+                <h3 className="font-display text-lg font-semibold text-ink">
+                  {activeTab === "campaigns" && "Your campaigns"}
+                  {activeTab === "moviemarks" && "Moviemarks"}
+                  {activeTab === "votes" && "Movie Votes"}
+                  {activeTab === "reservations" && "Reservations"}
+                </h3>
+                <span className="text-xs text-ink-faint">{tabItems.length} saved</span>
+              </div>
+
+              {tabItems.length > 0 ? (
+                <div className="mt-4 grid gap-3">
+                  {tabItems.map((item) => (
+                    <a key={item.campaignId} href={item.href} className="group rounded-2xl border border-line bg-paper p-4 transition-colors hover:border-marquee hover:shadow-sm">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="truncate font-semibold text-ink group-hover:text-marquee">{item.title}</p>
+                          <p className="mt-1 text-xs text-ink-soft">{item.market}</p>
+                          <p className="mt-1 text-xs text-ink-faint">Date: {item.dateWindowLabel}</p>
+                          <p className="mt-1 text-[11px] font-medium text-ink-soft">{item.subtitle}</p>
+                        </div>
+                        <span className="shrink-0 rounded-full border border-line px-2.5 py-1 text-[10px] font-semibold text-ink-soft">
+                          {item.status}
+                        </span>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-3 text-sm text-ink-soft">
+                  {activeTab === "campaigns" && "Campaigns you create will appear here."}
+                  {activeTab === "moviemarks" && "Saved moviemarks will appear here."}
+                  {activeTab === "votes" && "Movie votes you cast will appear here."}
+                  {activeTab === "reservations" && "Reservations you place will appear here."}
+                </p>
+              )}
+            </div>
+          </div>
 
           <button
             type="button"
             disabled={pending}
             onClick={handleSignOut}
-            className="mt-6 rounded-full border border-line px-4 py-2 text-sm font-semibold text-ink-soft transition-colors hover:border-marquee hover:text-marquee disabled:opacity-60"
+            className="mx-auto mt-6 block rounded-full border border-line px-4 py-2 text-sm font-semibold text-ink-soft transition-colors hover:border-marquee hover:text-marquee disabled:opacity-60"
           >
             {pending ? "Signing out..." : "Sign Out"}
           </button>

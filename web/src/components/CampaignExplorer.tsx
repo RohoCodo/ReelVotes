@@ -1,15 +1,15 @@
 import { useEffect, useMemo, useRef, useState, type UIEvent } from "react";
 import { createPortal } from "react-dom";
 import type { User } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore/lite";
+import { collection, deleteDoc, doc, onSnapshot, setDoc } from "firebase/firestore";
 import { DayPicker, type DateRange } from "react-day-picker";
 import "react-day-picker/dist/style.css";
 import { getCampaignSummaries, rankCampaignChoices, type CampaignSummary } from "../lib/campaigns";
 import { adminSetCampaignStatus, upsertCampaignMovieVote, upsertCampaignSupport } from "../lib/firebase";
+import { db } from "../lib/firebase";
 import { auth, isPopupSignInCancellation, onAuthStateChanged, signInWithGoogle } from "../lib/firebase-auth";
 import { dbLite } from "../lib/firebase-lite";
 import { getMovieMetadataByTitle } from "../lib/tmdb";
-import CampaignDiscussionInline from "./CampaignDiscussionInline";
 
 const ADMIN_EMAILS = new Set([
   "rt332@cornell.edu",
@@ -64,6 +64,39 @@ const statusTone: Record<string, string> = {
 
 const POST_AUTH_CAMPAIGN_KEY = "reelvotes:post-auth-campaign";
 
+function isShareCancellation(error: unknown): boolean {
+  const name = String((error as any)?.name || "").toLowerCase();
+  const message = String((error as any)?.message || "").toLowerCase();
+  return name === "aborterror" || message.includes("share canceled") || message.includes("share cancelled");
+}
+
+async function copyTextToClipboard(text: string): Promise<boolean> {
+  if (navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      // Fall through to the legacy copy path below.
+    }
+  }
+
+  try {
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.setAttribute("readonly", "true");
+    textarea.style.position = "fixed";
+    textarea.style.opacity = "0";
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+    const copied = document.execCommand("copy");
+    document.body.removeChild(textarea);
+    return copied;
+  } catch {
+    return false;
+  }
+}
+
 function meter(value: number, total: number): number {
   if (total <= 0) return 0;
   return Math.max(0, Math.min(100, Math.round((value / total) * 100)));
@@ -104,6 +137,26 @@ function availabilityTagText(status: CampaignSummary["choices"][number]["availab
   if (status === "awaiting-theater-check") return "Checking";
   return "Not checked";
 }
+
+function rightsTagText(status: CampaignSummary["status"]): string {
+  if (status === "active" || status === "licensing-pending") return "Rights Pending";
+  return "Confirmed";
+}
+
+function rightsTagClass(status: CampaignSummary["status"]): string {
+  if (status === "active" || status === "licensing-pending") return "border-gold/35 bg-gold/10 text-rose";
+  return "border-emerald/35 bg-emerald/10 text-emerald";
+}
+
+type BookmarkedCampaignRecord = {
+  campaignId: string;
+  slug: string;
+  title: string;
+  market: string;
+  dateWindowLabel: string;
+  status: CampaignSummary["status"];
+  bookmarkedAtMs: number;
+};
 
 function comparableTitle(value: string): string {
   return String(value || "")
@@ -152,27 +205,6 @@ function campaignTitleWithoutTheater(campaign: CampaignSummary): string {
 
   return rawTitle;
 }
-
-function campaignDateKey(campaign: CampaignSummary): string {
-  const direct = String(campaign.deadTimeSlot?.screeningDateTime || campaign.screeningDateTime || "").trim();
-  if (direct) {
-    const match = direct.match(/^(\d{4}-\d{2}-\d{2})/);
-    if (match) return match[1];
-    const parsed = new Date(direct);
-    if (!Number.isNaN(parsed.getTime())) {
-      const y = parsed.getFullYear();
-      const m = String(parsed.getMonth() + 1).padStart(2, "0");
-      const d = String(parsed.getDate()).padStart(2, "0");
-      return `${y}-${m}-${d}`;
-    }
-  }
-  const windowStart = String(campaign.campaignWindow?.startDate || campaign.deadTimeSlot?.dateRangeStart || "").trim();
-  if (/^\d{4}-\d{2}-\d{2}$/.test(windowStart)) {
-    return windowStart;
-  }
-  return "";
-}
-
 function toDateKey(date: Date): string {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, "0");
@@ -190,16 +222,6 @@ function formatRangeLabel(range: DateRange | undefined): string {
     return `${formatter.format(range.from)} - ${formatter.format(range.to)}`;
   }
   return "Dates";
-}
-
-function buildCampaignDiscussionThreadId(campaignId: string): string {
-  const normalized = String(campaignId || "")
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9_-]+/g, "_")
-    .replace(/^_+|_+$/g, "")
-    .slice(0, 100);
-  return `campaign_${normalized || "campaign"}`;
 }
 
 function rememberPostAuthCampaign(campaignId: string) {
@@ -268,14 +290,13 @@ export default function CampaignExplorer({
   const [authUser, setAuthUser] = useState<User | null | undefined>(undefined);
   const [pendingById, setPendingById] = useState<Record<string, boolean>>({});
   const [pendingVoteById, setPendingVoteById] = useState<Record<string, boolean>>({});
+  const [pendingBookmarkById, setPendingBookmarkById] = useState<Record<string, boolean>>({});
   const [adminPendingById, setAdminPendingById] = useState<Record<string, boolean>>({});
   const [adminStatusById, setAdminStatusById] = useState<Record<string, string>>({});
   const [adminMovieById, setAdminMovieById] = useState<Record<string, string>>({});
   const [adminAvailabilityByCampaignId, setAdminAvailabilityByCampaignId] = useState<Record<string, Record<string, string>>>({});
   const [adminNoteById, setAdminNoteById] = useState<Record<string, string>>({});
   const [bookmarkedById, setBookmarkedById] = useState<Record<string, boolean>>({});
-  const [discussionOpenById, setDiscussionOpenById] = useState<Record<string, boolean>>({});
-  const [historicalCommentCountById, setHistoricalCommentCountById] = useState<Record<string, number>>({});
   const [activeChoiceByCampaignId, setActiveChoiceByCampaignId] = useState<Record<string, number>>({});
   const [actionError, setActionError] = useState("");
   const [canRenderFloatingCreate, setCanRenderFloatingCreate] = useState(false);
@@ -305,18 +326,65 @@ export default function CampaignExplorer({
   }
 
   async function handleShare(campaign: CampaignSummary) {
+    const shareUrl = `${window.location.origin}/campaigns#${campaign.id}`;
+    const shareText = `${campaign.title} • ${campaign.market}`;
+    const sharePayload = `${shareText}\n${shareUrl}`;
+
     try {
-      const shareUrl = `${window.location.origin}/campaigns#${campaign.id}`;
-      const shareText = `${campaign.title} • ${campaign.market}`;
       if (navigator.share) {
-        await navigator.share({ title: campaign.title, text: shareText, url: shareUrl });
-        return;
+        try {
+          await navigator.share({ title: campaign.title, text: shareText, url: shareUrl });
+          return;
+        } catch (error) {
+          if (isShareCancellation(error)) return;
+        }
       }
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`);
-      }
+
+      const copied = await copyTextToClipboard(sharePayload);
+      if (copied) return;
+
+      window.prompt("Copy this campaign link:", sharePayload);
     } catch {
-      // no-op: silently ignore cancelled shares/copy failures
+      window.prompt("Copy this campaign link:", sharePayload);
+    }
+  }
+
+  async function handleBookmark(campaign: CampaignSummary) {
+    setActionError("");
+
+    if (!authUser) {
+      try {
+        await signInWithGoogle();
+      } catch (error) {
+        if (isPopupSignInCancellation(error)) return;
+        setActionError(String((error as any)?.message || "Sign-in required to bookmark campaigns."));
+      }
+      return;
+    }
+
+    const bookmarkRef = doc(db, "userProfiles", authUser.uid, "bookmarks", campaign.id);
+    const nextBookmarked = !bookmarkedById[campaign.id];
+
+    setPendingBookmarkById((prev) => ({ ...prev, [campaign.id]: true }));
+    try {
+      if (nextBookmarked) {
+        const payload: BookmarkedCampaignRecord = {
+          campaignId: campaign.id,
+          slug: campaign.slug,
+          title: campaign.title,
+          market: campaign.market,
+          dateWindowLabel: campaign.dateWindowLabel,
+          status: campaign.status,
+          bookmarkedAtMs: Date.now(),
+        };
+        await setDoc(bookmarkRef, payload, { merge: true });
+      } else {
+        await deleteDoc(bookmarkRef);
+      }
+    } catch (error) {
+      setActionError(String((error as any)?.message || "Could not update bookmark right now."));
+    } finally {
+      setPendingBookmarkById((prev) => ({ ...prev, [campaign.id]: false }));
     }
   }
 
@@ -387,6 +455,33 @@ export default function CampaignExplorer({
   }, []);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    if (!authUser) {
+      setBookmarkedById({});
+      return;
+    }
+
+    const bookmarksRef = collection(db, "userProfiles", authUser.uid, "bookmarks");
+    const unsubscribe = onSnapshot(
+      bookmarksRef,
+      (snapshot) => {
+        const next: Record<string, boolean> = {};
+        snapshot.forEach((bookmarkDoc) => {
+          next[bookmarkDoc.id] = true;
+        });
+        setBookmarkedById(next);
+      },
+      (error) => {
+        console.error("[CampaignExplorer] Could not load bookmarks:", error);
+        setBookmarkedById({});
+      },
+    );
+
+    return () => unsubscribe();
+  }, [authUser]);
+
+  useEffect(() => {
     if (typeof window === "undefined" || !authUser) return;
 
     const pendingTarget = readPostAuthCampaign();
@@ -402,46 +497,6 @@ export default function CampaignExplorer({
       window.location.assign(targetUrl);
     }
   }, [authUser]);
-
-  useEffect(() => {
-    if (!campaigns) {
-      setHistoricalCommentCountById({});
-      return;
-    }
-
-    const historicalCampaigns = campaigns.filter((campaign) => campaign.origin === "historical-vote");
-    if (historicalCampaigns.length === 0) {
-      setHistoricalCommentCountById({});
-      return;
-    }
-
-    let cancelled = false;
-    Promise.all(
-      historicalCampaigns.map(async (campaign) => {
-        const threadId = buildCampaignDiscussionThreadId(campaign.id);
-        const threadSnap = await getDoc(doc(dbLite, "threads", threadId));
-        const threadData = threadSnap.exists() ? threadSnap.data() : null;
-        return [campaign.id, Math.max(0, Number(threadData?.messageCount || 0))] as const;
-      }),
-    )
-      .then((pairs) => {
-        if (cancelled) return;
-        const next: Record<string, number> = {};
-        pairs.forEach(([campaignId, count]) => {
-          next[campaignId] = count;
-        });
-        setHistoricalCommentCountById(next);
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setHistoricalCommentCountById({});
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [campaigns]);
 
   useEffect(() => {
     setCanRenderFloatingCreate(true);
@@ -927,11 +982,6 @@ export default function CampaignExplorer({
                   ? campaign.selectedMovieTitle
                   : (rankedChoices[0]?.title || campaign.selectedMovieTitle || ""),
               );
-              const commentsAnchorId = `campaign-comments-${campaign.id}`;
-              const isDiscussionOpen = Boolean(discussionOpenById[campaign.id]);
-              const historicalCommentCount = Math.max(0, Number(historicalCommentCountById[campaign.id] || 0));
-              const canOpenComments = !isHistoricalVoteCampaign || historicalCommentCount > 0;
-
               return (
                 <article id={campaign.id} key={campaign.id} className="snap-start snap-always flex scroll-mt-24 flex-col rounded-2xl border border-line bg-paper p-3 sm:p-4">
                   <div className="flex min-w-0 items-start gap-2.5">
@@ -940,10 +990,13 @@ export default function CampaignExplorer({
                     </span>
                     <div className="min-w-0 pt-0.5">
                       <p className="line-clamp-1 text-[15px] font-semibold leading-tight text-ink">{readOnly ? campaignTitleWithoutTheater(campaign) : displayTitle}</p>
-                      <div className="mt-0.5 flex items-center gap-2">
+                      <div className="mt-0.5 flex min-w-0 items-center gap-1.5">
                         <p className="truncate text-xs leading-tight text-ink-faint">Date: {campaign.dateWindowLabel}</p>
-                        <span className={`shrink-0 whitespace-nowrap rounded-full border px-2.5 py-1 text-[10px] font-semibold ${statusTone[campaign.status] || statusTone.active}`}>
+                        <span className={`whitespace-nowrap rounded-full border px-2.5 py-1 text-[10px] font-semibold ${statusTone[campaign.status] || statusTone.active}`}>
                           {statusLabel[campaign.status] || campaign.status}
+                        </span>
+                        <span className={`whitespace-nowrap rounded-full border px-2.5 py-1 text-[10px] font-semibold ${rightsTagClass(campaign.status)}`}>
+                          {rightsTagText(campaign.status)}
                         </span>
                       </div>
                     </div>
@@ -1135,26 +1188,6 @@ export default function CampaignExplorer({
                       </div>
 
                       <div className="ml-auto flex shrink-0 items-center gap-2">
-                        {canOpenComments && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setDiscussionOpenById((prev) => ({
-                                ...prev,
-                                [campaign.id]: !prev[campaign.id],
-                              }));
-                              window.setTimeout(() => {
-                                document.getElementById(commentsAnchorId)?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-                              }, 60);
-                            }}
-                            aria-label={isDiscussionOpen ? "Hide comments" : "Open comments"}
-                            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-line text-ink-soft transition-colors hover:border-marquee hover:text-marquee"
-                          >
-                            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8">
-                              <path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5 8.3 8.3 0 0 1-3.8-.9L3 21l1.9-5.7a8.3 8.3 0 0 1-.9-3.8A8.5 8.5 0 1 1 21 11.5z" />
-                            </svg>
-                          </button>
-                        )}
                         <button
                           type="button"
                           onClick={() => handleShare(campaign)}
@@ -1168,7 +1201,8 @@ export default function CampaignExplorer({
                         </button>
                         <button
                           type="button"
-                          onClick={() => setBookmarkedById((prev) => ({ ...prev, [campaign.id]: !prev[campaign.id] }))}
+                          disabled={Boolean(pendingBookmarkById[campaign.id])}
+                          onClick={() => handleBookmark(campaign)}
                           aria-label={bookmarkedById[campaign.id] ? "Remove bookmark" : "Bookmark campaign"}
                           className={`inline-flex h-9 w-9 items-center justify-center rounded-full border transition-colors ${
                             bookmarkedById[campaign.id]
@@ -1183,33 +1217,6 @@ export default function CampaignExplorer({
                       </div>
                     </div>
 
-                    {canOpenComments && (
-                      <div id={commentsAnchorId}>
-                        {isDiscussionOpen ? (
-                          isHistoricalVoteCampaign ? (
-                            <CampaignDiscussionInline
-                              campaignId={campaign.id}
-                              choices={rankedChoices}
-                              variant="preview"
-                              previewLimit={10}
-                            />
-                          ) : (
-                            <CampaignDiscussionInline
-                              campaignId={campaign.id}
-                              choices={rankedChoices}
-                              variant="full"
-                            />
-                          )
-                        ) : (
-                          <CampaignDiscussionInline
-                            campaignId={campaign.id}
-                            choices={rankedChoices}
-                            variant="preview"
-                            previewLimit={2}
-                          />
-                        )}
-                      </div>
-                    )}
                   </div>
                 </article>
               );
@@ -1259,15 +1266,28 @@ export default function CampaignExplorer({
 
             return (
               <article id={campaign.id} key={campaign.id} className="rounded-2xl border border-line bg-paper p-5">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${statusTone[campaign.status] || statusTone.active}`}>
-                    {statusLabel[campaign.status] || campaign.status}
-                  </span>
-                  <span className="text-xs text-ink-faint">{campaign.market}</span>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${statusTone[campaign.status] || statusTone.active}`}>
+                      {statusLabel[campaign.status] || campaign.status}
+                    </span>
+                    <span className={`rounded-full border px-2.5 py-1 text-[10px] font-semibold ${rightsTagClass(campaign.status)}`}>
+                      {rightsTagText(campaign.status)}
+                    </span>
+                    <span className="text-xs text-ink-faint">{campaign.market}</span>
+                  </div>
                 </div>
 
                 <h3 className="mt-3 font-display text-2xl font-semibold text-ink">{readOnly ? campaignTitleWithoutTheater(campaign) : displayTitle}</h3>
-                <p className="mt-1 text-sm text-ink-soft">Date: {campaign.dateWindowLabel}</p>
+                <div className="mt-1 flex flex-wrap items-center gap-2">
+                  <p className="text-sm text-ink-soft">Date: {campaign.dateWindowLabel}</p>
+                  <span className={`rounded-full border px-2.5 py-1 text-[10px] font-semibold ${statusTone[campaign.status] || statusTone.active}`}>
+                    {statusLabel[campaign.status] || campaign.status}
+                  </span>
+                  <span className={`rounded-full border px-2.5 py-1 text-[10px] font-semibold ${rightsTagClass(campaign.status)}`}>
+                    {rightsTagText(campaign.status)}
+                  </span>
+                </div>
                 {campaign.createdByEmail && (
                   <p className="mt-1 text-xs text-ink-faint">Created by {campaign.createdByEmail}</p>
                 )}
@@ -1402,8 +1422,6 @@ export default function CampaignExplorer({
                     </div>
                   </div>
                 </div>
-
-                {!isHistoricalVoteCampaign && <CampaignDiscussionInline campaignId={campaign.id} choices={rankedChoices} />}
 
                 {!compact && isAdminUser && !isHistoricalVoteCampaign && !readOnly && (
                   <div className="mt-4 rounded-xl border border-line bg-cream p-3">
