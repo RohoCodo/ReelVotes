@@ -284,6 +284,7 @@ export default function CampaignExplorer({
 }) {
   const [campaigns, setCampaigns] = useState<CampaignSummary[] | null>(null);
   const [search, setSearch] = useState("");
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
   const [selectedRange, setSelectedRange] = useState<DateRange | undefined>(undefined);
   const [showDateFilter, setShowDateFilter] = useState(false);
   const [datePickerMonths, setDatePickerMonths] = useState(1);
@@ -452,6 +453,21 @@ export default function CampaignExplorer({
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => setAuthUser(user));
     return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mediaQuery = window.matchMedia("(max-width: 639px)");
+    const syncViewport = () => setIsMobileViewport(mediaQuery.matches);
+    syncViewport();
+
+    if (typeof mediaQuery.addEventListener === "function") {
+      mediaQuery.addEventListener("change", syncViewport);
+      return () => mediaQuery.removeEventListener("change", syncViewport);
+    }
+
+    mediaQuery.addListener(syncViewport);
+    return () => mediaQuery.removeListener(syncViewport);
   }, []);
 
   useEffect(() => {
@@ -884,7 +900,7 @@ export default function CampaignExplorer({
               type="search"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search campaigns, movies, or markets"
+              placeholder={isMobileViewport ? "Search campaigns" : "Search campaigns by movies or campaign title"}
               className="w-full min-w-0 flex-1 rounded-xl border border-line bg-paper px-4 py-3 text-base text-ink outline-none transition-colors focus:border-marquee sm:text-sm"
             />
             <div className="relative shrink-0" ref={datePickerRef}>
@@ -989,7 +1005,7 @@ export default function CampaignExplorer({
                       {String(username || "rv").slice(0, 1).toUpperCase()}
                     </span>
                     <div className="min-w-0 pt-0.5">
-                      <p className="line-clamp-1 text-[15px] font-semibold leading-tight text-ink">{readOnly ? campaignTitleWithoutTheater(campaign) : displayTitle}</p>
+                      <p className="line-clamp-2 text-[15px] font-semibold leading-tight text-ink sm:line-clamp-1">{readOnly ? campaignTitleWithoutTheater(campaign) : displayTitle}</p>
                       <div className="mt-0.5 flex min-w-0 items-center gap-1.5">
                         <p className="truncate text-xs leading-tight text-ink-faint">Date: {campaign.dateWindowLabel}</p>
                         <span className={`whitespace-nowrap rounded-full border px-2.5 py-1 text-[10px] font-semibold ${statusTone[campaign.status] || statusTone.active}`}>
