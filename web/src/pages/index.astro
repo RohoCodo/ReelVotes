@@ -33,14 +33,10 @@ const flow = [
   description="ReelVotes lets moviegoers Choose what plays next at independent theaters — and turns real votes into real screenings."
 >
   <!-- Hero -->
-  <section class="relative flex min-h-[calc(100dvh-65px)] flex-col justify-center">
-    <div class="mx-auto max-w-6xl px-5 py-16 sm:px-8">
+  <section class="relative flex min-h-[calc(82dvh-65px)] flex-col justify-center">
+    <div class="mx-auto max-w-6xl px-5 py-10 sm:px-8 sm:py-12">
       <div class="mx-auto max-w-3xl text-center">
-        <span class="inline-flex items-center gap-2 rounded-full border border-line bg-paper px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-ink-soft">
-          Now programming with The New Parkway Theater
-        </span>
-
-        <h1 class="mt-6 font-display text-4xl font-semibold leading-[1.08] tracking-tight text-ink sm:text-6xl">
+        <h1 class="mt-0 font-display text-4xl font-semibold leading-[1.08] tracking-tight text-ink sm:text-6xl">
           <span class="block">You pick three movies.</span>
           <span class="block text-marquee">The people vote.</span>
           <span class="block">A local theater screens the top licensable movie!</span>
@@ -58,7 +54,7 @@ const flow = [
             See current campaigns!
           </a>
           <a
-            href="/screenings"
+            href="/screenings#previous"
             class="w-full rounded-full border border-line bg-paper px-7 py-3.5 text-center text-sm font-semibold text-ink transition-colors hover:border-ink/30 sm:w-auto"
           >
             See previously secured screenings!
@@ -74,7 +70,7 @@ const flow = [
     <a
       href="#how-it-works"
       aria-label="Scroll to how it works"
-      class="absolute inset-x-0 bottom-10 hidden justify-center sm:flex"
+      class="absolute inset-x-0 bottom-10 flex justify-center"
     >
       <span class="animate-bounce rounded-full border border-line bg-paper p-2 text-ink-faint transition-colors hover:text-marquee">
         <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -207,7 +203,8 @@ const flow = [
       </p>
       <div class="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
         <a
-          href="/create"
+          href="#"
+          data-home-cta-auth="true"
           class="w-full rounded-full bg-marquee px-7 py-3.5 text-center text-sm font-semibold text-white shadow-md shadow-marquee/30 transition-transform hover:-translate-y-0.5 sm:w-auto"
         >
           Sign In
@@ -216,3 +213,45 @@ const flow = [
     </div>
   </section>
 </Layout>
+
+<script>
+  import { auth, onAuthStateChanged, signInWithGoogle } from "../lib/firebase-auth";
+
+  let homeCtaUnsubscribe = null;
+
+  function initHomeCta() {
+    const ctaButton = document.querySelector('a[data-home-cta-auth="true"]');
+    if (!ctaButton) return;
+
+    const setSignedOut = () => {
+      ctaButton.textContent = "Sign In";
+      ctaButton.setAttribute("href", "#");
+      ctaButton.onclick = async (event) => {
+        event.preventDefault();
+        try {
+          await signInWithGoogle();
+        } catch (error) {
+          console.error("Sign in failed:", error);
+        }
+      };
+    };
+
+    const setSignedIn = () => {
+      ctaButton.textContent = "Create campaign";
+      ctaButton.setAttribute("href", "/create");
+      ctaButton.onclick = null;
+    };
+
+    homeCtaUnsubscribe?.();
+    homeCtaUnsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setSignedIn();
+        return;
+      }
+      setSignedOut();
+    });
+  }
+
+  document.addEventListener("astro:page-load", initHomeCta);
+  initHomeCta();
+</script>

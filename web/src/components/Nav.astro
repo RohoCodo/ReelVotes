@@ -1,7 +1,7 @@
 ---
 const primaryLinks = [
   { href: "/campaigns", label: "Campaigns" },
-  { href: "/showtimes", label: "Screenings" },
+  { href: "/screenings#previous", label: "Screenings" },
   { href: "/join", label: "Join List" },
   { href: "/how-it-works", label: "How It Works" },
   { href: "/for-theaters", label: "For Theaters" },
@@ -35,7 +35,7 @@ const allMobileLinks = [
             href={link.href}
             class:list={[
               "relative py-1.5 text-sm font-medium transition-colors hover:text-marquee",
-              currentPath === link.href
+              currentPath === (String(link.href).split("#")[0].replace(/\/$/, "") || "/")
                 ? "text-marquee after:absolute after:inset-x-0 after:-bottom-[13px] after:h-0.5 after:rounded-full after:bg-marquee"
                 : "text-ink-soft",
             ]}

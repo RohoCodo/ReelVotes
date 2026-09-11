@@ -62,6 +62,8 @@ const statusTone: Record<string, string> = {
   cancelled: "border-line text-ink-faint",
 };
 
+const POST_AUTH_CAMPAIGN_KEY = "reelvotes:post-auth-campaign";
+
 function meter(value: number, total: number): number {
   if (total <= 0) return 0;
   return Math.max(0, Math.min(100, Math.round((value / total) * 100)));
@@ -198,6 +200,47 @@ function buildCampaignDiscussionThreadId(campaignId: string): string {
     .replace(/^_+|_+$/g, "")
     .slice(0, 100);
   return `campaign_${normalized || "campaign"}`;
+}
+
+function rememberPostAuthCampaign(campaignId: string) {
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.setItem(
+      POST_AUTH_CAMPAIGN_KEY,
+      JSON.stringify({
+        campaignId: String(campaignId || "").trim(),
+        createdAt: Date.now(),
+      }),
+    );
+  } catch {
+    // Ignore storage failures and continue with auth.
+  }
+}
+
+function readPostAuthCampaign(): { campaignId: string; createdAt: number } | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.sessionStorage.getItem(POST_AUTH_CAMPAIGN_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { campaignId?: unknown; createdAt?: unknown };
+    const campaignId = String(parsed?.campaignId || "").trim();
+    if (!campaignId) return null;
+    return {
+      campaignId,
+      createdAt: Number(parsed?.createdAt || 0),
+    };
+  } catch {
+    return null;
+  }
+}
+
+function clearPostAuthCampaign() {
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.removeItem(POST_AUTH_CAMPAIGN_KEY);
+  } catch {
+    // Ignore storage failures.
+  }
 }
 
 export default function CampaignExplorer({
@@ -342,6 +385,23 @@ export default function CampaignExplorer({
     const unsubscribe = onAuthStateChanged(auth, (user) => setAuthUser(user));
     return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !authUser) return;
+
+    const pendingTarget = readPostAuthCampaign();
+    if (!pendingTarget?.campaignId) return;
+
+    const targetUrl = `/campaigns#${encodeURIComponent(pendingTarget.campaignId)}`;
+    const currentHash = decodeURIComponent(String(window.location.hash || "").replace(/^#/, "")).trim();
+    const onTargetPage = window.location.pathname === "/campaigns" && currentHash === pendingTarget.campaignId;
+
+    clearPostAuthCampaign();
+
+    if (!onTargetPage) {
+      window.location.assign(targetUrl);
+    }
+  }, [authUser]);
 
   useEffect(() => {
     if (!campaigns) {
@@ -553,11 +613,28 @@ export default function CampaignExplorer({
   async function handleVote(campaign: CampaignSummary, campaignMovieId: string) {
     setActionError("");
     const previousVotedCampaignMovieId = campaign.viewerMovieVoteCampaignMovieId;
+    const previousCampaignState = campaign;
+
+    const adjustVoteCount = (choiceCampaignMovieId: string, delta: number, choices: CampaignSummary["choices"]) =>
+      choices.map((choice) =>
+        choice.campaignMovieId === choiceCampaignMovieId
+          ? {
+              ...choice,
+              voteCount: Math.max(0, Number(choice.voteCount || 0) + delta),
+            }
+          : choice,
+      );
 
     if (!authUser) {
       try {
+        rememberPostAuthCampaign(campaign.id);
         await signInWithGoogle();
+        if (typeof window !== "undefined") {
+          window.location.assign(`/campaigns#${encodeURIComponent(campaign.id)}`);
+        }
+        return;
       } catch (error) {
+        clearPostAuthCampaign();
         if (isPopupSignInCancellation(error)) {
           return;
         }
@@ -575,7 +652,15 @@ export default function CampaignExplorer({
         row.id === campaign.id
           ? {
               ...row,
-              viewerMovieVoteCampaignMovieId: campaignMovieId,
+              choices:
+                previousVotedCampaignMovieId === campaignMovieId
+                  ? adjustVoteCount(campaignMovieId, -1, row.choices)
+                  : adjustVoteCount(
+                      campaignMovieId,
+                      1,
+                      previousVotedCampaignMovieId ? adjustVoteCount(previousVotedCampaignMovieId, -1, row.choices) : row.choices,
+                    ),
+              viewerMovieVoteCampaignMovieId: previousVotedCampaignMovieId === campaignMovieId ? null : campaignMovieId,
             }
           : row,
       );
@@ -636,12 +721,7 @@ export default function CampaignExplorer({
       setCampaigns((prev) => {
         if (!prev) return prev;
         return prev.map((row) =>
-          row.id === campaign.id
-            ? {
-                ...row,
-                viewerMovieVoteCampaignMovieId: previousVotedCampaignMovieId || null,
-              }
-            : row,
+          row.id === campaign.id ? previousCampaignState : row,
         );
       });
     } finally {
@@ -677,9 +757,56 @@ export default function CampaignExplorer({
     return compact ? rows.slice(0, 3) : rows;
   }, [campaigns, compact, search, selectedRange, statusFilter]);
 
+  const gridContainerClass = useMemo(() => {
+    if (isFeedLayout) {
+      return "mx-auto w-full max-w-2xl";
+    }
+    if (!compact) {
+      return "grid grid-cols-1 gap-4 lg:grid-cols-2";
+    }
+
+    const count = visible?.length ?? 0;
+    if (count <= 1) {
+      return "mx-auto grid w-full max-w-2xl grid-cols-1 gap-4";
+    }
+    if (count === 2) {
+      return "mx-auto grid w-full max-w-5xl grid-cols-1 gap-4 md:grid-cols-2";
+    }
+    return "mx-auto grid w-full max-w-6xl grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3";
+  }, [compact, isFeedLayout, visible]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || visible === null || visible.length === 0) return;
+
+    const hashCampaignId = decodeURIComponent(String(window.location.hash || "").replace(/^#/, "")).trim();
+    if (!hashCampaignId) return;
+
+    let cancelled = false;
+    const scrollToTarget = () => {
+      if (cancelled) return true;
+      const target = document.getElementById(hashCampaignId);
+      if (!target) return false;
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+      return true;
+    };
+
+    if (scrollToTarget()) {
+      return;
+    }
+
+    const timeoutHandle = window.setTimeout(() => {
+      scrollToTarget();
+    }, 180);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeoutHandle);
+    };
+  }, [visible]);
+
   if (visible === null) {
     return (
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <div className={compact ? "mx-auto grid w-full max-w-6xl grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3" : "grid grid-cols-1 gap-4 lg:grid-cols-2"}>
         {Array.from({ length: compact ? 3 : 6 }).map((_, index) => (
           <div key={index} className="rounded-2xl border border-line bg-paper p-5">
             <div className="skeleton h-5 w-2/3 rounded" />
@@ -759,7 +886,7 @@ export default function CampaignExplorer({
         </div>
       )}
 
-      <div ref={feedContainerRef} className={isFeedLayout ? "mx-auto w-full max-w-2xl" : "grid grid-cols-1 gap-4 lg:grid-cols-2"}>
+      <div ref={feedContainerRef} className={gridContainerClass}>
         {isFeedLayout ? (
           visible.length === 0 ? (
             <div className="rounded-2xl border border-line bg-paper p-6 text-sm text-ink-soft">
@@ -782,6 +909,7 @@ export default function CampaignExplorer({
               const handle = campaignHandle(campaign.slug);
               const votedCampaignMovieId = campaign.viewerMovieVoteCampaignMovieId;
               const isHistoricalVoteCampaign = campaign.origin === "historical-vote";
+              const isHistoricalMode = mode === "historical-votes";
               const canVoteAtAll = !isHistoricalVoteCampaign && !readOnly;
               const canVote = canVoteAtAll;
               const leadLabel = readOnly ? "Winner" : "Leading";
@@ -805,7 +933,7 @@ export default function CampaignExplorer({
               const canOpenComments = !isHistoricalVoteCampaign || historicalCommentCount > 0;
 
               return (
-                <article key={campaign.id} className="snap-start snap-always flex scroll-mt-24 flex-col rounded-2xl border border-line bg-paper p-3 sm:p-4">
+                <article id={campaign.id} key={campaign.id} className="snap-start snap-always flex scroll-mt-24 flex-col rounded-2xl border border-line bg-paper p-3 sm:p-4">
                   <div className="flex min-w-0 items-start gap-2.5">
                     <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-marquee/15 text-xs font-semibold text-marquee">
                       {String(username || "rv").slice(0, 1).toUpperCase()}
@@ -1001,7 +1129,7 @@ export default function CampaignExplorer({
                         )}
                         {showVotesChip && (
                           <span className="inline-flex items-center gap-1 rounded-full border border-marquee/35 bg-marquee/10 px-2.5 py-1.5 text-[10px] font-semibold whitespace-nowrap text-marquee">
-                            🗳️ Votes {totalVotes.toLocaleString()}/{votingThreshold}
+                            🗳️ Votes {totalVotes.toLocaleString()}{isHistoricalMode ? "" : `/${votingThreshold}`}
                           </span>
                         )}
                       </div>
@@ -1097,13 +1225,13 @@ export default function CampaignExplorer({
             </div>
           ) : (
           visible.map((campaign) => {
-            const interestPct = meter(campaign.counts.interested, campaign.thresholds.interested);
+            const rankedChoices = rankCampaignChoices(campaign.choices);
+            const totalVotes = rankedChoices.reduce((sum, choice) => sum + Math.max(0, Number(choice.voteCount || 0)), 0);
+            const votePct = meter(totalVotes, campaign.thresholds.interested);
             const backingPct = meter(campaign.counts.backing, campaign.thresholds.backing);
             const reservationCount = Math.max(0, Number(campaign.counts.backing || 0));
             const reservationThreshold = Math.max(1, Number(campaign.thresholds.backing || 1));
-            const votingCount = Math.max(0, Number(campaign.counts.interested || 0));
             const votingThreshold = Math.max(reservationThreshold, Number(campaign.thresholds.interested || reservationThreshold * 2));
-            const rankedChoices = rankCampaignChoices(campaign.choices);
             const displayTitle = campaignTitleWithTheater(campaign);
             const chosenMovie = rankedChoices[0]?.title || campaign.selectedMovieTitle || "Movie TBD";
             const supportPending = Boolean(pendingById[campaign.id]);
@@ -1116,6 +1244,7 @@ export default function CampaignExplorer({
             const selectedComparable = comparableTitle(chosenMovie);
             const votedCampaignMovieId = campaign.viewerMovieVoteCampaignMovieId;
             const isHistoricalVoteCampaign = campaign.origin === "historical-vote";
+            const isHistoricalMode = mode === "historical-votes";
             const canVoteAtAll = !isHistoricalVoteCampaign && !readOnly;
             const canVoteNow = canVoteAtAll;
             const leadLabel = readOnly ? "Winner" : "Leading";
@@ -1129,7 +1258,7 @@ export default function CampaignExplorer({
             );
 
             return (
-              <article key={campaign.id} className="rounded-2xl border border-line bg-paper p-5">
+              <article id={campaign.id} key={campaign.id} className="rounded-2xl border border-line bg-paper p-5">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${statusTone[campaign.status] || statusTone.active}`}>
                     {statusLabel[campaign.status] || campaign.status}
@@ -1237,15 +1366,33 @@ export default function CampaignExplorer({
                   <div className="rounded-xl border border-marquee/30 bg-gradient-to-br from-marquee/10 to-paper px-3 py-3">
                     <p className="text-[11px] font-semibold uppercase tracking-wide text-marquee">🗳️ Votes</p>
                     <div className="mt-1 flex items-end justify-between gap-2">
-                      <p className="text-sm font-semibold text-ink">{campaign.counts.interested} / {campaign.thresholds.interested}</p>
-                      <p className="text-[11px] font-semibold text-marquee">{interestPct}%</p>
+                      <p className="text-sm font-semibold text-ink">{totalVotes.toLocaleString()}</p>
+                      {canVoteAtAll && !isHistoricalMode && <p className="text-[11px] font-semibold text-marquee">{votePct}%</p>}
                     </div>
-                    <div className="mt-2 h-2 overflow-hidden rounded-full bg-cream-soft">
-                      <div className="h-full rounded-full bg-marquee" style={{ width: `${interestPct}%` }} />
-                    </div>
+                    {canVoteAtAll && !isHistoricalMode && (
+                      <div className="mt-2 h-2 overflow-hidden rounded-full bg-cream-soft">
+                        <div className="h-full rounded-full bg-marquee" style={{ width: `${votePct}%` }} />
+                      </div>
+                    )}
                   </div>
                   <div className="rounded-xl border border-rose/30 bg-gradient-to-br from-rose/10 to-paper px-3 py-3">
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-rose">🎟️ Reservations</p>
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-[11px] font-semibold uppercase tracking-wide text-rose">🎟️ Reservations</p>
+                      {!isHistoricalVoteCampaign && !readOnly && (
+                        <button
+                          type="button"
+                          disabled={supportPending}
+                          onClick={() => handleSupport(campaign, campaign.viewerSupport === "backing" ? "none" : "backing")}
+                          className={`rounded-full border px-2.5 py-1 text-[10px] font-semibold whitespace-nowrap transition-colors ${campaign.viewerSupport === "backing" ? "border-rose bg-rose/10 text-rose" : "border-line text-ink-soft hover:border-rose hover:text-rose"}`}
+                        >
+                          {supportPending
+                            ? "Saving…"
+                            : campaign.viewerSupport === "backing"
+                              ? "Unreserve"
+                              : "Reserve"}
+                        </button>
+                      )}
+                    </div>
                     <div className="mt-1 flex items-end justify-between gap-2">
                       <p className="text-sm font-semibold text-ink">{campaign.counts.backing} / {campaign.thresholds.backing}</p>
                       <p className="text-[11px] font-semibold text-rose">{backingPct}%</p>
@@ -1257,33 +1404,6 @@ export default function CampaignExplorer({
                 </div>
 
                 {!isHistoricalVoteCampaign && <CampaignDiscussionInline campaignId={campaign.id} choices={rankedChoices} />}
-
-                {!compact && !isHistoricalVoteCampaign && !readOnly && (
-                  <div className="mt-4 flex flex-wrap justify-center gap-2">
-                    <button
-                      type="button"
-                      disabled={supportPending}
-                      onClick={() => handleSupport(campaign, campaign.viewerSupport === "backing" ? "none" : "backing")}
-                      className={`rounded-full border px-3.5 py-2 text-xs font-semibold transition-colors ${campaign.viewerSupport === "backing" ? "border-rose bg-rose/10 text-rose" : "border-line text-ink-soft hover:border-rose hover:text-rose"}`}
-                    >
-                      {supportPending
-                        ? "Saving…"
-                        : campaign.viewerSupport === "backing"
-                          ? `🎟️ Unreserve ${reservationCount}/${reservationThreshold}`
-                          : `🎟️ Reserve ${reservationCount}/${reservationThreshold}`}
-                    </button>
-                    {campaign.viewerSupport && (
-                      <button
-                        type="button"
-                        disabled={supportPending}
-                        onClick={() => handleSupport(campaign, "none")}
-                        className="rounded-full border border-line px-3.5 py-2 text-xs font-semibold text-ink-faint transition-colors hover:border-ink/30 hover:text-ink-soft"
-                      >
-                        Remove support
-                      </button>
-                    )}
-                  </div>
-                )}
 
                 {!compact && isAdminUser && !isHistoricalVoteCampaign && !readOnly && (
                   <div className="mt-4 rounded-xl border border-line bg-cream p-3">
