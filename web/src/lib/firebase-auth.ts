@@ -1,10 +1,14 @@
 import {
+	browserLocalPersistence,
+	browserSessionPersistence,
 	getAuth,
 	GoogleAuthProvider,
 	getRedirectResult,
+	inMemoryPersistence,
 	signInWithPopup,
 	signInWithRedirect,
 	onAuthStateChanged,
+	setPersistence,
 	signOut,
 } from "firebase/auth";
 import { firebaseApp } from "./firebase-core";
@@ -12,8 +16,42 @@ import { firebaseApp } from "./firebase-core";
 // Split out of firebase.ts so pages that never sign anyone in (vote, chat,
 // suggest, etc.) don't pull the Auth SDK into their bundle.
 export const auth = getAuth(firebaseApp);
-export const googleProvider = new GoogleAuthProvider();
-googleProvider.setCustomParameters({ prompt: "select_account" });
+
+function buildGoogleProvider(options?: { forceAccountSelection?: boolean }) {
+	const provider = new GoogleAuthProvider();
+	if (options?.forceAccountSelection) {
+		provider.setCustomParameters({ prompt: "select_account" });
+	}
+	return provider;
+}
+
+let authPersistencePromise: Promise<void> | null = null;
+
+async function ensureAuthPersistence() {
+	if (authPersistencePromise) {
+		return authPersistencePromise;
+	}
+
+	authPersistencePromise = (async () => {
+		try {
+			await setPersistence(auth, browserLocalPersistence);
+			return;
+		} catch {
+			// Fall through to session persistence.
+		}
+
+		try {
+			await setPersistence(auth, browserSessionPersistence);
+			return;
+		} catch {
+			// Fall through to in-memory as a last resort.
+		}
+
+		await setPersistence(auth, inMemoryPersistence);
+	})();
+
+	return authPersistencePromise;
+}
 
 export function isPopupSignInCancellation(error: unknown): boolean {
 	const code = String((error as any)?.code || "").toLowerCase();
@@ -43,17 +81,20 @@ function shouldPreferRedirectOnThisDevice(): boolean {
 	return /iphone|ipad|ipod|android|mobile/.test(ua);
 }
 
-export async function signInWithGoogle() {
+export async function signInWithGoogle(options?: { forceAccountSelection?: boolean }) {
+	await ensureAuthPersistence();
+	const provider = buildGoogleProvider(options);
+
 	if (shouldPreferRedirectOnThisDevice()) {
-		await signInWithRedirect(auth, googleProvider);
+		await signInWithRedirect(auth, provider);
 		return null;
 	}
 
 	try {
-		return await signInWithPopup(auth, googleProvider);
+		return await signInWithPopup(auth, provider);
 	} catch (error) {
 		if (shouldFallbackToRedirect(error)) {
-			await signInWithRedirect(auth, googleProvider);
+			await signInWithRedirect(auth, provider);
 			return null;
 		}
 		throw error;
@@ -61,13 +102,15 @@ export async function signInWithGoogle() {
 }
 
 if (typeof window !== "undefined") {
-	void getRedirectResult(auth).catch((error) => {
+	void ensureAuthPersistence()
+		.then(() => getRedirectResult(auth))
+		.catch((error) => {
 		const code = String((error as any)?.code || "").toLowerCase();
 		if (code === "auth/no-auth-event") {
 			return;
 		}
 		console.error("Google redirect sign-in failed:", error);
-	});
+		});
 }
 
 export { signInWithPopup, onAuthStateChanged, signOut };

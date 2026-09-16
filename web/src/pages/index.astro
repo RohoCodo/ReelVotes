@@ -216,6 +216,7 @@ const flow = [
 
 <script>
   import { auth, onAuthStateChanged, signInWithGoogle } from "../lib/firebase-auth";
+  import { rememberPostAuthDestination } from "../lib/post-auth-redirect";
 
   let homeCtaUnsubscribe = null;
 
@@ -229,6 +230,7 @@ const flow = [
       ctaButton.onclick = async (event) => {
         event.preventDefault();
         try {
+          rememberPostAuthDestination("/vote");
           await signInWithGoogle();
         } catch (error) {
           console.error("Sign in failed:", error);
@@ -237,8 +239,8 @@ const flow = [
     };
 
     const setSignedIn = () => {
-      ctaButton.textContent = "Create campaign";
-      ctaButton.setAttribute("href", "/create");
+      ctaButton.textContent = "Vote now";
+      ctaButton.setAttribute("href", "/vote");
       ctaButton.onclick = null;
     };
 

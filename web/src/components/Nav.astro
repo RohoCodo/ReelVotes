@@ -141,6 +141,11 @@ const allMobileLinks = [
 
 <script>
   import { auth, onAuthStateChanged, signInWithGoogle } from "../lib/firebase-auth";
+  import {
+    navigateToPostAuthDestination,
+    rememberCurrentLocationForPostAuth,
+    rememberPostAuthDestination,
+  } from "../lib/post-auth-redirect";
 
   // Re-bound on every astro:page-load (fires on first load AND after every
   // view-transition navigation) — with <ClientRouter /> swapping in fresh
@@ -172,6 +177,23 @@ const allMobileLinks = [
 
   let authUnsubscribe = null;
 
+  function rememberNavSignInDestination() {
+    const currentPath = window.location.pathname;
+    if (
+      currentPath === "/vote" ||
+      currentPath === "/create" ||
+      currentPath === "/account" ||
+      currentPath === "/admin" ||
+      currentPath === "/reelsuccess" ||
+      currentPath === "/theater-registration"
+    ) {
+      rememberCurrentLocationForPostAuth();
+      return;
+    }
+
+    rememberPostAuthDestination("/vote");
+  }
+
   function initNavAuthButtons() {
     const buttons = Array.from(document.querySelectorAll('a[data-auth-button="true"]'));
     const accountLinks = Array.from(document.querySelectorAll('a[data-account-link="true"]'));
@@ -185,6 +207,7 @@ const allMobileLinks = [
         button.onclick = async (event) => {
           event.preventDefault();
           try {
+            rememberNavSignInDestination();
             await signInWithGoogle();
           } catch (error) {
             console.error("Sign in failed:", error);
@@ -211,6 +234,9 @@ const allMobileLinks = [
     authUnsubscribe?.();
     authUnsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
+        if (navigateToPostAuthDestination()) {
+          return;
+        }
         setSignedIn();
       } else {
         setSignedOut();
