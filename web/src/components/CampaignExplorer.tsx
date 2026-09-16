@@ -269,6 +269,7 @@ export default function CampaignExplorer({
   compact = false,
   layout = "grid",
   mode = "all",
+  sortBy = "default",
   showCreateButton = true,
   showSearch = true,
   statusFilter,
@@ -277,6 +278,7 @@ export default function CampaignExplorer({
   compact?: boolean;
   layout?: "grid" | "feed";
   mode?: "all" | "historical-votes";
+  sortBy?: "default" | "votes-desc";
   showCreateButton?: boolean;
   showSearch?: boolean;
   statusFilter?: CampaignSummary["status"][];
@@ -825,8 +827,31 @@ export default function CampaignExplorer({
         campaign.choices.some((choice) => choice.title.toLowerCase().includes(q))
       );
     });
-    return compact ? rows.slice(0, 3) : rows;
-  }, [campaigns, compact, search, selectedRange, statusFilter]);
+
+    const sortedRows = sortBy === "votes-desc"
+      ? [...rows].sort((a, b) => {
+          const totalVotesA = rankCampaignChoices(a.choices)
+            .reduce((sum, choice) => sum + Math.max(0, Number(choice.voteCount || 0)), 0);
+          const totalVotesB = rankCampaignChoices(b.choices)
+            .reduce((sum, choice) => sum + Math.max(0, Number(choice.voteCount || 0)), 0);
+          if (totalVotesB !== totalVotesA) return totalVotesB - totalVotesA;
+
+          const interestedA = Math.max(0, Number(a.counts.interested || 0));
+          const interestedB = Math.max(0, Number(b.counts.interested || 0));
+          if (interestedB !== interestedA) return interestedB - interestedA;
+
+          const dateA = campaignDateKey(a);
+          const dateB = campaignDateKey(b);
+          if (dateA && dateB && dateA !== dateB) return dateB.localeCompare(dateA);
+          if (dateA && !dateB) return -1;
+          if (!dateA && dateB) return 1;
+
+          return a.title.localeCompare(b.title);
+        })
+      : rows;
+
+    return compact ? sortedRows.slice(0, 3) : sortedRows;
+  }, [campaigns, compact, search, selectedRange, sortBy, statusFilter]);
 
   const gridContainerClass = useMemo(() => {
     if (isFeedLayout) {
