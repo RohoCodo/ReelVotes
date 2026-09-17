@@ -7,7 +7,14 @@ import "react-day-picker/dist/style.css";
 import { getCampaignSummaries, rankCampaignChoices, type CampaignSummary } from "../lib/campaigns";
 import { adminSetCampaignStatus, upsertCampaignMovieVote, upsertCampaignSupport } from "../lib/firebase";
 import { db } from "../lib/firebase";
-import { auth, isPopupSignInCancellation, onAuthStateChanged, signInWithGoogle } from "../lib/firebase-auth";
+import {
+  auth,
+  clearLastAuthError,
+  isPopupSignInCancellation,
+  onAuthStateChanged,
+  readLastAuthError,
+  signInWithGoogle,
+} from "../lib/firebase-auth";
 import { dbLite } from "../lib/firebase-lite";
 import { getMovieMetadataByTitle } from "../lib/tmdb";
 
@@ -205,6 +212,27 @@ function campaignTitleWithoutTheater(campaign: CampaignSummary): string {
 
   return rawTitle;
 }
+
+function formatAuthErrorMessage(rawCode: string, rawMessage: string): string {
+  const code = String(rawCode || "").toLowerCase();
+  const message = String(rawMessage || "").trim();
+
+  if (code === "auth/unauthorized-domain") {
+    return "Sign-in blocked: this domain is not authorized in Firebase Auth. Add reelvotes.com and www.reelvotes.com in Firebase Authentication > Settings > Authorized domains.";
+  }
+  if (code === "auth/web-storage-unsupported") {
+    return "Sign-in blocked: this browser is blocking web storage/cookies. On iPhone, disable Prevent Cross-Site Tracking for this test or try Safari private tab off.";
+  }
+  if (code === "auth/popup-blocked" || code === "auth/popup-closed-by-user") {
+    return "Google sign-in popup was blocked or closed. Please allow popups for ReelVotes and try Vote again.";
+  }
+  if (code === "auth/network-request-failed") {
+    return "Sign-in failed due to network restrictions. Please retry on a stable connection and disable strict content blockers for ReelVotes.";
+  }
+
+  return `Sign-in error (${rawCode || "unknown"}): ${message || "Unknown authentication error."}`;
+}
+
 function toDateKey(date: Date): string {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, "0");
@@ -453,8 +481,36 @@ export default function CampaignExplorer({
   }, [mode]);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => setAuthUser(user));
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setAuthUser(user);
+      if (user) {
+        clearLastAuthError();
+        setActionError("");
+      }
+    });
     return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const applyLastError = () => {
+      const latest = readLastAuthError();
+      if (!latest) return;
+      setActionError(formatAuthErrorMessage(latest.code, latest.message));
+    };
+
+    applyLastError();
+
+    const onAuthError = (event: Event) => {
+      const customEvent = event as CustomEvent<{ code?: string; message?: string }>;
+      const code = String(customEvent.detail?.code || "auth/unknown");
+      const message = String(customEvent.detail?.message || "Unknown authentication error.");
+      setActionError(formatAuthErrorMessage(code, message));
+    };
+
+    window.addEventListener("reelvotes:auth-error", onAuthError as EventListener);
+    return () => window.removeEventListener("reelvotes:auth-error", onAuthError as EventListener);
   }, []);
 
   useEffect(() => {
@@ -938,6 +994,10 @@ export default function CampaignExplorer({
 
   return (
     <div>
+      {!compact && actionError && (
+        <p className="mb-4 rounded-xl border border-red-300 bg-red-50 p-3 text-sm text-red-700">{actionError}</p>
+      )}
+
       <div ref={floatingCreateTriggerRef} className="h-px" aria-hidden="true" />
 
       {!compact && showSearch && (
@@ -1585,8 +1645,6 @@ export default function CampaignExplorer({
           )
         )}
       </div>
-
-      {!compact && actionError && <p className="mt-4 rounded-xl border border-red-300/30 bg-red-900/20 p-3 text-sm text-red-200">{actionError}</p>}
 
       {canRenderFloatingCreate &&
         isFeedLayout &&
