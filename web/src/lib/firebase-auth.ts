@@ -6,7 +6,6 @@ import {
 	getRedirectResult,
 	inMemoryPersistence,
 	signInWithPopup,
-	signInWithRedirect,
 	onAuthStateChanged,
 	setPersistence,
 	signOut,
@@ -153,8 +152,8 @@ export async function signInWithGoogle(options?: { forceAccountSelection?: boole
 	} catch (error) {
 		await persistenceReady.catch(() => undefined);
 		if (shouldFallbackToRedirect(error)) {
-			await signInWithRedirect(auth, provider);
-			return null;
+			reportAuthError(error, "popup");
+			throw error;
 		}
 		reportAuthError(error, "popup");
 		throw error;
@@ -172,6 +171,10 @@ if (typeof window !== "undefined") {
 		.catch((error) => {
 		const code = String((error as any)?.code || "").toLowerCase();
 		if (code === "auth/no-auth-event") {
+			return;
+		}
+		if (code === "auth/missing-initial-state") {
+			reportAuthError(error, "redirect-result");
 			return;
 		}
 		reportAuthError(error, "redirect-result");

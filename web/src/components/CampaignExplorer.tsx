@@ -216,6 +216,7 @@ function campaignTitleWithoutTheater(campaign: CampaignSummary): string {
 function formatAuthErrorMessage(rawCode: string, rawMessage: string): string {
   const code = String(rawCode || "").toLowerCase();
   const message = String(rawMessage || "").trim();
+  const lowerMessage = message.toLowerCase();
 
   if (code === "auth/unauthorized-domain") {
     return "Sign-in blocked: this domain is not authorized in Firebase Auth. Add reelvotes.com and www.reelvotes.com in Firebase Authentication > Settings > Authorized domains.";
@@ -225,6 +226,9 @@ function formatAuthErrorMessage(rawCode: string, rawMessage: string): string {
   }
   if (code === "auth/popup-blocked" || code === "auth/popup-closed-by-user") {
     return "Google sign-in popup was blocked or closed. Please allow popups for ReelVotes and try Vote again.";
+  }
+  if (code === "auth/missing-initial-state" || lowerMessage.includes("missing initial state")) {
+    return "Sign-in could not be completed in this browser session because auth storage is partitioned/blocked. Open ReelVotes directly in Safari or Chrome (not an in-app browser), then try voting again.";
   }
   if (code === "auth/network-request-failed") {
     return "Sign-in failed due to network restrictions. Please retry on a stable connection and disable strict content blockers for ReelVotes.";
