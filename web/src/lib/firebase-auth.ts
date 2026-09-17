@@ -74,12 +74,13 @@ function shouldFallbackToRedirect(error: unknown): boolean {
 }
 
 export async function signInWithGoogle(options?: { forceAccountSelection?: boolean }) {
-	await ensureAuthPersistence();
+	const persistenceReady = ensureAuthPersistence();
 	const provider = buildGoogleProvider(options);
 
 	try {
 		return await signInWithPopup(auth, provider);
 	} catch (error) {
+		await persistenceReady.catch(() => undefined);
 		if (shouldFallbackToRedirect(error)) {
 			await signInWithRedirect(auth, provider);
 			return null;
