@@ -9,10 +9,8 @@ import { adminSetCampaignStatus, upsertCampaignMovieVote, upsertCampaignSupport 
 import { db } from "../lib/firebase";
 import {
   auth,
-  clearLastAuthError,
   isPopupSignInCancellation,
   onAuthStateChanged,
-  readLastAuthError,
   signInWithGoogle,
 } from "../lib/firebase-auth";
 import { dbLite } from "../lib/firebase-lite";
@@ -213,30 +211,6 @@ function campaignTitleWithoutTheater(campaign: CampaignSummary): string {
   return rawTitle;
 }
 
-function formatAuthErrorMessage(rawCode: string, rawMessage: string): string {
-  const code = String(rawCode || "").toLowerCase();
-  const message = String(rawMessage || "").trim();
-  const lowerMessage = message.toLowerCase();
-
-  if (code === "auth/unauthorized-domain") {
-    return "Sign-in blocked: this domain is not authorized in Firebase Auth. Add reelvotes.com and www.reelvotes.com in Firebase Authentication > Settings > Authorized domains.";
-  }
-  if (code === "auth/web-storage-unsupported") {
-    return "Sign-in blocked: this browser is blocking web storage/cookies. On iPhone, disable Prevent Cross-Site Tracking for this test or try Safari private tab off.";
-  }
-  if (code === "auth/popup-blocked" || code === "auth/popup-closed-by-user") {
-    return "Google sign-in popup was blocked or closed. Please allow popups for ReelVotes and try Vote again.";
-  }
-  if (code === "auth/missing-initial-state" || lowerMessage.includes("missing initial state")) {
-    return "Sign-in could not be completed in this browser session because auth storage is partitioned/blocked. Open ReelVotes directly in Safari or Chrome (not an in-app browser), then try voting again.";
-  }
-  if (code === "auth/network-request-failed") {
-    return "Sign-in failed due to network restrictions. Please retry on a stable connection and disable strict content blockers for ReelVotes.";
-  }
-
-  return `Sign-in error (${rawCode || "unknown"}): ${message || "Unknown authentication error."}`;
-}
-
 function toDateKey(date: Date): string {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, "0");
@@ -392,7 +366,7 @@ export default function CampaignExplorer({
         await signInWithGoogle();
       } catch (error) {
         if (isPopupSignInCancellation(error)) return;
-        setActionError(String((error as any)?.message || "Sign-in required to bookmark campaigns."));
+        setActionError("Sign-in required to bookmark campaigns.");
       }
       return;
     }
@@ -485,36 +459,8 @@ export default function CampaignExplorer({
   }, [mode]);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setAuthUser(user);
-      if (user) {
-        clearLastAuthError();
-        setActionError("");
-      }
-    });
+    const unsubscribe = onAuthStateChanged(auth, (user) => setAuthUser(user));
     return () => unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const applyLastError = () => {
-      const latest = readLastAuthError();
-      if (!latest) return;
-      setActionError(formatAuthErrorMessage(latest.code, latest.message));
-    };
-
-    applyLastError();
-
-    const onAuthError = (event: Event) => {
-      const customEvent = event as CustomEvent<{ code?: string; message?: string }>;
-      const code = String(customEvent.detail?.code || "auth/unknown");
-      const message = String(customEvent.detail?.message || "Unknown authentication error.");
-      setActionError(formatAuthErrorMessage(code, message));
-    };
-
-    window.addEventListener("reelvotes:auth-error", onAuthError as EventListener);
-    return () => window.removeEventListener("reelvotes:auth-error", onAuthError as EventListener);
   }, []);
 
   useEffect(() => {
@@ -662,7 +608,7 @@ export default function CampaignExplorer({
         if (isPopupSignInCancellation(error)) {
           return;
         }
-        setActionError(String((error as any)?.message || "Sign-in required to support campaigns."));
+        setActionError("Sign-in required to support campaigns.");
         return;
       }
     }
@@ -793,7 +739,7 @@ export default function CampaignExplorer({
         if (isPopupSignInCancellation(error)) {
           return;
         }
-        setActionError(String((error as any)?.message || "Sign-in required to vote."));
+        setActionError("Sign-in required to vote.");
         return;
       }
     }
