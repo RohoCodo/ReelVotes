@@ -687,6 +687,7 @@ export default function CampaignExplorer({
     setActionError("");
     const previousVotedCampaignMovieId = campaign.viewerMovieVoteCampaignMovieId;
     const previousCampaignState = campaign;
+    let effectiveAuthUser = authUser;
 
     const adjustVoteCount = (choiceCampaignMovieId: string, delta: number, choices: CampaignSummary["choices"]) =>
       choices.map((choice) =>
@@ -698,14 +699,35 @@ export default function CampaignExplorer({
           : choice,
       );
 
-    if (!authUser) {
+    if (effectiveAuthUser === undefined) {
+      setActionError("Checking sign-in status. Please try voting again in a second.");
+      return;
+    }
+
+    if (!effectiveAuthUser && auth.currentUser) {
+      effectiveAuthUser = auth.currentUser;
+      setAuthUser(auth.currentUser);
+    }
+
+    if (!effectiveAuthUser) {
       try {
         rememberPostAuthCampaign(campaign.id);
-        await signInWithGoogle();
-        if (typeof window !== "undefined") {
-          window.location.assign(`/campaigns#${encodeURIComponent(campaign.id)}`);
+        const signInResult = await signInWithGoogle();
+        const popupUser = signInResult?.user || null;
+
+        if (popupUser) {
+          effectiveAuthUser = popupUser;
+          setAuthUser(popupUser);
+          clearPostAuthCampaign();
+        } else if (auth.currentUser) {
+          effectiveAuthUser = auth.currentUser;
+          setAuthUser(auth.currentUser);
+          clearPostAuthCampaign();
+        } else {
+          // Redirect flow may still be in progress; avoid a false negative.
+          setActionError("Finishing sign-in… please tap Vote once more in a second.");
+          return;
         }
-        return;
       } catch (error) {
         clearPostAuthCampaign();
         if (isPopupSignInCancellation(error)) {

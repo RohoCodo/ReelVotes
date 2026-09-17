@@ -73,22 +73,9 @@ function shouldFallbackToRedirect(error: unknown): boolean {
 		message.includes("operation-not-supported-in-this-environment");
 }
 
-function shouldPreferRedirectOnThisDevice(): boolean {
-	if (typeof window === "undefined") {
-		return false;
-	}
-	const ua = String(window.navigator?.userAgent || "").toLowerCase();
-	return /iphone|ipad|ipod|android|mobile/.test(ua);
-}
-
 export async function signInWithGoogle(options?: { forceAccountSelection?: boolean }) {
 	await ensureAuthPersistence();
 	const provider = buildGoogleProvider(options);
-
-	if (shouldPreferRedirectOnThisDevice()) {
-		await signInWithRedirect(auth, provider);
-		return null;
-	}
 
 	try {
 		return await signInWithPopup(auth, provider);
