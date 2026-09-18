@@ -5,7 +5,7 @@ import { getFunctions, httpsCallable } from "firebase/functions";
 // security rules, matching the pattern the previous vanilla-JS site used.
 const firebaseConfig = {
   apiKey: "AIzaSyDMa_twNQAZVrnLHUNNNsxk6aTa-9FrnSc",
-  authDomain: "reelvotes.com",
+  authDomain: "www.reelvotes.com",
   projectId: "reelconvo",
   storageBucket: "reelconvo.firebasestorage.app",
   messagingSenderId: "913820455359",
