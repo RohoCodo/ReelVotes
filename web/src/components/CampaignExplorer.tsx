@@ -68,8 +68,6 @@ const statusTone: Record<string, string> = {
   cancelled: "border-line text-ink-faint",
 };
 
-const POST_AUTH_CAMPAIGN_KEY = "reelvotes:post-auth-campaign";
-
 function isShareCancellation(error: unknown): boolean {
   const name = String((error as any)?.name || "").toLowerCase();
   const message = String((error as any)?.message || "").toLowerCase();
@@ -229,47 +227,6 @@ function formatRangeLabel(range: DateRange | undefined): string {
     return `${formatter.format(range.from)} - ${formatter.format(range.to)}`;
   }
   return "Dates";
-}
-
-function rememberPostAuthCampaign(campaignId: string) {
-  if (typeof window === "undefined") return;
-  try {
-    window.sessionStorage.setItem(
-      POST_AUTH_CAMPAIGN_KEY,
-      JSON.stringify({
-        campaignId: String(campaignId || "").trim(),
-        createdAt: Date.now(),
-      }),
-    );
-  } catch {
-    // Ignore storage failures and continue with auth.
-  }
-}
-
-function readPostAuthCampaign(): { campaignId: string; createdAt: number } | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = window.sessionStorage.getItem(POST_AUTH_CAMPAIGN_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as { campaignId?: unknown; createdAt?: unknown };
-    const campaignId = String(parsed?.campaignId || "").trim();
-    if (!campaignId) return null;
-    return {
-      campaignId,
-      createdAt: Number(parsed?.createdAt || 0),
-    };
-  } catch {
-    return null;
-  }
-}
-
-function clearPostAuthCampaign() {
-  if (typeof window === "undefined") return;
-  try {
-    window.sessionStorage.removeItem(POST_AUTH_CAMPAIGN_KEY);
-  } catch {
-    // Ignore storage failures.
-  }
 }
 
 export default function CampaignExplorer({
@@ -507,23 +464,6 @@ export default function CampaignExplorer({
   }, [authUser]);
 
   useEffect(() => {
-    if (typeof window === "undefined" || !authUser) return;
-
-    const pendingTarget = readPostAuthCampaign();
-    if (!pendingTarget?.campaignId) return;
-
-    const targetUrl = `/campaigns#${encodeURIComponent(pendingTarget.campaignId)}`;
-    const currentHash = decodeURIComponent(String(window.location.hash || "").replace(/^#/, "")).trim();
-    const onTargetPage = window.location.pathname === "/campaigns" && currentHash === pendingTarget.campaignId;
-
-    clearPostAuthCampaign();
-
-    if (!onTargetPage) {
-      window.location.assign(targetUrl);
-    }
-  }, [authUser]);
-
-  useEffect(() => {
     setCanRenderFloatingCreate(true);
 
     const updateFloatingCta = () => {
@@ -695,6 +635,7 @@ export default function CampaignExplorer({
     const previousVotedCampaignMovieId = campaign.viewerMovieVoteCampaignMovieId;
     const previousCampaignState = campaign;
     let effectiveAuthUser = authUser;
+    let signInError: unknown = null;
 
     const adjustVoteCount = (choiceCampaignMovieId: string, delta: number, choices: CampaignSummary["choices"]) =>
       choices.map((choice) =>
@@ -707,8 +648,10 @@ export default function CampaignExplorer({
       );
 
     if (effectiveAuthUser === undefined) {
-      setActionError("Checking sign-in status. Please try voting again in a second.");
-      return;
+      effectiveAuthUser = await waitForSignedInUser(1500);
+      if (effectiveAuthUser) {
+        setAuthUser(effectiveAuthUser);
+      }
     }
 
     if (!effectiveAuthUser && auth.currentUser) {
@@ -718,26 +661,30 @@ export default function CampaignExplorer({
 
     if (!effectiveAuthUser) {
       try {
-        rememberPostAuthCampaign(campaign.id);
         const signInResult = await signInWithGoogle();
         const popupUser = signInResult?.user || await waitForSignedInUser();
 
         if (popupUser) {
           effectiveAuthUser = popupUser;
           setAuthUser(popupUser);
-          clearPostAuthCampaign();
         } else if (auth.currentUser) {
           effectiveAuthUser = auth.currentUser;
           setAuthUser(auth.currentUser);
-          clearPostAuthCampaign();
         } else {
-          // Redirect flow may still be in progress; avoid a false negative.
-          setActionError("Finishing sign-in… please tap Vote once more in a second.");
+          setActionError("Sign-in completed, but your session is still loading. Please wait a moment and try again.");
           return;
         }
       } catch (error) {
-        clearPostAuthCampaign();
-        if (isPopupSignInCancellation(error)) {
+        signInError = error;
+        const recoveredUser = await waitForSignedInUser(2000);
+        if (recoveredUser) {
+          effectiveAuthUser = recoveredUser;
+          setAuthUser(recoveredUser);
+        }
+      }
+
+      if (!effectiveAuthUser) {
+        if (isPopupSignInCancellation(signInError)) {
           return;
         }
         setActionError("Sign-in required to vote.");
