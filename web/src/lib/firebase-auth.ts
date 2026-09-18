@@ -5,6 +5,7 @@ import {
 	GoogleAuthProvider,
 	getRedirectResult,
 	inMemoryPersistence,
+	type User,
 	signInWithPopup,
 	onAuthStateChanged,
 	setPersistence,
@@ -70,6 +71,30 @@ function shouldFallbackToRedirect(error: unknown): boolean {
 		message.includes("popup blocked") ||
 		message.includes("popup-closed-by-user") ||
 		message.includes("operation-not-supported-in-this-environment");
+}
+
+export async function waitForSignedInUser(timeoutMs = 4000): Promise<User | null> {
+	if (auth.currentUser) {
+		return auth.currentUser;
+	}
+
+	return await new Promise((resolve) => {
+		let settled = false;
+		const timeoutId = window.setTimeout(() => {
+			if (settled) return;
+			settled = true;
+			unsubscribe();
+			resolve(auth.currentUser);
+		}, timeoutMs);
+
+		const unsubscribe = onAuthStateChanged(auth, (user) => {
+			if (!user || settled) return;
+			settled = true;
+			window.clearTimeout(timeoutId);
+			unsubscribe();
+			resolve(user);
+		});
+	});
 }
 
 export async function signInWithGoogle(options?: { forceAccountSelection?: boolean }) {

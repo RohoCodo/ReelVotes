@@ -12,6 +12,7 @@ import {
   isPopupSignInCancellation,
   onAuthStateChanged,
   signInWithGoogle,
+  waitForSignedInUser,
 } from "../lib/firebase-auth";
 import { dbLite } from "../lib/firebase-lite";
 import { getMovieMetadataByTitle } from "../lib/tmdb";
@@ -719,7 +720,7 @@ export default function CampaignExplorer({
       try {
         rememberPostAuthCampaign(campaign.id);
         const signInResult = await signInWithGoogle();
-        const popupUser = signInResult?.user || null;
+        const popupUser = signInResult?.user || await waitForSignedInUser();
 
         if (popupUser) {
           effectiveAuthUser = popupUser;
@@ -742,6 +743,10 @@ export default function CampaignExplorer({
         setActionError("Sign-in required to vote.");
         return;
       }
+    }
+
+    if (effectiveAuthUser) {
+      await effectiveAuthUser.getIdToken();
     }
 
     setPendingVoteById((prev) => ({ ...prev, [campaign.id]: true }));

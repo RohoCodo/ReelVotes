@@ -23,60 +23,8 @@ import CampaignExplorer from "../components/CampaignExplorer";
       </div>
     </div>
 
-    <div id="campaigns-feed-anchor" class="mt-12" data-reveal>
+    <div id="campaigns-feed-anchor" class="mt-12 scroll-mt-24" data-reveal>
       <CampaignExplorer layout="feed" showSearch={true} sortBy="votes-desc" client:load />
     </div>
   </section>
-
-  <script is:inline>
-    function revealFirstCampaignOnLoad() {
-      if (window.location.pathname !== "/campaigns" || window.location.hash) {
-        return;
-      }
-
-      const anchor = document.getElementById("campaigns-feed-anchor");
-      if (!anchor) {
-        return;
-      }
-
-      let settled = false;
-
-      const positionFeed = () => {
-        if (settled) {
-          return true;
-        }
-
-        const firstCampaign = anchor.querySelector("article[id]");
-        if (!firstCampaign) {
-          return false;
-        }
-
-        const rect = firstCampaign.getBoundingClientRect();
-        const desiredTop = Math.max(120, window.innerHeight - 260);
-        if (rect.top > desiredTop) {
-          const nextScrollTop = Math.max(0, window.scrollY + rect.top - desiredTop);
-          window.scrollTo({ top: nextScrollTop, left: 0, behavior: "auto" });
-        }
-
-        settled = true;
-        return true;
-      };
-
-      if (positionFeed()) {
-        return;
-      }
-
-      const observer = new MutationObserver(() => {
-        if (positionFeed()) {
-          observer.disconnect();
-        }
-      });
-
-      observer.observe(anchor, { childList: true, subtree: true });
-      window.setTimeout(() => observer.disconnect(), 5000);
-    }
-
-    document.addEventListener("astro:page-load", revealFirstCampaignOnLoad);
-    revealFirstCampaignOnLoad();
-  </script>
 </Layout>
