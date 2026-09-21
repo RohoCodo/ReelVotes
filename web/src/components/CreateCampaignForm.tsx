@@ -1,12 +1,14 @@
 import { useEffect, useState, type FormEvent } from "react";
 import type { User } from "firebase/auth";
-import { DayPicker, type DateRange } from "react-day-picker";
+import { DayPicker } from "react-day-picker";
 import "react-day-picker/dist/style.css";
 import { createCampaign } from "../lib/firebase";
 import { auth, isPopupSignInCancellation, onAuthStateChanged, signInWithGoogle, signOut } from "../lib/firebase-auth";
 import { CAMPAIGN_MOVIE_CHOICES_REQUIRED } from "../lib/campaign-policy";
 import { searchMoviesByQuery, type MovieSearchResult } from "../lib/tmdb";
 import { publicListTheaters } from "../lib/firebase-core";
+
+const MIN_CAMPAIGN_LEAD_DAYS = 30;
 
 type TheaterOption = {
   theaterKey: string;
@@ -23,19 +25,31 @@ function toDateKey(date: Date): string {
   return `${y}-${m}-${d}`;
 }
 
-function isAtLeastTwoWeekRange(range: DateRange | undefined): boolean {
-  if (!range?.from || !range?.to) return false;
-  const start = new Date(range.from.getFullYear(), range.from.getMonth(), range.from.getDate());
-  const end = new Date(range.to.getFullYear(), range.to.getMonth(), range.to.getDate());
-  const msInDay = 24 * 60 * 60 * 1000;
-  const dayCount = Math.floor((end.getTime() - start.getTime()) / msInDay) + 1;
-  return dayCount >= 14;
+function startOfLocalDay(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
 
-function formatRangeLabel(range: DateRange | undefined): string {
-  if (!range?.from || !range?.to) return "Choose 2-week window";
+function addDays(date: Date, days: number): Date {
+  const next = new Date(date.getTime());
+  next.setDate(next.getDate() + days);
+  return next;
+}
+
+function getEarliestCampaignDate(): Date {
+  return addDays(startOfLocalDay(new Date()), MIN_CAMPAIGN_LEAD_DAYS);
+}
+
+function isAtLeastMinimumCampaignDate(selectedDate: Date | undefined): boolean {
+  if (!selectedDate) return false;
+  const selectedKey = toDateKey(startOfLocalDay(selectedDate));
+  const minKey = toDateKey(getEarliestCampaignDate());
+  return selectedKey >= minKey;
+}
+
+function formatSingleDateLabel(selectedDate: Date | undefined): string {
+  if (!selectedDate) return "Choose a screening date";
   const formatter = new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" });
-  return `${formatter.format(range.from)} - ${formatter.format(range.to)}`;
+  return formatter.format(selectedDate);
 }
 
 export default function CreateCampaignForm() {
@@ -45,7 +59,7 @@ export default function CreateCampaignForm() {
   const [citySuggestions, setCitySuggestions] = useState<string[]>([]);
   const [citySearchLoading, setCitySearchLoading] = useState(false);
   const [showCitySuggestions, setShowCitySuggestions] = useState(false);
-  const [selectedRange, setSelectedRange] = useState<DateRange | undefined>(undefined);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [choices, setChoices] = useState<string[]>(["", "", ""]);
   const [movieSuggestionsByIndex, setMovieSuggestionsByIndex] = useState<Record<number, MovieSearchResult[]>>({
     0: [],
@@ -242,25 +256,26 @@ export default function CreateCampaignForm() {
       return;
     }
 
-    if (!selectedRange?.from || !selectedRange?.to) {
-      setErrorMessage("Please choose a campaign date window.");
+    if (!selectedDate) {
+      setErrorMessage("Please choose a campaign screening date.");
       return;
     }
 
-    if (!isAtLeastTwoWeekRange(selectedRange)) {
-      setErrorMessage("Screening window must be at least 2 weeks.");
+    if (!isAtLeastMinimumCampaignDate(selectedDate)) {
+      setErrorMessage(`Screening date must be at least ${MIN_CAMPAIGN_LEAD_DAYS} days from today.`);
       return;
     }
 
     setSubmitState("submitting");
 
     try {
-      const dateRangeStart = toDateKey(selectedRange.from);
-      const dateRangeEnd = toDateKey(selectedRange.to);
+      const normalizedSelectedDate = startOfLocalDay(selectedDate);
+      const dateRangeStart = toDateKey(normalizedSelectedDate);
+      const dateRangeEnd = dateRangeStart;
       const response: any = await createCampaign({
         title,
         market,
-        dateWindowLabel: formatRangeLabel(selectedRange),
+        dateWindowLabel: formatSingleDateLabel(normalizedSelectedDate),
         dateRangeStart,
         dateRangeEnd,
         choices: rankedChoices,
@@ -271,7 +286,7 @@ export default function CreateCampaignForm() {
       setSubmitState("success");
       setSuccessMessage(
         campaign?.slug
-          ? `Campaign created: ${campaign.title}. Date window: ${formatRangeLabel(selectedRange)}. It is now live at /campaigns.`
+          ? `Campaign created: ${campaign.title}. Screening date: ${formatSingleDateLabel(normalizedSelectedDate)}. It is now live at /campaigns.`
           : "Campaign created successfully.",
       );
 
@@ -279,7 +294,7 @@ export default function CreateCampaignForm() {
       setMarket("");
       setCitySuggestions([]);
       setShowCitySuggestions(false);
-      setSelectedRange(undefined);
+      setSelectedDate(undefined);
       setChoices(["", "", ""]);
       setMovieSuggestionsByIndex({ 0: [], 1: [], 2: [] });
       setMovieSearchLoadingByIndex({ 0: false, 1: false, 2: false });
@@ -385,26 +400,27 @@ export default function CreateCampaignForm() {
             </div>
 
             <div className="rounded-2xl border border-line bg-paper p-5">
-              <p className="block text-xs font-semibold uppercase tracking-wide text-ink-faint">Screening date window</p>
-              <p className="mt-2 text-xs text-ink-faint">2. Pick a date range of at least 2 weeks for when the screening can take place.</p>
+              <p className="block text-xs font-semibold uppercase tracking-wide text-ink-faint">Screening date</p>
+              <p className="mt-2 text-xs text-ink-faint">2. Pick one date at least {MIN_CAMPAIGN_LEAD_DAYS} days from today.</p>
               <div className="mt-3 rounded-xl border border-line bg-cream p-3">
-                <p className="mb-2 text-xs font-semibold text-ink">{formatRangeLabel(selectedRange)}</p>
+                <p className="mb-2 text-xs font-semibold text-ink">{formatSingleDateLabel(selectedDate)}</p>
                 <DayPicker
-                  mode="range"
-                  selected={selectedRange}
-                  onSelect={setSelectedRange}
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={setSelectedDate}
+                  disabled={{ before: getEarliestCampaignDate() }}
                   numberOfMonths={2}
                   pagedNavigation
                   showOutsideDays
                   className="rv-date-picker rv-date-picker-two-months text-sm"
                 />
               </div>
-              {!selectedRange?.from || !selectedRange?.to ? (
-                <p className="mt-2 text-xs text-ink-faint">Select both start and end dates.</p>
-              ) : isAtLeastTwoWeekRange(selectedRange) ? (
-                <p className="mt-2 text-xs text-emerald">Perfect: this screening window is at least 2 weeks.</p>
+              {!selectedDate ? (
+                <p className="mt-2 text-xs text-ink-faint">Select a screening date.</p>
+              ) : isAtLeastMinimumCampaignDate(selectedDate) ? (
+                <p className="mt-2 text-xs text-emerald">Perfect: this date is at least {MIN_CAMPAIGN_LEAD_DAYS} days out.</p>
               ) : (
-                <p className="mt-2 text-xs text-red-300">Selected screening range is too short. Please choose at least 2 weeks.</p>
+                <p className="mt-2 text-xs text-red-300">This date is too soon. Please choose a date at least {MIN_CAMPAIGN_LEAD_DAYS} days away.</p>
               )}
             </div>
           </div>
@@ -507,7 +523,7 @@ export default function CreateCampaignForm() {
                 <option value="" disabled>No ReelSuccess theaters found for this city</option>
               )}
             </select>
-            <p className="mt-2 text-xs text-ink-faint">Results are filtered by the city typed above using ReelSuccess theater data.</p>
+            <p className="mt-2 text-xs text-ink-faint">This is a preference. If demand is high enough, we will ensure it gets screened somewhere in this city.</p>
           </div>
 
           {errorMessage && <p className="rounded-xl border border-red-300/30 bg-red-900/20 p-3 text-sm text-red-200">{errorMessage}</p>}

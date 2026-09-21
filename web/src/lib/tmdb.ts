@@ -42,7 +42,7 @@ export interface MovieSearchResult {
 
 const movieMetadataCache = new Map<string, MovieMetadata>();
 
-function buildPosterUrl(posterPath: string | null | undefined, size = "w185"): string | null {
+function buildPosterUrl(posterPath: string | null | undefined, size = "original"): string | null {
   return posterPath ? `https://image.tmdb.org/t/p/${size}${posterPath}` : null;
 }
 
@@ -94,7 +94,8 @@ function normalizeMovieTitleForSearch(title: string): string {
 }
 
 function getLocalPosterFallback(title: string): string | null {
-  return LOCAL_POSTER_FALLBACKS[String(title || "").trim().toLowerCase()] || null;
+  const fallback = LOCAL_POSTER_FALLBACKS[String(title || "").trim().toLowerCase()] || null;
+  return fallback ? fallback.replace("/w185/", "/original/") : null;
 }
 
 async function searchTMDB(query: string): Promise<any[]> {
@@ -180,7 +181,7 @@ export async function getMovieMetadataByTitle(title: string): Promise<MovieMetad
       const details = await getMovieDetails(override.tmdbId);
       const metadata: MovieMetadata = {
         tmdbId: override.tmdbId,
-        poster: buildPosterUrl(details?.poster_path, "w185"),
+        poster: buildPosterUrl(details?.poster_path, "original"),
         starRating: formatStarRating(details?.vote_average),
         trailerUrl: selectYouTubeTrailerUrl(details?.videos, normalizedLookupTitle),
       };
@@ -211,7 +212,7 @@ export async function getMovieMetadataByTitle(title: string): Promise<MovieMetad
 
     let metadata: MovieMetadata = {
       tmdbId: match?.id || null,
-      poster: buildPosterUrl(match?.poster_path, "w185") || localPosterFallback,
+      poster: buildPosterUrl(match?.poster_path, "original") || localPosterFallback,
       starRating: formatStarRating(match?.vote_average),
       trailerUrl: buildYouTubeTrailerSearchUrl(normalizedLookupTitle),
     };
@@ -220,7 +221,7 @@ export async function getMovieMetadataByTitle(title: string): Promise<MovieMetad
       const details = await getMovieDetails(metadata.tmdbId);
       metadata = {
         ...metadata,
-        poster: metadata.poster || buildPosterUrl(details?.poster_path, "w185"),
+        poster: metadata.poster || buildPosterUrl(details?.poster_path, "original"),
         starRating: metadata.starRating || formatStarRating(details?.vote_average),
         trailerUrl: selectYouTubeTrailerUrl(details?.videos, normalizedLookupTitle),
       };
@@ -261,7 +262,7 @@ export async function searchMoviesByQuery(query: string, limit = 8): Promise<Mov
       tmdbId,
       title,
       releaseDate,
-      poster: buildPosterUrl(item?.poster_path, "w185"),
+      poster: buildPosterUrl(item?.poster_path, "original"),
       starRating: formatStarRating(item?.vote_average),
     });
   });

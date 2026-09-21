@@ -5,6 +5,9 @@ import { publicListCampaigns } from "./firebase-core";
 import { getMovieMetadataByTitle } from "./tmdb";
 import { REELVOTES_EVENTS, type ConfiguredEvent } from "./events-config";
 
+const CAMPAIGN_REQUIRED_VOTES = 60;
+const CAMPAIGN_REQUIRED_RESERVATIONS = 30;
+
 const LEGACY_CAMPAIGN_OWNER_EMAIL = "rohan@reelvotes.com";
 const LEGACY_SELECTED_MOVIE_OVERRIDES: Record<string, string> = {
   newparkway1: "The Matrix",
@@ -334,9 +337,7 @@ function normalizeChoices(raw: unknown): CampaignMovieChoice[] {
       const posterRaw = String(
         row.posterUrl || row.posterURL || row.poster_path || row.posterPath || row.poster || "",
       ).trim();
-      const posterUrl = posterRaw.startsWith("/")
-        ? `https://image.tmdb.org/t/p/w500${posterRaw}`
-        : (posterRaw || null);
+      const posterUrl = normalizePosterUrl(posterRaw);
       if (!title || ![1, 2, 3].includes(originalPosition)) return null;
       return {
         campaignMovieId: campaignMovieId || `${campaignId || "campaign"}_${originalPosition}`,
@@ -421,17 +422,12 @@ function buildCampaignSummary(id: string, data: Record<string, unknown>): Campai
   const title = String(data.title || "").trim();
   if (!title) return null;
 
-  const thresholdsSource =
-    data.thresholds && typeof data.thresholds === "object" ? (data.thresholds as Record<string, unknown>) : {};
   const countsSource = data.counts && typeof data.counts === "object" ? (data.counts as Record<string, unknown>) : {};
   const replacementSource =
     data.replacement && typeof data.replacement === "object" ? (data.replacement as Record<string, unknown>) : {};
 
-  const backing = Math.max(1, Number(thresholdsSource.backing || data.backingThreshold || 75));
-  const interested = Math.max(
-    backing,
-    Number(thresholdsSource.interested || data.interestedThreshold || calculateInterestThreshold(backing)),
-  );
+  const backing = CAMPAIGN_REQUIRED_RESERVATIONS;
+  const interested = CAMPAIGN_REQUIRED_VOTES;
 
   const normalizedCampaignMovies = normalizeChoices(data.campaignMovies);
   const choices = normalizedCampaignMovies.length > 0 ? normalizedCampaignMovies : normalizeLegacyChoices(data.choices);
@@ -805,7 +801,7 @@ async function enrichCampaignPosters(campaigns: CampaignSummary[]): Promise<Camp
           const metadata = await getMovieMetadataByTitle(choice.title);
           return {
             ...choice,
-            posterUrl: metadata.poster || null,
+            posterUrl: normalizePosterUrl(metadata.poster),
           };
         }),
       );
@@ -870,4 +866,24 @@ export async function getCampaignSummaries(options?: {
   }
 
   return await enrichCampaignPosters(await appendHistoricalVotes([]));
+}
+
+function normalizePosterUrl(raw: unknown): string | null {
+  const value = String(raw || "").trim();
+  if (!value) return null;
+
+  if (value.startsWith("/")) {
+    return `https://image.tmdb.org/t/p/original${value}`;
+  }
+
+  try {
+    const url = new URL(value);
+    if (url.hostname === "image.tmdb.org") {
+      url.pathname = url.pathname.replace(/^\/t\/p\/(w\d+|original)\//, "/t/p/original/");
+      return url.toString();
+    }
+    return value;
+  } catch {
+    return value;
+  }
 }

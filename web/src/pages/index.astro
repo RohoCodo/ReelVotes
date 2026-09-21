@@ -121,7 +121,7 @@ const flow = [
         </p>
       </div>
       <div class="mt-12" data-reveal>
-        <CampaignExplorer compact client:load />
+        <CampaignExplorer compact sortBy="votes-desc" client:load />
       </div>
       <div class="mt-8 text-center" data-reveal>
         <a href="/campaigns" class="text-sm font-semibold text-marquee hover:underline">View all campaigns &rarr;</a>
@@ -230,7 +230,7 @@ const flow = [
       ctaButton.onclick = async (event) => {
         event.preventDefault();
         try {
-          rememberPostAuthDestination("/vote");
+          rememberPostAuthDestination("/campaigns");
           await signInWithGoogle();
         } catch (error) {
           console.error("Sign in failed:", error);
@@ -239,8 +239,8 @@ const flow = [
     };
 
     const setSignedIn = () => {
-      ctaButton.textContent = "Vote now";
-      ctaButton.setAttribute("href", "/vote");
+      ctaButton.textContent = "View campaigns";
+      ctaButton.setAttribute("href", "/campaigns");
       ctaButton.onclick = null;
     };
 

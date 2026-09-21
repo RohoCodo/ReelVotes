@@ -4,6 +4,9 @@ import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { getCampaignSummaries, type CampaignSummary } from "../lib/campaigns";
 import { auth, onAuthStateChanged, signInWithGoogle, signOut } from "../lib/firebase-auth";
+import { rememberPostAuthDestination } from "../lib/post-auth-redirect";
+
+const LOCAL_BOOKMARKS_KEY_PREFIX = "reelvotes:local-bookmarks:";
 
 type BookmarkedCampaignRecord = {
   campaignId: string;
@@ -27,6 +30,37 @@ type CampaignListItem = {
   subtitle: string;
 };
 
+function localBookmarksStorageKey(uid: string): string {
+  return `${LOCAL_BOOKMARKS_KEY_PREFIX}${String(uid || "anon").trim() || "anon"}`;
+}
+
+function readLocalBookmarksByUser(uid: string): Record<string, boolean> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = window.localStorage.getItem(localBookmarksStorageKey(uid));
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    if (!parsed || typeof parsed !== "object") return {};
+    const next: Record<string, boolean> = {};
+    Object.entries(parsed).forEach(([campaignId, value]) => {
+      if (value) next[String(campaignId)] = true;
+    });
+    return next;
+  } catch {
+    return {};
+  }
+}
+
+function localBookmarkIds(uid: string): string[] {
+  return Object.keys(readLocalBookmarksByUser(uid)).filter(Boolean);
+}
+
+function isPermissionDeniedError(error: unknown): boolean {
+  const code = String((error as any)?.code || "").toLowerCase();
+  const message = String((error as any)?.message || "").toLowerCase();
+  return code.includes("permission-denied") || message.includes("insufficient permissions");
+}
+
 function tabButtonClass(active: boolean): string {
   return active
     ? "bg-marquee text-white shadow-sm"
@@ -39,6 +73,7 @@ export default function AccountPanel() {
   const [errorMessage, setErrorMessage] = useState("");
   const [campaigns, setCampaigns] = useState<CampaignSummary[]>([]);
   const [bookmarkedCampaigns, setBookmarkedCampaigns] = useState<BookmarkedCampaignRecord[]>([]);
+  const [localBookmarkedIds, setLocalBookmarkedIds] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<AccountTab>("campaigns");
 
   useEffect(() => {
@@ -49,8 +84,11 @@ export default function AccountPanel() {
   useEffect(() => {
     if (!authUser) {
       setBookmarkedCampaigns([]);
+      setLocalBookmarkedIds([]);
       return;
     }
+
+    setLocalBookmarkedIds(localBookmarkIds(authUser.uid));
 
     const bookmarksRef = collection(db, "userProfiles", authUser.uid, "bookmarks");
     const unsubscribe = onSnapshot(
@@ -61,9 +99,13 @@ export default function AccountPanel() {
           .filter((record) => Boolean(record?.campaignId))
           .sort((left, right) => (right.bookmarkedAtMs || 0) - (left.bookmarkedAtMs || 0));
         setBookmarkedCampaigns(next);
+        setLocalBookmarkedIds(localBookmarkIds(authUser.uid));
       },
-      () => {
+      (error) => {
         setBookmarkedCampaigns([]);
+        if (isPermissionDeniedError(error)) {
+          setLocalBookmarkedIds(localBookmarkIds(authUser.uid));
+        }
       },
     );
 
@@ -99,6 +141,7 @@ export default function AccountPanel() {
     setPending(true);
     setErrorMessage("");
     try {
+      rememberPostAuthDestination("/campaigns");
       await signInWithGoogle();
     } catch (error) {
       setErrorMessage(String((error as any)?.message || "Could not sign in right now."));
@@ -139,16 +182,37 @@ export default function AccountPanel() {
   }, [campaigns]);
 
   const moviemarks = useMemo(() => {
-    return bookmarkedCampaigns.map((campaign) => ({
-      campaignId: campaign.campaignId,
-      title: campaign.title,
-      market: campaign.market,
-      dateWindowLabel: campaign.dateWindowLabel,
-      status: campaign.status,
-      href: `/campaigns#${campaign.campaignId}`,
-      subtitle: "Bookmarked campaign",
-    }));
-  }, [bookmarkedCampaigns]);
+    const byId = new Map<string, CampaignListItem>();
+
+    bookmarkedCampaigns.forEach((campaign) => {
+      byId.set(campaign.campaignId, {
+        campaignId: campaign.campaignId,
+        title: campaign.title,
+        market: campaign.market,
+        dateWindowLabel: campaign.dateWindowLabel,
+        status: campaign.status,
+        href: `/campaigns#${campaign.campaignId}`,
+        subtitle: "Bookmarked campaign",
+      });
+    });
+
+    localBookmarkedIds.forEach((campaignId) => {
+      if (byId.has(campaignId)) return;
+      const campaign = campaigns.find((entry) => entry.id === campaignId);
+      if (!campaign) return;
+      byId.set(campaignId, {
+        campaignId,
+        title: campaign.title,
+        market: campaign.market,
+        dateWindowLabel: campaign.dateWindowLabel,
+        status: campaign.status,
+        href: `/campaigns#${campaignId}`,
+        subtitle: "Bookmarked campaign",
+      });
+    });
+
+    return Array.from(byId.values());
+  }, [bookmarkedCampaigns, localBookmarkedIds, campaigns]);
 
   const tabCounts: Record<AccountTab, number> = {
     campaigns: yourCampaigns.length,

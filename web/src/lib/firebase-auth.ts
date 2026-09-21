@@ -5,6 +5,7 @@ import {
 	GoogleAuthProvider,
 	getRedirectResult,
 	inMemoryPersistence,
+	signInWithRedirect,
 	type User,
 	signInWithPopup,
 	onAuthStateChanged,
@@ -64,13 +65,33 @@ function shouldFallbackToRedirect(error: unknown): boolean {
 	const code = String((error as any)?.code || "").toLowerCase();
 	const message = String((error as any)?.message || "").toLowerCase();
 	return code === "auth/popup-blocked" ||
-		code === "auth/popup-closed-by-user" ||
-		code === "auth/cancelled-popup-request" ||
 		code === "auth/operation-not-supported-in-this-environment" ||
 		code === "auth/web-storage-unsupported" ||
 		message.includes("popup blocked") ||
-		message.includes("popup-closed-by-user") ||
 		message.includes("operation-not-supported-in-this-environment");
+}
+
+function isIosFamilyDevice(): boolean {
+	if (typeof navigator === "undefined") return false;
+	const userAgent = navigator.userAgent || "";
+	const platform = navigator.platform || "";
+	const maxTouchPoints = Number(navigator.maxTouchPoints || 0);
+	return /iphone|ipad|ipod/i.test(userAgent) ||
+		(platform === "MacIntel" && maxTouchPoints > 1);
+}
+
+function isEmbeddedInAppBrowser(): boolean {
+	if (typeof navigator === "undefined") return false;
+	const userAgent = navigator.userAgent || "";
+	return /fban|fbav|instagram|line\//i.test(userAgent) ||
+		/\bwv\b/i.test(userAgent) ||
+		/crios/i.test(userAgent) ||
+		/gsa/i.test(userAgent);
+}
+
+function shouldPreferRedirectSignIn(): boolean {
+	if (typeof window === "undefined") return false;
+	return isIosFamilyDevice() || isEmbeddedInAppBrowser();
 }
 
 export async function waitForSignedInUser(timeoutMs = 4000): Promise<User | null> {
@@ -101,11 +122,17 @@ export async function signInWithGoogle(options?: { forceAccountSelection?: boole
 	await ensureAuthPersistence();
 	const provider = buildGoogleProvider(options);
 
+	if (shouldPreferRedirectSignIn()) {
+		await signInWithRedirect(auth, provider);
+		return null;
+	}
+
 	try {
 		return await signInWithPopup(auth, provider);
 	} catch (error) {
 		if (shouldFallbackToRedirect(error)) {
-			throw error;
+			await signInWithRedirect(auth, provider);
+			return null;
 		}
 		throw error;
 	}

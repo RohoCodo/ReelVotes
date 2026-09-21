@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type UIEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type UIEvent } from "react";
 import { createPortal } from "react-dom";
 import type { User } from "firebase/auth";
 import { collection, deleteDoc, doc, onSnapshot, setDoc } from "firebase/firestore";
@@ -16,6 +16,15 @@ import {
 } from "../lib/firebase-auth";
 import { dbLite } from "../lib/firebase-lite";
 import { getMovieMetadataByTitle } from "../lib/tmdb";
+
+const PENDING_CAMPAIGN_VOTE_KEY = "reelvotes:pending-campaign-vote";
+const LOCAL_BOOKMARKS_KEY_PREFIX = "reelvotes:local-bookmarks:";
+
+type PendingCampaignVote = {
+  campaignId: string;
+  campaignMovieId: string;
+  createdAt: number;
+};
 
 const ADMIN_EMAILS = new Set([
   "rt332@cornell.edu",
@@ -115,6 +124,42 @@ function campaignHandle(slug: string): string {
     .slice(0, 24) || "campaign";
 }
 
+function isPermissionDeniedError(error: unknown): boolean {
+  const code = String((error as any)?.code || "").toLowerCase();
+  const message = String((error as any)?.message || "").toLowerCase();
+  return code.includes("permission-denied") || message.includes("insufficient permissions");
+}
+
+function localBookmarksStorageKey(uid: string): string {
+  return `${LOCAL_BOOKMARKS_KEY_PREFIX}${String(uid || "anon").trim() || "anon"}`;
+}
+
+function readLocalBookmarksByUser(uid: string): Record<string, boolean> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = window.localStorage.getItem(localBookmarksStorageKey(uid));
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    if (!parsed || typeof parsed !== "object") return {};
+    const next: Record<string, boolean> = {};
+    Object.entries(parsed).forEach(([campaignId, value]) => {
+      if (value) next[String(campaignId)] = true;
+    });
+    return next;
+  } catch {
+    return {};
+  }
+}
+
+function writeLocalBookmarksByUser(uid: string, bookmarksById: Record<string, boolean>) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(localBookmarksStorageKey(uid), JSON.stringify(bookmarksById));
+  } catch {
+    // Ignore storage write failures.
+  }
+}
+
 function rankBadgeClass(rank: number): string {
   if (rank === 1) return "bg-marquee/90 text-white";
   if (rank === 2) return "bg-gold/80 text-ink";
@@ -150,6 +195,132 @@ function rightsTagText(status: CampaignSummary["status"]): string {
 function rightsTagClass(status: CampaignSummary["status"]): string {
   if (status === "active" || status === "licensing-pending") return "border-gold/35 bg-gold/10 text-rose";
   return "border-emerald/35 bg-emerald/10 text-emerald";
+}
+
+function rightsInfoMessage(status: CampaignSummary["status"]): string {
+  if (status === "active" || status === "licensing-pending") {
+    return "Rights pending: we are confirming licensing and theater availability for the leading title.";
+  }
+  if (status === "theater-check") {
+    return "Rights check in progress: theater availability and licensing are being verified now.";
+  }
+  if (status === "movie-available") {
+    return "Rights confirmed: the leading title is available for scheduling.";
+  }
+  return "Rights status updates as the campaign moves from voting to theater confirmation.";
+}
+
+const RESERVE_INFO_MESSAGE = "Reserve is a lightweight commitment. It helps prove demand and unlock theater and rights checks for this campaign.";
+
+function InfoHoverIcon({
+  label,
+  message,
+  className = "",
+}: {
+  label: string;
+  message: string;
+  className?: string;
+}) {
+  const [isHoverOpen, setIsHoverOpen] = useState(false);
+  const [isPinnedOpen, setIsPinnedOpen] = useState(false);
+  const [tooltipStyle, setTooltipStyle] = useState<CSSProperties | null>(null);
+  const anchorRef = useRef<HTMLButtonElement | null>(null);
+  const isOpen = isHoverOpen || isPinnedOpen;
+
+  useEffect(() => {
+    if (!isPinnedOpen || typeof window === "undefined") return;
+
+    const handlePointerDown = (event: PointerEvent) => {
+      const anchor = anchorRef.current;
+      if (!anchor) return;
+      const target = event.target as Node | null;
+      if (target && anchor.contains(target)) return;
+      setIsPinnedOpen(false);
+      setIsHoverOpen(false);
+    };
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setIsPinnedOpen(false);
+      setIsHoverOpen(false);
+    };
+
+    window.addEventListener("pointerdown", handlePointerDown);
+    window.addEventListener("keydown", handleEscape);
+    return () => {
+      window.removeEventListener("pointerdown", handlePointerDown);
+      window.removeEventListener("keydown", handleEscape);
+    };
+  }, [isPinnedOpen]);
+
+  useEffect(() => {
+    if (!isOpen || typeof window === "undefined") return;
+
+    const updateTooltipPosition = () => {
+      const anchor = anchorRef.current;
+      if (!anchor) return;
+
+      const rect = anchor.getBoundingClientRect();
+      const viewportWidth = window.innerWidth || 0;
+      const tooltipWidth = 224;
+      const gutter = 8;
+      const maxLeft = Math.max(gutter, viewportWidth - tooltipWidth - gutter);
+      const left = Math.max(gutter, Math.min(rect.right - tooltipWidth, maxLeft));
+      // Always anchor tooltip above the info icon.
+      setTooltipStyle({
+        left,
+        top: rect.top - gutter,
+        transform: "translateY(-100%)",
+      });
+    };
+
+    updateTooltipPosition();
+    window.addEventListener("resize", updateTooltipPosition);
+    window.addEventListener("scroll", updateTooltipPosition, true);
+
+    return () => {
+      window.removeEventListener("resize", updateTooltipPosition);
+      window.removeEventListener("scroll", updateTooltipPosition, true);
+    };
+  }, [isOpen]);
+
+  return (
+    <span
+      className={`relative inline-flex ${className}`}
+      onMouseEnter={() => setIsHoverOpen(true)}
+      onMouseLeave={() => setIsHoverOpen(false)}
+    >
+      <button
+        ref={anchorRef}
+        type="button"
+        aria-label={label}
+        aria-expanded={isOpen}
+        onClick={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          setIsPinnedOpen((prev) => !prev);
+        }}
+        className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-line text-[11px] font-semibold text-ink-soft transition-colors hover:border-marquee hover:text-marquee"
+      >
+        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 10v6" />
+          <circle cx="12" cy="7.2" r="1" fill="currentColor" stroke="none" />
+        </svg>
+      </button>
+      {isOpen && tooltipStyle && typeof document !== "undefined"
+        ? createPortal(
+            <span
+              className="pointer-events-none fixed z-[200] block w-56 whitespace-normal border border-line bg-paper px-2.5 py-2 text-left text-[11px] leading-relaxed text-ink-soft shadow-lg"
+              style={tooltipStyle}
+            >
+              {message}
+            </span>,
+            document.body,
+          )
+        : null}
+    </span>
+  );
 }
 
 type BookmarkedCampaignRecord = {
@@ -217,6 +388,33 @@ function toDateKey(date: Date): string {
   return `${y}-${m}-${d}`;
 }
 
+function campaignDateKey(campaign: CampaignSummary): string {
+  const rawCandidates = [
+    campaign.campaignWindow?.startDate,
+    campaign.deadTimeSlot?.dateRangeStart,
+    campaign.deadTimeSlot?.screeningDateTime,
+    campaign.screeningDateTime,
+  ];
+
+  for (const rawValue of rawCandidates) {
+    const value = String(rawValue || "").trim();
+    if (!value) continue;
+
+    // Prefer direct yyyy-mm-dd values when present.
+    const dateOnlyMatch = value.match(/^(\d{4}-\d{2}-\d{2})/);
+    if (dateOnlyMatch) {
+      return dateOnlyMatch[1];
+    }
+
+    const parsed = new Date(value);
+    if (!Number.isNaN(parsed.getTime())) {
+      return toDateKey(parsed);
+    }
+  }
+
+  return "";
+}
+
 function formatRangeLabel(range: DateRange | undefined): string {
   if (!range?.from && !range?.to) return "Dates";
   const formatter = new Intl.DateTimeFormat(undefined, {month: "short", day: "numeric"});
@@ -227,6 +425,54 @@ function formatRangeLabel(range: DateRange | undefined): string {
     return `${formatter.format(range.from)} - ${formatter.format(range.to)}`;
   }
   return "Dates";
+}
+
+function rememberPendingCampaignVote(campaignId: string, campaignMovieId: string) {
+  if (typeof window === "undefined") return;
+  try {
+    const payload: PendingCampaignVote = {
+      campaignId: String(campaignId || "").trim(),
+      campaignMovieId: String(campaignMovieId || "").trim(),
+      createdAt: Date.now(),
+    };
+
+    if (!payload.campaignId || !payload.campaignMovieId) return;
+    window.sessionStorage.setItem(PENDING_CAMPAIGN_VOTE_KEY, JSON.stringify(payload));
+  } catch {
+    // Ignore storage failures.
+  }
+}
+
+function readPendingCampaignVote(): PendingCampaignVote | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.sessionStorage.getItem(PENDING_CAMPAIGN_VOTE_KEY);
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw) as Partial<PendingCampaignVote> | null;
+    const campaignId = String(parsed?.campaignId || "").trim();
+    const campaignMovieId = String(parsed?.campaignMovieId || "").trim();
+    const createdAt = Number(parsed?.createdAt || 0);
+
+    if (!campaignId || !campaignMovieId) return null;
+    if (!Number.isFinite(createdAt) || Date.now() - createdAt > 30 * 60 * 1000) {
+      clearPendingCampaignVote();
+      return null;
+    }
+
+    return { campaignId, campaignMovieId, createdAt };
+  } catch {
+    return null;
+  }
+}
+
+function clearPendingCampaignVote() {
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.removeItem(PENDING_CAMPAIGN_VOTE_KEY);
+  } catch {
+    // Ignore storage failures.
+  }
 }
 
 export default function CampaignExplorer({
@@ -269,7 +515,14 @@ export default function CampaignExplorer({
   const [canRenderFloatingCreate, setCanRenderFloatingCreate] = useState(false);
   const [floatingCreateRight, setFloatingCreateRight] = useState(16);
   const [showFloatingCreate, setShowFloatingCreate] = useState(false);
+  const [activeCompactCampaignIndex, setActiveCompactCampaignIndex] = useState(0);
+  const [voteSuccessCampaignId, setVoteSuccessCampaignId] = useState<string | null>(null);
   const feedContainerRef = useRef<HTMLDivElement | null>(null);
+  const compactCarouselRef = useRef<HTMLDivElement | null>(null);
+  const compactSnapTimeoutRef = useRef<number | null>(null);
+  const compactTouchStartXRef = useRef<number | null>(null);
+  const compactTouchStartIndexRef = useRef<number | null>(null);
+  const pendingVoteResumeRef = useRef(false);
   const floatingCreateTriggerRef = useRef<HTMLDivElement | null>(null);
   const datePickerRef = useRef<HTMLDivElement | null>(null);
   const isFeedLayout = layout === "feed" && !compact;
@@ -283,6 +536,95 @@ export default function CampaignExplorer({
         ? prev
         : { ...prev, [campaignId]: nextIndex }
     ));
+  }
+
+  function handleCompactCarouselScroll(event: UIEvent<HTMLDivElement>) {
+    const container = event.currentTarget;
+    const cards = Array.from(container.children) as HTMLElement[];
+    if (cards.length <= 1) {
+      setActiveCompactCampaignIndex(0);
+      return;
+    }
+
+    const viewportCenter = container.scrollLeft + container.clientWidth / 2;
+    let closestIndex = 0;
+    let closestDistance = Number.POSITIVE_INFINITY;
+
+    cards.forEach((card, index) => {
+      const cardCenter = card.offsetLeft + card.clientWidth / 2;
+      const distance = Math.abs(cardCenter - viewportCenter);
+      if (distance < closestDistance) {
+        closestDistance = distance;
+        closestIndex = index;
+      }
+    });
+
+    if (compactSnapTimeoutRef.current !== null) {
+      window.clearTimeout(compactSnapTimeoutRef.current);
+    }
+
+    compactSnapTimeoutRef.current = window.setTimeout(() => {
+      const target = cards[closestIndex];
+      if (!target) return;
+      const targetLeft = Math.max(0, target.offsetLeft);
+      const delta = Math.abs(container.scrollLeft - targetLeft);
+      if (delta <= 1) return;
+      container.scrollTo({ left: targetLeft, behavior: "auto" });
+    }, 110);
+
+    setActiveCompactCampaignIndex((prev) => (prev === closestIndex ? prev : closestIndex));
+  }
+
+  function handleCompactCarouselTouchStart(event: TouchEvent<HTMLDivElement>) {
+    const container = event.currentTarget;
+    const cards = Array.from(container.children) as HTMLElement[];
+    if (cards.length <= 1) return;
+
+    const viewportCenter = container.scrollLeft + container.clientWidth / 2;
+    let closestIndex = 0;
+    let closestDistance = Number.POSITIVE_INFINITY;
+
+    cards.forEach((card, index) => {
+      const cardCenter = card.offsetLeft + card.clientWidth / 2;
+      const distance = Math.abs(cardCenter - viewportCenter);
+      if (distance < closestDistance) {
+        closestDistance = distance;
+        closestIndex = index;
+      }
+    });
+
+    compactTouchStartXRef.current = event.touches[0]?.clientX ?? null;
+    compactTouchStartIndexRef.current = closestIndex;
+  }
+
+  function handleCompactCarouselTouchEnd(event: TouchEvent<HTMLDivElement>) {
+    const startX = compactTouchStartXRef.current;
+    const startIndex = compactTouchStartIndexRef.current;
+    compactTouchStartXRef.current = null;
+    compactTouchStartIndexRef.current = null;
+    if (startX === null || startIndex === null) return;
+
+    const container = event.currentTarget;
+    const cards = Array.from(container.children) as HTMLElement[];
+    if (cards.length <= 1) return;
+
+    const endX = event.changedTouches[0]?.clientX ?? startX;
+    const deltaX = endX - startX;
+    const swipeThresholdPx = 20;
+    if (Math.abs(deltaX) < swipeThresholdPx) return;
+
+    const direction = deltaX < 0 ? 1 : -1;
+    const targetIndex = Math.max(0, Math.min(cards.length - 1, startIndex + direction));
+    const target = cards[targetIndex];
+    if (!target) return;
+
+    if (compactSnapTimeoutRef.current !== null) {
+      window.clearTimeout(compactSnapTimeoutRef.current);
+      compactSnapTimeoutRef.current = null;
+    }
+
+    container.scrollTo({ left: target.offsetLeft, behavior: "smooth" });
+    setActiveCompactCampaignIndex((prev) => (prev === targetIndex ? prev : targetIndex));
   }
 
   function formatCount(value: number): string {
@@ -316,23 +658,64 @@ export default function CampaignExplorer({
     }
   }
 
+  function closeVoteSuccessDialog() {
+    setVoteSuccessCampaignId(null);
+  }
+
+  function openVoteSuccessDialog(campaignId: string) {
+    setVoteSuccessCampaignId(String(campaignId || "").trim() || null);
+  }
+
   async function handleBookmark(campaign: CampaignSummary) {
     setActionError("");
+    let effectiveAuthUser = authUser;
+    let signInError: unknown = null;
 
-    if (!authUser) {
-      try {
-        await signInWithGoogle();
-      } catch (error) {
-        if (isPopupSignInCancellation(error)) return;
-        setActionError("Sign-in required to bookmark campaigns.");
+    if (effectiveAuthUser === undefined) {
+      effectiveAuthUser = await waitForSignedInUser(1500);
+      if (effectiveAuthUser) {
+        setAuthUser(effectiveAuthUser);
       }
-      return;
     }
 
-    const bookmarkRef = doc(db, "userProfiles", authUser.uid, "bookmarks", campaign.id);
+    if (!effectiveAuthUser && auth.currentUser) {
+      effectiveAuthUser = auth.currentUser;
+      setAuthUser(auth.currentUser);
+    }
+
+    if (!effectiveAuthUser) {
+      try {
+        const signInResult = await signInWithGoogle();
+        const popupUser = signInResult?.user || await waitForSignedInUser();
+        if (popupUser) {
+          effectiveAuthUser = popupUser;
+          setAuthUser(popupUser);
+        } else if (auth.currentUser) {
+          effectiveAuthUser = auth.currentUser;
+          setAuthUser(auth.currentUser);
+        }
+      } catch (error) {
+        signInError = error;
+        const recoveredUser = await waitForSignedInUser(2000);
+        if (recoveredUser) {
+          effectiveAuthUser = recoveredUser;
+          setAuthUser(recoveredUser);
+        }
+      }
+
+      if (!effectiveAuthUser) {
+        if (isPopupSignInCancellation(signInError)) return;
+        setActionError("Sign-in required to bookmark campaigns.");
+        return;
+      }
+    }
+
+    const bookmarkRef = doc(db, "userProfiles", effectiveAuthUser.uid, "bookmarks", campaign.id);
     const nextBookmarked = !bookmarkedById[campaign.id];
+    const uid = effectiveAuthUser.uid;
 
     setPendingBookmarkById((prev) => ({ ...prev, [campaign.id]: true }));
+    setBookmarkedById((prev) => ({ ...prev, [campaign.id]: nextBookmarked }));
     try {
       if (nextBookmarked) {
         const payload: BookmarkedCampaignRecord = {
@@ -348,8 +731,23 @@ export default function CampaignExplorer({
       } else {
         await deleteDoc(bookmarkRef);
       }
+      setBookmarkedById((prev) => {
+        const merged = { ...prev, [campaign.id]: nextBookmarked };
+        writeLocalBookmarksByUser(uid, merged);
+        return merged;
+      });
     } catch (error) {
-      setActionError(String((error as any)?.message || "Could not update bookmark right now."));
+      if (isPermissionDeniedError(error)) {
+        setBookmarkedById((prev) => {
+          const merged = { ...prev, [campaign.id]: nextBookmarked };
+          writeLocalBookmarksByUser(uid, merged);
+          return merged;
+        });
+        setActionError("Bookmark saved on this device. Account bookmark permissions are not enabled yet.");
+      } else {
+        setActionError(String((error as any)?.message || "Could not update bookmark right now."));
+        setBookmarkedById((prev) => ({ ...prev, [campaign.id]: !nextBookmarked }));
+      }
     } finally {
       setPendingBookmarkById((prev) => ({ ...prev, [campaign.id]: false }));
     }
@@ -453,9 +851,14 @@ export default function CampaignExplorer({
           next[bookmarkDoc.id] = true;
         });
         setBookmarkedById(next);
+        writeLocalBookmarksByUser(authUser.uid, next);
       },
       (error) => {
         console.error("[CampaignExplorer] Could not load bookmarks:", error);
+        if (isPermissionDeniedError(error)) {
+          setBookmarkedById(readLocalBookmarksByUser(authUser.uid));
+          return;
+        }
         setBookmarkedById({});
       },
     );
@@ -469,11 +872,16 @@ export default function CampaignExplorer({
     const updateFloatingCta = () => {
       const viewportWidth = window.innerWidth || 0;
       const viewportHeight = window.innerHeight || 0;
-      const feedMaxWidth = 672;
-      const nextRight = Math.max(16, ((viewportWidth - feedMaxWidth) / 2) + 16);
-      setFloatingCreateRight(Math.round(nextRight));
-
       const feedRect = feedContainerRef.current?.getBoundingClientRect();
+      if (feedRect) {
+        const nextRight = Math.max(16, (viewportWidth - feedRect.right) + 16);
+        setFloatingCreateRight(Math.round(nextRight));
+      } else {
+        const fallbackMaxWidth = 1152;
+        const nextRight = Math.max(16, ((viewportWidth - fallbackMaxWidth) / 2) + 16);
+        setFloatingCreateRight(Math.round(nextRight));
+      }
+
       if (!feedRect || !isFeedLayout || !showCreateButton) {
         setShowFloatingCreate(false);
         return;
@@ -630,12 +1038,9 @@ export default function CampaignExplorer({
     }
   }
 
-  async function handleVote(campaign: CampaignSummary, campaignMovieId: string) {
-    setActionError("");
+  async function submitVoteForCampaign(campaign: CampaignSummary, campaignMovieId: string): Promise<boolean> {
     const previousVotedCampaignMovieId = campaign.viewerMovieVoteCampaignMovieId;
     const previousCampaignState = campaign;
-    let effectiveAuthUser = authUser;
-    let signInError: unknown = null;
 
     const adjustVoteCount = (choiceCampaignMovieId: string, delta: number, choices: CampaignSummary["choices"]) =>
       choices.map((choice) =>
@@ -647,58 +1052,8 @@ export default function CampaignExplorer({
           : choice,
       );
 
-    if (effectiveAuthUser === undefined) {
-      effectiveAuthUser = await waitForSignedInUser(1500);
-      if (effectiveAuthUser) {
-        setAuthUser(effectiveAuthUser);
-      }
-    }
-
-    if (!effectiveAuthUser && auth.currentUser) {
-      effectiveAuthUser = auth.currentUser;
-      setAuthUser(auth.currentUser);
-    }
-
-    if (!effectiveAuthUser) {
-      try {
-        const signInResult = await signInWithGoogle();
-        const popupUser = signInResult?.user || await waitForSignedInUser();
-
-        if (popupUser) {
-          effectiveAuthUser = popupUser;
-          setAuthUser(popupUser);
-        } else if (auth.currentUser) {
-          effectiveAuthUser = auth.currentUser;
-          setAuthUser(auth.currentUser);
-        } else {
-          setActionError("Sign-in completed, but your session is still loading. Please wait a moment and try again.");
-          return;
-        }
-      } catch (error) {
-        signInError = error;
-        const recoveredUser = await waitForSignedInUser(2000);
-        if (recoveredUser) {
-          effectiveAuthUser = recoveredUser;
-          setAuthUser(recoveredUser);
-        }
-      }
-
-      if (!effectiveAuthUser) {
-        if (isPopupSignInCancellation(signInError)) {
-          return;
-        }
-        setActionError("Sign-in required to vote.");
-        return;
-      }
-    }
-
-    if (effectiveAuthUser) {
-      await effectiveAuthUser.getIdToken();
-    }
-
     setPendingVoteById((prev) => ({ ...prev, [campaign.id]: true }));
 
-    // Optimistic UI switch so the selected vote updates immediately.
     setCampaigns((prev) => {
       if (!prev) return prev;
       return prev.map((row) =>
@@ -753,7 +1108,6 @@ export default function CampaignExplorer({
                 return {
                   ...choice,
                   ...matched,
-                  // Keep any existing poster if backend payload omits it.
                   posterUrl: choice.posterUrl || matched.posterUrl || null,
                 };
               });
@@ -768,19 +1122,144 @@ export default function CampaignExplorer({
           },
         );
       });
+      return true;
     } catch (error) {
       setActionError(String((error as any)?.message || "Could not submit vote right now."));
-      // Roll back optimistic update on failure.
       setCampaigns((prev) => {
         if (!prev) return prev;
         return prev.map((row) =>
           row.id === campaign.id ? previousCampaignState : row,
         );
       });
+      return false;
     } finally {
       setPendingVoteById((prev) => ({ ...prev, [campaign.id]: false }));
     }
   }
+
+  async function handleVote(campaign: CampaignSummary, campaignMovieId: string) {
+    setActionError("");
+    let effectiveAuthUser = authUser;
+    let signInError: unknown = null;
+
+    if (effectiveAuthUser === undefined) {
+      effectiveAuthUser = await waitForSignedInUser(1500);
+      if (effectiveAuthUser) {
+        setAuthUser(effectiveAuthUser);
+      }
+    }
+
+    if (!effectiveAuthUser && auth.currentUser) {
+      effectiveAuthUser = auth.currentUser;
+      setAuthUser(auth.currentUser);
+    }
+
+    if (!effectiveAuthUser) {
+      rememberPendingCampaignVote(campaign.id, campaignMovieId);
+      try {
+        const signInResult = await signInWithGoogle();
+        const popupUser = signInResult?.user || await waitForSignedInUser();
+
+        if (popupUser) {
+          effectiveAuthUser = popupUser;
+          setAuthUser(popupUser);
+        } else if (auth.currentUser) {
+          effectiveAuthUser = auth.currentUser;
+          setAuthUser(auth.currentUser);
+        } else {
+          setActionError("Sign-in completed, but your session is still loading. Please wait a moment and try again.");
+          return;
+        }
+      } catch (error) {
+        signInError = error;
+        const recoveredUser = await waitForSignedInUser(2000);
+        if (recoveredUser) {
+          effectiveAuthUser = recoveredUser;
+          setAuthUser(recoveredUser);
+        }
+      }
+
+      if (!effectiveAuthUser) {
+        if (isPopupSignInCancellation(signInError)) {
+          clearPendingCampaignVote();
+          return;
+        }
+        setActionError("Sign-in required to vote.");
+        return;
+      }
+
+      clearPendingCampaignVote();
+    }
+
+    if (effectiveAuthUser) {
+      await effectiveAuthUser.getIdToken();
+    }
+
+    const wasAlreadyVotedForSameMovie = campaign.viewerMovieVoteCampaignMovieId === campaignMovieId;
+    const succeeded = await submitVoteForCampaign(campaign, campaignMovieId);
+    if (!succeeded || wasAlreadyVotedForSameMovie) return;
+    openVoteSuccessDialog(campaign.id);
+  }
+
+  const voteSuccessCampaign = useMemo(() => {
+    if (!voteSuccessCampaignId || !campaigns) return null;
+    return campaigns.find((campaign) => campaign.id === voteSuccessCampaignId) || null;
+  }, [campaigns, voteSuccessCampaignId]);
+
+  const voteSuccessModal = voteSuccessCampaign && typeof document !== "undefined"
+    ? createPortal(
+      <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true" aria-label="Vote success">
+        <div className="w-full max-w-xl rounded-2xl border border-line bg-paper p-5 shadow-[0_24px_80px_-24px_rgba(0,0,0,0.75)] sm:p-6">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-marquee">Vote Submitted</p>
+              <h3 className="mt-2 font-display text-2xl font-semibold text-ink">Thank you for voting!</h3>
+            </div>
+            <button
+              type="button"
+              onClick={closeVoteSuccessDialog}
+              aria-label="Close vote success dialog"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-line text-ink-soft transition-colors hover:border-marquee hover:text-marquee"
+            >
+              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+                <path d="M18 6L6 18" />
+                <path d="M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <p className="mt-3 text-sm leading-relaxed text-ink-soft">
+            Thank you for voting! Share with friends to reach our vote goal to make this screening a reality and watch with them! See other campaigns as well!
+          </p>
+
+          <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-end">
+            <button
+              type="button"
+              onClick={async () => {
+                await handleShare(voteSuccessCampaign);
+              }}
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-marquee/50 bg-marquee/10 px-4 py-2.5 text-sm font-semibold text-marquee transition-colors hover:bg-marquee/20"
+            >
+              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+                <path d="M22 2 11 13" />
+                <path d="m22 2-7 20-4-9-9-4 20-7z" />
+              </svg>
+              <span>Share</span>
+            </button>
+
+            <a
+              href="/campaigns"
+              onClick={closeVoteSuccessDialog}
+              className="inline-flex items-center justify-center rounded-full bg-marquee px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-marquee/90"
+            >
+              See More Campaigns
+            </a>
+          </div>
+        </div>
+      </div>,
+      document.body,
+    )
+    : null;
 
   const isAdminUser = Boolean(authUser?.email && ADMIN_EMAILS.has(String(authUser.email).toLowerCase()));
 
@@ -830,12 +1309,12 @@ export default function CampaignExplorer({
         })
       : rows;
 
-    return compact ? sortedRows.slice(0, 3) : sortedRows;
+    return sortedRows;
   }, [campaigns, compact, search, selectedRange, sortBy, statusFilter]);
 
   const gridContainerClass = useMemo(() => {
     if (isFeedLayout) {
-      return "mx-auto w-full max-w-2xl";
+      return "mx-auto w-full max-w-6xl";
     }
     if (!compact) {
       return "grid grid-cols-1 gap-4 lg:grid-cols-2";
@@ -880,7 +1359,57 @@ export default function CampaignExplorer({
     };
   }, [visible]);
 
+  useEffect(() => {
+    if (typeof window === "undefined" || !authUser || !campaigns || pendingVoteResumeRef.current) {
+      return;
+    }
+
+    const pendingVote = readPendingCampaignVote();
+    if (!pendingVote) return;
+
+    const campaign = campaigns.find((row) => row.id === pendingVote.campaignId);
+    if (!campaign) return;
+
+    if (campaign.viewerMovieVoteCampaignMovieId === pendingVote.campaignMovieId) {
+      clearPendingCampaignVote();
+      return;
+    }
+
+    pendingVoteResumeRef.current = true;
+    setActionError("");
+    window.history.replaceState(null, "", `#${campaign.id}`);
+
+    void (async () => {
+      try {
+        await authUser.getIdToken();
+        const succeeded = await submitVoteForCampaign(campaign, pendingVote.campaignMovieId);
+        if (succeeded) {
+          clearPendingCampaignVote();
+        } else {
+          clearPendingCampaignVote();
+          setActionError("Your sign-in worked, but the vote did not finish. Please tap Vote again.");
+        }
+      } finally {
+        pendingVoteResumeRef.current = false;
+      }
+    })();
+  }, [authUser, campaigns]);
+
   if (visible === null) {
+    if (compact) {
+      return (
+        <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <div key={index} className="min-w-full snap-center rounded-2xl border border-line bg-paper p-5">
+              <div className="skeleton h-5 w-2/3 rounded" />
+              <div className="skeleton mt-3 h-3.5 w-1/2 rounded" />
+              <div className="skeleton mt-5 h-20 w-full rounded-xl" />
+            </div>
+          ))}
+        </div>
+      );
+    }
+
     return (
       <div className={compact ? "mx-auto grid w-full max-w-6xl grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3" : "grid grid-cols-1 gap-4 lg:grid-cols-2"}>
         {Array.from({ length: compact ? 3 : 6 }).map((_, index) => (
@@ -894,6 +1423,183 @@ export default function CampaignExplorer({
     );
   }
 
+  if (compact) {
+    return (
+      <div>
+        {actionError && (
+          <p className="mb-4 rounded-xl border border-red-300 bg-red-50 p-3 text-sm text-red-700">{actionError}</p>
+        )}
+
+        {visible.length === 0 ? (
+          <div className="rounded-2xl border border-line bg-paper p-6 text-sm text-ink-soft">
+            No active campaigns are available right now.
+          </div>
+        ) : (
+          <div
+            ref={compactCarouselRef}
+            onTouchStart={handleCompactCarouselTouchStart}
+            onTouchEnd={handleCompactCarouselTouchEnd}
+            onScroll={handleCompactCarouselScroll}
+            className="flex snap-x snap-mandatory overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          >
+            {visible.map((campaign) => {
+              const rankedChoices = rankCampaignChoices(campaign.choices);
+              const displayTitle = campaignTitleWithoutTheater(campaign);
+              const totalVotes = rankedChoices.reduce((sum, choice) => sum + Math.max(0, Number(choice.voteCount || 0)), 0);
+              const reservationCount = Math.max(0, Number(campaign.counts.backing || 0));
+              const reservationThreshold = Math.max(1, Number(campaign.thresholds.backing || 1));
+              const votingThreshold = Math.max(reservationThreshold, Number(campaign.thresholds.interested || reservationThreshold * 2));
+              const votedCampaignMovieId = campaign.viewerMovieVoteCampaignMovieId;
+              const votePending = Boolean(pendingVoteById[campaign.id]);
+              const supportPending = Boolean(pendingById[campaign.id]);
+              const isHistoricalVoteCampaign = campaign.origin === "historical-vote";
+              const canVoteAtAll = !isHistoricalVoteCampaign && !readOnly;
+              const canVote = canVoteAtAll;
+
+              return (
+                <article key={campaign.id} className="min-w-full snap-start snap-always rounded-2xl border border-line bg-paper p-5">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-marquee">Active campaign</p>
+                      <h3 className="mt-2 font-display text-2xl font-semibold text-ink">{displayTitle}</h3>
+                      <p className="mt-1 text-sm text-ink-soft">{campaign.dateWindowLabel} • {campaign.market}</p>
+                    </div>
+                    <div className="ml-2 flex shrink-0 items-center gap-2">
+                      <a
+                        href={`/campaigns#${campaign.id}`}
+                        className="inline-flex items-center rounded-full border border-line px-3 py-1.5 text-[11px] font-semibold text-ink-soft transition-colors hover:border-marquee hover:text-marquee"
+                      >
+                        Open campaign
+                      </a>
+                      <InfoHoverIcon
+                        label="Campaign rights info"
+                        message={rightsInfoMessage(campaign.status)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mt-4 rounded-2xl border border-line bg-cream p-3">
+                    <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:grid sm:grid-cols-3 sm:overflow-visible sm:pb-0">
+                      {rankedChoices.map((choice, idx) => {
+                        const isVoted = votedCampaignMovieId === choice.campaignMovieId;
+                        return (
+                          <div key={`${campaign.id}-compact-${choice.campaignMovieId}`} className="min-w-[82%] snap-center sm:min-w-0">
+                            <p className="mb-2 line-clamp-1 text-center text-xs font-semibold text-ink">{choice.title}</p>
+                            <div className="overflow-hidden rounded-xl border border-line bg-paper">
+                              <div className="relative aspect-[2/3] bg-gradient-to-br from-cream to-cream-soft">
+                                {choice.posterUrl ? (
+                                  <img src={choice.posterUrl} alt={`${choice.title} poster`} className="h-full w-full object-cover" loading="lazy" />
+                                ) : (
+                                  <div className="flex h-full w-full items-center justify-center px-3 text-center text-sm font-semibold leading-snug text-ink-soft">
+                                    {choice.title}
+                                  </div>
+                                )}
+                                <span className={`absolute left-2 top-2 rounded-full px-2 py-0.5 text-[10px] font-semibold ${rankBadgeClass(idx + 1)}`}>
+                                  #{idx + 1}
+                                </span>
+                                <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/65 to-transparent px-2 pb-2 pt-8 text-xs font-medium text-white/95">
+                                  {choice.voteCount} votes
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="mt-2 flex items-center gap-1.5">
+                              {canVote ? (
+                                <button
+                                  type="button"
+                                  disabled={votePending || !canVote}
+                                  onClick={() => handleVote(campaign, choice.campaignMovieId)}
+                                  className={`flex-1 rounded-full border px-2.5 py-1 text-[11px] font-semibold transition-colors ${
+                                    isVoted
+                                      ? "border-emerald/60 bg-emerald/10 text-emerald"
+                                      : "border-line bg-paper text-ink-soft hover:border-marquee hover:text-marquee"
+                                  }`}
+                                >
+                                  {isVoted ? "Voted ✓" : votePending ? "Saving…" : "Vote"}
+                                </button>
+                              ) : (
+                                <span className="flex-1 rounded-full border border-line px-2.5 py-1 text-center text-[11px] font-semibold text-ink-faint">Voting closed</span>
+                              )}
+
+                              <button
+                                type="button"
+                                onClick={() => openTrailerSearch(choice.title)}
+                                aria-label={`Watch trailer for ${choice.title}`}
+                                className="inline-flex shrink-0 items-center gap-1 rounded-full border border-line px-2 py-1 text-[11px] font-semibold text-ink-soft transition-colors hover:border-marquee hover:text-marquee"
+                              >
+                                <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8">
+                                  <rect x="3" y="5" width="18" height="14" rx="3" />
+                                  <path d="M10 9v6l5-3-5-3z" fill="currentColor" stroke="none" />
+                                </svg>
+                                <span>Trailer</span>
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+                      <div className="inline-flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          disabled={supportPending || isHistoricalVoteCampaign || readOnly}
+                          onClick={() => handleSupport(campaign, campaign.viewerSupport === "backing" ? "none" : "backing")}
+                          className={`rounded-full border px-2.5 py-1.5 text-[10px] font-semibold whitespace-nowrap transition-colors ${campaign.viewerSupport === "backing" ? "border-rose bg-rose/10 text-rose" : "border-line text-ink-soft hover:border-rose hover:text-rose"}`}
+                        >
+                          {supportPending
+                            ? "Saving…"
+                            : campaign.viewerSupport === "backing"
+                              ? `🎟️ Unreserve ${reservationCount}/${reservationThreshold}`
+                              : `🎟️ Reserve ${reservationCount}/${reservationThreshold}`}
+                        </button>
+                        <InfoHoverIcon
+                          label="What is Reserve?"
+                          message={RESERVE_INFO_MESSAGE}
+                        />
+                      </div>
+                      <span className="inline-flex items-center gap-1 rounded-full border border-marquee/35 bg-marquee/10 px-2.5 py-1.5 text-[10px] font-semibold whitespace-nowrap text-marquee">
+                        🗳️ Votes {totalVotes.toLocaleString()}/{votingThreshold}
+                      </span>
+                    </div>
+                  </div>
+
+                </article>
+              );
+            })}
+          </div>
+        )}
+
+        {visible.length > 1 && (
+          <div className="mt-3 flex items-center justify-center gap-1.5" aria-label="Active campaign carousel pagination">
+            {visible.map((campaign, index) => {
+              const isActive = index === activeCompactCampaignIndex;
+              return (
+                <button
+                  key={`${campaign.id}-compact-dot`}
+                  type="button"
+                  onClick={() => {
+                    const container = compactCarouselRef.current;
+                    const target = container?.children.item(index) as HTMLElement | null;
+                    if (!container || !target) return;
+                    container.scrollTo({ left: target.offsetLeft, behavior: "smooth" });
+                  }}
+                  aria-label={`Go to campaign ${index + 1}`}
+                  className={`inline-flex h-2.5 w-2.5 rounded-full transition-colors ${isActive ? "bg-marquee" : "bg-line hover:bg-ink-faint"}`}
+                />
+              );
+            })}
+          </div>
+        )}
+
+        {visible.length > 1 && (
+          <p className="mt-3 text-center text-xs text-ink-faint">Swipe or scroll horizontally to browse campaigns.</p>
+        )}
+        {voteSuccessModal}
+      </div>
+    );
+  }
+
   return (
     <div>
       {!compact && actionError && (
@@ -903,7 +1609,7 @@ export default function CampaignExplorer({
       <div ref={floatingCreateTriggerRef} className="h-px" aria-hidden="true" />
 
       {!compact && showSearch && (
-        <div className={isFeedLayout ? "mx-auto mb-5 w-full max-w-2xl" : "mb-5"}>
+        <div className={isFeedLayout ? "mx-auto mb-5 w-full max-w-6xl" : "mb-5"}>
           <div className="flex items-center gap-2">
             <input
               type="search"
@@ -978,7 +1684,7 @@ export default function CampaignExplorer({
           <div className="snap-y snap-mandatory space-y-4">
             {visible.map((campaign) => {
               const rankedChoices = rankCampaignChoices(campaign.choices);
-              const displayTitle = campaignTitleWithTheater(campaign);
+              const displayTitle = campaignTitleWithoutTheater(campaign);
               const chosenMovie = rankedChoices[0]?.title || campaign.selectedMovieTitle || "Movie TBD";
               const supportPending = Boolean(pendingById[campaign.id]);
               const votePending = Boolean(pendingVoteById[campaign.id]);
@@ -986,7 +1692,6 @@ export default function CampaignExplorer({
               const reservationThreshold = Math.max(1, Number(campaign.thresholds.backing || 1));
               const votingCount = Math.max(0, Number(campaign.counts.interested || 0));
               const votingThreshold = Math.max(reservationThreshold, Number(campaign.thresholds.interested || reservationThreshold * 2));
-              const handle = campaignHandle(campaign.slug);
               const votedCampaignMovieId = campaign.viewerMovieVoteCampaignMovieId;
               const isHistoricalVoteCampaign = campaign.origin === "historical-vote";
               const isHistoricalMode = mode === "historical-votes";
@@ -997,9 +1702,6 @@ export default function CampaignExplorer({
               const totalVotes = rankedChoices.reduce((sum, choice) => sum + Math.max(0, Number(choice.voteCount || 0)), 0);
               const showReserveChip = readOnly ? reservationCount > 0 : true;
               const showVotesChip = totalVotes > 0;
-              const username = campaign.createdByEmail
-                ? String(campaign.createdByEmail).split("@")[0]
-                : handle;
               const prefersSelectedMovie =
                 isHistoricalVoteCampaign || ["completed", "confirmed", "screening"].includes(String(campaign.status || ""));
               const highlightedComparable = comparableTitle(
@@ -1008,26 +1710,20 @@ export default function CampaignExplorer({
                   : (rankedChoices[0]?.title || campaign.selectedMovieTitle || ""),
               );
               return (
-                <article id={campaign.id} key={campaign.id} className="snap-start snap-always flex scroll-mt-24 flex-col rounded-2xl border border-line bg-paper p-3 sm:p-4">
-                  <div className="flex min-w-0 items-start gap-2.5">
-                    <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-marquee/15 text-xs font-semibold text-marquee">
-                      {String(username || "rv").slice(0, 1).toUpperCase()}
-                    </span>
-                    <div className="min-w-0 pt-0.5">
-                      <p className="line-clamp-2 text-[15px] font-semibold leading-tight text-ink sm:line-clamp-1">{readOnly ? campaignTitleWithoutTheater(campaign) : displayTitle}</p>
-                      <div className="mt-0.5 flex min-w-0 items-center gap-1.5">
-                        <p className="truncate text-xs leading-tight text-ink-faint">Date: {campaign.dateWindowLabel}</p>
-                        <span className={`whitespace-nowrap rounded-full border px-2.5 py-1 text-[10px] font-semibold ${statusTone[campaign.status] || statusTone.active}`}>
-                          {statusLabel[campaign.status] || campaign.status}
-                        </span>
-                        <span className={`whitespace-nowrap rounded-full border px-2.5 py-1 text-[10px] font-semibold ${rightsTagClass(campaign.status)}`}>
-                          {rightsTagText(campaign.status)}
-                        </span>
-                      </div>
+                <article id={campaign.id} key={campaign.id} className="snap-start snap-always flex scroll-mt-24 flex-col rounded-2xl border border-line bg-paper p-5">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-marquee">Active campaign</p>
+                      <h3 className="mt-2 font-display text-2xl font-semibold text-ink">{readOnly ? campaignTitleWithoutTheater(campaign) : displayTitle}</h3>
+                      <p className="mt-1 text-sm text-ink-soft">{campaign.dateWindowLabel} • {campaign.market}</p>
                     </div>
+                    <InfoHoverIcon
+                      label="Campaign rights info"
+                      message={rightsInfoMessage(campaign.status)}
+                    />
                   </div>
 
-                  <div className="mt-2.5 overflow-hidden rounded-2xl border border-line bg-cream p-2.5">
+                  <div className="mt-2.5 overflow-hidden rounded-2xl border border-line bg-cream p-3">
                     <div className="mb-2 flex items-center justify-start gap-2 px-1">
                       <p className="text-[11px] text-ink-soft">
                         {leadLabel}
@@ -1074,33 +1770,32 @@ export default function CampaignExplorer({
                                 </div>
                               </div>
 
-                              {canVote && (
-                                <div className="mt-2.5 grid grid-cols-[1fr_auto] gap-2">
-                                  <button
-                                    type="button"
-                                    disabled={votePending || !canVote}
-                                    onClick={() => handleVote(campaign, choice.campaignMovieId)}
-                                    className={`w-full rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
-                                      isVoted
-                                        ? "border-emerald/60 bg-emerald/10 text-emerald"
-                                        : "border-line bg-paper text-ink-soft hover:border-marquee hover:text-marquee"
-                                    }`}
-                                  >
-                                    {isVoted ? "Voted ✓" : votePending ? "Saving…" : "Vote"}
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => openTrailerSearch(choice.title)}
-                                    aria-label={`Watch trailer for ${choice.title}`}
-                                    className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-line text-ink-soft transition-colors hover:border-marquee hover:text-marquee"
-                                  >
-                                    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8">
-                                      <rect x="3" y="5" width="18" height="14" rx="3" />
-                                      <path d="M10 9v6l5-3-5-3z" fill="currentColor" stroke="none" />
-                                    </svg>
-                                  </button>
-                                </div>
-                              )}
+                              <div className="mt-2.5 flex items-center gap-1.5">
+                                <button
+                                  type="button"
+                                  disabled={votePending || !canVote}
+                                  onClick={() => handleVote(campaign, choice.campaignMovieId)}
+                                  className={`flex-1 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                                    isVoted
+                                      ? "border-emerald/60 bg-emerald/10 text-emerald"
+                                      : "border-line bg-paper text-ink-soft hover:border-marquee hover:text-marquee"
+                                  }`}
+                                >
+                                  {!canVote ? "Voting closed" : isVoted ? "Voted ✓" : votePending ? "Saving…" : "Vote"}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => openTrailerSearch(choice.title)}
+                                  aria-label={`Watch trailer for ${choice.title}`}
+                                  className="inline-flex shrink-0 items-center gap-1 rounded-full border border-line px-2 py-1.5 text-[11px] font-semibold text-ink-soft transition-colors hover:border-marquee hover:text-marquee"
+                                >
+                                  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8">
+                                    <rect x="3" y="5" width="18" height="14" rx="3" />
+                                    <path d="M10 9v6l5-3-5-3z" fill="currentColor" stroke="none" />
+                                  </svg>
+                                  <span>Trailer</span>
+                                </button>
+                              </div>
                             </div>
                           </div>
                         );
@@ -1133,11 +1828,11 @@ export default function CampaignExplorer({
                         return (
                           <div
                             key={`${campaign.id}-feed-desktop-${choice.campaignMovieId}`}
-                            className={`group relative min-h-0 overflow-hidden rounded-xl border text-left ${
+                            className={`group relative overflow-hidden rounded-xl border bg-paper text-left ${
                               isHighlighted ? "border-emerald/60 ring-2 ring-emerald/30" : "border-line"
                             }`}
                           >
-                            <div className="relative h-full w-full bg-gradient-to-br from-cream to-cream-soft">
+                            <div className="relative aspect-[2/3] w-full bg-gradient-to-br from-cream to-cream-soft">
                               {choice.posterUrl ? (
                                 <img src={choice.posterUrl} alt={`${choice.title} poster`} className="h-full w-full object-cover" loading="lazy" />
                               ) : (
@@ -1154,56 +1849,62 @@ export default function CampaignExplorer({
                               <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/65 to-transparent px-1.5 pb-1.5 pt-6 text-[10px] font-medium text-white/95">
                                 {choice.voteCount} votes
                               </span>
-                              {canVote && (
-                                <div className="absolute right-1.5 bottom-1.5 flex items-center gap-1.5">
-                                  <button
-                                    type="button"
-                                    onClick={() => openTrailerSearch(choice.title)}
-                                    aria-label={`Watch trailer for ${choice.title}`}
-                                    className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/70 bg-black/55 text-white transition-colors hover:border-marquee hover:text-marquee"
-                                  >
-                                    <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.8">
-                                      <rect x="3" y="5" width="18" height="14" rx="3" />
-                                      <path d="M10 9v6l5-3-5-3z" fill="currentColor" stroke="none" />
-                                    </svg>
-                                  </button>
-                                  <button
-                                    type="button"
-                                    disabled={votePending || !canVote}
-                                    onClick={() => handleVote(campaign, choice.campaignMovieId)}
-                                    className={`rounded-full border px-2 py-1 text-[10px] font-semibold transition-colors ${
-                                      isVoted
-                                        ? "border-emerald/60 bg-emerald/90 text-white"
-                                        : "border-white/70 bg-black/55 text-white hover:border-marquee hover:text-marquee"
-                                    }`}
-                                  >
-                                    {isVoted ? "Voted ✓" : votePending ? "Saving…" : "Vote"}
-                                  </button>
-                                </div>
-                              )}
+                            </div>
+
+                            <div className="border-t border-line bg-paper p-2">
+                              <div className="flex items-center gap-1.5">
+                                <button
+                                  type="button"
+                                  disabled={votePending || !canVote}
+                                  onClick={() => handleVote(campaign, choice.campaignMovieId)}
+                                  className={`flex-1 rounded-full border px-2.5 py-1 text-[10px] font-semibold transition-colors ${
+                                    isVoted
+                                      ? "border-emerald/60 bg-emerald/10 text-emerald"
+                                      : "border-line bg-paper text-ink-soft hover:border-marquee hover:text-marquee"
+                                  }`}
+                                >
+                                  {!canVote ? "Voting closed" : isVoted ? "Voted ✓" : votePending ? "Saving…" : "Vote"}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => openTrailerSearch(choice.title)}
+                                  aria-label={`Watch trailer for ${choice.title}`}
+                                  className="inline-flex shrink-0 items-center gap-1 rounded-full border border-line px-2 py-1 text-[10px] font-semibold text-ink-soft transition-colors hover:border-marquee hover:text-marquee"
+                                >
+                                  <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.8">
+                                    <rect x="3" y="5" width="18" height="14" rx="3" />
+                                    <path d="M10 9v6l5-3-5-3z" fill="currentColor" stroke="none" />
+                                  </svg>
+                                  <span>Trailer</span>
+                                </button>
+                              </div>
                             </div>
                           </div>
                         );
                       })}
                     </div>
-                  </div>
 
-                  <div className="mt-3">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div className="flex min-w-0 flex-wrap items-center gap-2">
+                    <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
                         {showReserveChip && (
-                          <button
-                            type="button"
-                            disabled={supportPending || isHistoricalVoteCampaign || readOnly}
-                            onClick={() => handleSupport(campaign, campaign.viewerSupport === "backing" ? "none" : "backing")}
-                            className={`rounded-full border px-2.5 py-1.5 text-[10px] font-semibold whitespace-nowrap transition-colors ${campaign.viewerSupport === "backing" ? "border-rose bg-rose/10 text-rose" : "border-line text-ink-soft hover:border-rose hover:text-rose"}`}
-                          >
-                            {supportPending
-                              ? "Saving…"
-                              : campaign.viewerSupport === "backing"
-                                ? `🎟️ Unreserve ${reservationCount}/${reservationThreshold}`
-                                : `🎟️ Reserve ${reservationCount}/${reservationThreshold}`}
-                          </button>
+                          <div className="inline-flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              disabled={supportPending || isHistoricalVoteCampaign || readOnly}
+                              onClick={() => handleSupport(campaign, campaign.viewerSupport === "backing" ? "none" : "backing")}
+                              className={`rounded-full border px-2.5 py-1.5 text-[10px] font-semibold whitespace-nowrap transition-colors ${campaign.viewerSupport === "backing" ? "border-rose bg-rose/10 text-rose" : "border-line text-ink-soft hover:border-rose hover:text-rose"}`}
+                            >
+                              {supportPending
+                                ? "Saving…"
+                                : campaign.viewerSupport === "backing"
+                                  ? `🎟️ Unreserve ${reservationCount}/${reservationThreshold}`
+                                  : `🎟️ Reserve ${reservationCount}/${reservationThreshold}`}
+                            </button>
+                            <InfoHoverIcon
+                              label="What is Reserve?"
+                              message={RESERVE_INFO_MESSAGE}
+                            />
+                          </div>
                         )}
                         {showVotesChip && (
                           <span className="inline-flex items-center gap-1 rounded-full border border-marquee/35 bg-marquee/10 px-2.5 py-1.5 text-[10px] font-semibold whitespace-nowrap text-marquee">
@@ -1217,9 +1918,9 @@ export default function CampaignExplorer({
                           type="button"
                           onClick={() => handleShare(campaign)}
                           aria-label="Share campaign"
-                          className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-line text-ink-soft transition-colors hover:border-marquee hover:text-marquee"
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-line text-ink-soft transition-colors hover:border-marquee hover:text-marquee"
                         >
-                          <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8">
+                          <svg viewBox="0 0 24 24" className="h-4.5 w-4.5" fill="none" stroke="currentColor" strokeWidth="1.8">
                             <path d="M22 2 11 13" />
                             <path d="m22 2-7 20-4-9-9-4 20-7z" />
                           </svg>
@@ -1229,19 +1930,18 @@ export default function CampaignExplorer({
                           disabled={Boolean(pendingBookmarkById[campaign.id])}
                           onClick={() => handleBookmark(campaign)}
                           aria-label={bookmarkedById[campaign.id] ? "Remove bookmark" : "Bookmark campaign"}
-                          className={`inline-flex h-9 w-9 items-center justify-center rounded-full border transition-colors ${
+                          className={`inline-flex h-8 w-8 items-center justify-center rounded-full border transition-colors ${
                             bookmarkedById[campaign.id]
                               ? "border-rose/60 bg-rose/10 text-rose"
                               : "border-line text-ink-soft hover:border-rose hover:text-rose"
                           }`}
                         >
-                          <svg viewBox="0 0 24 24" className="h-5 w-5" fill={bookmarkedById[campaign.id] ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.8">
+                          <svg viewBox="0 0 24 24" className="h-4.5 w-4.5" fill={bookmarkedById[campaign.id] ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.8">
                             <path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z" />
                           </svg>
                         </button>
                       </div>
                     </div>
-
                   </div>
                 </article>
               );
@@ -1301,6 +2001,10 @@ export default function CampaignExplorer({
                     </span>
                     <span className="text-xs text-ink-faint">{campaign.market}</span>
                   </div>
+                  <InfoHoverIcon
+                    label="Campaign rights info"
+                    message={rightsInfoMessage(campaign.status)}
+                  />
                 </div>
 
                 <h3 className="mt-3 font-display text-2xl font-semibold text-ink">{readOnly ? campaignTitleWithoutTheater(campaign) : displayTitle}</h3>
@@ -1424,18 +2128,24 @@ export default function CampaignExplorer({
                     <div className="flex items-center justify-between gap-2">
                       <p className="text-[11px] font-semibold uppercase tracking-wide text-rose">🎟️ Reservations</p>
                       {!isHistoricalVoteCampaign && !readOnly && (
-                        <button
-                          type="button"
-                          disabled={supportPending}
-                          onClick={() => handleSupport(campaign, campaign.viewerSupport === "backing" ? "none" : "backing")}
-                          className={`rounded-full border px-2.5 py-1 text-[10px] font-semibold whitespace-nowrap transition-colors ${campaign.viewerSupport === "backing" ? "border-rose bg-rose/10 text-rose" : "border-line text-ink-soft hover:border-rose hover:text-rose"}`}
-                        >
-                          {supportPending
-                            ? "Saving…"
-                            : campaign.viewerSupport === "backing"
-                              ? "Unreserve"
-                              : "Reserve"}
-                        </button>
+                        <div className="inline-flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            disabled={supportPending}
+                            onClick={() => handleSupport(campaign, campaign.viewerSupport === "backing" ? "none" : "backing")}
+                            className={`rounded-full border px-2.5 py-1 text-[10px] font-semibold whitespace-nowrap transition-colors ${campaign.viewerSupport === "backing" ? "border-rose bg-rose/10 text-rose" : "border-line text-ink-soft hover:border-rose hover:text-rose"}`}
+                          >
+                            {supportPending
+                              ? "Saving…"
+                              : campaign.viewerSupport === "backing"
+                                ? "Unreserve"
+                                : "Reserve"}
+                          </button>
+                          <InfoHoverIcon
+                            label="What is Reserve?"
+                            message={RESERVE_INFO_MESSAGE}
+                          />
+                        </div>
                       )}
                     </div>
                     <div className="mt-1 flex items-end justify-between gap-2">
@@ -1571,6 +2281,8 @@ export default function CampaignExplorer({
           </div>,
           document.body,
         )}
+
+      {voteSuccessModal}
 
     </div>
   );

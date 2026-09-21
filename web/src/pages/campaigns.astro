@@ -12,15 +12,16 @@ import CampaignExplorer from "../components/CampaignExplorer";
         Every campaign starts with three movie choices competing for votes. The theater confirms availability after demand reaches
         the licensing trigger.
       </p>
-      <div class="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-        <a
-          href="/create"
-          data-create-campaign-top="true"
-          class="w-full rounded-full bg-marquee px-7 py-3.5 text-center text-sm font-semibold text-white shadow-md shadow-marquee/30 transition-transform hover:-translate-y-0.5 sm:w-auto"
-        >
-          Create a campaign
-        </a>
-      </div>
+    </div>
+
+    <div class="mt-8 flex justify-end" data-reveal>
+      <a
+        href="/create"
+        data-create-campaign-top="true"
+        class="w-full rounded-full bg-marquee px-7 py-3.5 text-center text-sm font-semibold text-white shadow-md shadow-marquee/30 transition-transform hover:-translate-y-0.5 sm:w-auto"
+      >
+        Create a campaign
+      </a>
     </div>
 
     <div id="campaigns-feed-anchor" class="mt-12 scroll-mt-24">
