@@ -522,6 +522,7 @@ export default function CampaignExplorer({
   const compactSnapTimeoutRef = useRef<number | null>(null);
   const compactTouchStartXRef = useRef<number | null>(null);
   const compactTouchStartIndexRef = useRef<number | null>(null);
+  const compactCarouselSwiping = useRef<boolean>(false);
   const pendingVoteResumeRef = useRef(false);
   const floatingCreateTriggerRef = useRef<HTMLDivElement | null>(null);
   const datePickerRef = useRef<HTMLDivElement | null>(null);
@@ -615,6 +616,39 @@ export default function CampaignExplorer({
 
     const direction = deltaX < 0 ? 1 : -1;
     const targetIndex = Math.max(0, Math.min(cards.length - 1, startIndex + direction));
+    const target = cards[targetIndex];
+    if (!target) return;
+
+    if (compactSnapTimeoutRef.current !== null) {
+      window.clearTimeout(compactSnapTimeoutRef.current);
+      compactSnapTimeoutRef.current = null;
+    }
+
+    container.scrollTo({ left: target.offsetLeft, behavior: "smooth" });
+    setActiveCompactCampaignIndex((prev) => (prev === targetIndex ? prev : targetIndex));
+  }
+
+  function scrollCompactCarouselByDirection(direction: -1 | 1) {
+    const container = compactCarouselRef.current;
+    if (!container) return;
+
+    const cards = Array.from(container.children) as HTMLElement[];
+    if (cards.length <= 1) return;
+
+    const viewportCenter = container.scrollLeft + container.clientWidth / 2;
+    let closestIndex = 0;
+    let closestDistance = Number.POSITIVE_INFINITY;
+
+    cards.forEach((card, index) => {
+      const cardCenter = card.offsetLeft + card.clientWidth / 2;
+      const distance = Math.abs(cardCenter - viewportCenter);
+      if (distance < closestDistance) {
+        closestDistance = distance;
+        closestIndex = index;
+      }
+    });
+
+    const targetIndex = Math.max(0, Math.min(cards.length - 1, closestIndex + direction));
     const target = cards[targetIndex];
     if (!target) return;
 
@@ -1435,14 +1469,15 @@ export default function CampaignExplorer({
             No active campaigns are available right now.
           </div>
         ) : (
-          <div
-            ref={compactCarouselRef}
-            onTouchStart={handleCompactCarouselTouchStart}
-            onTouchEnd={handleCompactCarouselTouchEnd}
-            onScroll={handleCompactCarouselScroll}
-            className="flex snap-x snap-mandatory overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-          >
-            {visible.map((campaign) => {
+          <div className="relative">
+            <div
+              ref={compactCarouselRef}
+              onTouchStart={handleCompactCarouselTouchStart}
+              onTouchEnd={handleCompactCarouselTouchEnd}
+              onScroll={handleCompactCarouselScroll}
+              className="flex snap-x snap-mandatory overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            >
+              {visible.map((campaign) => {
               const rankedChoices = rankCampaignChoices(campaign.choices);
               const displayTitle = campaignTitleWithoutTheater(campaign);
               const totalVotes = rankedChoices.reduce((sum, choice) => sum + Math.max(0, Number(choice.voteCount || 0)), 0);
@@ -1567,6 +1602,33 @@ export default function CampaignExplorer({
                 </article>
               );
             })}
+            </div>
+
+            {visible.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => scrollCompactCarouselByDirection(-1)}
+                  className="absolute left-0 top-1/2 -translate-y-1/2 hidden sm:inline-flex items-center justify-center h-10 w-10 rounded-full bg-white/80 hover:bg-white shadow-md z-10 text-ink"
+                  aria-label="Previous campaign"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => scrollCompactCarouselByDirection(1)}
+                  className="absolute right-0 top-1/2 -translate-y-1/2 hidden sm:inline-flex items-center justify-center h-10 w-10 rounded-full bg-white/80 hover:bg-white shadow-md z-10 text-ink"
+                  aria-label="Next campaign"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </>
+            )}
           </div>
         )}
 
