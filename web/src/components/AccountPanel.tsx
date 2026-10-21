@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import type { User } from "firebase/auth";
+import { httpsCallable } from "firebase/functions";
 import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { getCampaignSummaries, type CampaignSummary } from "../lib/campaigns";
+import { functions as firebaseFunctions } from "../lib/firebase-core";
 import { auth, onAuthStateChanged, signInWithGoogle, signOut } from "../lib/firebase-auth";
 import { rememberPostAuthDestination } from "../lib/post-auth-redirect";
 
@@ -29,6 +31,17 @@ type CampaignListItem = {
   href: string;
   subtitle: string;
 };
+
+const TRANSITION_BUTTON_EMAIL = "rohan@reelvotes.com";
+const adminTransitionCampaignsToScreenings = httpsCallable(firebaseFunctions, "adminTransitionCampaignsToScreenings");
+
+function canonicalizeEmail(email: string): string {
+  const normalized = String(email || "").trim().toLowerCase();
+  if (!normalized.includes("@")) return normalized;
+  const [localPart, domainPart] = normalized.split("@");
+  const canonicalLocalPart = String(localPart || "").split("+")[0];
+  return `${canonicalLocalPart}@${String(domainPart || "")}`;
+}
 
 function localBookmarksStorageKey(uid: string): string {
   return `${LOCAL_BOOKMARKS_KEY_PREFIX}${String(uid || "anon").trim() || "anon"}`;
@@ -75,6 +88,8 @@ export default function AccountPanel() {
   const [bookmarkedCampaigns, setBookmarkedCampaigns] = useState<BookmarkedCampaignRecord[]>([]);
   const [localBookmarkedIds, setLocalBookmarkedIds] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<AccountTab>("campaigns");
+  const [transitionPending, setTransitionPending] = useState(false);
+  const [transitionMessage, setTransitionMessage] = useState("");
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => setAuthUser(user));
@@ -162,7 +177,29 @@ export default function AccountPanel() {
     }
   }
 
-  const userEmail = String(authUser?.email || "").toLowerCase();
+  async function handleTransitionToScreenings() {
+    if (!authUser?.email) return;
+
+    setTransitionPending(true);
+    setTransitionMessage("");
+    setErrorMessage("");
+
+    try {
+      const result: any = await adminTransitionCampaignsToScreenings({
+        adminEmail: authUser.email,
+      });
+      const transitioned = Number(result?.data?.transitioned || 0);
+      const scanned = Number(result?.data?.scanned || 0);
+      setTransitionMessage(`Transition sweep completed: ${transitioned} transitioned (${scanned} scanned).`);
+    } catch (error) {
+      setErrorMessage(String((error as any)?.message || "Could not run transition sweep right now."));
+    } finally {
+      setTransitionPending(false);
+    }
+  }
+
+  const userEmail = canonicalizeEmail(authUser?.email || "");
+  const canRunTransitionSweep = userEmail === TRANSITION_BUTTON_EMAIL;
   const yourCampaigns = useMemo(() => {
     return campaigns
       .filter((campaign) => String(campaign.createdByEmail || "").toLowerCase() === userEmail)
@@ -332,6 +369,23 @@ export default function AccountPanel() {
           >
             {pending ? "Signing out..." : "Sign Out"}
           </button>
+
+          {canRunTransitionSweep && (
+            <button
+              type="button"
+              disabled={transitionPending}
+              onClick={handleTransitionToScreenings}
+              className="mx-auto mt-2 block rounded-full border border-marquee/40 bg-marquee/10 px-4 py-2 text-sm font-semibold text-marquee transition-colors hover:bg-marquee/20 disabled:opacity-60"
+            >
+              {transitionPending ? "Transitioning..." : "Transition to Screenings"}
+            </button>
+          )}
+
+          {transitionMessage && (
+            <p className="mt-3 rounded-lg border border-emerald/35 bg-emerald/10 px-3 py-2 text-xs text-emerald">
+              {transitionMessage}
+            </p>
+          )}
         </>
       ) : (
         <>

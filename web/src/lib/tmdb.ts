@@ -4,10 +4,14 @@
 
 const TMDB_API_KEY = "05e2d906f097b769ba4d7e8c7305accf";
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
+const BLOCKED_POSTER_PATHS = new Set([
+  "/c2yH89njxLApIDyUkYou4ZXTjlr.jpg",
+]);
 
 // A small number of titles TMDB's search doesn't resolve well by name alone.
 const TMDB_TITLE_OVERRIDES: Record<string, { tmdbId: number }> = {
   "blade runner": { tmdbId: 78 },
+  "party monster": { tmdbId: 1415 },
 };
 
 // Local fallback posters for the default ballot, in case TMDB is unreachable
@@ -44,6 +48,24 @@ const movieMetadataCache = new Map<string, MovieMetadata>();
 
 function buildPosterUrl(posterPath: string | null | undefined, size = "original"): string | null {
   return posterPath ? `https://image.tmdb.org/t/p/${size}${posterPath}` : null;
+}
+
+function isBlockedPosterUrl(url: string | null | undefined): boolean {
+  const raw = String(url || "").trim();
+  if (!raw) return false;
+
+  try {
+    const parsed = new URL(raw);
+    return BLOCKED_POSTER_PATHS.has(parsed.pathname);
+  } catch {
+    return false;
+  }
+}
+
+function sanitizePosterUrl(url: string | null | undefined): string | null {
+  const normalized = String(url || "").trim() || null;
+  if (!normalized) return null;
+  return isBlockedPosterUrl(normalized) ? null : normalized;
 }
 
 function buildYouTubeTrailerSearchUrl(title: string): string {
@@ -181,7 +203,7 @@ export async function getMovieMetadataByTitle(title: string): Promise<MovieMetad
       const details = await getMovieDetails(override.tmdbId);
       const metadata: MovieMetadata = {
         tmdbId: override.tmdbId,
-        poster: buildPosterUrl(details?.poster_path, "original"),
+        poster: sanitizePosterUrl(buildPosterUrl(details?.poster_path, "original")),
         starRating: formatStarRating(details?.vote_average),
         trailerUrl: selectYouTubeTrailerUrl(details?.videos, normalizedLookupTitle),
       };
@@ -205,14 +227,18 @@ export async function getMovieMetadataByTitle(title: string): Promise<MovieMetad
     }
 
     const exact = results.find((movie) => movie.title?.trim().toLowerCase() === normalizedTitle) || null;
-    const withPoster = results.find((movie) => Boolean(movie?.poster_path)) || null;
+    const withPoster =
+      results.find((movie) => sanitizePosterUrl(buildPosterUrl(movie?.poster_path, "original"))) || null;
     const exactWithPoster =
-      results.find((movie) => movie.title?.trim().toLowerCase() === normalizedTitle && movie?.poster_path) || null;
+      results.find((movie) => (
+        movie.title?.trim().toLowerCase() === normalizedTitle &&
+        sanitizePosterUrl(buildPosterUrl(movie?.poster_path, "original"))
+      )) || null;
     const match = exactWithPoster || withPoster || exact || results[0] || null;
 
     let metadata: MovieMetadata = {
       tmdbId: match?.id || null,
-      poster: buildPosterUrl(match?.poster_path, "original") || localPosterFallback,
+      poster: sanitizePosterUrl(buildPosterUrl(match?.poster_path, "original")) || localPosterFallback,
       starRating: formatStarRating(match?.vote_average),
       trailerUrl: buildYouTubeTrailerSearchUrl(normalizedLookupTitle),
     };
@@ -221,7 +247,7 @@ export async function getMovieMetadataByTitle(title: string): Promise<MovieMetad
       const details = await getMovieDetails(metadata.tmdbId);
       metadata = {
         ...metadata,
-        poster: metadata.poster || buildPosterUrl(details?.poster_path, "original"),
+        poster: metadata.poster || sanitizePosterUrl(buildPosterUrl(details?.poster_path, "original")),
         starRating: metadata.starRating || formatStarRating(details?.vote_average),
         trailerUrl: selectYouTubeTrailerUrl(details?.videos, normalizedLookupTitle),
       };

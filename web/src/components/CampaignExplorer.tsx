@@ -524,6 +524,7 @@ export default function CampaignExplorer({
   const compactTouchStartIndexRef = useRef<number | null>(null);
   const compactCarouselSwiping = useRef<boolean>(false);
   const pendingVoteResumeRef = useRef(false);
+  const lastAutoScrolledHashRef = useRef("");
   const floatingCreateTriggerRef = useRef<HTMLDivElement | null>(null);
   const datePickerRef = useRef<HTMLDivElement | null>(null);
   const isFeedLayout = layout === "feed" && !compact;
@@ -1369,6 +1370,7 @@ export default function CampaignExplorer({
 
     const hashCampaignId = decodeURIComponent(String(window.location.hash || "").replace(/^#/, "")).trim();
     if (!hashCampaignId) return;
+    if (hashCampaignId === lastAutoScrolledHashRef.current) return;
 
     let cancelled = false;
     const scrollToTarget = () => {
@@ -1376,6 +1378,7 @@ export default function CampaignExplorer({
       const target = document.getElementById(hashCampaignId);
       if (!target) return false;
       target.scrollIntoView({ behavior: "smooth", block: "start" });
+      lastAutoScrolledHashRef.current = hashCampaignId;
       return true;
     };
 

@@ -48,6 +48,7 @@ const DEFAULT_ELIMINATIONS_PER_NIGHT = 3;
 const LEGACY_ANON_EMAIL_SUFFIX = "@reelvotes.local";
 const EMAIL_OPTIONAL_EVENT_IDS = new Set([]);
 const PRIVILEGED_ADMIN_EMAIL = "rt332@cornell.edu";
+const TRANSITION_SWEEP_EMAIL = "rohan@reelvotes.com";
 const ADMIN_EMAILS = new Set([
   "rt332@cornell.edu",
   "rohan@reelvotes.com",
@@ -1201,6 +1202,100 @@ async function processScreeningTransitionsOnce() {
   };
 }
 
+async function processCampaignVoteTransitionsOnce() {
+  const campaignsSnapshot = await db.collection("campaigns").get();
+  let transitioned = 0;
+  const summaries = [];
+
+  for (const campaignDoc of campaignsSnapshot.docs) {
+    const campaignId = campaignDoc.id;
+    const campaignData = campaignDoc.data() || {};
+    const currentStatus = String(campaignData.status || "active").trim().toLowerCase();
+    if (!(currentStatus === "active" || currentStatus === "licensing-pending")) {
+      continue;
+    }
+
+    const thresholdInterested = toNonNegativeInt(
+      campaignData?.thresholds?.interested || campaignData?.interestedThreshold,
+      0,
+    );
+    if (thresholdInterested <= 0) {
+      continue;
+    }
+
+    const campaignMovies = coerceCampaignMoviesFromData(campaignId, campaignData);
+    const ranked = rankCampaignMovies(campaignMovies);
+    const leadingMovie = ranked[0] || null;
+    if (!leadingMovie) {
+      continue;
+    }
+
+    const totalVoteCount = campaignMovies.reduce(
+      (sum, movie) => sum + toNonNegativeInt(movie.voteCount, 0),
+      0,
+    );
+    const leadVoteCount = toNonNegativeInt(leadingMovie.voteCount, 0);
+    if (totalVoteCount < thresholdInterested) {
+      continue;
+    }
+
+    const now = admin.firestore.FieldValue.serverTimestamp();
+    const campaignMoviesOnTrigger = campaignMovies.map((movie) => ({
+      ...movie,
+      availabilityStatus:
+        movie.availabilityStatus === "not-checked" ? "awaiting-theater-check" : movie.availabilityStatus,
+      updatedAt: now,
+    }));
+
+    await campaignDoc.ref.set({
+      status: "theater-check",
+      selectedMovieTitle: leadingMovie.title || null,
+      campaignMovies: campaignMoviesOnTrigger,
+      choices: campaignMoviesOnTrigger.map((movie) => toLegacyChoiceFromCampaignMovie(movie)),
+      workflow: {
+        ...(campaignData.workflow && typeof campaignData.workflow === "object" ? campaignData.workflow : {}),
+        theaterCheckTriggeredAt: now,
+      },
+      updated_at: now,
+      updated_by: "campaign-vote-transition-bot",
+    }, {merge: true});
+
+    const triggerLogRef = db.collection("campaign_notifications").doc(`${campaignId}_theater_check`);
+    const triggerLogSnap = await triggerLogRef.get();
+    if (!triggerLogSnap.exists) {
+      await triggerLogRef.set({
+        campaignId,
+        type: "theater-check-trigger",
+        status: "queued",
+        created_at: now,
+        payload: {
+          market: String(campaignData.market || ""),
+          title: String(campaignData.title || ""),
+          preferredTheaters: Array.isArray(campaignData.preferredTheaters) ? campaignData.preferredTheaters : [],
+        },
+      }, {merge: true});
+    }
+
+    transitioned += 1;
+    summaries.push({
+      campaignId,
+      from: currentStatus,
+      to: "theater-check",
+      totalVoteCount,
+      leadVoteCount,
+      thresholdInterested,
+      leadingTitle: leadingMovie.title || null,
+      reason: "campaign-vote-threshold-reached",
+    });
+  }
+
+  return {
+    scanned: campaignsSnapshot.size,
+    transitioned,
+    summaries,
+  };
+}
+
 function sanitizeScreeningDateTime(screeningDateTimeInput) {
   const normalizedDateTime = String(screeningDateTimeInput || "").trim();
   if (!normalizedDateTime) {
@@ -1721,6 +1816,30 @@ exports.processScreeningTransitions = onSchedule({
   const summary = await processScreeningTransitionsOnce();
   logger.info("processScreeningTransitions completed", summary);
   return summary;
+});
+
+exports.adminTransitionCampaignsToScreenings = onCall(async (request) => {
+  const uid = request.auth?.uid || "";
+  const authEmail = normalizeEmail(request.auth?.token?.email);
+  const adminEmail = normalizeEmail(request.data?.adminEmail);
+
+  if (!uid || !authEmail) {
+    throw new HttpsError("unauthenticated", "Sign in is required.");
+  }
+
+  if (authEmail !== TRANSITION_SWEEP_EMAIL || adminEmail !== TRANSITION_SWEEP_EMAIL) {
+    throw new HttpsError("permission-denied", `Only ${TRANSITION_SWEEP_EMAIL} can run this transition sweep.`);
+  }
+
+  const summary = await processCampaignVoteTransitionsOnce();
+  logger.info("adminTransitionCampaignsToScreenings completed", {
+    adminEmail,
+    ...summary,
+  });
+  return {
+    ok: true,
+    ...summary,
+  };
 });
 
 exports.processCampaignNotifications = onSchedule({
