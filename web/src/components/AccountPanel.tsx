@@ -90,6 +90,17 @@ export default function AccountPanel() {
   const [activeTab, setActiveTab] = useState<AccountTab>("campaigns");
   const [transitionPending, setTransitionPending] = useState(false);
   const [transitionMessage, setTransitionMessage] = useState("");
+  const [transitionDetails, setTransitionDetails] = useState<string[]>([]);
+
+  async function refreshCampaigns() {
+    if (!authUser) {
+      setCampaigns([]);
+      return;
+    }
+
+    const rows = await getCampaignSummaries();
+    setCampaigns(rows);
+  }
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => setAuthUser(user));
@@ -182,6 +193,7 @@ export default function AccountPanel() {
 
     setTransitionPending(true);
     setTransitionMessage("");
+    setTransitionDetails([]);
     setErrorMessage("");
 
     try {
@@ -190,7 +202,37 @@ export default function AccountPanel() {
       });
       const transitioned = Number(result?.data?.transitioned || 0);
       const scanned = Number(result?.data?.scanned || 0);
+      const summaries = Array.isArray(result?.data?.summaries) ? result.data.summaries : [];
+      const skipped = Array.isArray(result?.data?.skipped) ? result.data.skipped : [];
+      const details = summaries
+        .slice(0, 8)
+        .map((row: any) => {
+          const title = String(row?.title || row?.leadingTitle || row?.campaignId || "campaign").trim();
+          const reason = String(row?.reason || "").trim();
+          return reason ? `${title} (${reason})` : title;
+        })
+        .filter(Boolean);
+
+      const skippedDetails = skipped
+        .slice(0, 8)
+        .map((row: any) => {
+          const title = String(row?.title || row?.campaignId || "campaign").trim();
+          const reason = String(row?.reason || "unknown-skip").trim();
+          if (reason === "threshold-not-reached") {
+            const votes = Number(row?.totalVoteCount || 0);
+            const thresholdVotes = Number(row?.thresholdInterested || 0);
+            const reservations = Number(row?.backingCount || 0);
+            const thresholdReservations = Number(row?.thresholdBacking || 0);
+            return `${title} (${reason}: votes ${votes}/${thresholdVotes}, reserves ${reservations}/${thresholdReservations})`;
+          }
+          return `${title} (${reason})`;
+        })
+        .filter(Boolean);
+
       setTransitionMessage(`Transition sweep completed: ${transitioned} transitioned (${scanned} scanned).`);
+      setTransitionDetails(details.length > 0 ? details : skippedDetails);
+
+      await refreshCampaigns();
     } catch (error) {
       setErrorMessage(String((error as any)?.message || "Could not run transition sweep right now."));
     } finally {
@@ -382,9 +424,16 @@ export default function AccountPanel() {
           )}
 
           {transitionMessage && (
-            <p className="mt-3 rounded-lg border border-emerald/35 bg-emerald/10 px-3 py-2 text-xs text-emerald">
-              {transitionMessage}
-            </p>
+            <div className="mt-3 rounded-lg border border-emerald/35 bg-emerald/10 px-3 py-2 text-xs text-emerald">
+              <p>{transitionMessage}</p>
+              {transitionDetails.length > 0 && (
+                <ul className="mt-2 list-disc space-y-1 pl-4">
+                  {transitionDetails.map((detail) => (
+                    <li key={detail}>{detail}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
           )}
         </>
       ) : (

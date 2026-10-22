@@ -27,11 +27,7 @@ type PendingCampaignVote = {
 };
 
 const ADMIN_EMAILS = new Set([
-  "rt332@cornell.edu",
   "rohan@reelvotes.com",
-  "moses@thenewparkway.com",
-  "programming@thenewparkway.com",
-  "nikki@thenewparkwaytheater.com",
 ]);
 
 const adminStatusOptions = [
@@ -122,6 +118,14 @@ function campaignHandle(slug: string): string {
     .replace(/[^a-z0-9_]+/g, "_")
     .replace(/^_+|_+$/g, "")
     .slice(0, 24) || "campaign";
+}
+
+function canonicalizeEmail(email: string): string {
+  const normalized = String(email || "").trim().toLowerCase();
+  if (!normalized.includes("@")) return normalized;
+  const [localPart, domainPart] = normalized.split("@");
+  const canonicalLocalPart = String(localPart || "").split("+")[0];
+  return `${canonicalLocalPart}@${String(domainPart || "")}`;
 }
 
 function isPermissionDeniedError(error: unknown): boolean {
@@ -507,6 +511,7 @@ export default function CampaignExplorer({
   const [adminPendingById, setAdminPendingById] = useState<Record<string, boolean>>({});
   const [adminStatusById, setAdminStatusById] = useState<Record<string, string>>({});
   const [adminMovieById, setAdminMovieById] = useState<Record<string, string>>({});
+  const [adminTicketById, setAdminTicketById] = useState<Record<string, string>>({});
   const [adminAvailabilityByCampaignId, setAdminAvailabilityByCampaignId] = useState<Record<string, Record<string, string>>>({});
   const [adminNoteById, setAdminNoteById] = useState<Record<string, string>>({});
   const [bookmarkedById, setBookmarkedById] = useState<Record<string, boolean>>({});
@@ -1034,6 +1039,7 @@ export default function CampaignExplorer({
     setActionError("");
     const status = (adminStatusById[campaign.id] || campaign.status) as CampaignSummary["status"];
     const selectedMovieTitle = (adminMovieById[campaign.id] || campaign.selectedMovieTitle || "").trim();
+    const ticketUrl = (adminTicketById[campaign.id] ?? campaign.ticketUrl ?? "").trim();
     const movieAvailabilityByCampaignMovieId = adminAvailabilityByCampaignId[campaign.id] || {};
     const note = (adminNoteById[campaign.id] || "").trim();
 
@@ -1043,6 +1049,7 @@ export default function CampaignExplorer({
         campaignId: campaign.id,
         status,
         selectedMovieTitle,
+        ticketUrl,
         movieAvailabilityByCampaignMovieId,
         note,
       });
@@ -1051,6 +1058,9 @@ export default function CampaignExplorer({
       const nextSelectedMovieTitle = response?.data?.selectedMovieTitle
         ? String(response.data.selectedMovieTitle)
         : null;
+      const nextTicketUrl = Object.prototype.hasOwnProperty.call(response?.data || {}, "ticketUrl")
+        ? (response?.data?.ticketUrl ? String(response.data.ticketUrl) : null)
+        : (ticketUrl || null);
 
       setCampaigns((prev) => {
         if (!prev) return prev;
@@ -1060,12 +1070,14 @@ export default function CampaignExplorer({
                 ...row,
                 status: nextStatus,
                 selectedMovieTitle: nextSelectedMovieTitle,
+                ticketUrl: nextTicketUrl,
               }
             : row,
         );
       });
 
       setAdminNoteById((prev) => ({ ...prev, [campaign.id]: "" }));
+      setAdminTicketById((prev) => ({ ...prev, [campaign.id]: nextTicketUrl || "" }));
     } catch (error) {
       setActionError(String((error as any)?.message || "Could not update campaign status."));
     } finally {
@@ -1296,7 +1308,10 @@ export default function CampaignExplorer({
     )
     : null;
 
-  const isAdminUser = Boolean(authUser?.email && ADMIN_EMAILS.has(String(authUser.email).toLowerCase()));
+  const signedInEmail = canonicalizeEmail(
+    String(authUser?.email || auth.currentUser?.email || ""),
+  );
+  const isAdminUser = Boolean(signedInEmail && ADMIN_EMAILS.has(signedInEmail));
 
   const visible = useMemo(() => {
     if (!campaigns) return null;
@@ -1753,6 +1768,11 @@ export default function CampaignExplorer({
               const chosenMovie = rankedChoices[0]?.title || campaign.selectedMovieTitle || "Movie TBD";
               const supportPending = Boolean(pendingById[campaign.id]);
               const votePending = Boolean(pendingVoteById[campaign.id]);
+              const adminPending = Boolean(adminPendingById[campaign.id]);
+              const adminDraftStatus = adminStatusById[campaign.id] || campaign.status;
+              const adminDraftMovie = adminMovieById[campaign.id] ?? (campaign.selectedMovieTitle || "");
+              const adminDraftTicket = adminTicketById[campaign.id] ?? (campaign.ticketUrl || "");
+              const adminDraftNote = adminNoteById[campaign.id] || "";
               const reservationCount = Math.max(0, Number(campaign.counts.backing || 0));
               const reservationThreshold = Math.max(1, Number(campaign.thresholds.backing || 1));
               const votingCount = Math.max(0, Number(campaign.counts.interested || 0));
@@ -1782,10 +1802,23 @@ export default function CampaignExplorer({
                       <h3 className="mt-2 font-display text-2xl font-semibold text-ink">{readOnly ? campaignTitleWithoutTheater(campaign) : displayTitle}</h3>
                       <p className="mt-1 text-sm text-ink-soft">{campaign.dateWindowLabel} • {campaign.market}</p>
                     </div>
-                    <InfoHoverIcon
-                      label="Campaign rights info"
-                      message={rightsInfoMessage(campaign.status)}
-                    />
+                    <div className="flex shrink-0 flex-col items-end gap-2">
+                      <InfoHoverIcon
+                        label="Campaign rights info"
+                        message={rightsInfoMessage(campaign.status)}
+                      />
+                      {campaign.ticketUrl && (
+                        <a
+                          href={campaign.ticketUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1 rounded-full border border-emerald/35 bg-emerald/10 px-3 py-1.5 text-[11px] font-semibold text-emerald transition-colors hover:bg-emerald/20"
+                        >
+                          <span aria-hidden="true">🎟️</span>
+                          <span>Get Tickets</span>
+                        </a>
+                      )}
+                    </div>
                   </div>
 
                   <div className="mt-2.5 overflow-hidden rounded-2xl border border-line bg-cream p-3">
@@ -2007,6 +2040,91 @@ export default function CampaignExplorer({
                         </button>
                       </div>
                     </div>
+
+                    {isAdminUser && !isHistoricalVoteCampaign && !readOnly && (
+                      <div className="mt-3 rounded-xl border border-line bg-paper/80 p-2.5">
+                        <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-faint">Admin controls</p>
+                        <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                          <select
+                            value={adminDraftStatus}
+                            onChange={(event) =>
+                              setAdminStatusById((prev) => ({ ...prev, [campaign.id]: event.target.value }))
+                            }
+                            className="rounded-lg border border-line bg-paper px-3 py-2 text-xs text-ink outline-none transition-colors focus:border-marquee"
+                          >
+                            {adminStatusOptions.map((option) => (
+                              <option key={option} value={option}>
+                                {option}
+                              </option>
+                            ))}
+                          </select>
+                          <input
+                            type="text"
+                            value={adminDraftMovie}
+                            onChange={(event) =>
+                              setAdminMovieById((prev) => ({ ...prev, [campaign.id]: event.target.value }))
+                            }
+                            placeholder="Selected movie title"
+                            className="rounded-lg border border-line bg-paper px-3 py-2 text-xs text-ink outline-none transition-colors focus:border-marquee"
+                          />
+                        </div>
+                        <input
+                          type="url"
+                          value={adminDraftTicket}
+                          onChange={(event) =>
+                            setAdminTicketById((prev) => ({ ...prev, [campaign.id]: event.target.value }))
+                          }
+                          placeholder="Ticket URL (https://...)"
+                          className="mt-2 w-full rounded-lg border border-line bg-paper px-3 py-2 text-xs text-ink outline-none transition-colors focus:border-marquee"
+                        />
+                        <div className="mt-2 grid gap-2 sm:grid-cols-3">
+                          {campaign.choices.map((choice) => {
+                            const draftAvailability =
+                              adminAvailabilityByCampaignId[campaign.id]?.[choice.campaignMovieId] || choice.availabilityStatus;
+                            return (
+                              <label key={`${campaign.id}-feed-admin-${choice.campaignMovieId}`} className="grid gap-1">
+                                <span className="line-clamp-1 text-[10px] text-ink-faint">{choice.title}</span>
+                                <select
+                                  value={draftAvailability}
+                                  onChange={(event) =>
+                                    setAdminAvailabilityByCampaignId((prev) => ({
+                                      ...prev,
+                                      [campaign.id]: {
+                                        ...(prev[campaign.id] || {}),
+                                        [choice.campaignMovieId]: event.target.value,
+                                      },
+                                    }))
+                                  }
+                                  className="rounded-lg border border-line bg-paper px-3 py-2 text-xs text-ink outline-none transition-colors focus:border-marquee"
+                                >
+                                  <option value="not-checked">not-checked</option>
+                                  <option value="awaiting-theater-check">awaiting-theater-check</option>
+                                  <option value="available">available</option>
+                                  <option value="unavailable">unavailable</option>
+                                </select>
+                              </label>
+                            );
+                          })}
+                        </div>
+                        <textarea
+                          rows={2}
+                          value={adminDraftNote}
+                          onChange={(event) =>
+                            setAdminNoteById((prev) => ({ ...prev, [campaign.id]: event.target.value }))
+                          }
+                          placeholder="Internal note (optional)"
+                          className="mt-2 w-full rounded-lg border border-line bg-paper px-3 py-2 text-xs text-ink outline-none transition-colors focus:border-marquee"
+                        />
+                        <button
+                          type="button"
+                          disabled={adminPending}
+                          onClick={() => handleAdminUpdate(campaign)}
+                          className="mx-auto mt-3 block rounded-full bg-marquee px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-marquee-dark disabled:opacity-60"
+                        >
+                          {adminPending ? "Updating…" : "Update campaign"}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </article>
               );
@@ -2036,6 +2154,7 @@ export default function CampaignExplorer({
             const adminPending = Boolean(adminPendingById[campaign.id]);
             const adminDraftStatus = adminStatusById[campaign.id] || campaign.status;
             const adminDraftMovie = adminMovieById[campaign.id] ?? (campaign.selectedMovieTitle || "");
+            const adminDraftTicket = adminTicketById[campaign.id] ?? (campaign.ticketUrl || "");
             const adminDraftNote = adminNoteById[campaign.id] || "";
             const rankedTitles = rankedChoices.map((choice) => choice.title).filter(Boolean).join(" • ");
             const selectedComparable = comparableTitle(chosenMovie);
@@ -2072,7 +2191,20 @@ export default function CampaignExplorer({
                   />
                 </div>
 
-                <h3 className="mt-3 font-display text-2xl font-semibold text-ink">{readOnly ? campaignTitleWithoutTheater(campaign) : displayTitle}</h3>
+                <div className="mt-3 flex items-start justify-between gap-3">
+                  <h3 className="font-display text-2xl font-semibold text-ink">{readOnly ? campaignTitleWithoutTheater(campaign) : displayTitle}</h3>
+                  {campaign.ticketUrl && (
+                    <a
+                      href={campaign.ticketUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex shrink-0 items-center gap-1 rounded-full border border-emerald/35 bg-emerald/10 px-3 py-1.5 text-xs font-semibold text-emerald transition-colors hover:bg-emerald/20"
+                    >
+                      <span aria-hidden="true">🎟️</span>
+                      <span>Get Tickets</span>
+                    </a>
+                  )}
+                </div>
                 <div className="mt-1 flex flex-wrap items-center gap-2">
                   <p className="text-sm text-ink-soft">Date: {campaign.dateWindowLabel}</p>
                   <span className={`rounded-full border px-2.5 py-1 text-[10px] font-semibold ${statusTone[campaign.status] || statusTone.active}`}>
@@ -2268,6 +2400,15 @@ export default function CampaignExplorer({
                         className="rounded-lg border border-line bg-paper px-3 py-2 text-xs text-ink outline-none transition-colors focus:border-marquee"
                       />
                     </div>
+                    <input
+                      type="url"
+                      value={adminDraftTicket}
+                      onChange={(event) =>
+                        setAdminTicketById((prev) => ({ ...prev, [campaign.id]: event.target.value }))
+                      }
+                      placeholder="Ticket URL (https://...)"
+                      className="mt-2 w-full rounded-lg border border-line bg-paper px-3 py-2 text-xs text-ink outline-none transition-colors focus:border-marquee"
+                    />
                     <div className="mt-2 grid gap-2 sm:grid-cols-3">
                       {campaign.choices.map((choice) => {
                         const draftAvailability =
@@ -2310,7 +2451,7 @@ export default function CampaignExplorer({
                       type="button"
                       disabled={adminPending}
                       onClick={() => handleAdminUpdate(campaign)}
-                      className="mt-2 rounded-full bg-ink px-3.5 py-2 text-xs font-semibold text-white transition-opacity disabled:opacity-60"
+                      className="mx-auto mt-3 block rounded-full bg-marquee px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-marquee-dark disabled:opacity-60"
                     >
                       {adminPending ? "Updating…" : "Update campaign"}
                     </button>

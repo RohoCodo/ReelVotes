@@ -49,6 +49,7 @@ const LEGACY_ANON_EMAIL_SUFFIX = "@reelvotes.local";
 const EMAIL_OPTIONAL_EVENT_IDS = new Set([]);
 const PRIVILEGED_ADMIN_EMAIL = "rt332@cornell.edu";
 const TRANSITION_SWEEP_EMAIL = "rohan@reelvotes.com";
+const CAMPAIGN_EDITOR_EMAIL = "rohan@reelvotes.com";
 const ADMIN_EMAILS = new Set([
   "rt332@cornell.edu",
   "rohan@reelvotes.com",
@@ -1206,27 +1207,51 @@ async function processCampaignVoteTransitionsOnce() {
   const campaignsSnapshot = await db.collection("campaigns").get();
   let transitioned = 0;
   const summaries = [];
+  const skipped = [];
 
   for (const campaignDoc of campaignsSnapshot.docs) {
     const campaignId = campaignDoc.id;
     const campaignData = campaignDoc.data() || {};
+    const campaignTitle = String(campaignData.title || "").trim() || null;
     const currentStatus = String(campaignData.status || "active").trim().toLowerCase();
     if (!(currentStatus === "active" || currentStatus === "licensing-pending")) {
+      skipped.push({
+        campaignId,
+        title: campaignTitle,
+        status: currentStatus,
+        reason: "status-not-eligible",
+      });
       continue;
     }
 
+    const thresholds = campaignData?.thresholds && typeof campaignData.thresholds === "object"
+      ? campaignData.thresholds
+      : {};
+    const counts = campaignData?.counts && typeof campaignData.counts === "object"
+      ? campaignData.counts
+      : {};
+
     const thresholdInterested = toNonNegativeInt(
-      campaignData?.thresholds?.interested || campaignData?.interestedThreshold,
+      thresholds?.interested || campaignData?.interestedThreshold,
       0,
     );
-    if (thresholdInterested <= 0) {
-      continue;
-    }
+    const thresholdBacking = toNonNegativeInt(
+      thresholds?.backing || campaignData?.backingThreshold,
+      0,
+    );
+    const interestedCount = toNonNegativeInt(counts?.interested, 0);
+    const backingCount = toNonNegativeInt(counts?.backing, 0);
 
     const campaignMovies = coerceCampaignMoviesFromData(campaignId, campaignData);
     const ranked = rankCampaignMovies(campaignMovies);
     const leadingMovie = ranked[0] || null;
     if (!leadingMovie) {
+      skipped.push({
+        campaignId,
+        title: campaignTitle,
+        status: currentStatus,
+        reason: "no-campaign-movies",
+      });
       continue;
     }
 
@@ -1235,16 +1260,54 @@ async function processCampaignVoteTransitionsOnce() {
       0,
     );
     const leadVoteCount = toNonNegativeInt(leadingMovie.voteCount, 0);
-    if (totalVoteCount < thresholdInterested) {
+    const supportReady = computeCampaignStatusAfterSupport(
+      currentStatus,
+      {interested: interestedCount, backing: backingCount},
+      thresholds,
+    ) === "theater-check";
+
+    const backingThresholdReady = thresholdBacking > 0 && backingCount >= thresholdBacking;
+    const interestedThresholdReady = thresholdInterested > 0 && interestedCount >= thresholdInterested;
+    const totalVoteThresholdReady = thresholdInterested > 0 && totalVoteCount >= thresholdInterested;
+    const leadVoteThresholdReady = thresholdInterested > 0 && leadVoteCount >= thresholdInterested;
+
+    if (!(
+      supportReady ||
+      backingThresholdReady ||
+      interestedThresholdReady ||
+      totalVoteThresholdReady ||
+      leadVoteThresholdReady
+    )) {
+      skipped.push({
+        campaignId,
+        title: campaignTitle,
+        status: currentStatus,
+        reason: "threshold-not-reached",
+        interestedCount,
+        backingCount,
+        totalVoteCount,
+        leadVoteCount,
+        thresholdBacking,
+        thresholdInterested,
+        leadingTitle: leadingMovie.title || null,
+      });
       continue;
     }
 
+    const transitionReason =
+      backingThresholdReady ? "backing-threshold-reached" :
+      interestedThresholdReady ? "interested-threshold-reached" :
+      supportReady ? "support-trigger-threshold-reached" :
+      leadVoteThresholdReady ? "lead-vote-threshold-reached" :
+      "total-vote-threshold-reached";
+
     const now = admin.firestore.FieldValue.serverTimestamp();
+    const nowIso = new Date().toISOString();
     const campaignMoviesOnTrigger = campaignMovies.map((movie) => ({
       ...movie,
       availabilityStatus:
         movie.availabilityStatus === "not-checked" ? "awaiting-theater-check" : movie.availabilityStatus,
-      updatedAt: now,
+      updatedAt: nowIso,
     }));
 
     await campaignDoc.ref.set({
@@ -1279,13 +1342,17 @@ async function processCampaignVoteTransitionsOnce() {
     transitioned += 1;
     summaries.push({
       campaignId,
+      title: campaignTitle,
       from: currentStatus,
       to: "theater-check",
+      interestedCount,
+      backingCount,
       totalVoteCount,
       leadVoteCount,
+      thresholdBacking,
       thresholdInterested,
       leadingTitle: leadingMovie.title || null,
-      reason: "campaign-vote-threshold-reached",
+      reason: transitionReason,
     });
   }
 
@@ -1293,6 +1360,8 @@ async function processCampaignVoteTransitionsOnce() {
     scanned: campaignsSnapshot.size,
     transitioned,
     summaries,
+    skippedCount: skipped.length,
+    skipped,
   };
 }
 
@@ -3638,6 +3707,8 @@ exports.createCampaign = onCall(async (request) => {
       uid,
       email: authEmail,
     },
+    createdByUid: uid,
+    createdByEmail: authEmail,
     replacement: {
       replacedCampaignId: replacedCampaignId || null,
       notifyPreviousSupporters,
@@ -3810,9 +3881,63 @@ exports.publicListCampaigns = onCall(async (request) => {
   const limit = sanitizePositiveInt(request.data?.limit, 50, 200);
   const uid = request.auth?.uid || "";
 
+  const resolveTicketUrl = (root) => {
+    const candidateKeys = new Set([
+      "ticketurl",
+      "ticket_url",
+      "ticketlink",
+      "ticketsurl",
+      "tickets_url",
+      "ticketslink",
+      "presaleurl",
+      "presale_url",
+      "presalelink",
+      "bookingurl",
+      "booking_url",
+      "bookinglink",
+      "purchaseurl",
+      "purchase_url",
+      "purchaselink",
+    ]);
+
+    const queue = [root];
+    const visited = new Set();
+
+    while (queue.length > 0) {
+      const current = queue.shift();
+      if (!current || visited.has(current)) continue;
+      visited.add(current);
+
+      if (Array.isArray(current)) {
+        current.forEach((item) => queue.push(item));
+        continue;
+      }
+
+      if (typeof current !== "object") continue;
+
+      for (const [key, rawValue] of Object.entries(current)) {
+        const normalizedKey = String(key || "")
+          .trim()
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "");
+        const value = String(rawValue || "").trim();
+        if (candidateKeys.has(normalizedKey) && value) {
+          return value;
+        }
+
+        if (rawValue && typeof rawValue === "object") {
+          queue.push(rawValue);
+        }
+      }
+    }
+
+    return null;
+  };
+
   const snapshot = await db.collection("campaigns").get();
   const rows = snapshot.docs.map((docSnap) => {
     const data = docSnap.data() || {};
+    const ticketUrl = resolveTicketUrl(data);
     let campaignMovies = [];
     try {
       campaignMovies = coerceCampaignMoviesFromData(docSnap.id, data);
@@ -3823,6 +3948,16 @@ exports.publicListCampaigns = onCall(async (request) => {
     const replacement = data.replacement && typeof data.replacement === "object"
       ? data.replacement
       : {};
+    const organizer = data.organizer && typeof data.organizer === "object"
+      ? data.organizer
+      : {};
+    const createdByEmail = normalizeEmail(
+      data.createdByEmail ||
+      data.organizerEmail ||
+      organizer.email ||
+      data.created_by ||
+      "",
+    ) || null;
     return {
       id: docSnap.id,
       slug: data.slug || docSnap.id,
@@ -3830,9 +3965,11 @@ exports.publicListCampaigns = onCall(async (request) => {
       market: data.market || "",
       dateWindowLabel: data.dateWindowLabel || "",
       screeningDateTime: data.screeningDateTime || "",
+      ticketUrl,
       campaignWindow: data.campaignWindow || null,
       deadTimeSlot: data.deadTimeSlot || null,
       status: data.status || "active",
+      createdByEmail,
       selectedMovieTitle: data.selectedMovieTitle || rankedMovies[0]?.title || null,
       preferredTheaters: Array.isArray(data.preferredTheaters) ? data.preferredTheaters : [],
       choices: campaignMovies.map((movie) => toLegacyChoiceFromCampaignMovie(movie)),
@@ -4211,13 +4348,22 @@ exports.adminSetCampaignStatus = onCall(async (request) => {
   if (!uid || !authEmail) {
     throw new HttpsError("unauthenticated", "Sign in is required.");
   }
-  if (!ADMIN_EMAILS.has(authEmail)) {
-    throw new HttpsError("permission-denied", "Admin access denied.");
+  if (authEmail !== CAMPAIGN_EDITOR_EMAIL) {
+    throw new HttpsError("permission-denied", `Only ${CAMPAIGN_EDITOR_EMAIL} can edit campaign status and availability.`);
   }
 
   const campaignId = sanitizeTextField(request.data?.campaignId, {required: true, maxLength: 120});
   const status = sanitizeCampaignStatus(request.data?.status);
   const selectedMovieTitle = sanitizeTextField(request.data?.selectedMovieTitle, {required: false, maxLength: 200});
+  const hasTicketUrlField = Object.prototype.hasOwnProperty.call(request.data || {}, "ticketUrl");
+  const ticketUrlInput = hasTicketUrlField
+    ? sanitizeTextField(request.data?.ticketUrl, {required: false, maxLength: 500})
+    : null;
+  const ticketUrlCandidate = hasTicketUrlField ? String(ticketUrlInput || "").trim().replace(/\/+$/g, "") : "";
+  if (ticketUrlCandidate && !/^https?:\/\/.+/i.test(ticketUrlCandidate)) {
+    throw new HttpsError("invalid-argument", "Ticket URL must begin with http:// or https://.");
+  }
+  const ticketUrl = hasTicketUrlField ? (ticketUrlCandidate || null) : null;
   const licensingStatus = sanitizeCampaignLicensingStatus(request.data?.licensingStatus);
   const movieAvailabilityPatch = sanitizeMovieAvailabilityPatch(request.data?.movieAvailabilityByCampaignMovieId);
   const note = sanitizeTextField(request.data?.note, {required: false, maxLength: 800});
@@ -4229,25 +4375,54 @@ exports.adminSetCampaignStatus = onCall(async (request) => {
   }
 
   const now = admin.firestore.FieldValue.serverTimestamp();
+  const nowIso = new Date().toISOString();
+  const campaignData = campaignDoc.data() || {};
+  const existingCampaignMovies = coerceCampaignMoviesFromData(campaignId, campaignData);
   let campaignMoviesPatch = null;
   if (Object.keys(movieAvailabilityPatch).length > 0) {
-    const existingCampaignMovies = coerceCampaignMoviesFromData(campaignId, campaignDoc.data() || {});
     campaignMoviesPatch = existingCampaignMovies.map((movie) => {
       const nextStatus = movieAvailabilityPatch[movie.campaignMovieId];
       if (!nextStatus) return movie;
       return {
         ...movie,
         availabilityStatus: nextStatus,
-        updatedAt: now,
+        updatedAt: nowIso,
       };
     });
   }
 
+  const moviesForStatusEvaluation = campaignMoviesPatch || existingCampaignMovies;
+  const rankedMovies = rankCampaignMovies(moviesForStatusEvaluation);
+  const fallbackSelectedMovieTitle = rankedMovies[0]?.title || "";
+  const effectiveSelectedMovieTitle =
+    selectedMovieTitle ||
+    String(campaignData.selectedMovieTitle || "").trim() ||
+    fallbackSelectedMovieTitle;
+
+  const selectedMovie = moviesForStatusEvaluation.find(
+    (movie) => normalizeMovieTitle(movie.title) === normalizeMovieTitle(effectiveSelectedMovieTitle),
+  ) || null;
+  const selectedMovieAvailable = selectedMovie?.availabilityStatus === "available";
+  const hasScreeningDate = Boolean(
+    String(campaignData.screeningDateTime || "").trim() ||
+    String(campaignData?.deadTimeSlot?.screeningDateTime || "").trim(),
+  );
+
+  let nextStatus = status;
+  if (
+    selectedMovieAvailable &&
+    hasScreeningDate &&
+    (status === "active" || status === "licensing-pending" || status === "theater-check" || status === "movie-available")
+  ) {
+    nextStatus = "scheduled";
+  }
+
   const patch = {
-    status,
+    status: nextStatus,
     updated_at: now,
     updated_by: authEmail,
-    ...(selectedMovieTitle ? {selectedMovieTitle} : {}),
+    ...(effectiveSelectedMovieTitle ? {selectedMovieTitle: effectiveSelectedMovieTitle} : {}),
+    ...(hasTicketUrlField ? {ticketUrl} : {}),
     ...(campaignMoviesPatch
       ? {
         campaignMovies: campaignMoviesPatch,
@@ -4274,8 +4449,9 @@ exports.adminSetCampaignStatus = onCall(async (request) => {
   if (note) {
     await campaignRef.collection("admin_updates").add({
       note,
-      status,
-      selectedMovieTitle: selectedMovieTitle || null,
+      status: nextStatus,
+      selectedMovieTitle: effectiveSelectedMovieTitle || null,
+      ticketUrl: hasTicketUrlField ? ticketUrl : null,
       licensingStatus: licensingStatus || null,
       movieAvailabilityByCampaignMovieId: Object.keys(movieAvailabilityPatch).length > 0 ? movieAvailabilityPatch : null,
       created_at: now,
@@ -4285,8 +4461,9 @@ exports.adminSetCampaignStatus = onCall(async (request) => {
 
   logger.info("Admin set campaign status", {
     campaignId,
-    status,
-    selectedMovieTitle: selectedMovieTitle || null,
+    status: nextStatus,
+    selectedMovieTitle: effectiveSelectedMovieTitle || null,
+    ticketUrl: hasTicketUrlField ? ticketUrl : null,
     licensingStatus: licensingStatus || null,
     adminEmail: authEmail,
   });
@@ -4294,8 +4471,9 @@ exports.adminSetCampaignStatus = onCall(async (request) => {
   return {
     ok: true,
     campaignId,
-    status,
-    selectedMovieTitle: selectedMovieTitle || null,
+    status: nextStatus,
+    selectedMovieTitle: effectiveSelectedMovieTitle || null,
+    ticketUrl: hasTicketUrlField ? ticketUrl : null,
     licensingStatus: licensingStatus || null,
     updatedBy: authEmail,
   };
