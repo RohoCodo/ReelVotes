@@ -16,6 +16,7 @@ import { auth, signInWithGoogle, onAuthStateChanged, signOut } from "../lib/fire
 import { storage } from "../lib/firebase-storage";
 import { getMovieMetadataByTitle, type MovieMetadata } from "../lib/tmdb";
 import { withTimeout } from "../lib/withTimeout";
+import ReelSuccessSalesWorkspace, { type SalesView } from "./ReelSuccessSalesWorkspace";
 
 // --- Types -----------------------------------------------------------------
 
@@ -101,7 +102,7 @@ interface FileUploadState {
 }
 
 type AuthPhase = "checking" | "signed-out" | "syncing" | "no-access" | "ready";
-type Tab = "find" | "grosses";
+type Tab = SalesView | "find" | "grosses";
 
 // --- Helpers -----------------------------------------------------------------
 
@@ -142,7 +143,7 @@ export default function ReelSuccessDashboard() {
   const [claims, setClaims] = useState<Claims | null>(null);
   const [accessError, setAccessError] = useState("");
   const [signInError, setSignInError] = useState("");
-  const [tab, setTab] = useState<Tab>("find");
+  const [tab, setTab] = useState<Tab>("overview");
 
   const isSuperAdmin = claims?.admin === true || claims?.role === "super_admin";
 
@@ -248,32 +249,35 @@ export default function ReelSuccessDashboard() {
     <div>
       <DashboardHeader user={user} claims={claims} onSignOut={handleSignOut} />
 
-      <div className="mt-6 grid grid-cols-2 gap-1 rounded-full bg-cream-soft p-1 text-sm font-semibold sm:inline-grid sm:w-auto">
-        <button
-          type="button"
-          onClick={() => setTab("find")}
-          className={`rounded-full px-4 py-2 transition-colors ${
-            tab === "find" ? "bg-marquee text-white" : "text-ink-soft"
-          }`}
-        >
-          Find Your Next Movie
-        </button>
-        <button
-          type="button"
-          onClick={() => setTab("grosses")}
-          className={`rounded-full px-4 py-2 transition-colors ${
-            tab === "grosses" ? "bg-marquee text-white" : "text-ink-soft"
-          }`}
-        >
-          Upload and Manage Grosses
-        </button>
-      </div>
+      <nav aria-label="ReelSuccess workspace" className="mt-6 flex flex-wrap gap-2 rounded-2xl border border-line bg-cream-soft p-2 text-sm font-semibold">
+        {([
+          ["overview", "Overview"],
+          ["performance", "Movie Performance"],
+          ["find", "Discover Movies"],
+          ["imports", "Data & Imports"],
+          ["grosses", "PDF Gross Uploads"],
+        ] as const).map(([value, label]) => (
+          <button
+            type="button"
+            key={value}
+            aria-current={tab === value ? "page" : undefined}
+            onClick={() => setTab(value)}
+            className={`rounded-xl px-4 py-3 transition-colors ${
+              tab === value ? "bg-violet-400 text-slate-950" : "text-ink-soft hover:bg-paper hover:text-ink"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </nav>
 
       <div className="mt-6">
         {tab === "find" ? (
           <FindMovieTab isSuperAdmin={Boolean(isSuperAdmin)} />
-        ) : (
+        ) : tab === "grosses" ? (
           <GrossesTab claims={claims!} isSuperAdmin={Boolean(isSuperAdmin)} userEmail={user?.email || ""} />
+        ) : (
+          <SalesTabShell view={tab} isSuperAdmin={Boolean(isSuperAdmin)} />
         )}
       </div>
     </div>
@@ -296,6 +300,7 @@ function DashboardHeader({
         <p className="mt-1 text-sm text-ink-soft">
           {claims?.admin || claims?.role === "super_admin" ? "Super admin" : "Theater partner"} · {user?.email}
         </p>
+        <p className="mt-2 text-xs text-orange-200">Programming intelligence / Evidence first. Your team makes the decisions.</p>
       </div>
       <button
         type="button"
@@ -490,13 +495,43 @@ function TheaterContextCard({ theater, bare = false }: { theater: TheaterSummary
   return <div className="rounded-xl border border-line bg-cream p-4">{content}</div>;
 }
 
+function SalesTabShell({ view, isSuperAdmin }: { view: SalesView; isSuperAdmin: boolean }) {
+  const selection = useTheaterSelection(isSuperAdmin);
+  return (
+    <div className="min-w-0 space-y-6">
+      <section className="rounded-2xl border border-line bg-paper p-5">
+        <h2 className="mb-3 text-sm font-semibold text-ink">Authorized theater / location</h2>
+        <TheaterPicker isSuperAdmin={isSuperAdmin} {...selection} />
+      </section>
+      {selection.selected ? (
+        <ReelSuccessSalesWorkspace
+          key={selection.selected.theater_key}
+          theaterKey={selection.selected.theater_key}
+          theaterName={selection.selected.theater_name}
+          view={view}
+        />
+      ) : (
+        <p className="rounded-2xl border border-line bg-paper p-6 text-sm text-ink-soft">Select an authorized theater to work with its private sales data.</p>
+      )}
+      <section className="rounded-2xl border border-dashed border-line p-5">
+        <h2 className="text-sm font-semibold text-ink">Later milestones</h2>
+        <p className="mt-2 text-sm leading-relaxed text-ink-soft">Recommendations with decision tracking, Demand & Presales, Scheduling, expanded Reports, and model evaluation are not yet available in this sales workspace. They require tested data and dedicated source integrations.</p>
+      </section>
+    </div>
+  );
+}
+
 // --- Tab 1: Find Your Next Movie ----------------------------------------------
 
 function FindMovieTab({ isSuperAdmin }: { isSuperAdmin: boolean }) {
   const { selected, setSelected, loadingMine, myTheaterError, loadMyTheater } = useTheaterSelection(isSuperAdmin);
 
   return (
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,320px)_1fr]">
+    <div>
+      <p className="mb-5 rounded-xl border border-line bg-cream-soft p-4 text-sm leading-relaxed text-ink-soft">
+        Existing discovery index: historical movie presence and similar-theater context, not verified paid ticket sales or validated attendance predictions. These suggestions are separate from your confirmed sales imports.
+      </p>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,320px)_1fr]">
       <section className="rounded-2xl border border-line bg-paper p-5 sm:p-6">
         <h2 className="font-display text-lg font-semibold text-ink">Theater</h2>
         <div className="mt-4">
@@ -519,6 +554,7 @@ function FindMovieTab({ isSuperAdmin }: { isSuperAdmin: boolean }) {
             Select a theater to see recommendations.
           </div>
         )}
+      </div>
       </div>
     </div>
   );
@@ -708,7 +744,7 @@ function RecommendationsCard({ recommendations }: { recommendations: Recommendat
   return (
     <section className="rounded-2xl border border-line bg-paper p-5 sm:p-6">
       <h2 className="font-display text-lg font-semibold text-ink">Recommended Movies</h2>
-      <p className="mt-1 text-xs text-ink-soft">Ranked by recommendation score, based on similar theaters' performance.</p>
+      <p className="mt-1 text-xs text-ink-soft">Ranked by the existing discovery score, based on historical movie presence at similar theaters, not measured ticket sales.</p>
       <div className="mt-4 flex flex-col gap-3">
         {sorted.map((rec, index) => {
           const key = movieKey(rec.movie_title);

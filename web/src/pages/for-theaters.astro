@@ -1,6 +1,22 @@
 ---
 import Layout from "../layouts/Layout.astro";
 
+const REELSUCCESS_APP_URL = "/reelsuccess/";
+const reelSuccessBenefits = [
+  {
+    title: "Understand movie performance",
+    body: "Explore historical box-office results and compare films across relevant categories.",
+  },
+  {
+    title: "Identify programming opportunities",
+    body: "Find movies worth considering based on available performance data and programming context.",
+  },
+  {
+    title: "Make more informed decisions",
+    body: "Bring additional data and insights into your theater's programming process.",
+  },
+];
+
 const process = [
   {
     title: "Theater onboarding & setup",
@@ -51,6 +67,85 @@ const process = [
         </li>
       ))}
     </ol>
+
+    <section
+      aria-labelledby="reelsuccess-heading"
+      class="relative mt-12 overflow-hidden rounded-2xl border border-gold/35 bg-paper p-6 shadow-[0_12px_40px_-24px_rgba(212,160,23,0.25)] sm:p-8"
+    >
+      <div aria-hidden="true" class="absolute inset-x-0 top-0 h-1 bg-linear-to-r from-marquee via-rose to-gold"></div>
+      <p class="text-xs font-semibold uppercase tracking-widest text-rose">Introducing ReelSuccess</p>
+      <p class="mt-3 text-sm font-semibold text-ink-soft">ReelSuccess: Movie programming intelligence</p>
+      <h2 id="reelsuccess-heading" class="mt-2 max-w-lg font-display text-3xl font-semibold leading-tight text-ink sm:text-4xl">
+        Make smarter movie programming decisions.
+      </h2>
+      <p class="mt-4 text-base font-medium leading-relaxed text-ink">
+        Your theater's next great screening starts with better data.
+      </p>
+      <p class="mt-3 text-sm leading-relaxed text-ink-soft">
+        ReelVotes helps you build an audience for screenings. ReelSuccess supports your decisions about what to screen.
+      </p>
+
+      <div class="mt-7 grid items-start gap-8 md:grid-cols-2">
+        <div>
+          <p class="text-sm leading-relaxed text-ink-soft">
+            ReelSuccess analyzes historical box-office performance and movie data to help independent theaters identify promising films, compare programming opportunities, and better understand what may resonate with their audiences.
+          </p>
+          <ul class="mt-6 space-y-5">
+            {reelSuccessBenefits.map((benefit) => (
+              <li class="flex gap-3">
+                <span aria-hidden="true" class="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-rose"></span>
+                <div>
+                  <h3 class="text-sm font-semibold text-ink">{benefit.title}</h3>
+                  <p class="mt-1 text-sm leading-relaxed text-ink-soft">{benefit.body}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <figure class="rounded-2xl border border-line bg-cream p-5">
+          <div class="flex items-center justify-between gap-3 border-b border-line pb-4">
+            <p class="font-display text-lg font-semibold text-ink">ReelSuccess</p>
+            <span class="rounded-full border border-gold/35 px-2.5 py-1 text-xs font-medium text-rose">Illustrative</span>
+          </div>
+          <p class="mt-4 text-xs font-semibold uppercase tracking-wide text-ink-soft">A programming research workspace</p>
+          <div class="mt-4 space-y-3">
+            <div class="rounded-xl border border-line bg-paper p-4">
+              <p class="text-sm font-semibold text-ink">Historical performance</p>
+              <p class="mt-2 text-xs leading-relaxed text-ink-soft">Available box-office results provide a starting point for research.</p>
+            </div>
+            <div class="rounded-xl border border-line bg-paper p-4">
+              <p class="text-sm font-semibold text-ink">Programming context</p>
+              <p class="mt-2 text-xs leading-relaxed text-ink-soft">Consider movie data alongside your theater's programming goals.</p>
+            </div>
+            <div class="rounded-xl border border-gold/35 bg-gold-soft p-4">
+              <p class="text-sm font-semibold text-rose">Your judgment comes first</p>
+              <p class="mt-2 text-xs leading-relaxed text-ink-soft">Additional evidence for your team, not a replacement for your programmers.</p>
+            </div>
+          </div>
+          <figcaption class="mt-4 text-xs leading-relaxed text-ink-soft">
+            Illustrative concept, not a product screenshot or actual analytics output.
+          </figcaption>
+        </figure>
+      </div>
+
+      <div class="mt-8 border-t border-line pt-6">
+        <a
+          href={REELSUCCESS_APP_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-flex items-center gap-2 rounded-full border border-gold/50 bg-gold-soft px-6 py-3 text-sm font-semibold text-rose transition-colors hover:border-rose hover:bg-paper"
+        >
+          Explore ReelSuccess
+          <span aria-hidden="true">&#8599;</span>
+          <span class="sr-only">(opens in a new tab)</span>
+        </a>
+        <p class="mt-3 text-xs leading-relaxed text-ink-soft">Partner access required. Sign in with an approved account.</p>
+        <p class="mt-4 text-xs leading-relaxed text-ink-soft">
+          ReelSuccess is an early-stage decision-support tool. It has analyzed box-office data from an initial theater partner; predictive accuracy across multiple theaters has not yet been established.
+        </p>
+      </div>
+    </section>
 
     <div class="mt-10 grid gap-4 sm:grid-cols-2">
       <div class="rounded-2xl border border-line bg-cream-soft p-6">

@@ -1,55 +1,43 @@
 import { useEffect, useState, type FormEvent } from "react";
 import type { User } from "firebase/auth";
-import { DayPicker } from "react-day-picker";
-import "react-day-picker/dist/style.css";
 import { createCampaign } from "../lib/firebase";
 import { auth, isPopupSignInCancellation, onAuthStateChanged, signInWithGoogle, signOut } from "../lib/firebase-auth";
 import { CAMPAIGN_MOVIE_CHOICES_REQUIRED } from "../lib/campaign-policy";
 import { searchMoviesByQuery, type MovieSearchResult } from "../lib/tmdb";
-import { publicListTheaters } from "../lib/firebase-core";
+import { publicListDeadTimeSlots, publicListTheaters } from "../lib/firebase-core";
 
-const MIN_CAMPAIGN_LEAD_DAYS = 30;
-
-type TheaterOption = {
+type DeadTimeSlotOption = {
+  slotId: string;
   theaterKey: string;
   theaterName: string;
-  theaterCityState: string;
+  market: string;
+  dayOfWeek: string;
+  timeLabel: string;
+  screeningDateTime: string;
+  label: string;
+  ticketPrice: number | null;
+  licensingFee: number | null;
 };
 
 type SubmitState = "idle" | "submitting" | "success";
 
-function toDateKey(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
+function splitTheaters(value: string): string[] {
+  return String(value || "")
+    .split("\n")
+    .map((row) => row.trim())
+    .filter(Boolean)
+    .slice(0, 10);
 }
 
-function startOfLocalDay(date: Date): Date {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+function sanitizeCurrency(value: unknown): number | null {
+  const n = Number(value);
+  if (!Number.isFinite(n) || n <= 0) return null;
+  return Number(n.toFixed(2));
 }
 
-function addDays(date: Date, days: number): Date {
-  const next = new Date(date.getTime());
-  next.setDate(next.getDate() + days);
-  return next;
-}
-
-function getEarliestCampaignDate(): Date {
-  return addDays(startOfLocalDay(new Date()), MIN_CAMPAIGN_LEAD_DAYS);
-}
-
-function isAtLeastMinimumCampaignDate(selectedDate: Date | undefined): boolean {
-  if (!selectedDate) return false;
-  const selectedKey = toDateKey(startOfLocalDay(selectedDate));
-  const minKey = toDateKey(getEarliestCampaignDate());
-  return selectedKey >= minKey;
-}
-
-function formatSingleDateLabel(selectedDate: Date | undefined): string {
-  if (!selectedDate) return "Choose a screening date";
-  const formatter = new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" });
-  return formatter.format(selectedDate);
+function computeAutoBackingThreshold(ticketPrice: number | null, licensingFee: number | null): number | null {
+  if (!ticketPrice || !licensingFee) return null;
+  return Math.max(10, Math.min(1000, Math.ceil(licensingFee / ticketPrice)));
 }
 
 export default function CreateCampaignForm() {
@@ -59,7 +47,9 @@ export default function CreateCampaignForm() {
   const [citySuggestions, setCitySuggestions] = useState<string[]>([]);
   const [citySearchLoading, setCitySearchLoading] = useState(false);
   const [showCitySuggestions, setShowCitySuggestions] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [deadTimeSlots, setDeadTimeSlots] = useState<DeadTimeSlotOption[]>([]);
+  const [deadTimeLoading, setDeadTimeLoading] = useState(false);
+  const [selectedDeadTimeSlotId, setSelectedDeadTimeSlotId] = useState("");
   const [choices, setChoices] = useState<string[]>(["", "", ""]);
   const [movieSuggestionsByIndex, setMovieSuggestionsByIndex] = useState<Record<number, MovieSearchResult[]>>({
     0: [],
@@ -73,8 +63,6 @@ export default function CreateCampaignForm() {
   });
   const [activeMovieInputIndex, setActiveMovieInputIndex] = useState<number | null>(null);
   const [selectedPreferredTheater, setSelectedPreferredTheater] = useState("");
-  const [preferredTheaterOptions, setPreferredTheaterOptions] = useState<TheaterOption[]>([]);
-  const [preferredTheaterLoading, setPreferredTheaterLoading] = useState(false);
 
   const [submitState, setSubmitState] = useState<SubmitState>("idle");
   const [errorMessage, setErrorMessage] = useState("");
@@ -97,7 +85,7 @@ export default function CreateCampaignForm() {
     setCitySearchLoading(true);
     const timer = window.setTimeout(async () => {
       try {
-        const response: any = await publicListTheaters({ query, limit: 60 });
+        const response: any = await publicListTheaters({ query, limit: 40 });
         if (cancelled) return;
         const theaters = Array.isArray(response?.data?.theaters) ? response.data.theaters : [];
         const deduped = new Set<string>();
@@ -118,78 +106,6 @@ export default function CreateCampaignForm() {
       window.clearTimeout(timer);
     };
   }, [market, showCitySuggestions]);
-
-  useEffect(() => {
-    const marketQuery = market.trim();
-    if (marketQuery.length < 2) {
-      setPreferredTheaterOptions([]);
-      setPreferredTheaterLoading(false);
-      return;
-    }
-
-    let cancelled = false;
-    setPreferredTheaterLoading(true);
-
-    const timer = window.setTimeout(async () => {
-      try {
-        const response: any = await publicListTheaters({ query: marketQuery, limit: 250 });
-        if (cancelled) return;
-
-        const theaterRows = Array.isArray(response?.data?.theaters) ? response.data.theaters : [];
-        const normalizedMarket = marketQuery.toLowerCase().replace(/\s+/g, " ").trim();
-        const normalizedCity = marketQuery.split(",")[0].toLowerCase().trim();
-        const deduped = new Map<string, TheaterOption>();
-
-        theaterRows.forEach((row: any) => {
-          const theaterKey = String(row?.theater_key || "").trim();
-          const theaterName = String(row?.theater_name || "").trim();
-          const theaterCityState = String(row?.theater_city_state || "").trim();
-          const city = String(row?.city || "").toLowerCase().trim();
-          const cityStateLower = theaterCityState.toLowerCase();
-
-          if (!theaterName) return;
-
-          const cityMatch =
-            (normalizedMarket && cityStateLower.includes(normalizedMarket)) ||
-            (normalizedCity && city.includes(normalizedCity)) ||
-            (normalizedCity && cityStateLower.includes(normalizedCity));
-
-          if (!cityMatch) return;
-
-          const key = theaterKey || `${theaterName}|${theaterCityState}`;
-          if (!deduped.has(key)) {
-            deduped.set(key, { theaterKey, theaterName, theaterCityState });
-          }
-        });
-
-        const options = Array.from(deduped.values()).sort((a, b) => {
-          const citySort = a.theaterCityState.localeCompare(b.theaterCityState);
-          if (citySort !== 0) return citySort;
-          return a.theaterName.localeCompare(b.theaterName);
-        });
-
-        setPreferredTheaterOptions(options);
-      } catch {
-        if (!cancelled) {
-          setPreferredTheaterOptions([]);
-        }
-      } finally {
-        if (!cancelled) setPreferredTheaterLoading(false);
-      }
-    }, 220);
-
-    return () => {
-      cancelled = true;
-      window.clearTimeout(timer);
-    };
-  }, [market]);
-
-  useEffect(() => {
-    if (!selectedPreferredTheater) return;
-    if (!preferredTheaterOptions.some((row) => row.theaterName === selectedPreferredTheater)) {
-      setSelectedPreferredTheater("");
-    }
-  }, [preferredTheaterOptions, selectedPreferredTheater]);
 
   useEffect(() => {
     const timers = choices.map((rawTitle, index) => {
@@ -220,6 +136,91 @@ export default function CreateCampaignForm() {
       });
     };
   }, [choices]);
+
+  useEffect(() => {
+    const marketQuery = market.trim();
+    if (marketQuery.length < 2) {
+      setDeadTimeSlots([]);
+      setDeadTimeLoading(false);
+      setSelectedDeadTimeSlotId("");
+      return;
+    }
+
+    let cancelled = false;
+    setDeadTimeLoading(true);
+
+    const timer = window.setTimeout(async () => {
+      try {
+        const response: any = await publicListDeadTimeSlots({ market: marketQuery, limit: 200 });
+        if (cancelled) return;
+        const rawSlots = Array.isArray(response?.data?.slots) ? response.data.slots : [];
+        const nextSlots: DeadTimeSlotOption[] = rawSlots
+          .map((slot: any) => ({
+            slotId: String(slot?.slotId || "").trim(),
+            theaterKey: String(slot?.theaterKey || "").trim(),
+            theaterName: String(slot?.theaterName || "").trim(),
+            market: String(slot?.market || "").trim(),
+            dayOfWeek: String(slot?.dayOfWeek || "").trim(),
+            timeLabel: String(slot?.timeLabel || "").trim(),
+            screeningDateTime: String(slot?.screeningDateTime || "").trim(),
+            label: String(slot?.label || "").trim(),
+            ticketPrice: sanitizeCurrency(slot?.ticketPrice ?? slot?.ticket_price),
+            licensingFee: sanitizeCurrency(slot?.licensingFee ?? slot?.licenseFee ?? slot?.licensing_fee),
+          }))
+          .filter((slot: DeadTimeSlotOption) => Boolean(slot.slotId));
+
+        setDeadTimeSlots(nextSlots);
+        setSelectedDeadTimeSlotId((prev) => {
+          if (prev && nextSlots.some((slot) => slot.slotId === prev)) {
+            return prev;
+          }
+          return nextSlots.find((slot) => Boolean(slot.screeningDateTime))?.slotId || "";
+        });
+      } catch {
+        if (!cancelled) {
+          setDeadTimeSlots([]);
+          setSelectedDeadTimeSlotId("");
+        }
+      } finally {
+        if (!cancelled) setDeadTimeLoading(false);
+      }
+    }, 220);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [market]);
+
+  const selectedDeadTimeSlot = deadTimeSlots.find((slot) => slot.slotId === selectedDeadTimeSlotId) || null;
+  const selectedDeadTimeLabel = selectedDeadTimeSlot?.label || "";
+
+  const theaterOptions = Array.from(
+    new Map(
+      deadTimeSlots
+        .filter((slot) => Boolean(slot.theaterName || slot.theaterKey))
+        .map((slot) => [slot.theaterKey || slot.theaterName, { theaterKey: slot.theaterKey, theaterName: slot.theaterName }]),
+    ).values(),
+  );
+
+  useEffect(() => {
+    if (selectedDeadTimeSlot?.theaterName) {
+      setSelectedPreferredTheater(selectedDeadTimeSlot.theaterName);
+      return;
+    }
+    if (!theaterOptions.some((row) => row.theaterName === selectedPreferredTheater)) {
+      setSelectedPreferredTheater(theaterOptions[0]?.theaterName || "");
+    }
+  }, [selectedDeadTimeSlotId, selectedDeadTimeSlot?.theaterName, selectedPreferredTheater, theaterOptions]);
+
+  const selectedTheaterSlot =
+    deadTimeSlots.find((slot) => slot.theaterName === selectedPreferredTheater && slot.ticketPrice && slot.licensingFee) ||
+    deadTimeSlots.find((slot) => slot.theaterName === selectedPreferredTheater) ||
+    selectedDeadTimeSlot;
+
+  const thresholdTicketPrice = selectedTheaterSlot?.ticketPrice || null;
+  const thresholdLicensingFee = selectedTheaterSlot?.licensingFee || null;
+  const autoBackingThreshold = computeAutoBackingThreshold(thresholdTicketPrice, thresholdLicensingFee);
 
   async function handleSignIn() {
     setErrorMessage("");
@@ -256,37 +257,34 @@ export default function CreateCampaignForm() {
       return;
     }
 
-    if (!selectedDate) {
-      setErrorMessage("Please choose a campaign screening date.");
+    if (!selectedDeadTimeSlot || !selectedDeadTimeSlotId || !selectedDeadTimeLabel) {
+      setErrorMessage("Please select a dead-time day/time slot from local theaters.");
       return;
     }
 
-    if (!isAtLeastMinimumCampaignDate(selectedDate)) {
-      setErrorMessage(`Screening date must be at least ${MIN_CAMPAIGN_LEAD_DAYS} days from today.`);
+    if (!selectedDeadTimeSlot.screeningDateTime) {
+      setErrorMessage("Selected dead-time slot must include a screening date/time.");
       return;
     }
 
     setSubmitState("submitting");
 
     try {
-      const normalizedSelectedDate = startOfLocalDay(selectedDate);
-      const dateRangeStart = toDateKey(normalizedSelectedDate);
-      const dateRangeEnd = dateRangeStart;
       const response: any = await createCampaign({
         title,
         market,
-        dateWindowLabel: formatSingleDateLabel(normalizedSelectedDate),
-        dateRangeStart,
-        dateRangeEnd,
+        dateWindowLabel: selectedDeadTimeLabel,
+        deadTimeSlotId: selectedDeadTimeSlotId,
         choices: rankedChoices,
         preferredTheaters: selectedPreferredTheater ? [selectedPreferredTheater] : [],
+        backingThreshold: autoBackingThreshold || undefined,
       });
 
       const campaign = response?.data?.campaign;
       setSubmitState("success");
       setSuccessMessage(
         campaign?.slug
-          ? `Campaign created: ${campaign.title}. Screening date: ${formatSingleDateLabel(normalizedSelectedDate)}. It is now live at /campaigns.`
+          ? `Campaign created: ${campaign.title}. Slot: ${selectedDeadTimeLabel}. It is now live at /campaigns.`
           : "Campaign created successfully.",
       );
 
@@ -294,14 +292,14 @@ export default function CreateCampaignForm() {
       setMarket("");
       setCitySuggestions([]);
       setShowCitySuggestions(false);
-      setSelectedDate(undefined);
+      setDeadTimeSlots([]);
+      setDeadTimeLoading(false);
+      setSelectedDeadTimeSlotId("");
       setChoices(["", "", ""]);
       setMovieSuggestionsByIndex({ 0: [], 1: [], 2: [] });
       setMovieSearchLoadingByIndex({ 0: false, 1: false, 2: false });
       setActiveMovieInputIndex(null);
       setSelectedPreferredTheater("");
-      setPreferredTheaterOptions([]);
-      setPreferredTheaterLoading(false);
     } catch (error) {
       setSubmitState("idle");
       setErrorMessage(String((error as any)?.message || "Could not create campaign."));
@@ -309,7 +307,7 @@ export default function CreateCampaignForm() {
   }
 
   if (authUser === undefined) {
-    return <p className="text-sm text-ink-soft">Loading sign-in state...</p>;
+    return <p className="text-sm text-ink-soft">Loading sign-in state…</p>;
   }
 
   return (
@@ -349,7 +347,7 @@ export default function CreateCampaignForm() {
             />
           </div>
 
-          <div className="grid gap-4">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div className="rounded-2xl border border-line bg-paper p-5">
               <label className="block text-xs font-semibold uppercase tracking-wide text-ink-faint" htmlFor="campaignMarket">
                 City
@@ -368,11 +366,10 @@ export default function CreateCampaignForm() {
                 placeholder="Search city (e.g., Oakland, CA)"
                 className="mt-2 w-full rounded-xl border border-line bg-cream px-4 py-3 text-sm text-ink outline-none transition-colors focus:border-marquee"
               />
-              <p className="mt-3 text-xs text-ink-faint">1. Pick your city first.</p>
               {showCitySuggestions && (
                 <div className="mt-2 rounded-xl border border-line bg-cream p-2">
                   {citySearchLoading ? (
-                    <p className="px-2 py-2 text-xs text-ink-soft">Searching cities...</p>
+                    <p className="px-2 py-2 text-xs text-ink-soft">Searching cities…</p>
                   ) : citySuggestions.length > 0 ? (
                     <div className="max-h-44 space-y-1 overflow-y-auto">
                       {citySuggestions.map((city) => (
@@ -400,28 +397,37 @@ export default function CreateCampaignForm() {
             </div>
 
             <div className="rounded-2xl border border-line bg-paper p-5">
-              <p className="block text-xs font-semibold uppercase tracking-wide text-ink-faint">Screening date</p>
-              <p className="mt-2 text-xs text-ink-faint">2. Pick one date at least {MIN_CAMPAIGN_LEAD_DAYS} days from today.</p>
-              <div className="mt-3 rounded-xl border border-line bg-cream p-3">
-                <p className="mb-2 text-xs font-semibold text-ink">{formatSingleDateLabel(selectedDate)}</p>
-                <DayPicker
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={setSelectedDate}
-                  disabled={{ before: getEarliestCampaignDate() }}
-                  numberOfMonths={2}
-                  pagedNavigation
-                  showOutsideDays
-                  className="rv-date-picker rv-date-picker-two-months text-sm"
-                />
-              </div>
-              {!selectedDate ? (
-                <p className="mt-2 text-xs text-ink-faint">Select a screening date.</p>
-              ) : isAtLeastMinimumCampaignDate(selectedDate) ? (
-                <p className="mt-2 text-xs text-emerald">Perfect: this date is at least {MIN_CAMPAIGN_LEAD_DAYS} days out.</p>
-              ) : (
-                <p className="mt-2 text-xs text-red-300">This date is too soon. Please choose a date at least {MIN_CAMPAIGN_LEAD_DAYS} days away.</p>
-              )}
+              <label className="block text-xs font-semibold uppercase tracking-wide text-ink-faint" htmlFor="deadTimeSlot">
+                Available Days + Times
+              </label>
+              <select
+                id="deadTimeSlot"
+                required
+                value={selectedDeadTimeSlotId}
+                onChange={(event) => setSelectedDeadTimeSlotId(event.target.value)}
+                className="mt-2 w-full rounded-xl border border-line bg-cream px-4 py-3 text-sm text-ink outline-none transition-colors focus:border-marquee"
+              >
+                {deadTimeLoading ? (
+                  <option value="">Loading local theater dead-time slots…</option>
+                ) : deadTimeSlots.filter((slot) => Boolean(slot.screeningDateTime)).length > 0 ? (
+                  deadTimeSlots.filter((slot) => Boolean(slot.screeningDateTime)).map((slot) => (
+                    <option key={slot.slotId} value={slot.slotId}>
+                      {slot.label || `${slot.theaterName} • ${slot.dayOfWeek} ${slot.timeLabel}`}
+                    </option>
+                  ))
+                ) : (
+                  <option value="">No dead-time slots found for this city yet</option>
+                )}
+              </select>
+              <p className="mt-3 text-xs text-ink-faint">
+                {selectedDeadTimeSlot ? (
+                  <>
+                    Campaign slot: <strong className="text-ink">{selectedDeadTimeLabel}</strong>
+                  </>
+                ) : (
+                  "Pick your city first, then choose a theater-submitted dead-time slot with a date/time."
+                )}
+              </p>
             </div>
           </div>
 
@@ -455,7 +461,7 @@ export default function CreateCampaignForm() {
                     {activeMovieInputIndex === index && (
                       <div className="mt-2 rounded-xl border border-line bg-paper p-2">
                         {loading ? (
-                          <p className="px-2 py-2 text-xs text-ink-soft">Searching movies...</p>
+                          <p className="px-2 py-2 text-xs text-ink-soft">Searching TMDB…</p>
                         ) : hasQuery && results.length > 0 ? (
                           <div className="max-h-52 space-y-1 overflow-y-auto">
                             {results.map((result) => (
@@ -488,7 +494,7 @@ export default function CreateCampaignForm() {
                             ))}
                           </div>
                         ) : hasQuery ? (
-                          <p className="px-2 py-2 text-xs text-ink-soft">No matches yet. Keep typing.</p>
+                          <p className="px-2 py-2 text-xs text-ink-soft">No TMDB matches yet. Keep typing.</p>
                         ) : (
                           <p className="px-2 py-2 text-xs text-ink-soft">Type at least 2 characters to search.</p>
                         )}
@@ -502,28 +508,43 @@ export default function CreateCampaignForm() {
 
           <div className="rounded-2xl border border-line bg-paper p-5">
             <label className="block text-xs font-semibold uppercase tracking-wide text-ink-faint" htmlFor="preferredTheater">
-              Preferred theater (optional)
+              Preferred theater
             </label>
             <select
               id="preferredTheater"
               value={selectedPreferredTheater}
               onChange={(event) => setSelectedPreferredTheater(event.target.value)}
-              className="rv-select-inset-arrow mt-2 w-full rounded-xl border border-line bg-cream px-4 py-3 text-sm text-ink outline-none transition-colors focus:border-marquee"
+              className="mt-2 w-full rounded-xl border border-line bg-cream px-4 py-3 text-sm text-ink outline-none transition-colors focus:border-marquee"
             >
-              <option value="">No preference</option>
-              {preferredTheaterLoading ? (
-                <option value="" disabled>Loading theaters for this city...</option>
-              ) : preferredTheaterOptions.length > 0 ? (
-                preferredTheaterOptions.map((row) => (
-                  <option key={row.theaterKey || `${row.theaterName}|${row.theaterCityState}`} value={row.theaterName}>
-                    {row.theaterName}{row.theaterCityState ? ` (${row.theaterCityState})` : ""}
+              {theaterOptions.length > 0 ? (
+                theaterOptions.map((row) => (
+                  <option key={row.theaterKey || row.theaterName} value={row.theaterName}>
+                    {row.theaterName}
                   </option>
                 ))
               ) : (
-                <option value="" disabled>No ReelSuccess theaters found for this city</option>
+                <option value="">No theater options for this city yet</option>
               )}
             </select>
-            <p className="mt-2 text-xs text-ink-faint">This is a preference. If demand is high enough, we will ensure it gets screened somewhere in this city.</p>
+            <p className="mt-2 text-xs text-ink-faint">Options are theaters in this city that currently have dead-time slots.</p>
+          </div>
+
+          <div className="rounded-2xl border border-line bg-paper p-5">
+            <p className="text-xs font-semibold uppercase tracking-wide text-ink-faint">Backing threshold</p>
+            {autoBackingThreshold ? (
+              <div className="mt-2 space-y-1 text-sm leading-relaxed text-ink-soft">
+                <p>
+                  Auto threshold for <strong className="text-ink">{selectedPreferredTheater || selectedTheaterSlot?.theaterName || "selected theater"}</strong>: <strong className="text-ink">{autoBackingThreshold} backers</strong>
+                </p>
+                <p className="text-xs text-ink-faint">
+                  Based on estimated ticket price ${thresholdTicketPrice?.toFixed(2)} and licensing fee ${thresholdLicensingFee?.toFixed(2)}.
+                </p>
+              </div>
+            ) : (
+              <p className="mt-2 text-sm leading-relaxed text-ink-soft">
+                Threshold will auto-fill when the selected theater has both ticket price and licensing fee saved on its dead-time slot.
+              </p>
+            )}
           </div>
 
           {errorMessage && <p className="rounded-xl border border-red-300/30 bg-red-900/20 p-3 text-sm text-red-200">{errorMessage}</p>}
@@ -534,7 +555,7 @@ export default function CreateCampaignForm() {
             disabled={submitState === "submitting"}
             className="w-full rounded-full bg-marquee px-7 py-3.5 text-sm font-semibold text-white shadow-md shadow-marquee/30 transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {submitState === "submitting" ? "Creating campaign..." : "Create campaign"}
+            {submitState === "submitting" ? "Creating campaign…" : "Create campaign"}
           </button>
         </>
       )}

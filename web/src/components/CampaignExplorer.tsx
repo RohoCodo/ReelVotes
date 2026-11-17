@@ -5,8 +5,11 @@ import { collection, deleteDoc, doc, onSnapshot, setDoc } from "firebase/firesto
 import { DayPicker, type DateRange } from "react-day-picker";
 import "react-day-picker/dist/style.css";
 import { getCampaignSummaries, rankCampaignChoices, type CampaignSummary } from "../lib/campaigns";
-import { adminSetCampaignStatus, upsertCampaignMovieVote, upsertCampaignSupport } from "../lib/firebase";
+import { calculateInterestThreshold } from "../lib/campaign-policy";
+import { adminGetCampaignAvailability, adminSetCampaignStatus, createReservationSetup, submitScreeningAvailability, updateCampaignMovies, upsertCampaignMovieVote, upsertCampaignSupport } from "../lib/firebase";
 import { db } from "../lib/firebase";
+import ReservePaymentModal from "./ReservePaymentModal";
+import ScreeningAvailabilityModal, { type AvailabilityPayload } from "./ScreeningAvailabilityModal";
 import {
   auth,
   isPopupSignInCancellation,
@@ -39,6 +42,7 @@ const adminStatusOptions = [
   "suspended",
   "expired",
   "cancelled",
+  "archived",
 ] as const;
 
 const statusLabel: Record<string, string> = {
@@ -55,6 +59,7 @@ const statusLabel: Record<string, string> = {
   suspended: "Suspended",
   expired: "Expired",
   cancelled: "Cancelled",
+  archived: "Archived",
 };
 
 const statusTone: Record<string, string> = {
@@ -71,6 +76,7 @@ const statusTone: Record<string, string> = {
   suspended: "border-red-300/40 text-red-300",
   expired: "border-line text-ink-faint",
   cancelled: "border-line text-ink-faint",
+  archived: "border-line text-ink-faint",
 };
 
 function isShareCancellation(error: unknown): boolean {
@@ -214,7 +220,7 @@ function rightsInfoMessage(status: CampaignSummary["status"]): string {
   return "Rights status updates as the campaign moves from voting to theater confirmation.";
 }
 
-const RESERVE_INFO_MESSAGE = "Reserve is a lightweight commitment. It helps prove demand and unlock theater and rights checks for this campaign.";
+const RESERVE_INFO_MESSAGE = "Reserving is a pledge toward the licensing fee ($15 minimum, more if you want to push it over the top). Your card is saved now and only charged once total pledges cover the fee and the screening is confirmed — if the goal isn't reached, you're never charged.";
 
 function InfoHoverIcon({
   label,
@@ -479,6 +485,162 @@ function clearPendingCampaignVote() {
   }
 }
 
+interface AvailabilityDateSummary {
+  date: string;
+  voters: number;
+  afternoon: number;
+  evening: number;
+  night: number;
+}
+
+const AVAILABILITY_BUCKETS: Array<{ key: "afternoon" | "evening" | "night"; label: string }> = [
+  { key: "afternoon", label: "Aft" },
+  { key: "evening", label: "Eve" },
+  { key: "night", label: "Night" },
+];
+
+function formatAvailabilityDay(dateKey: string): string {
+  const parsed = new Date(`${dateKey}T12:00:00`);
+  if (Number.isNaN(parsed.getTime())) return dateKey;
+  return parsed.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" });
+}
+
+// Admin-only, on-demand heatmap of voter screening availability for a
+// campaign (data collected by ScreeningAvailabilityModal after votes).
+function AdminAvailabilitySummary({ campaignId }: { campaignId: string }) {
+  const [phase, setPhase] = useState<"idle" | "loading" | "loaded" | "error">("idle");
+  const [totalRespondents, setTotalRespondents] = useState(0);
+  const [dates, setDates] = useState<AvailabilityDateSummary[]>([]);
+
+  async function load() {
+    setPhase("loading");
+    try {
+      const response: any = await adminGetCampaignAvailability({ campaignId });
+      const rows = Array.isArray(response?.data?.dates) ? response.data.dates : [];
+      setDates(
+        rows.map((row: any) => ({
+          date: String(row?.date || ""),
+          voters: Math.max(0, Number(row?.voters || 0)),
+          afternoon: Math.max(0, Number(row?.afternoon || 0)),
+          evening: Math.max(0, Number(row?.evening || 0)),
+          night: Math.max(0, Number(row?.night || 0)),
+        })),
+      );
+      setTotalRespondents(Math.max(0, Number(response?.data?.totalRespondents || 0)));
+      setPhase("loaded");
+    } catch {
+      setPhase("error");
+    }
+  }
+
+  if (phase === "idle" || phase === "error" || phase === "loading") {
+    return (
+      <div className="mt-2">
+        <button
+          type="button"
+          disabled={phase === "loading"}
+          onClick={load}
+          className="rounded-full border border-line px-3 py-1.5 text-[11px] font-semibold text-ink-soft transition-colors hover:border-marquee hover:text-marquee disabled:opacity-60"
+        >
+          {phase === "loading" ? "Loading availability…" : "Show voter availability"}
+        </button>
+        {phase === "error" && (
+          <span className="ml-2 text-[11px] font-semibold text-red-500">Could not load availability.</span>
+        )}
+      </div>
+    );
+  }
+
+  if (dates.length === 0) {
+    return (
+      <p className="mt-2 text-[11px] text-ink-faint">
+        No voter availability submitted yet{totalRespondents ? ` (${totalRespondents} responses on other dates)` : ""}.
+      </p>
+    );
+  }
+
+  const maxCount = dates.reduce(
+    (max, row) => Math.max(max, row.afternoon, row.evening, row.night),
+    0,
+  );
+
+  let best: { date: string; label: string; count: number } | null = null;
+  dates.forEach((row) => {
+    AVAILABILITY_BUCKETS.forEach((bucket) => {
+      const count = row[bucket.key];
+      if (count > 0 && (!best || count > best.count)) {
+        best = { date: row.date, label: bucket.label, count };
+      }
+    });
+  });
+
+  return (
+    <div className="mt-2 rounded-xl border border-line bg-cream p-2.5">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-faint">
+          Voter availability · {totalRespondents} respondent{totalRespondents === 1 ? "" : "s"}
+        </p>
+        <button
+          type="button"
+          onClick={load}
+          className="text-[11px] font-semibold text-marquee hover:underline"
+        >
+          Refresh
+        </button>
+      </div>
+
+      {best && (
+        <p className="mt-1.5 text-[11px] text-ink-soft">
+          Best window:{" "}
+          <span className="font-semibold text-ink">
+            {formatAvailabilityDay(best.date)} · {best.label === "Aft" ? "Afternoon" : best.label === "Eve" ? "Evening" : "Night"}
+          </span>{" "}
+          ({best.count} voter{best.count === 1 ? "" : "s"})
+        </p>
+      )}
+
+      <table className="mt-2 w-full border-separate border-spacing-0.5 text-[11px]">
+        <thead>
+          <tr className="text-left text-[10px] font-semibold uppercase text-ink-faint">
+            <th className="px-1.5 py-1">Date</th>
+            <th className="px-1.5 py-1 text-center">Voters</th>
+            {AVAILABILITY_BUCKETS.map((bucket) => (
+              <th key={bucket.key} className="px-1.5 py-1 text-center">
+                {bucket.label}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {dates.map((row) => (
+            <tr key={row.date}>
+              <td className="px-1.5 py-1 font-semibold text-ink">{formatAvailabilityDay(row.date)}</td>
+              <td className="px-1.5 py-1 text-center text-ink-soft">{row.voters}</td>
+              {AVAILABILITY_BUCKETS.map((bucket) => {
+                const count = row[bucket.key];
+                const intensity = maxCount > 0 ? count / maxCount : 0;
+                return (
+                  <td
+                    key={bucket.key}
+                    className="rounded px-1.5 py-1 text-center font-semibold text-ink"
+                    style={
+                      count > 0
+                        ? { backgroundColor: `rgba(16, 185, 129, ${(0.15 + 0.55 * intensity).toFixed(2)})` }
+                        : undefined
+                    }
+                  >
+                    {count || "—"}
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 export default function CampaignExplorer({
   compact = false,
   layout = "grid",
@@ -512,6 +674,14 @@ export default function CampaignExplorer({
   const [adminStatusById, setAdminStatusById] = useState<Record<string, string>>({});
   const [adminMovieById, setAdminMovieById] = useState<Record<string, string>>({});
   const [adminTicketById, setAdminTicketById] = useState<Record<string, string>>({});
+  const [adminPriceById, setAdminPriceById] = useState<Record<string, string>>({});
+  const [adminFeeById, setAdminFeeById] = useState<Record<string, string>>({});
+  const [adminDateStartById, setAdminDateStartById] = useState<Record<string, string>>({});
+  const [adminDateEndById, setAdminDateEndById] = useState<Record<string, string>>({});
+  const [showArchived, setShowArchived] = useState(false);
+  const [editMovies, setEditMovies] = useState<{ campaign: CampaignSummary; titles: string[] } | null>(null);
+  const [editMoviesPending, setEditMoviesPending] = useState(false);
+  const [editMoviesError, setEditMoviesError] = useState("");
   const [adminAvailabilityByCampaignId, setAdminAvailabilityByCampaignId] = useState<Record<string, Record<string, string>>>({});
   const [adminNoteById, setAdminNoteById] = useState<Record<string, string>>({});
   const [bookmarkedById, setBookmarkedById] = useState<Record<string, boolean>>({});
@@ -522,6 +692,18 @@ export default function CampaignExplorer({
   const [showFloatingCreate, setShowFloatingCreate] = useState(false);
   const [activeCompactCampaignIndex, setActiveCompactCampaignIndex] = useState(0);
   const [voteSuccessCampaignId, setVoteSuccessCampaignId] = useState<string | null>(null);
+  const [availabilityPrompt, setAvailabilityPrompt] = useState<{
+    campaign: CampaignSummary;
+    votedTitle: string;
+  } | null>(null);
+  const [reserveModal, setReserveModal] = useState<{
+    campaign: CampaignSummary;
+    clientSecret: string;
+    publishableKey: string;
+    minPledgeCents: number;
+    licensingFeeCents: number | null;
+    totalPledgedCents: number;
+  } | null>(null);
   const feedContainerRef = useRef<HTMLDivElement | null>(null);
   const compactCarouselRef = useRef<HTMLDivElement | null>(null);
   const compactSnapTimeoutRef = useRef<number | null>(null);
@@ -833,6 +1015,7 @@ export default function CampaignExplorer({
     getCampaignSummaries({
       includeHistoricalVotes: mode === "historical-votes",
       historicalVotesOnly: mode === "historical-votes",
+      includeArchived: showArchived,
     })
       .then((rows) => {
         if (!cancelled) {
@@ -852,7 +1035,7 @@ export default function CampaignExplorer({
       cancelled = true;
       window.clearTimeout(timeoutHandle);
     };
-  }, [mode]);
+  }, [mode, showArchived]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => setAuthUser(user));
@@ -987,6 +1170,43 @@ export default function CampaignExplorer({
     return () => media.removeEventListener("change", onChange);
   }, []);
 
+  async function finalizeSupport(
+    campaign: CampaignSummary,
+    level: "interested" | "backing" | "none",
+    setupIntentId?: string,
+    pledgeAmountCents?: number,
+  ) {
+    const response: any = await upsertCampaignSupport({
+      campaignId: campaign.id,
+      level,
+      ...(setupIntentId ? { setupIntentId } : {}),
+      ...(pledgeAmountCents ? { pledgeAmountCents } : {}),
+    });
+    const nextCounts = response?.data?.counts || {};
+    const nextStatus = String(response?.data?.status || campaign.status);
+    const viewerSupport =
+      response?.data?.viewerSupport === "backing" || response?.data?.viewerSupport === "interested"
+        ? response.data.viewerSupport
+        : null;
+
+    setCampaigns((prev) => {
+      if (!prev) return prev;
+      return prev.map((row) =>
+        row.id === campaign.id
+          ? {
+              ...row,
+              status: nextStatus as CampaignSummary["status"],
+              counts: {
+                interested: Math.max(0, Number(nextCounts.interested || 0)),
+                backing: Math.max(0, Number(nextCounts.backing || 0)),
+              },
+              viewerSupport,
+            }
+          : row,
+      );
+    });
+  }
+
   async function handleSupport(campaign: CampaignSummary, level: "interested" | "backing" | "none") {
     setActionError("");
 
@@ -1004,34 +1224,118 @@ export default function CampaignExplorer({
 
     setPendingById((prev) => ({ ...prev, [campaign.id]: true }));
     try {
-      const response: any = await upsertCampaignSupport({ campaignId: campaign.id, level });
-      const nextCounts = response?.data?.counts || {};
-      const nextStatus = String(response?.data?.status || campaign.status);
-      const viewerSupport =
-        response?.data?.viewerSupport === "backing" || response?.data?.viewerSupport === "interested"
-          ? response.data.viewerSupport
-          : null;
-
-      setCampaigns((prev) => {
-        if (!prev) return prev;
-        return prev.map((row) =>
-          row.id === campaign.id
-            ? {
-                ...row,
-                status: nextStatus as CampaignSummary["status"],
-                counts: {
-                  interested: Math.max(0, Number(nextCounts.interested || 0)),
-                  backing: Math.max(0, Number(nextCounts.backing || 0)),
-                },
-                viewerSupport,
-              }
-            : row,
-        );
-      });
+      if (level === "backing") {
+        // Reserving may require saving a card first (charged only when the
+        // screening is scheduled). The backend says whether payment applies.
+        const setupResponse: any = await createReservationSetup({ campaignId: campaign.id });
+        const setup = setupResponse?.data || {};
+        if (setup.paymentRequired) {
+          if (!setup.clientSecret || !setup.publishableKey) {
+            setActionError("Reservations with payment aren't available right now. Please try again later.");
+            return;
+          }
+          setReserveModal({
+            campaign,
+            clientSecret: String(setup.clientSecret),
+            publishableKey: String(setup.publishableKey),
+            minPledgeCents: Math.max(50, Number(setup.minPledgeCents || 1500)),
+            licensingFeeCents: Number(setup.licensingFeeCents || 0) > 0 ? Number(setup.licensingFeeCents) : null,
+            totalPledgedCents: Math.max(0, Number(setup.totalPledgedCents || 0)),
+          });
+          return;
+        }
+      }
+      await finalizeSupport(campaign, level);
     } catch (error) {
       setActionError(String((error as any)?.message || "Could not update support right now."));
     } finally {
       setPendingById((prev) => ({ ...prev, [campaign.id]: false }));
+    }
+  }
+
+  async function handleReserveCardSaved(setupIntentId: string, amountCents: number) {
+    const modal = reserveModal;
+    if (!modal) return;
+    setReserveModal(null);
+    setPendingById((prev) => ({ ...prev, [modal.campaign.id]: true }));
+    try {
+      await finalizeSupport(modal.campaign, "backing", setupIntentId, amountCents);
+    } catch (error) {
+      setActionError(String((error as any)?.message || "Could not complete your reservation right now."));
+    } finally {
+      setPendingById((prev) => ({ ...prev, [modal.campaign.id]: false }));
+    }
+  }
+
+  function openEditMovies(campaign: CampaignSummary) {
+    const orderedTitles = [...campaign.choices]
+      .sort((a, b) => a.originalPosition - b.originalPosition)
+      .map((choice) => choice.title);
+    while (orderedTitles.length < 3) orderedTitles.push("");
+    setEditMoviesError("");
+    setEditMovies({ campaign, titles: orderedTitles.slice(0, 3) });
+  }
+
+  async function handleEditMoviesSave() {
+    const current = editMovies;
+    if (!current || editMoviesPending) return;
+    const titles = current.titles.map((title) => title.trim());
+    if (titles.some((title) => !title)) {
+      setEditMoviesError("All three movie titles are required.");
+      return;
+    }
+    if (new Set(titles.map((title) => title.toLowerCase())).size !== 3) {
+      setEditMoviesError("Movie titles must be unique.");
+      return;
+    }
+
+    setEditMoviesPending(true);
+    setEditMoviesError("");
+    try {
+      const response: any = await updateCampaignMovies({ campaignId: current.campaign.id, choices: titles });
+      const rawChoices = Array.isArray(response?.data?.choices) ? response.data.choices : [];
+      const nextSelected = response?.data?.selectedMovieTitle ? String(response.data.selectedMovieTitle) : null;
+
+      // Fill posters for newly added titles so cards don't show placeholders.
+      const nextChoices = await Promise.all(
+        rawChoices.map(async (raw: any, index: number) => {
+          const base = {
+            campaignMovieId: String(raw?.campaignMovieId || `${current.campaign.id}_${index + 1}`),
+            campaignId: current.campaign.id,
+            movieId: String(raw?.movieId || ""),
+            title: String(raw?.title || ""),
+            voteCount: Math.max(0, Number(raw?.voteCount || 0)),
+            originalPosition: (Number(raw?.originalPosition || index + 1) as 1 | 2 | 3),
+            availabilityStatus: (String(raw?.availabilityStatus || "not-checked") as CampaignSummary["choices"][number]["availabilityStatus"]),
+            createdAt: null,
+            updatedAt: null,
+            posterUrl: raw?.posterUrl ? String(raw.posterUrl) : null,
+          };
+          if (!base.posterUrl && base.title) {
+            try {
+              const metadata = await getMovieMetadataByTitle(base.title);
+              base.posterUrl = metadata.poster || null;
+            } catch {
+              // Poster enrichment is cosmetic only.
+            }
+          }
+          return base;
+        }),
+      );
+
+      setCampaigns((prev) => {
+        if (!prev) return prev;
+        return prev.map((row) =>
+          row.id === current.campaign.id
+            ? { ...row, choices: nextChoices, selectedMovieTitle: nextSelected }
+            : row,
+        );
+      });
+      setEditMovies(null);
+    } catch (error) {
+      setEditMoviesError(String((error as any)?.message || "Could not update the movies right now."));
+    } finally {
+      setEditMoviesPending(false);
     }
   }
 
@@ -1040,8 +1344,53 @@ export default function CampaignExplorer({
     const status = (adminStatusById[campaign.id] || campaign.status) as CampaignSummary["status"];
     const selectedMovieTitle = (adminMovieById[campaign.id] || campaign.selectedMovieTitle || "").trim();
     const ticketUrl = (adminTicketById[campaign.id] ?? campaign.ticketUrl ?? "").trim();
+    const currentPriceLabel = campaign.ticketPriceCents ? (campaign.ticketPriceCents / 100).toFixed(2) : "";
+    const priceDraft = (adminPriceById[campaign.id] ?? currentPriceLabel).trim();
     const movieAvailabilityByCampaignMovieId = adminAvailabilityByCampaignId[campaign.id] || {};
     const note = (adminNoteById[campaign.id] || "").trim();
+
+    // Only send ticketPrice when there's something to set or clear; the
+    // backend ignores the field entirely when the key is absent.
+    let ticketPricePayload: Record<string, unknown> = {};
+    if (priceDraft) {
+      const parsedPrice = Number(priceDraft);
+      if (!Number.isFinite(parsedPrice) || parsedPrice < 0.5) {
+        setActionError("Ticket price must be a number of at least 0.50.");
+        return;
+      }
+      ticketPricePayload = { ticketPrice: parsedPrice };
+    } else if (campaign.ticketPriceCents) {
+      ticketPricePayload = { ticketPrice: null };
+    }
+
+    const currentFeeLabel = campaign.licensingFeeCents ? (campaign.licensingFeeCents / 100).toFixed(2) : "";
+    const feeDraft = (adminFeeById[campaign.id] ?? currentFeeLabel).trim();
+    let licensingFeePayload: Record<string, unknown> = {};
+    if (feeDraft) {
+      const parsedFee = Number(feeDraft);
+      if (!Number.isFinite(parsedFee) || parsedFee <= 0) {
+        setActionError("Licensing fee must be a positive number.");
+        return;
+      }
+      licensingFeePayload = { licensingFee: parsedFee };
+    } else if (campaign.licensingFeeCents) {
+      licensingFeePayload = { licensingFee: null };
+    }
+
+    const currentStart = campaign.campaignWindow?.startDate || "";
+    const currentEnd = campaign.campaignWindow?.endDate || "";
+    const startDraft = (adminDateStartById[campaign.id] ?? currentStart).trim();
+    const endDraft = (adminDateEndById[campaign.id] ?? currentEnd).trim();
+    let datePayload: Record<string, unknown> = {};
+    if ((startDraft || endDraft) && (startDraft !== currentStart || endDraft !== currentEnd)) {
+      const effectiveStart = startDraft || endDraft;
+      const effectiveEnd = endDraft || startDraft;
+      if (effectiveEnd < effectiveStart) {
+        setActionError("Campaign end date must be on or after the start date.");
+        return;
+      }
+      datePayload = { dateRangeStart: effectiveStart, dateRangeEnd: effectiveEnd };
+    }
 
     setAdminPendingById((prev) => ({ ...prev, [campaign.id]: true }));
     try {
@@ -1052,6 +1401,9 @@ export default function CampaignExplorer({
         ticketUrl,
         movieAvailabilityByCampaignMovieId,
         note,
+        ...ticketPricePayload,
+        ...licensingFeePayload,
+        ...datePayload,
       });
 
       const nextStatus = String(response?.data?.status || status) as CampaignSummary["status"];
@@ -1061,6 +1413,15 @@ export default function CampaignExplorer({
       const nextTicketUrl = Object.prototype.hasOwnProperty.call(response?.data || {}, "ticketUrl")
         ? (response?.data?.ticketUrl ? String(response.data.ticketUrl) : null)
         : (ticketUrl || null);
+      const nextTicketPriceCents = priceDraft ? Math.round(Number(priceDraft) * 100) : null;
+      const nextLicensingFeeCents = feeDraft ? Math.round(Number(feeDraft) * 100) : null;
+      const nextDateWindowLabel = response?.data?.dateWindowLabel ? String(response.data.dateWindowLabel) : null;
+      const nextCampaignWindow = response?.data?.campaignWindow
+        ? {
+            startDate: String(response.data.campaignWindow.startDate || "") || null,
+            endDate: String(response.data.campaignWindow.endDate || "") || null,
+          }
+        : null;
 
       setCampaigns((prev) => {
         if (!prev) return prev;
@@ -1071,6 +1432,10 @@ export default function CampaignExplorer({
                 status: nextStatus,
                 selectedMovieTitle: nextSelectedMovieTitle,
                 ticketUrl: nextTicketUrl,
+                ticketPriceCents: nextTicketPriceCents,
+                licensingFeeCents: nextLicensingFeeCents,
+                ...(nextDateWindowLabel ? { dateWindowLabel: nextDateWindowLabel } : {}),
+                ...(nextCampaignWindow ? { campaignWindow: nextCampaignWindow } : {}),
               }
             : row,
         );
@@ -1078,6 +1443,14 @@ export default function CampaignExplorer({
 
       setAdminNoteById((prev) => ({ ...prev, [campaign.id]: "" }));
       setAdminTicketById((prev) => ({ ...prev, [campaign.id]: nextTicketUrl || "" }));
+      setAdminPriceById((prev) => ({
+        ...prev,
+        [campaign.id]: nextTicketPriceCents ? (nextTicketPriceCents / 100).toFixed(2) : "",
+      }));
+      setAdminFeeById((prev) => ({
+        ...prev,
+        [campaign.id]: nextLicensingFeeCents ? (nextLicensingFeeCents / 100).toFixed(2) : "",
+      }));
     } catch (error) {
       setActionError(String((error as any)?.message || "Could not update campaign status."));
     } finally {
@@ -1245,8 +1618,123 @@ export default function CampaignExplorer({
     const wasAlreadyVotedForSameMovie = campaign.viewerMovieVoteCampaignMovieId === campaignMovieId;
     const succeeded = await submitVoteForCampaign(campaign, campaignMovieId);
     if (!succeeded || wasAlreadyVotedForSameMovie) return;
-    openVoteSuccessDialog(campaign.id);
+    // Ask for screening availability first; the thanks/share dialog follows
+    // once the voter submits or skips.
+    const votedChoice = campaign.choices.find((choice) => choice.campaignMovieId === campaignMovieId);
+    setAvailabilityPrompt({ campaign, votedTitle: votedChoice?.title || campaign.title });
   }
+
+  function availabilityWindowFor(campaign: CampaignSummary): { minDate: string; maxDate: string } {
+    const todayKey = toDateKey(new Date());
+    const fallbackEndKey = toDateKey(new Date(Date.now() + 13 * 24 * 60 * 60 * 1000));
+    const isDateKey = (value: string) => /^\d{4}-\d{2}-\d{2}/.test(value);
+
+    const rawStart = String(
+      campaign.campaignWindow?.startDate || campaign.deadTimeSlot?.screeningDateTime || campaign.screeningDateTime || "",
+    ).trim();
+    const rawEnd = String(campaign.campaignWindow?.endDate || rawStart || "").trim();
+
+    let minDate = isDateKey(rawStart) ? rawStart.slice(0, 10) : todayKey;
+    let maxDate = isDateKey(rawEnd) ? rawEnd.slice(0, 10) : fallbackEndKey;
+    if (maxDate < todayKey) {
+      // Window already passed — fall back to the next two weeks.
+      return { minDate: todayKey, maxDate: fallbackEndKey };
+    }
+    if (minDate < todayKey) minDate = todayKey;
+    if (maxDate < minDate) maxDate = minDate;
+    return { minDate, maxDate };
+  }
+
+  function handleAvailabilitySkip() {
+    const current = availabilityPrompt;
+    setAvailabilityPrompt(null);
+    if (current) openVoteSuccessDialog(current.campaign.id);
+  }
+
+  async function handleAvailabilitySubmit(data: AvailabilityPayload) {
+    const current = availabilityPrompt;
+    setAvailabilityPrompt(null);
+    if (current) openVoteSuccessDialog(current.campaign.id);
+    try {
+      await submitScreeningAvailability({ campaignId: data.eventId, availability: data.availability });
+    } catch (error) {
+      console.warn("[CampaignExplorer] Could not save screening availability:", error);
+    }
+  }
+
+  const availabilityModal = availabilityPrompt && typeof document !== "undefined"
+    ? (() => {
+        const { minDate, maxDate } = availabilityWindowFor(availabilityPrompt.campaign);
+        return createPortal(
+          <ScreeningAvailabilityModal
+            isOpen
+            voteId={auth.currentUser?.uid || ""}
+            eventId={availabilityPrompt.campaign.id}
+            title={availabilityPrompt.votedTitle}
+            minDate={minDate}
+            maxDate={maxDate}
+            onSubmit={handleAvailabilitySubmit}
+            onSkip={handleAvailabilitySkip}
+          />,
+          document.body,
+        );
+      })()
+    : null;
+
+  const editMoviesModal = editMovies && typeof document !== "undefined"
+    ? createPortal(
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-ink/50 p-4" role="dialog" aria-modal="true" aria-label="Edit campaign movies">
+          <div className="w-full max-w-md rounded-2xl border border-line bg-paper p-6 shadow-xl">
+            <h3 className="font-display text-xl font-semibold text-ink">Edit campaign movies</h3>
+            <p className="mt-2 text-sm leading-relaxed text-ink-soft">
+              Swap the three ranked movies for{" "}
+              <span className="font-semibold text-ink">{editMovies.campaign.title}</span>. Votes for movies you keep are
+              preserved; replaced movies start fresh at zero votes.
+            </p>
+            <div className="mt-4 grid gap-2">
+              {editMovies.titles.map((title, index) => (
+                <label key={index} className="grid gap-1">
+                  <span className="text-[11px] font-semibold text-ink-faint">Choice {index + 1}</span>
+                  <input
+                    type="text"
+                    value={title}
+                    maxLength={200}
+                    onChange={(event) => {
+                      const next = [...editMovies.titles];
+                      next[index] = event.target.value;
+                      setEditMovies({ ...editMovies, titles: next });
+                      setEditMoviesError("");
+                    }}
+                    placeholder={`Movie title ${index + 1}`}
+                    className="rounded-lg border border-line bg-paper px-3 py-2 text-sm text-ink outline-none transition-colors focus:border-marquee"
+                  />
+                </label>
+              ))}
+            </div>
+            {editMoviesError && <p className="mt-3 text-sm font-semibold text-red-500">{editMoviesError}</p>}
+            <div className="mt-5 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setEditMovies(null)}
+                disabled={editMoviesPending}
+                className="rounded-full border border-line px-4 py-2 text-sm font-semibold text-ink-soft transition-colors hover:border-marquee hover:text-marquee disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleEditMoviesSave}
+                disabled={editMoviesPending}
+                className="rounded-full bg-marquee px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-marquee/90 disabled:opacity-50"
+              >
+                {editMoviesPending ? "Saving…" : "Save movies"}
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body,
+      )
+    : null;
 
   const voteSuccessCampaign = useMemo(() => {
     if (!voteSuccessCampaignId || !campaigns) return null;
@@ -1323,6 +1811,8 @@ export default function CampaignExplorer({
     const allowedStatuses = statusFilter ? new Set(statusFilter) : null;
     const rows = campaigns.filter((campaign) => {
       if (allowedStatuses && !allowedStatuses.has(campaign.status)) return false;
+      // Archived campaigns are hidden unless the admin explicitly shows them.
+      if (!allowedStatuses && campaign.status === "archived" && !showArchived) return false;
       if (start || end) {
         const candidateDate = campaignDateKey(campaign);
         if (!candidateDate) return false;
@@ -1360,7 +1850,7 @@ export default function CampaignExplorer({
       : rows;
 
     return sortedRows;
-  }, [campaigns, compact, search, selectedRange, sortBy, statusFilter]);
+  }, [campaigns, compact, search, selectedRange, sortBy, statusFilter, showArchived]);
 
   const gridContainerClass = useMemo(() => {
     if (isFeedLayout) {
@@ -1501,7 +1991,7 @@ export default function CampaignExplorer({
               const totalVotes = rankedChoices.reduce((sum, choice) => sum + Math.max(0, Number(choice.voteCount || 0)), 0);
               const reservationCount = Math.max(0, Number(campaign.counts.backing || 0));
               const reservationThreshold = Math.max(1, Number(campaign.thresholds.backing || 1));
-              const votingThreshold = Math.max(reservationThreshold, Number(campaign.thresholds.interested || reservationThreshold * 2));
+              const votingThreshold = Math.max(reservationThreshold, Number(campaign.thresholds.interested || calculateInterestThreshold(reservationThreshold)));
               const votedCampaignMovieId = campaign.viewerMovieVoteCampaignMovieId;
               const votePending = Boolean(pendingVoteById[campaign.id]);
               const supportPending = Boolean(pendingById[campaign.id]);
@@ -1675,6 +2165,7 @@ export default function CampaignExplorer({
         {visible.length > 1 && (
           <p className="mt-3 text-center text-xs text-ink-faint">Swipe or scroll horizontally to browse campaigns.</p>
         )}
+        {availabilityModal}
         {voteSuccessModal}
       </div>
     );
@@ -1682,6 +2173,21 @@ export default function CampaignExplorer({
 
   return (
     <div>
+      {reserveModal
+        ? createPortal(
+            <ReservePaymentModal
+              clientSecret={reserveModal.clientSecret}
+              publishableKey={reserveModal.publishableKey}
+              minAmountCents={reserveModal.minPledgeCents}
+              licensingFeeCents={reserveModal.licensingFeeCents}
+              totalPledgedCents={reserveModal.totalPledgedCents}
+              campaignTitle={reserveModal.campaign.title}
+              onSuccess={handleReserveCardSaved}
+              onCancel={() => setReserveModal(null)}
+            />,
+            document.body,
+          )
+        : null}
       {!compact && actionError && (
         <p className="mb-4 rounded-xl border border-red-300 bg-red-50 p-3 text-sm text-red-700">{actionError}</p>
       )}
@@ -1752,6 +2258,18 @@ export default function CampaignExplorer({
         </div>
       )}
 
+      {isAdminUser && mode === "all" && (
+        <label className="mb-4 flex w-fit cursor-pointer items-center gap-2 text-xs font-semibold text-ink-soft">
+          <input
+            type="checkbox"
+            checked={showArchived}
+            onChange={(event) => setShowArchived(event.target.checked)}
+            className="h-3.5 w-3.5 accent-marquee"
+          />
+          Show archived campaigns
+        </label>
+      )}
+
       <div ref={feedContainerRef} className={gridContainerClass}>
         {isFeedLayout ? (
           visible.length === 0 ? (
@@ -1772,11 +2290,15 @@ export default function CampaignExplorer({
               const adminDraftStatus = adminStatusById[campaign.id] || campaign.status;
               const adminDraftMovie = adminMovieById[campaign.id] ?? (campaign.selectedMovieTitle || "");
               const adminDraftTicket = adminTicketById[campaign.id] ?? (campaign.ticketUrl || "");
+              const adminDraftPrice = adminPriceById[campaign.id] ?? (campaign.ticketPriceCents ? (campaign.ticketPriceCents / 100).toFixed(2) : "");
+              const adminDraftFee = adminFeeById[campaign.id] ?? (campaign.licensingFeeCents ? (campaign.licensingFeeCents / 100).toFixed(2) : "");
+              const adminDraftDateStart = adminDateStartById[campaign.id] ?? (campaign.campaignWindow?.startDate || "");
+              const adminDraftDateEnd = adminDateEndById[campaign.id] ?? (campaign.campaignWindow?.endDate || "");
               const adminDraftNote = adminNoteById[campaign.id] || "";
               const reservationCount = Math.max(0, Number(campaign.counts.backing || 0));
               const reservationThreshold = Math.max(1, Number(campaign.thresholds.backing || 1));
               const votingCount = Math.max(0, Number(campaign.counts.interested || 0));
-              const votingThreshold = Math.max(reservationThreshold, Number(campaign.thresholds.interested || reservationThreshold * 2));
+              const votingThreshold = Math.max(reservationThreshold, Number(campaign.thresholds.interested || calculateInterestThreshold(reservationThreshold)));
               const votedCampaignMovieId = campaign.viewerMovieVoteCampaignMovieId;
               const isHistoricalVoteCampaign = campaign.origin === "historical-vote";
               const isHistoricalMode = mode === "historical-votes";
@@ -2041,6 +2563,20 @@ export default function CampaignExplorer({
                       </div>
                     </div>
 
+                    {!readOnly &&
+                      !isHistoricalVoteCampaign &&
+                      ["active", "licensing-pending"].includes(String(campaign.status || "")) &&
+                      Boolean(signedInEmail) &&
+                      (signedInEmail === String(campaign.createdByEmail || "").toLowerCase() || isAdminUser) && (
+                      <button
+                        type="button"
+                        onClick={() => openEditMovies(campaign)}
+                        className="mt-3 w-fit rounded-full border border-line px-3 py-1.5 text-[11px] font-semibold text-ink-soft transition-colors hover:border-marquee hover:text-marquee"
+                      >
+                        ✏️ Edit movies
+                      </button>
+                    )}
+
                     {isAdminUser && !isHistoricalVoteCampaign && !readOnly && (
                       <div className="mt-3 rounded-xl border border-line bg-paper/80 p-2.5">
                         <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-faint">Admin controls</p>
@@ -2077,6 +2613,54 @@ export default function CampaignExplorer({
                           placeholder="Ticket URL (https://...)"
                           className="mt-2 w-full rounded-lg border border-line bg-paper px-3 py-2 text-xs text-ink outline-none transition-colors focus:border-marquee"
                         />
+                        <input
+                          type="number"
+                          min="0.5"
+                          step="0.01"
+                          inputMode="decimal"
+                          value={adminDraftPrice}
+                          onChange={(event) =>
+                            setAdminPriceById((prev) => ({ ...prev, [campaign.id]: event.target.value }))
+                          }
+                          placeholder="Ticket price $ (charged when scheduled)"
+                          className="mt-2 w-full rounded-lg border border-line bg-paper px-3 py-2 text-xs text-ink outline-none transition-colors focus:border-marquee"
+                        />
+                        <input
+                          type="number"
+                          min="1"
+                          step="0.01"
+                          inputMode="decimal"
+                          value={adminDraftFee}
+                          onChange={(event) =>
+                            setAdminFeeById((prev) => ({ ...prev, [campaign.id]: event.target.value }))
+                          }
+                          placeholder="Licensing fee $ (pledge target)"
+                          className="mt-2 w-full rounded-lg border border-line bg-paper px-3 py-2 text-xs text-ink outline-none transition-colors focus:border-marquee"
+                        />
+                        <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                          <label className="grid gap-1">
+                            <span className="text-[10px] font-semibold text-ink-faint">Campaign start date</span>
+                            <input
+                              type="date"
+                              value={adminDraftDateStart}
+                              onChange={(event) =>
+                                setAdminDateStartById((prev) => ({ ...prev, [campaign.id]: event.target.value }))
+                              }
+                              className="rounded-lg border border-line bg-paper px-3 py-2 text-xs text-ink outline-none transition-colors focus:border-marquee"
+                            />
+                          </label>
+                          <label className="grid gap-1">
+                            <span className="text-[10px] font-semibold text-ink-faint">Campaign end date</span>
+                            <input
+                              type="date"
+                              value={adminDraftDateEnd}
+                              onChange={(event) =>
+                                setAdminDateEndById((prev) => ({ ...prev, [campaign.id]: event.target.value }))
+                              }
+                              className="rounded-lg border border-line bg-paper px-3 py-2 text-xs text-ink outline-none transition-colors focus:border-marquee"
+                            />
+                          </label>
+                        </div>
                         <div className="mt-2 grid gap-2 sm:grid-cols-3">
                           {campaign.choices.map((choice) => {
                             const draftAvailability =
@@ -2106,6 +2690,7 @@ export default function CampaignExplorer({
                             );
                           })}
                         </div>
+                        <AdminAvailabilitySummary campaignId={campaign.id} />
                         <textarea
                           rows={2}
                           value={adminDraftNote}
@@ -2146,7 +2731,7 @@ export default function CampaignExplorer({
             const backingPct = meter(campaign.counts.backing, campaign.thresholds.backing);
             const reservationCount = Math.max(0, Number(campaign.counts.backing || 0));
             const reservationThreshold = Math.max(1, Number(campaign.thresholds.backing || 1));
-            const votingThreshold = Math.max(reservationThreshold, Number(campaign.thresholds.interested || reservationThreshold * 2));
+            const votingThreshold = Math.max(reservationThreshold, Number(campaign.thresholds.interested || calculateInterestThreshold(reservationThreshold)));
             const displayTitle = campaignTitleWithTheater(campaign);
             const chosenMovie = rankedChoices[0]?.title || campaign.selectedMovieTitle || "Movie TBD";
             const supportPending = Boolean(pendingById[campaign.id]);
@@ -2155,6 +2740,10 @@ export default function CampaignExplorer({
             const adminDraftStatus = adminStatusById[campaign.id] || campaign.status;
             const adminDraftMovie = adminMovieById[campaign.id] ?? (campaign.selectedMovieTitle || "");
             const adminDraftTicket = adminTicketById[campaign.id] ?? (campaign.ticketUrl || "");
+            const adminDraftPrice = adminPriceById[campaign.id] ?? (campaign.ticketPriceCents ? (campaign.ticketPriceCents / 100).toFixed(2) : "");
+            const adminDraftFee = adminFeeById[campaign.id] ?? (campaign.licensingFeeCents ? (campaign.licensingFeeCents / 100).toFixed(2) : "");
+            const adminDraftDateStart = adminDateStartById[campaign.id] ?? (campaign.campaignWindow?.startDate || "");
+            const adminDraftDateEnd = adminDateEndById[campaign.id] ?? (campaign.campaignWindow?.endDate || "");
             const adminDraftNote = adminNoteById[campaign.id] || "";
             const rankedTitles = rankedChoices.map((choice) => choice.title).filter(Boolean).join(" • ");
             const selectedComparable = comparableTitle(chosenMovie);
@@ -2355,6 +2944,21 @@ export default function CampaignExplorer({
                   </div>
                 </div>
 
+                {!compact &&
+                  !readOnly &&
+                  !isHistoricalVoteCampaign &&
+                  ["active", "licensing-pending"].includes(String(campaign.status || "")) &&
+                  Boolean(signedInEmail) &&
+                  (signedInEmail === String(campaign.createdByEmail || "").toLowerCase() || isAdminUser) && (
+                  <button
+                    type="button"
+                    onClick={() => openEditMovies(campaign)}
+                    className="mt-3 w-fit rounded-full border border-line px-3 py-1.5 text-[11px] font-semibold text-ink-soft transition-colors hover:border-marquee hover:text-marquee"
+                  >
+                    ✏️ Edit movies
+                  </button>
+                )}
+
                 {!compact && isAdminUser && !isHistoricalVoteCampaign && !readOnly && (
                   <div className="mt-4 rounded-xl border border-line bg-cream p-3">
                     <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-faint">Admin controls</p>
@@ -2409,6 +3013,54 @@ export default function CampaignExplorer({
                       placeholder="Ticket URL (https://...)"
                       className="mt-2 w-full rounded-lg border border-line bg-paper px-3 py-2 text-xs text-ink outline-none transition-colors focus:border-marquee"
                     />
+                    <input
+                      type="number"
+                      min="0.5"
+                      step="0.01"
+                      inputMode="decimal"
+                      value={adminDraftPrice}
+                      onChange={(event) =>
+                        setAdminPriceById((prev) => ({ ...prev, [campaign.id]: event.target.value }))
+                      }
+                      placeholder="Ticket price $ (charged when scheduled)"
+                      className="mt-2 w-full rounded-lg border border-line bg-paper px-3 py-2 text-xs text-ink outline-none transition-colors focus:border-marquee"
+                    />
+                    <input
+                      type="number"
+                      min="1"
+                      step="0.01"
+                      inputMode="decimal"
+                      value={adminDraftFee}
+                      onChange={(event) =>
+                        setAdminFeeById((prev) => ({ ...prev, [campaign.id]: event.target.value }))
+                      }
+                      placeholder="Licensing fee $ (pledge target)"
+                      className="mt-2 w-full rounded-lg border border-line bg-paper px-3 py-2 text-xs text-ink outline-none transition-colors focus:border-marquee"
+                    />
+                    <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                      <label className="grid gap-1">
+                        <span className="text-[10px] font-semibold text-ink-faint">Campaign start date</span>
+                        <input
+                          type="date"
+                          value={adminDraftDateStart}
+                          onChange={(event) =>
+                            setAdminDateStartById((prev) => ({ ...prev, [campaign.id]: event.target.value }))
+                          }
+                          className="rounded-lg border border-line bg-paper px-3 py-2 text-xs text-ink outline-none transition-colors focus:border-marquee"
+                        />
+                      </label>
+                      <label className="grid gap-1">
+                        <span className="text-[10px] font-semibold text-ink-faint">Campaign end date</span>
+                        <input
+                          type="date"
+                          value={adminDraftDateEnd}
+                          onChange={(event) =>
+                            setAdminDateEndById((prev) => ({ ...prev, [campaign.id]: event.target.value }))
+                          }
+                          className="rounded-lg border border-line bg-paper px-3 py-2 text-xs text-ink outline-none transition-colors focus:border-marquee"
+                        />
+                      </label>
+                    </div>
                     <div className="mt-2 grid gap-2 sm:grid-cols-3">
                       {campaign.choices.map((choice) => {
                         const draftAvailability =
@@ -2438,6 +3090,7 @@ export default function CampaignExplorer({
                         );
                       })}
                     </div>
+                    <AdminAvailabilitySummary campaignId={campaign.id} />
                     <textarea
                       rows={2}
                       value={adminDraftNote}
@@ -2487,6 +3140,10 @@ export default function CampaignExplorer({
           </div>,
           document.body,
         )}
+
+      {availabilityModal}
+
+      {editMoviesModal}
 
       {voteSuccessModal}
 

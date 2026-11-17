@@ -1,12 +1,14 @@
 import { collection, getDocs } from "firebase/firestore/lite";
 import { dbLite as db } from "./firebase-lite";
-import { calculateInterestThreshold, calculateLicensingTrigger, type CampaignStatus } from "./campaign-policy";
+import {
+  DEFAULT_BACKING_THRESHOLD,
+  calculateInterestThreshold,
+  calculateLicensingTrigger,
+  type CampaignStatus,
+} from "./campaign-policy";
 import { publicListCampaigns } from "./firebase-core";
 import { getMovieMetadataByTitle } from "./tmdb";
 import { REELVOTES_EVENTS, type ConfiguredEvent } from "./events-config";
-
-const CAMPAIGN_REQUIRED_VOTES = 60;
-const CAMPAIGN_REQUIRED_RESERVATIONS = 30;
 
 const LEGACY_CAMPAIGN_OWNER_EMAIL = "rohan@reelvotes.com";
 const LEGACY_SELECTED_MOVIE_OVERRIDES: Record<string, string> = {
@@ -36,17 +38,20 @@ export interface CampaignSummary {
   slug: string;
   origin: CampaignOrigin;
   createdByEmail: string | null;
+  ticketUrl?: string | null;
+  ticketPriceCents?: number | null;
+  licensingFeeCents?: number | null;
+  campaignWindow?: {
+    startDate: string | null;
+    endDate: string | null;
+    extensionCount?: number;
+  } | null;
   likedByEmail?: string | null;
   title: string;
   market: string;
   preferredTheaters: string[];
   dateWindowLabel: string;
   screeningDateTime?: string | null;
-  campaignWindow?: {
-    startDate: string | null;
-    endDate: string | null;
-    requiredDays: number;
-  } | null;
   deadTimeSlot?: {
     slotId: string;
     theaterKey: string | null;
@@ -56,8 +61,6 @@ export interface CampaignSummary {
     timeLabel: string | null;
     screeningDateTime: string | null;
     label: string | null;
-    dateRangeStart?: string | null;
-    dateRangeEnd?: string | null;
   } | null;
   status: CampaignStatus;
   selectedMovieTitle: string | null;
@@ -147,10 +150,10 @@ const fallbackCampaigns: CampaignSummary[] = [
       notifiedPreviousSupportersAt: null,
     },
     thresholds: {
-      backing: 75,
-      interested: 150,
-      licensingTriggerBacking: 53,
-      licensingTriggerInterested: 105,
+      backing: DEFAULT_BACKING_THRESHOLD,
+      interested: calculateInterestThreshold(DEFAULT_BACKING_THRESHOLD),
+      licensingTriggerBacking: calculateLicensingTrigger(DEFAULT_BACKING_THRESHOLD),
+      licensingTriggerInterested: calculateLicensingTrigger(calculateInterestThreshold(DEFAULT_BACKING_THRESHOLD)),
     },
   },
   {
@@ -215,10 +218,10 @@ const fallbackCampaigns: CampaignSummary[] = [
       notifiedPreviousSupportersAt: null,
     },
     thresholds: {
-      backing: 75,
-      interested: 150,
-      licensingTriggerBacking: 53,
-      licensingTriggerInterested: 105,
+      backing: DEFAULT_BACKING_THRESHOLD,
+      interested: calculateInterestThreshold(DEFAULT_BACKING_THRESHOLD),
+      licensingTriggerBacking: calculateLicensingTrigger(DEFAULT_BACKING_THRESHOLD),
+      licensingTriggerInterested: calculateLicensingTrigger(calculateInterestThreshold(DEFAULT_BACKING_THRESHOLD)),
     },
   },
   {
@@ -283,10 +286,10 @@ const fallbackCampaigns: CampaignSummary[] = [
       notifiedPreviousSupportersAt: null,
     },
     thresholds: {
-      backing: 75,
-      interested: 150,
-      licensingTriggerBacking: 53,
-      licensingTriggerInterested: 105,
+      backing: DEFAULT_BACKING_THRESHOLD,
+      interested: calculateInterestThreshold(DEFAULT_BACKING_THRESHOLD),
+      licensingTriggerBacking: calculateLicensingTrigger(DEFAULT_BACKING_THRESHOLD),
+      licensingTriggerInterested: calculateLicensingTrigger(calculateInterestThreshold(DEFAULT_BACKING_THRESHOLD)),
     },
   },
 ];
@@ -306,7 +309,8 @@ function normalizeStatus(raw: unknown): CampaignStatus {
     value === "completed" ||
     value === "suspended" ||
     value === "expired" ||
-    value === "cancelled"
+    value === "cancelled" ||
+    value === "archived"
   ) {
     return value;
   }
@@ -337,7 +341,9 @@ function normalizeChoices(raw: unknown): CampaignMovieChoice[] {
       const posterRaw = String(
         row.posterUrl || row.posterURL || row.poster_path || row.posterPath || row.poster || "",
       ).trim();
-      const posterUrl = normalizePosterUrl(posterRaw);
+      const posterUrl = posterRaw.startsWith("/")
+        ? `https://image.tmdb.org/t/p/w500${posterRaw}`
+        : (posterRaw || null);
       if (!title || ![1, 2, 3].includes(originalPosition)) return null;
       return {
         campaignMovieId: campaignMovieId || `${campaignId || "campaign"}_${originalPosition}`,
@@ -382,12 +388,10 @@ function normalizeLegacyChoices(raw: unknown): CampaignMovieChoice[] {
             ? "unavailable"
             : "not-checked";
       if (!title || ![1, 2, 3].includes(originalPosition)) return null;
-      const movieId = toComparableMovieTitle(title).replace(/\s+/g, "_");
-      const baseId = movieId || `choice_${originalPosition}`;
       return {
-        campaignMovieId: `cm_${originalPosition}_${baseId}`,
+        campaignMovieId: `${toComparableMovieTitle(title).replace(/\s+/g, "_") || `choice_${idx + 1}`}_${originalPosition}`,
         campaignId: "",
-        movieId,
+        movieId: toComparableMovieTitle(title).replace(/\s+/g, "_"),
         title,
         voteCount: Math.max(0, Number(row.voteCount ?? row.vote_count ?? 0)),
         originalPosition: originalPosition as 1 | 2 | 3,
@@ -422,12 +426,130 @@ function buildCampaignSummary(id: string, data: Record<string, unknown>): Campai
   const title = String(data.title || "").trim();
   if (!title) return null;
 
+  const organizerSource =
+    data.organizer && typeof data.organizer === "object"
+      ? (data.organizer as Record<string, unknown>)
+      : {};
+  const deadTimeSlotSource =
+    data.deadTimeSlot && typeof data.deadTimeSlot === "object"
+      ? (data.deadTimeSlot as Record<string, unknown>)
+      : {};
+  const campaignWindowSource =
+    data.campaignWindow && typeof data.campaignWindow === "object"
+      ? (data.campaignWindow as Record<string, unknown>)
+      : {};
+  const createdByEmail = String(
+    data.createdByEmail ||
+    data.organizerEmail ||
+    organizerSource.email ||
+    data.created_by ||
+    "",
+  )
+    .trim()
+    .toLowerCase() || null;
+
+  const thresholdsSource =
+    data.thresholds && typeof data.thresholds === "object" ? (data.thresholds as Record<string, unknown>) : {};
   const countsSource = data.counts && typeof data.counts === "object" ? (data.counts as Record<string, unknown>) : {};
   const replacementSource =
     data.replacement && typeof data.replacement === "object" ? (data.replacement as Record<string, unknown>) : {};
 
-  const backing = CAMPAIGN_REQUIRED_RESERVATIONS;
-  const interested = CAMPAIGN_REQUIRED_VOTES;
+  const pickTicketUrl = (...sources: Array<Record<string, unknown> | null | undefined>): string | null => {
+    const candidateKeys = [
+      "ticketUrl",
+      "ticketURL",
+      "ticketLink",
+      "ticket_url",
+      "ticket_link",
+      "ticketsUrl",
+      "ticketsURL",
+      "ticketsLink",
+      "tickets_url",
+      "tickets_link",
+      "presaleUrl",
+      "presaleURL",
+      "presaleLink",
+      "presale_url",
+      "presale_link",
+      "bookingUrl",
+      "bookingURL",
+      "bookingLink",
+      "booking_url",
+      "booking_link",
+      "purchaseUrl",
+      "purchaseURL",
+      "purchaseLink",
+      "purchase_url",
+      "purchase_link",
+    ] as const;
+
+    const ticketContextKey = /ticket|presale|booking|purchase/i;
+    const looksLikeDirectUrlOrLinkKey = (normalizedKey: string): boolean =>
+      normalizedKey === "url" ||
+      normalizedKey === "link" ||
+      normalizedKey.endsWith("url") ||
+      normalizedKey.endsWith("link");
+
+    for (const source of sources) {
+      if (!source) continue;
+      for (const key of candidateKeys) {
+        const value = String(source[key] || "").trim();
+        if (value) return value;
+      }
+    }
+
+    const isObjectRecord = (value: unknown): value is Record<string, unknown> =>
+      Boolean(value) && typeof value === "object" && !Array.isArray(value);
+
+    const visited = new Set<unknown>();
+    const queue: Array<{ value: unknown; inTicketContext: boolean }> = sources
+      .filter(Boolean)
+      .map((value) => ({ value, inTicketContext: false }));
+
+    while (queue.length > 0) {
+      const entry = queue.shift();
+      const current = entry?.value;
+      const inTicketContext = Boolean(entry?.inTicketContext);
+      if (!current || visited.has(current)) continue;
+      visited.add(current);
+
+      if (Array.isArray(current)) {
+        current.forEach((item) => queue.push({ value: item, inTicketContext }));
+        continue;
+      }
+
+      if (!isObjectRecord(current)) continue;
+
+      for (const [key, rawValue] of Object.entries(current)) {
+        const value = String(rawValue || "").trim();
+        const keyLower = key.toLowerCase();
+        const normalizedKey = keyLower.replace(/[^a-z0-9]+/g, "");
+        const nextInTicketContext = inTicketContext || ticketContextKey.test(normalizedKey);
+        const keyLooksLikeTicketUrl =
+          (keyLower.includes("ticket") || keyLower.includes("presale") || keyLower.includes("booking") || keyLower.includes("purchase")) &&
+          (keyLower.includes("url") || keyLower.includes("link"));
+        if (keyLooksLikeTicketUrl && value) {
+          return value;
+        }
+
+        if (nextInTicketContext && looksLikeDirectUrlOrLinkKey(normalizedKey) && value) {
+          return value;
+        }
+
+        if (isObjectRecord(rawValue) || Array.isArray(rawValue)) {
+          queue.push({ value: rawValue, inTicketContext: nextInTicketContext });
+        }
+      }
+    }
+
+    return null;
+  };
+
+  const backing = Math.max(1, Number(thresholdsSource.backing || data.backingThreshold || DEFAULT_BACKING_THRESHOLD));
+  const interested = Math.max(
+    backing,
+    Number(thresholdsSource.interested || data.interestedThreshold || calculateInterestThreshold(backing)),
+  );
 
   const normalizedCampaignMovies = normalizeChoices(data.campaignMovies);
   const choices = normalizedCampaignMovies.length > 0 ? normalizedCampaignMovies : normalizeLegacyChoices(data.choices);
@@ -441,7 +563,21 @@ function buildCampaignSummary(id: string, data: Record<string, unknown>): Campai
     id,
     slug: String(data.slug || id).trim(),
     origin: "campaign",
-    createdByEmail: data.createdByEmail ? String(data.createdByEmail).trim() : null,
+    createdByEmail,
+    ticketUrl: pickTicketUrl(data, deadTimeSlotSource, campaignWindowSource),
+    ticketPriceCents:
+      Number.isFinite(Number(data.ticketPriceCents)) && Number(data.ticketPriceCents) > 0
+        ? Math.round(Number(data.ticketPriceCents))
+        : null,
+    licensingFeeCents:
+      Number.isFinite(Number(data.licensingFeeCents)) && Number(data.licensingFeeCents) > 0
+        ? Math.round(Number(data.licensingFeeCents))
+        : null,
+    campaignWindow: {
+      startDate: String(campaignWindowSource.startDate || "").trim() || null,
+      endDate: String(campaignWindowSource.endDate || "").trim() || null,
+      extensionCount: Math.max(0, Number(campaignWindowSource.extensionCount || 0)),
+    },
     likedByEmail: data.likedByEmail ? String(data.likedByEmail).trim().toLowerCase() : null,
     title,
     market: String(data.market || "Unknown market").trim(),
@@ -450,17 +586,6 @@ function buildCampaignSummary(id: string, data: Record<string, unknown>): Campai
       : [],
     dateWindowLabel: String(data.dateWindowLabel || "Date window TBD").trim(),
     screeningDateTime: data.screeningDateTime ? String(data.screeningDateTime).trim() : null,
-    campaignWindow: data.campaignWindow && typeof data.campaignWindow === "object"
-      ? {
-          startDate: (data.campaignWindow as Record<string, unknown>).startDate
-            ? String((data.campaignWindow as Record<string, unknown>).startDate).trim()
-            : null,
-          endDate: (data.campaignWindow as Record<string, unknown>).endDate
-            ? String((data.campaignWindow as Record<string, unknown>).endDate).trim()
-            : null,
-          requiredDays: Math.max(1, Number((data.campaignWindow as Record<string, unknown>).requiredDays || 5)),
-        }
-      : null,
     deadTimeSlot: data.deadTimeSlot && typeof data.deadTimeSlot === "object"
       ? {
           slotId: String((data.deadTimeSlot as Record<string, unknown>).slotId || "").trim(),
@@ -484,12 +609,6 @@ function buildCampaignSummary(id: string, data: Record<string, unknown>): Campai
             : null,
           label: (data.deadTimeSlot as Record<string, unknown>).label
             ? String((data.deadTimeSlot as Record<string, unknown>).label).trim()
-            : null,
-          dateRangeStart: (data.deadTimeSlot as Record<string, unknown>).dateRangeStart
-            ? String((data.deadTimeSlot as Record<string, unknown>).dateRangeStart).trim()
-            : null,
-          dateRangeEnd: (data.deadTimeSlot as Record<string, unknown>).dateRangeEnd
-            ? String((data.deadTimeSlot as Record<string, unknown>).dateRangeEnd).trim()
             : null,
         }
       : null,
@@ -564,6 +683,12 @@ function parseDateTimeFromEventId(eventId: string): Date | null {
   const iso = `${datePart}T${hh}:${mm}:00`;
   const parsed = new Date(iso);
   return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function isBlockedCampaignPosterUrl(url: string | null | undefined): boolean {
+  const value = String(url || "").trim();
+  if (!value) return false;
+  return value.includes("/c2yH89njxLApIDyUkYou4ZXTjlr.jpg");
 }
 
 function looksLikeOpaqueEventId(value: string): boolean {
@@ -791,17 +916,31 @@ async function loadHistoricalVoteCampaigns(): Promise<CampaignSummary[]> {
 }
 
 async function enrichCampaignPosters(campaigns: CampaignSummary[]): Promise<CampaignSummary[]> {
+  const shouldForcePosterRefresh = (campaign: CampaignSummary, choice: CampaignMovieChoice): boolean => {
+    const campaignTitleKey = toComparableMovieTitle(campaign.title);
+    const choiceTitleKey = toComparableMovieTitle(choice.title);
+    return campaignTitleKey.includes("fentcheck") && choiceTitleKey === "party monster";
+  };
+
   return Promise.all(
     campaigns.map(async (campaign) => {
       const choices = await Promise.all(
         campaign.choices.map(async (choice) => {
-          if (choice.posterUrl || !choice.title) {
+          if (!choice.title) {
             return choice;
           }
+
+          const forceRefresh = shouldForcePosterRefresh(campaign, choice);
+          const hasBlockedPoster = isBlockedCampaignPosterUrl(choice.posterUrl);
+          if (choice.posterUrl && !forceRefresh && !hasBlockedPoster) {
+            return choice;
+          }
+
           const metadata = await getMovieMetadataByTitle(choice.title);
+          const correctedPoster = metadata.poster || (forceRefresh ? null : choice.posterUrl) || null;
           return {
             ...choice,
-            posterUrl: normalizePosterUrl(metadata.poster),
+            posterUrl: correctedPoster,
           };
         }),
       );
@@ -817,15 +956,25 @@ async function enrichCampaignPosters(campaigns: CampaignSummary[]): Promise<Camp
 export async function getCampaignSummaries(options?: {
   includeHistoricalVotes?: boolean;
   historicalVotesOnly?: boolean;
+  includeArchived?: boolean;
 }): Promise<CampaignSummary[]> {
   const includeHistoricalVotes = Boolean(options?.includeHistoricalVotes || options?.historicalVotesOnly);
   const historicalVotesOnly = Boolean(options?.historicalVotesOnly);
+  const includeArchived = Boolean(options?.includeArchived);
 
   async function appendHistoricalVotes(baseCampaigns: CampaignSummary[]): Promise<CampaignSummary[]> {
     if (!includeHistoricalVotes) return baseCampaigns;
     try {
       const historical = await loadHistoricalVoteCampaigns();
-      if (historicalVotesOnly) return historical;
+      if (historicalVotesOnly) {
+        // Completed campaign-flow screenings belong with past screenings too.
+        const completedCampaigns = baseCampaigns.filter((campaign) => campaign.status === "completed");
+        const byId = new Map<string, CampaignSummary>();
+        [...completedCampaigns, ...historical].forEach((campaign) => {
+          byId.set(campaign.id, campaign);
+        });
+        return Array.from(byId.values());
+      }
       const combined = [...baseCampaigns, ...historical];
       const byId = new Map<string, CampaignSummary>();
       combined.forEach((campaign) => {
@@ -839,7 +988,7 @@ export async function getCampaignSummaries(options?: {
   }
 
   try {
-    const response = await publicListCampaigns({ limit: 100 });
+    const response = await publicListCampaigns({ limit: 100, includeArchived });
     const rows = Array.isArray((response as any)?.data?.campaigns) ? (response as any).data.campaigns : [];
     const campaigns = rows
       .map((row: Record<string, unknown>) => buildCampaignSummary(String(row.id || ""), row))
@@ -856,7 +1005,8 @@ export async function getCampaignSummaries(options?: {
     const snapshot = await getDocs(collection(db, "campaigns"));
     const campaigns = snapshot.docs
       .map((docSnap) => buildCampaignSummary(docSnap.id, docSnap.data() as Record<string, unknown>))
-      .filter((row): row is CampaignSummary => Boolean(row));
+      .filter((row): row is CampaignSummary => Boolean(row))
+      .filter((campaign) => includeArchived || campaign.status !== "archived");
 
     if (campaigns.length > 0) {
       return await enrichCampaignPosters(await appendHistoricalVotes(campaigns));
@@ -866,24 +1016,4 @@ export async function getCampaignSummaries(options?: {
   }
 
   return await enrichCampaignPosters(await appendHistoricalVotes([]));
-}
-
-function normalizePosterUrl(raw: unknown): string | null {
-  const value = String(raw || "").trim();
-  if (!value) return null;
-
-  if (value.startsWith("/")) {
-    return `https://image.tmdb.org/t/p/original${value}`;
-  }
-
-  try {
-    const url = new URL(value);
-    if (url.hostname === "image.tmdb.org") {
-      url.pathname = url.pathname.replace(/^\/t\/p\/(w\d+|original)\//, "/t/p/original/");
-      return url.toString();
-    }
-    return value;
-  } catch {
-    return value;
-  }
 }

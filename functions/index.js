@@ -12,8 +12,9 @@ const fs = require("fs");
 const path = require("path");
 const admin = require("firebase-admin");
 const {setGlobalOptions} = require("firebase-functions");
-const {onCall, HttpsError} = require("firebase-functions/v2/https");
+const {onCall, onRequest, HttpsError} = require("firebase-functions/v2/https");
 const {onSchedule} = require("firebase-functions/v2/scheduler");
+const {defineSecret, defineString} = require("firebase-functions/params");
 const logger = require("firebase-functions/logger");
 
 admin.initializeApp();
@@ -99,6 +100,21 @@ const CAMPAIGN_REPLACEMENT_POLICY = Object.freeze({
   autoCarryBackingOnReplacement: false,
   maxSupportersToCarry: 300,
 });
+
+// --- Reservation payments (Stripe) -----------------------------------------
+// Secrets are placeholders until a Stripe account exists; any value not
+// starting with "sk_" keeps the whole payment feature disabled and
+// reservations behave exactly as before (no card required).
+const STRIPE_SECRET_KEY = defineSecret("STRIPE_SECRET_KEY");
+const STRIPE_WEBHOOK_SECRET = defineSecret("STRIPE_WEBHOOK_SECRET");
+const STRIPE_PUBLISHABLE_KEY = defineString("STRIPE_PUBLISHABLE_KEY", {default: ""});
+const RESERVATION_CURRENCY = "usd";
+const MIN_CHARGEABLE_CENTS = 50; // Stripe minimum charge
+const DEFAULT_MIN_PLEDGE_CENTS = 1500; // $15 default pledge floor
+const MAX_PLEDGE_CENTS = 100000; // $1,000 sanity cap per pledge
+const DEFAULT_LICENSING_FEE_CENTS = 30000; // $300 assumed licensing fee target
+const CAMPAIGN_DEFAULT_BACKING_THRESHOLD = 20;
+const CAMPAIGN_INTEREST_MULTIPLIER = 3;
 
 function readJsonFileSafe(filePath) {
   if (!fs.existsSync(filePath)) {
@@ -1365,6 +1381,582 @@ async function processCampaignVoteTransitionsOnce() {
   };
 }
 
+const CAMPAIGN_SCREENING_STATUSES_TO_COMPLETE = new Set(["scheduled", "confirmed", "screening"]);
+// Grace window after the resolved screening time before a campaign flips to
+// "completed". Covers screening runtime plus timezone skew from naive
+// (zone-less) screening timestamps parsed on UTC servers.
+const CAMPAIGN_COMPLETION_GRACE_MS = 12 * 60 * 60 * 1000;
+const MONTH_PREFIX_TO_INDEX = {
+  jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5,
+  jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11,
+};
+
+// Parses human-facing window labels such as "Oct 27 @ 9 pm at The New Parkway
+// Theater", "Nov 16", or "Nov 28 - Dec 10" (uses the range end). The year is
+// inferred from the reference date (campaign creation), assuming screenings
+// happen on or after campaign creation.
+function parseScreeningDateFromWindowLabel(label, referenceDateInput) {
+  const text = String(label || "").trim();
+  if (!text) return null;
+
+  const monthDayPattern = /\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+(\d{1,2})\b/gi;
+  let lastMatch = null;
+  let match;
+  while ((match = monthDayPattern.exec(text)) !== null) {
+    lastMatch = match;
+  }
+  if (!lastMatch) return null;
+
+  const monthIndex = MONTH_PREFIX_TO_INDEX[lastMatch[1].toLowerCase()];
+  const day = Number(lastMatch[2]);
+  if (!Number.isInteger(monthIndex) || !Number.isInteger(day) || day < 1 || day > 31) return null;
+
+  // Default to end of day for date-only labels.
+  let hours = 23;
+  let minutes = 59;
+  const timeMatch = text.match(/@\s*(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i);
+  if (timeMatch) {
+    const rawHours = Number(timeMatch[1]);
+    const meridiem = (timeMatch[3] || "").toLowerCase();
+    if (Number.isInteger(rawHours) && rawHours >= 0 && rawHours <= 23) {
+      hours = meridiem === "pm" ? (rawHours % 12) + 12 : meridiem === "am" ? rawHours % 12 : rawHours;
+      minutes = Number(timeMatch[2] || 0);
+      if (!Number.isInteger(minutes) || minutes < 0 || minutes > 59) minutes = 0;
+    }
+  }
+
+  const reference = toDateOrNull(referenceDateInput) || new Date();
+  const earliestAllowedMs = reference.getTime() - 7 * 24 * 60 * 60 * 1000;
+  const referenceYear = reference.getUTCFullYear();
+  for (const year of [referenceYear, referenceYear + 1]) {
+    const candidateMs = Date.UTC(year, monthIndex, day, hours, minutes, 0);
+    if (candidateMs >= earliestAllowedMs) {
+      return new Date(candidateMs);
+    }
+  }
+  return new Date(Date.UTC(referenceYear, monthIndex, day, hours, minutes, 0));
+}
+
+function resolveCampaignScreeningEndTime(campaignData = {}) {
+  const dateTimeCandidates = [
+    {value: campaignData.screeningDateTime, source: "screeningDateTime"},
+    {value: campaignData?.deadTimeSlot?.screeningDateTime, source: "deadTimeSlot.screeningDateTime"},
+  ];
+  for (const candidate of dateTimeCandidates) {
+    const raw = String(candidate.value || "").trim();
+    if (!raw) continue;
+    const parsed = toDateOrNull(raw);
+    if (parsed) return {endsAtMs: parsed.getTime(), source: candidate.source};
+  }
+
+  const dateOnlyCandidates = [
+    {value: campaignData?.deadTimeSlot?.dateRangeEnd, source: "deadTimeSlot.dateRangeEnd"},
+    {value: campaignData?.campaignWindow?.endDate, source: "campaignWindow.endDate"},
+  ];
+  for (const candidate of dateOnlyCandidates) {
+    const raw = String(candidate.value || "").trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) continue;
+    const parsed = toDateOrNull(`${raw}T23:59:59`);
+    if (parsed) return {endsAtMs: parsed.getTime(), source: candidate.source};
+  }
+
+  const labelDate = parseScreeningDateFromWindowLabel(campaignData.dateWindowLabel, campaignData.created_at);
+  if (labelDate) return {endsAtMs: labelDate.getTime(), source: "dateWindowLabel"};
+
+  return null;
+}
+
+// Automatically moves scheduled/confirmed/screening campaigns to "completed"
+// once their screening date has passed, so they drop off "future screenings"
+// and show up with past screenings without manual admin action.
+async function processCampaignScreeningCompletionsOnce() {
+  const nowMs = Date.now();
+  const campaignsSnapshot = await db.collection("campaigns").get();
+  let transitioned = 0;
+  const summaries = [];
+
+  for (const campaignDoc of campaignsSnapshot.docs) {
+    const campaignData = campaignDoc.data() || {};
+    const currentStatus = String(campaignData.status || "").trim().toLowerCase();
+    if (!CAMPAIGN_SCREENING_STATUSES_TO_COMPLETE.has(currentStatus)) {
+      continue;
+    }
+
+    const screeningEnd = resolveCampaignScreeningEndTime(campaignData);
+    if (!screeningEnd || nowMs < screeningEnd.endsAtMs + CAMPAIGN_COMPLETION_GRACE_MS) {
+      continue;
+    }
+
+    const now = admin.firestore.FieldValue.serverTimestamp();
+    await campaignDoc.ref.set({
+      status: "completed",
+      workflow: {screeningCompletedAt: now},
+      updated_at: now,
+      updated_by: "campaign-completion-bot",
+    }, {merge: true});
+
+    transitioned += 1;
+    summaries.push({
+      campaignId: campaignDoc.id,
+      title: String(campaignData.title || "").trim() || null,
+      from: currentStatus,
+      to: "completed",
+      reason: `screening-date-passed:${screeningEnd.source}`,
+    });
+  }
+
+  return {
+    scanned: campaignsSnapshot.size,
+    transitioned,
+    summaries,
+  };
+}
+
+// Archives in-flight campaigns whose date window has fully passed so they
+// disappear from the website (unlike completed screenings, which remain
+// visible under past screenings).
+const CAMPAIGN_STATUSES_TO_ARCHIVE = new Set([
+  "active",
+  "licensing-pending",
+  "theater-check",
+  "movie-available",
+  "tipped",
+]);
+
+async function processCampaignArchivesOnce() {
+  const nowMs = Date.now();
+  const campaignsSnapshot = await db.collection("campaigns").get();
+  let archived = 0;
+  const summaries = [];
+
+  for (const campaignDoc of campaignsSnapshot.docs) {
+    const campaignData = campaignDoc.data() || {};
+    const currentStatus = String(campaignData.status || "active").trim().toLowerCase();
+    if (!CAMPAIGN_STATUSES_TO_ARCHIVE.has(currentStatus)) {
+      continue;
+    }
+
+    const screeningEnd = resolveCampaignScreeningEndTime(campaignData);
+    if (!screeningEnd || nowMs < screeningEnd.endsAtMs + CAMPAIGN_COMPLETION_GRACE_MS) {
+      continue;
+    }
+
+    const now = admin.firestore.FieldValue.serverTimestamp();
+    await campaignDoc.ref.set({
+      status: "archived",
+      workflow: {archivedAt: now},
+      updated_at: now,
+      updated_by: "campaign-archive-bot",
+    }, {merge: true});
+
+    archived += 1;
+    summaries.push({
+      campaignId: campaignDoc.id,
+      title: String(campaignData.title || "").trim() || null,
+      from: currentStatus,
+      to: "archived",
+      reason: `window-ended:${screeningEnd.source}`,
+    });
+  }
+
+  return {
+    scanned: campaignsSnapshot.size,
+    archived,
+    summaries,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Reservation payments (Stripe): card is saved when a user reserves, and
+// charged off-session once the campaign is scheduled as a screening.
+// ---------------------------------------------------------------------------
+
+let stripeClientCache = null;
+
+function getStripeClient() {
+  let key = "";
+  try {
+    key = String(STRIPE_SECRET_KEY.value() || "").trim();
+  } catch {
+    key = "";
+  }
+  // Accept standard ("sk_") and restricted ("rk_") secret keys.
+  if (!key.startsWith("sk_") && !key.startsWith("rk_")) return null;
+  if (!stripeClientCache) {
+    const Stripe = require("stripe");
+    stripeClientCache = new Stripe(key);
+  }
+  return stripeClientCache;
+}
+
+function getStripePublishableKey() {
+  try {
+    const key = String(STRIPE_PUBLISHABLE_KEY.value() || "").trim();
+    return key.startsWith("pk_") ? key : "";
+  } catch {
+    return "";
+  }
+}
+
+function resolveCampaignTicketPriceCents(campaignData = {}) {
+  const explicit = Number(campaignData.ticketPriceCents);
+  if (Number.isInteger(explicit) && explicit >= MIN_CHARGEABLE_CENTS) return explicit;
+
+  const slotPrice = sanitizeCurrencyField(campaignData?.deadTimeSlot?.ticketPrice);
+  if (slotPrice) {
+    const cents = Math.round(slotPrice * 100);
+    if (cents >= MIN_CHARGEABLE_CENTS) return cents;
+  }
+  return null;
+}
+
+// Crowd-pledge model: supporters pledge a chosen amount (>= the campaign's
+// minimum) toward the licensing fee target. Cards are saved via SetupIntents
+// and only charged once total pledges cover the target and the campaign is
+// confirmed/scheduled.
+function resolveCampaignLicensingFeeCents(campaignData = {}) {
+  const explicit = Number(campaignData.licensingFeeCents);
+  if (Number.isInteger(explicit) && explicit > 0) return explicit;
+
+  const slotFee = sanitizeCurrencyField(campaignData?.deadTimeSlot?.licensingFee);
+  if (slotFee) return Math.round(slotFee * 100);
+  return null;
+}
+
+function resolveCampaignMinPledgeCents(campaignData = {}) {
+  const explicit = Number(campaignData.minPledgeCents);
+  if (Number.isInteger(explicit) && explicit >= MIN_CHARGEABLE_CENTS) return explicit;
+  // Flat $15 floor regardless of any ticket price.
+  return DEFAULT_MIN_PLEDGE_CENTS;
+}
+
+function campaignRequiresPledge(campaignData = {}) {
+  return Boolean(
+    resolveCampaignLicensingFeeCents(campaignData) || resolveCampaignTicketPriceCents(campaignData),
+  );
+}
+
+async function ensureStripeCustomer(stripe, uid, email) {
+  const customerRef = db.collection("stripe_customers").doc(uid);
+  const customerSnap = await customerRef.get();
+  const existingId = customerSnap.exists ? String((customerSnap.data() || {}).customerId || "") : "";
+  if (existingId) return existingId;
+
+  const customer = await stripe.customers.create({
+    email: email || undefined,
+    metadata: {uid},
+  });
+  await customerRef.set({
+    customerId: customer.id,
+    uid,
+    email: email || null,
+    created_at: admin.firestore.FieldValue.serverTimestamp(),
+  }, {merge: true});
+  return customer.id;
+}
+
+async function verifyReservationSetupIntent({setupIntentId, uid, campaignId}) {
+  const stripe = getStripeClient();
+  if (!stripe) {
+    throw new HttpsError("failed-precondition", "Payments are not configured.");
+  }
+
+  let setupIntent = null;
+  try {
+    setupIntent = await stripe.setupIntents.retrieve(setupIntentId);
+  } catch {
+    throw new HttpsError("invalid-argument", "Could not verify the saved card.");
+  }
+
+  if (!setupIntent || setupIntent.status !== "succeeded") {
+    throw new HttpsError("failed-precondition", "Card setup is not complete yet. Please finish the payment form.");
+  }
+  const metadata = setupIntent.metadata || {};
+  if (String(metadata.uid || "") !== uid || String(metadata.campaignId || "") !== campaignId) {
+    throw new HttpsError("permission-denied", "This card setup does not belong to this reservation.");
+  }
+
+  return {
+    setupIntentId: setupIntent.id,
+    customerId: String(setupIntent.customer || ""),
+    paymentMethodId: String(setupIntent.payment_method || ""),
+  };
+}
+
+// Charges saved cards for campaigns that have reached "scheduled".
+// Idempotency keys make retries safe; failed charges are parked as
+// "charge-failed" (no automatic retry storm) for a later dunning flow.
+async function processReservationChargesOnce() {
+  const stripe = getStripeClient();
+  if (!stripe) {
+    return {skipped: true, reason: "stripe-not-configured", scanned: 0, charged: 0, failed: 0, summaries: []};
+  }
+
+  const campaignsSnapshot = await db
+    .collection("campaigns")
+    .where("status", "in", ["scheduled", "confirmed"])
+    .get();
+  let charged = 0;
+  let failed = 0;
+  const summaries = [];
+
+  for (const campaignDoc of campaignsSnapshot.docs) {
+    const campaignId = campaignDoc.id;
+    const campaignData = campaignDoc.data() || {};
+    const fallbackAmountCents = resolveCampaignTicketPriceCents(campaignData);
+
+    const supportersSnapshot = await campaignDoc.ref
+      .collection("supporters")
+      .where("payment.status", "==", "card-saved")
+      .get();
+
+    for (const supporterDoc of supportersSnapshot.docs) {
+      const supporterData = supporterDoc.data() || {};
+      const payment = supporterData.payment && typeof supporterData.payment === "object"
+        ? supporterData.payment
+        : {};
+      const supporterUid = String(supporterData.uid || supporterDoc.id || "").trim();
+      if (!supporterUid || !payment.customerId || !payment.paymentMethodId) continue;
+
+      // Charge the supporter's own pledge; fall back to the ticket price for
+      // legacy fixed-price reservations.
+      const amountCents = toNonNegativeInt(payment.amountCents, 0) || fallbackAmountCents || 0;
+      if (amountCents < MIN_CHARGEABLE_CENTS) {
+        summaries.push({campaignId, uid: supporterUid, outcome: "skipped", reason: "no-chargeable-amount"});
+        continue;
+      }
+
+      const now = admin.firestore.FieldValue.serverTimestamp();
+      try {
+        const paymentIntent = await stripe.paymentIntents.create({
+          amount: amountCents,
+          currency: String(payment.currency || RESERVATION_CURRENCY),
+          customer: payment.customerId,
+          payment_method: payment.paymentMethodId,
+          off_session: true,
+          confirm: true,
+          description: `ReelVotes reservation — ${String(campaignData.title || campaignId)}`,
+          metadata: {campaignId, uid: supporterUid, type: "reservation-charge"},
+        }, {idempotencyKey: `reservation_charge_${campaignId}_${supporterUid}`});
+
+        await supporterDoc.ref.set({
+          payment: {
+            ...payment,
+            status: "charged",
+            paymentIntentId: paymentIntent.id,
+            amountCents,
+            chargedAt: new Date().toISOString(),
+            failureReason: null,
+          },
+          updated_at: now,
+        }, {merge: true});
+        await campaignDoc.ref.set({
+          payments: {
+            currency: String(payment.currency || RESERVATION_CURRENCY),
+            chargedCount: admin.firestore.FieldValue.increment(1),
+            totalCapturedCents: admin.firestore.FieldValue.increment(amountCents),
+          },
+          updated_at: now,
+        }, {merge: true});
+
+        charged += 1;
+        summaries.push({campaignId, uid: supporterUid, outcome: "charged", amountCents});
+      } catch (error) {
+        const failureReason = String(error?.raw?.message || error?.message || "charge-failed").slice(0, 500);
+        const failedPaymentIntentId =
+          error?.raw?.payment_intent?.id || error?.payment_intent?.id || null;
+        await supporterDoc.ref.set({
+          payment: {
+            ...payment,
+            status: "charge-failed",
+            paymentIntentId: failedPaymentIntentId,
+            failureReason,
+            failedAt: new Date().toISOString(),
+          },
+          updated_at: now,
+        }, {merge: true});
+        await campaignDoc.ref.set({
+          payments: {
+            failedCount: admin.firestore.FieldValue.increment(1),
+          },
+          updated_at: now,
+        }, {merge: true});
+
+        failed += 1;
+        summaries.push({campaignId, uid: supporterUid, outcome: "failed", reason: failureReason});
+        logger.warn("Reservation charge failed", {campaignId, uid: supporterUid, reason: failureReason});
+      }
+    }
+  }
+
+  return {scanned: campaignsSnapshot.size, charged, failed, summaries};
+}
+
+// Creates (or reuses) a Stripe customer for the signed-in user and returns a
+// SetupIntent client secret for the reserve payment form. Returns
+// paymentRequired: false when payments are disabled or the campaign has no
+// resolvable ticket price, so the frontend can fall back to a free reserve.
+exports.createReservationSetup = onCall({secrets: [STRIPE_SECRET_KEY]}, async (request) => {
+  const uid = request.auth?.uid || "";
+  const email = normalizeEmail(request.auth?.token?.email);
+  if (!uid) {
+    throw new HttpsError("unauthenticated", "Sign in is required to reserve a ticket.");
+  }
+
+  const campaignId = sanitizeTextField(request.data?.campaignId, {required: true, maxLength: 120});
+  const campaignRef = db.collection("campaigns").doc(campaignId);
+  const campaignSnap = await campaignRef.get();
+  if (!campaignSnap.exists) {
+    throw new HttpsError("not-found", "Campaign not found.");
+  }
+
+  const campaignData = campaignSnap.data() || {};
+  const stripe = getStripeClient();
+  if (!stripe || !campaignRequiresPledge(campaignData)) {
+    return {ok: true, paymentRequired: false};
+  }
+
+  const supporterSnap = await campaignRef.collection("supporters").doc(uid).get();
+  const existingPayment = supporterSnap.exists ? (supporterSnap.data() || {}).payment || null : null;
+  const existingStatus = existingPayment ? String(existingPayment.status || "") : "";
+  if (existingStatus === "card-saved" || existingStatus === "charged") {
+    return {ok: true, paymentRequired: false, alreadySaved: true};
+  }
+
+  const customerId = await ensureStripeCustomer(stripe, uid, email);
+  const setupIntent = await stripe.setupIntents.create({
+    customer: customerId,
+    usage: "off_session",
+    // This account uses dashboard-managed (dynamic) payment methods, which
+    // rejects payment_method_types; disallow redirect methods so saved
+    // methods stay chargeable off-session.
+    automatic_payment_methods: {enabled: true, allow_redirects: "never"},
+    metadata: {uid, campaignId},
+  });
+
+  return {
+    ok: true,
+    paymentRequired: true,
+    clientSecret: setupIntent.client_secret,
+    publishableKey: getStripePublishableKey(),
+    minPledgeCents: resolveCampaignMinPledgeCents(campaignData),
+    licensingFeeCents: resolveCampaignLicensingFeeCents(campaignData),
+    totalPledgedCents: toNonNegativeInt(campaignData?.pledges?.totalPledgedCents, 0),
+    currency: RESERVATION_CURRENCY,
+    campaignTitle: String(campaignData.title || ""),
+  };
+});
+
+async function handleStripeWebhookEvent(event) {
+  const object = event?.data?.object || {};
+  const metadata = object.metadata || {};
+  const campaignId = String(metadata.campaignId || "").trim();
+  const uid = String(metadata.uid || "").trim();
+  if (!campaignId || !uid) return; // not a reservation-related object
+
+  const supporterRef = db.collection("campaigns").doc(campaignId).collection("supporters").doc(uid);
+  const now = admin.firestore.FieldValue.serverTimestamp();
+
+  if (event.type === "payment_intent.succeeded") {
+    await supporterRef.set({
+      payment: {
+        status: "charged",
+        paymentIntentId: object.id,
+        chargedAt: new Date().toISOString(),
+        failureReason: null,
+      },
+      updated_at: now,
+    }, {merge: true});
+    return;
+  }
+
+  if (event.type === "payment_intent.payment_failed") {
+    const supporterSnap = await supporterRef.get();
+    const currentStatus = supporterSnap.exists
+      ? String((supporterSnap.data() || {})?.payment?.status || "")
+      : "";
+    if (currentStatus !== "charged") {
+      await supporterRef.set({
+        payment: {
+          status: "charge-failed",
+          paymentIntentId: object.id,
+          failureReason: String(object?.last_payment_error?.message || "payment_failed").slice(0, 500),
+          failedAt: new Date().toISOString(),
+        },
+        updated_at: now,
+      }, {merge: true});
+    }
+    return;
+  }
+
+  if (event.type === "charge.refunded") {
+    await supporterRef.set({
+      payment: {
+        status: "refunded",
+        refundedAt: new Date().toISOString(),
+      },
+      updated_at: now,
+    }, {merge: true});
+  }
+}
+
+exports.stripeWebhook = onRequest({secrets: [STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET]}, async (req, res) => {
+  if (req.method !== "POST") {
+    res.status(405).send("Method not allowed");
+    return;
+  }
+
+  const stripe = getStripeClient();
+  let webhookSecret = "";
+  try {
+    webhookSecret = String(STRIPE_WEBHOOK_SECRET.value() || "").trim();
+  } catch {
+    webhookSecret = "";
+  }
+  if (!stripe || !webhookSecret.startsWith("whsec_")) {
+    res.status(503).send("Payments not configured");
+    return;
+  }
+
+  let event = null;
+  try {
+    event = stripe.webhooks.constructEvent(req.rawBody, req.headers["stripe-signature"], webhookSecret);
+  } catch (error) {
+    logger.warn("Stripe webhook signature verification failed", {error: error?.message || String(error)});
+    res.status(400).send("Invalid signature");
+    return;
+  }
+
+  // Append-only audit log doubles as the idempotency guard.
+  const eventRef = db.collection("payment_events").doc(event.id);
+  const existingEvent = await eventRef.get();
+  if (existingEvent.exists) {
+    res.status(200).send("Already processed");
+    return;
+  }
+  await eventRef.set({
+    id: event.id,
+    type: event.type,
+    created: event.created || null,
+    objectId: String(event?.data?.object?.id || ""),
+    campaignId: String(event?.data?.object?.metadata?.campaignId || ""),
+    uid: String(event?.data?.object?.metadata?.uid || ""),
+    received_at: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  try {
+    await handleStripeWebhookEvent(event);
+    res.status(200).send("ok");
+  } catch (error) {
+    logger.error("Stripe webhook handler failed", {
+      eventId: event.id,
+      type: event.type,
+      error: error?.message || String(error),
+    });
+    res.status(500).send("Webhook handler error");
+  }
+});
+
 function sanitizeScreeningDateTime(screeningDateTimeInput) {
   const normalizedDateTime = String(screeningDateTimeInput || "").trim();
   if (!normalizedDateTime) {
@@ -1881,13 +2473,17 @@ exports.runNightlyElimination = onSchedule({
 exports.processScreeningTransitions = onSchedule({
   schedule: SCREENING_WORKFLOW_SWEEP_SCHEDULE,
   timeZone: SCREENING_WORKFLOW_TIMEZONE,
+  secrets: [STRIPE_SECRET_KEY],
 }, async () => {
   const summary = await processScreeningTransitionsOnce();
-  logger.info("processScreeningTransitions completed", summary);
-  return summary;
+  const campaignCompletions = await processCampaignScreeningCompletionsOnce();
+  const campaignArchives = await processCampaignArchivesOnce();
+  const reservationCharges = await processReservationChargesOnce();
+  logger.info("processScreeningTransitions completed", {...summary, campaignCompletions, campaignArchives, reservationCharges});
+  return {...summary, campaignCompletions, campaignArchives, reservationCharges};
 });
 
-exports.adminTransitionCampaignsToScreenings = onCall(async (request) => {
+exports.adminTransitionCampaignsToScreenings = onCall({secrets: [STRIPE_SECRET_KEY]}, async (request) => {
   const uid = request.auth?.uid || "";
   const authEmail = normalizeEmail(request.auth?.token?.email);
   const adminEmail = normalizeEmail(request.data?.adminEmail);
@@ -1901,13 +2497,24 @@ exports.adminTransitionCampaignsToScreenings = onCall(async (request) => {
   }
 
   const summary = await processCampaignVoteTransitionsOnce();
+  const completionSummary = await processCampaignScreeningCompletionsOnce();
+  const archiveSummary = await processCampaignArchivesOnce();
+  const chargeSummary = await processReservationChargesOnce();
   logger.info("adminTransitionCampaignsToScreenings completed", {
     adminEmail,
     ...summary,
+    completions: completionSummary,
+    archives: archiveSummary,
+    reservationCharges: chargeSummary,
   });
   return {
     ok: true,
     ...summary,
+    transitioned: summary.transitioned + completionSummary.transitioned + archiveSummary.archived,
+    summaries: [...summary.summaries, ...completionSummary.summaries, ...archiveSummary.summaries],
+    completions: completionSummary,
+    archives: archiveSummary,
+    reservationCharges: chargeSummary,
   };
 });
 
@@ -3457,7 +4064,8 @@ async function listPublicDeadTimeSlots({marketQuery = "", limit = 120} = {}) {
 function sanitizeBackingThreshold(value) {
   const n = Number(value);
   if (!Number.isFinite(n)) {
-    return 75;
+    // Default: 20 reservations × $15 min pledge = $300 licensing fee.
+    return CAMPAIGN_DEFAULT_BACKING_THRESHOLD;
   }
   return Math.max(10, Math.min(1000, Math.ceil(n)));
 }
@@ -3529,6 +4137,7 @@ function sanitizeCampaignStatus(value) {
     "suspended",
     "expired",
     "cancelled",
+    "archived",
   ]);
   if (!allowed.has(status)) {
     throw new HttpsError("invalid-argument", "Invalid campaign status.");
@@ -3644,7 +4253,7 @@ exports.createCampaign = onCall(async (request) => {
     request.data?.dateWindowLabel || buildDateRangeWindowLabel(dateRangeStart, dateRangeEnd),
     {required: true, maxLength: 120},
   );
-  const interestedThreshold = backingThreshold * 2;
+  const interestedThreshold = backingThreshold * CAMPAIGN_INTEREST_MULTIPLIER;
   const licensingTriggerPercentage = 70;
   const licensingTriggerBacking = Math.ceil((backingThreshold * licensingTriggerPercentage) / 100);
   const licensingTriggerInterested = Math.ceil((interestedThreshold * licensingTriggerPercentage) / 100);
@@ -3683,6 +4292,12 @@ exports.createCampaign = onCall(async (request) => {
       requiredDays: deadTimeSlotIdRaw ? 1 : 14,
     },
     deadTimeSlot: deadTimeSlotPayload,
+    // Pledge target: slot licensing fee when known, else the assumed default.
+    licensingFeeCents: (() => {
+      const slotFee = sanitizeCurrencyField(deadTimeSlotPayload?.licensingFee);
+      return slotFee ? Math.round(slotFee * 100) : DEFAULT_LICENSING_FEE_CENTS;
+    })(),
+    minPledgeCents: DEFAULT_MIN_PLEDGE_CENTS,
     status: "active",
     selectedMovieTitle: null,
     choices,
@@ -3876,6 +4491,121 @@ exports.publicListDeadTimeSlots = onCall(async (request) => {
   };
 });
 
+function assertCampaignOwner(campaignData, uid, email) {
+  const organizerUid = String(campaignData?.organizer?.uid || campaignData?.createdByUid || "").trim();
+  const organizerEmail = normalizeEmail(
+    campaignData?.organizer?.email || campaignData?.createdByEmail || campaignData?.created_by || "",
+  );
+  if (!((organizerUid && organizerUid === uid) || (organizerEmail && email && organizerEmail === email))) {
+    throw new HttpsError("permission-denied", "Only the campaign creator can manage this campaign.");
+  }
+}
+
+exports.archiveOwnCampaign = onCall(async (request) => {
+  const uid = request.auth?.uid || "";
+  const email = normalizeEmail(request.auth?.token?.email);
+  if (!uid) {
+    throw new HttpsError("unauthenticated", "Sign in is required.");
+  }
+
+  const campaignId = sanitizeTextField(request.data?.campaignId, {required: true, maxLength: 120});
+  const campaignRef = db.collection("campaigns").doc(campaignId);
+  return db.runTransaction(async (tx) => {
+    const campaignSnap = await tx.get(campaignRef);
+    if (!campaignSnap.exists) {
+      throw new HttpsError("not-found", "Campaign not found.");
+    }
+
+    const campaignData = campaignSnap.data() || {};
+    assertCampaignOwner(campaignData, uid, email);
+    const status = String(campaignData.status || "active").trim().toLowerCase();
+    if (status === "archived") {
+      return {ok: true, status};
+    }
+    if (!["active", "licensing-pending", "theater-check", "movie-available", "tipped", "suspended", "expired", "cancelled"].includes(status)) {
+      throw new HttpsError(
+        "failed-precondition",
+        "This campaign can no longer be removed because its screening is scheduled or complete.",
+      );
+    }
+
+    const now = admin.firestore.FieldValue.serverTimestamp();
+    tx.update(campaignRef, {
+      status: "archived",
+      archivedAt: now,
+      archivedByUid: uid,
+      archivedByEmail: email || null,
+      updated_at: now,
+    });
+    return {ok: true, status: "archived"};
+  });
+});
+
+exports.extendOwnCampaign = onCall(async (request) => {
+  const uid = request.auth?.uid || "";
+  const email = normalizeEmail(request.auth?.token?.email);
+  if (!uid) {
+    throw new HttpsError("unauthenticated", "Sign in is required.");
+  }
+
+  const campaignId = sanitizeTextField(request.data?.campaignId, {required: true, maxLength: 120});
+  const campaignRef = db.collection("campaigns").doc(campaignId);
+  return db.runTransaction(async (tx) => {
+    const campaignSnap = await tx.get(campaignRef);
+    if (!campaignSnap.exists) {
+      throw new HttpsError("not-found", "Campaign not found.");
+    }
+
+    const campaignData = campaignSnap.data() || {};
+    assertCampaignOwner(campaignData, uid, email);
+    const status = String(campaignData.status || "active").trim().toLowerCase();
+    if (!["active", "licensing-pending"].includes(status)) {
+      throw new HttpsError("failed-precondition", "Only campaigns still collecting support can be extended.");
+    }
+
+    const campaignWindow = campaignData.campaignWindow && typeof campaignData.campaignWindow === "object"
+      ? campaignData.campaignWindow
+      : {};
+    const deadTimeSlot = campaignData.deadTimeSlot && typeof campaignData.deadTimeSlot === "object"
+      ? campaignData.deadTimeSlot
+      : {};
+    if (deadTimeSlot.slotId) {
+      throw new HttpsError("failed-precondition", "A fixed theater date cannot be extended.");
+    }
+    if (toNonNegativeInt(campaignWindow.extensionCount, 0) >= 1) {
+      throw new HttpsError("failed-precondition", "This campaign has already used its one deadline extension.");
+    }
+
+    const startDate = sanitizeCampaignDate(campaignWindow.startDate, "campaignWindow.startDate");
+    const endDate = sanitizeCampaignDate(campaignWindow.endDate, "campaignWindow.endDate");
+    const startMs = Date.parse(`${startDate}T00:00:00Z`);
+    const endMs = Date.parse(`${endDate}T00:00:00Z`);
+    if (endMs < startMs || endMs - startMs < 13 * 86400000) {
+      throw new HttpsError("failed-precondition", "Only campaigns with a date range can be extended.");
+    }
+
+    const nowDate = new Date();
+    const todayUtcMs = Date.UTC(nowDate.getUTCFullYear(), nowDate.getUTCMonth(), nowDate.getUTCDate());
+    const daysRemaining = Math.floor((endMs - todayUtcMs) / 86400000);
+    if (daysRemaining < 0 || daysRemaining > 7) {
+      throw new HttpsError("failed-precondition", "Campaigns can be extended during their final 7 days.");
+    }
+
+    const nextEndDate = new Date(endMs + 14 * 86400000).toISOString().slice(0, 10);
+    const now = admin.firestore.FieldValue.serverTimestamp();
+    tx.update(campaignRef, {
+      "campaignWindow.endDate": nextEndDate,
+      "campaignWindow.extensionCount": 1,
+      "campaignWindow.lastExtendedAt": now,
+      "campaignWindow.lastExtendedByUid": uid,
+      dateWindowLabel: buildDateRangeWindowLabel(startDate, nextEndDate),
+      updated_at: now,
+    });
+
+    return {ok: true, startDate, endDate: nextEndDate, extensionCount: 1};
+  });
+});
+
 exports.publicListCampaigns = onCall(async (request) => {
   const query = normalizeSearchQuery(request.data?.query);
   const limit = sanitizePositiveInt(request.data?.limit, 50, 200);
@@ -3900,16 +4630,25 @@ exports.publicListCampaigns = onCall(async (request) => {
       "purchaselink",
     ]);
 
-    const queue = [root];
+    const ticketContextKey = /ticket|presale|booking|purchase/i;
+    const looksLikeDirectUrlOrLinkKey = (normalizedKey) =>
+      normalizedKey === "url" ||
+      normalizedKey === "link" ||
+      normalizedKey.endsWith("url") ||
+      normalizedKey.endsWith("link");
+
+    const queue = [{value: root, inTicketContext: false}];
     const visited = new Set();
 
     while (queue.length > 0) {
-      const current = queue.shift();
+      const entry = queue.shift();
+      const current = entry?.value;
+      const inTicketContext = Boolean(entry?.inTicketContext);
       if (!current || visited.has(current)) continue;
       visited.add(current);
 
       if (Array.isArray(current)) {
-        current.forEach((item) => queue.push(item));
+        current.forEach((item) => queue.push({value: item, inTicketContext}));
         continue;
       }
 
@@ -3921,12 +4660,18 @@ exports.publicListCampaigns = onCall(async (request) => {
           .toLowerCase()
           .replace(/[^a-z0-9]+/g, "");
         const value = String(rawValue || "").trim();
+        const nextInTicketContext = inTicketContext || ticketContextKey.test(normalizedKey);
+
         if (candidateKeys.has(normalizedKey) && value) {
           return value;
         }
 
+        if (nextInTicketContext && looksLikeDirectUrlOrLinkKey(normalizedKey) && value) {
+          return value;
+        }
+
         if (rawValue && typeof rawValue === "object") {
-          queue.push(rawValue);
+          queue.push({value: rawValue, inTicketContext: nextInTicketContext});
         }
       }
     }
@@ -3934,8 +4679,13 @@ exports.publicListCampaigns = onCall(async (request) => {
     return null;
   };
 
+  const includeArchived = request.data?.includeArchived === true;
   const snapshot = await db.collection("campaigns").get();
-  const rows = snapshot.docs.map((docSnap) => {
+  // Archived campaigns are hidden from the website unless explicitly requested
+  // (admin "show archived" view).
+  const visibleDocs = snapshot.docs.filter((docSnap) =>
+    includeArchived || String((docSnap.data() || {}).status || "").trim().toLowerCase() !== "archived");
+  const rows = visibleDocs.map((docSnap) => {
     const data = docSnap.data() || {};
     const ticketUrl = resolveTicketUrl(data);
     let campaignMovies = [];
@@ -3966,6 +4716,10 @@ exports.publicListCampaigns = onCall(async (request) => {
       dateWindowLabel: data.dateWindowLabel || "",
       screeningDateTime: data.screeningDateTime || "",
       ticketUrl,
+      ticketPriceCents: resolveCampaignTicketPriceCents(data),
+      licensingFeeCents: resolveCampaignLicensingFeeCents(data),
+      minPledgeCents: resolveCampaignMinPledgeCents(data),
+      totalPledgedCents: toNonNegativeInt(data?.pledges?.totalPledgedCents, 0),
       campaignWindow: data.campaignWindow || null,
       deadTimeSlot: data.deadTimeSlot || null,
       status: data.status || "active",
@@ -4056,6 +4810,227 @@ exports.publicListCampaigns = onCall(async (request) => {
     ok: true,
     total: filtered.length,
     campaigns: page,
+  };
+});
+
+// Stores a voter's screening date/time availability, collected right after a
+// movie vote. One doc per user per campaign at
+// campaigns/{campaignId}/availability/{uid}; resubmitting overwrites.
+exports.submitScreeningAvailability = onCall(async (request) => {
+  const uid = request.auth?.uid || "";
+  const email = normalizeEmail(request.auth?.token?.email);
+  if (!uid) {
+    throw new HttpsError("unauthenticated", "Sign in is required to share availability.");
+  }
+
+  const campaignId = sanitizeTextField(request.data?.campaignId, {required: true, maxLength: 120});
+  const rawAvailability = Array.isArray(request.data?.availability) ? request.data.availability : [];
+  if (rawAvailability.length === 0) {
+    throw new HttpsError("invalid-argument", "At least one availability date is required.");
+  }
+  if (rawAvailability.length > 31) {
+    throw new HttpsError("invalid-argument", "Too many availability dates.");
+  }
+
+  const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+  const timePattern = /^([01]\d|2[0-3]):[0-5]\d$/;
+  const availability = rawAvailability.map((row) => {
+    const date = String(row?.date || "").trim();
+    if (!datePattern.test(date)) {
+      throw new HttpsError("invalid-argument", "Availability dates must look like YYYY-MM-DD.");
+    }
+    const rawSlots = Array.isArray(row?.timeSlots) ? row.timeSlots : [];
+    if (rawSlots.length === 0 || rawSlots.length > 10) {
+      throw new HttpsError("invalid-argument", "Each date needs between 1 and 10 time slots.");
+    }
+    const timeSlots = rawSlots.map((slot) => {
+      const start = String(slot?.start || "").trim();
+      const end = String(slot?.end || "").trim();
+      if (!timePattern.test(start) || !timePattern.test(end) || start >= end) {
+        throw new HttpsError("invalid-argument", "Each time slot needs a valid start time before its end time.");
+      }
+      return {start, end};
+    });
+    return {date, timeSlots};
+  });
+
+  const campaignRef = db.collection("campaigns").doc(campaignId);
+  const campaignSnap = await campaignRef.get();
+  if (!campaignSnap.exists) {
+    throw new HttpsError("not-found", "Campaign not found.");
+  }
+
+  const availabilityRef = campaignRef.collection("availability").doc(uid);
+  const existingSnap = await availabilityRef.get();
+  const now = admin.firestore.FieldValue.serverTimestamp();
+  await availabilityRef.set({
+    uid,
+    email,
+    campaignId,
+    voteId: uid,
+    availability,
+    created_at: existingSnap.exists ? (existingSnap.data() || {}).created_at || now : now,
+    updated_at: now,
+  }, {merge: true});
+
+  logger.info("Screening availability saved", {campaignId, uid, dates: availability.length});
+  return {ok: true, savedDates: availability.length};
+});
+
+// Admin-only aggregate of voter availability for a campaign: per-date voter
+// counts bucketed into afternoon/evening/night windows for a quick heatmap.
+exports.adminGetCampaignAvailability = onCall(async (request) => {
+  const uid = request.auth?.uid || "";
+  const authEmail = normalizeEmail(request.auth?.token?.email);
+  if (!uid || !authEmail) {
+    throw new HttpsError("unauthenticated", "Sign in is required.");
+  }
+  if (authEmail !== CAMPAIGN_EDITOR_EMAIL) {
+    throw new HttpsError("permission-denied", `Only ${CAMPAIGN_EDITOR_EMAIL} can view campaign availability.`);
+  }
+
+  const campaignId = sanitizeTextField(request.data?.campaignId, {required: true, maxLength: 120});
+  const availabilitySnapshot = await db
+    .collection("campaigns").doc(campaignId)
+    .collection("availability")
+    .limit(500)
+    .get();
+
+  const BUCKETS = [
+    {key: "afternoon", start: "12:00", end: "17:00"},
+    {key: "evening", start: "17:00", end: "21:00"},
+    {key: "night", start: "21:00", end: "24:00"},
+  ];
+  const overlaps = (slot, bucket) => slot.start < bucket.end && slot.end > bucket.start;
+
+  const byDate = new Map();
+  availabilitySnapshot.docs.forEach((docSnap) => {
+    const rows = Array.isArray((docSnap.data() || {}).availability) ? docSnap.data().availability : [];
+    rows.forEach((row) => {
+      const date = String(row?.date || "").trim();
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return;
+      const slots = (Array.isArray(row?.timeSlots) ? row.timeSlots : [])
+        .map((slot) => ({start: String(slot?.start || ""), end: String(slot?.end || "")}))
+        .filter((slot) => slot.start && slot.end);
+      if (slots.length === 0) return;
+
+      const entry = byDate.get(date) || {date, voters: 0, afternoon: 0, evening: 0, night: 0};
+      entry.voters += 1;
+      BUCKETS.forEach((bucket) => {
+        if (slots.some((slot) => overlaps(slot, bucket))) {
+          entry[bucket.key] += 1;
+        }
+      });
+      byDate.set(date, entry);
+    });
+  });
+
+  return {
+    ok: true,
+    totalRespondents: availabilitySnapshot.size,
+    dates: Array.from(byDate.values()).sort((a, b) => a.date.localeCompare(b.date)),
+  };
+});
+
+// Lets the campaign organizer (or admin) swap the three movies on their own
+// campaign while it is still collecting support. Kept titles retain their
+// votes and availability; replaced slots start fresh with zero votes.
+exports.updateCampaignMovies = onCall(async (request) => {
+  const uid = request.auth?.uid || "";
+  const email = normalizeEmail(request.auth?.token?.email);
+  if (!uid) {
+    throw new HttpsError("unauthenticated", "Sign in is required to edit a campaign.");
+  }
+
+  const campaignId = sanitizeTextField(request.data?.campaignId, {required: true, maxLength: 120});
+  const choices = sanitizeCampaignChoices(request.data?.choices);
+
+  const campaignRef = db.collection("campaigns").doc(campaignId);
+  const campaignSnap = await campaignRef.get();
+  if (!campaignSnap.exists) {
+    throw new HttpsError("not-found", "Campaign not found.");
+  }
+  const campaignData = campaignSnap.data() || {};
+
+  const organizerUid = String(campaignData?.organizer?.uid || campaignData.createdByUid || "").trim();
+  const organizerEmail = normalizeEmail(
+    campaignData?.organizer?.email || campaignData.createdByEmail || campaignData.created_by || "",
+  );
+  const isOwner = (organizerUid && organizerUid === uid) || (organizerEmail && email && organizerEmail === email);
+  const isAdmin = Boolean(email) && email === CAMPAIGN_EDITOR_EMAIL;
+  if (!isOwner && !isAdmin) {
+    throw new HttpsError("permission-denied", "Only the campaign creator can edit its movies.");
+  }
+
+  const currentStatus = String(campaignData.status || "active").trim().toLowerCase();
+  if (!["active", "licensing-pending"].includes(currentStatus)) {
+    throw new HttpsError(
+      "failed-precondition",
+      "Movies can only be edited while the campaign is still collecting support.",
+    );
+  }
+
+  const existingMovies = coerceCampaignMoviesFromData(campaignId, campaignData);
+  const existingByTitle = new Map(existingMovies.map((movie) => [normalizeMovieTitle(movie.title), movie]));
+  const now = admin.firestore.FieldValue.serverTimestamp();
+  const nowIso = new Date().toISOString();
+
+  const nextCampaignMovies = choices.map((choice) => {
+    const existing = existingByTitle.get(normalizeMovieTitle(choice.title));
+    if (existing) {
+      return {
+        ...existing,
+        originalPosition: choice.rank,
+        updatedAt: nowIso,
+      };
+    }
+    return {
+      campaignMovieId: buildCampaignMovieId(choice.title, choice.rank),
+      campaignId,
+      movieId: movieDocId(choice.title),
+      title: choice.title,
+      voteCount: 0,
+      originalPosition: choice.rank,
+      availabilityStatus: "not-checked",
+      createdAt: nowIso,
+      updatedAt: nowIso,
+      posterUrl: null,
+    };
+  });
+
+  const nextTitleKeys = new Set(nextCampaignMovies.map((movie) => normalizeMovieTitle(movie.title)));
+  const selectedMovieTitle = String(campaignData.selectedMovieTitle || "").trim();
+  const selectedStillExists = Boolean(selectedMovieTitle) && nextTitleKeys.has(normalizeMovieTitle(selectedMovieTitle));
+
+  const nextChoices = nextCampaignMovies.map((movie) => toLegacyChoiceFromCampaignMovie(movie));
+  const batch = db.batch();
+  batch.set(campaignRef, {
+    campaignMovies: nextCampaignMovies,
+    choices: nextChoices,
+    ...(selectedMovieTitle && !selectedStillExists ? {selectedMovieTitle: null} : {}),
+    updated_at: now,
+    updated_by: email || uid,
+  }, {merge: true});
+
+  const nextIds = new Set(nextCampaignMovies.map((movie) => movie.campaignMovieId));
+  existingMovies
+    .filter((movie) => !nextIds.has(movie.campaignMovieId))
+    .forEach((movie) => batch.delete(campaignRef.collection("campaign_movies").doc(movie.campaignMovieId)));
+  nextCampaignMovies.forEach((movie) => {
+    batch.set(campaignRef.collection("campaign_movies").doc(movie.campaignMovieId), {
+      ...movie,
+      updated_at: now,
+    }, {merge: true});
+  });
+  await batch.commit();
+
+  logger.info("Campaign movies updated", {campaignId, by: email || uid, titles: choices.map((c) => c.title)});
+  return {
+    ok: true,
+    campaignId,
+    campaignMovies: nextCampaignMovies,
+    choices: nextChoices,
+    selectedMovieTitle: selectedStillExists ? selectedMovieTitle : null,
   };
 });
 
@@ -4194,7 +5169,7 @@ exports.upsertCampaignMovieVote = onCall(async (request) => {
   };
 });
 
-exports.upsertCampaignSupport = onCall(async (request) => {
+exports.upsertCampaignSupport = onCall({secrets: [STRIPE_SECRET_KEY]}, async (request) => {
   const uid = request.auth?.uid || "";
   const email = normalizeEmail(request.auth?.token?.email);
   if (!uid) {
@@ -4203,10 +5178,63 @@ exports.upsertCampaignSupport = onCall(async (request) => {
 
   const campaignId = sanitizeTextField(request.data?.campaignId, {required: true, maxLength: 120});
   const level = sanitizeCampaignSupportLevel(request.data?.level);
+  const setupIntentId = sanitizeTextField(request.data?.setupIntentId, {required: false, maxLength: 200});
 
   const campaignRef = db.collection("campaigns").doc(campaignId);
   const supporterRef = campaignRef.collection("supporters").doc(uid);
   const triggerLogRef = db.collection("campaign_notifications").doc(`${campaignId}_theater_check`);
+
+  // Stripe verification happens before the Firestore transaction (network
+  // calls are not allowed inside transactions, which can retry).
+  let reservationPayment = null;
+  if (level === "backing") {
+    const preSnap = await campaignRef.get();
+    if (!preSnap.exists) {
+      throw new HttpsError("not-found", "Campaign not found.");
+    }
+    const preData = preSnap.data() || {};
+    const stripe = getStripeClient();
+
+    if (stripe && campaignRequiresPledge(preData)) {
+      const existingSupporterSnap = await supporterRef.get();
+      const existingPayment = existingSupporterSnap.exists
+        ? (existingSupporterSnap.data() || {}).payment || null
+        : null;
+      const existingStatus = existingPayment ? String(existingPayment.status || "") : "";
+
+      if (existingStatus === "card-saved" || existingStatus === "charged") {
+        reservationPayment = existingPayment;
+      } else if (setupIntentId) {
+        const minPledgeCents = resolveCampaignMinPledgeCents(preData);
+        const pledgeAmountCents = Math.round(Number(request.data?.pledgeAmountCents));
+        if (
+          !Number.isInteger(pledgeAmountCents) ||
+          pledgeAmountCents < minPledgeCents ||
+          pledgeAmountCents > MAX_PLEDGE_CENTS
+        ) {
+          throw new HttpsError(
+            "invalid-argument",
+            `Pledge must be between $${(minPledgeCents / 100).toFixed(2)} and $${(MAX_PLEDGE_CENTS / 100).toFixed(0)}.`,
+          );
+        }
+        const verified = await verifyReservationSetupIntent({setupIntentId, uid, campaignId});
+        reservationPayment = {
+          status: "card-saved",
+          setupIntentId: verified.setupIntentId,
+          customerId: verified.customerId,
+          paymentMethodId: verified.paymentMethodId,
+          amountCents: pledgeAmountCents,
+          currency: RESERVATION_CURRENCY,
+          savedAt: new Date().toISOString(),
+        };
+      } else {
+        throw new HttpsError(
+          "failed-precondition",
+          "This reservation requires a pledge. Please complete the payment form.",
+        );
+      }
+    }
+  }
 
   const txResult = await db.runTransaction(async (tx) => {
     const [campaignSnap, supporterSnap, triggerLogSnap] = await Promise.all([
@@ -4230,6 +5258,16 @@ exports.upsertCampaignSupport = onCall(async (request) => {
 
     const oldLevelRaw = supporterSnap.exists ? String((supporterSnap.data() || {}).level || "none") : "none";
     const oldLevel = oldLevelRaw === "backing" || oldLevelRaw === "interested" ? oldLevelRaw : "none";
+    const existingPaymentData = supporterSnap.exists
+      ? ((supporterSnap.data() || {}).payment || {})
+      : {};
+    const existingPaymentStatus = String(existingPaymentData.status || "");
+    if (level !== "backing" && existingPaymentStatus === "charged") {
+      throw new HttpsError(
+        "failed-precondition",
+        "Your pledge was already charged for this confirmed screening. Contact support to request a refund.",
+      );
+    }
     const oldFlags = levelToSupportFlags(oldLevel);
     const newFlags = levelToSupportFlags(level);
 
@@ -4241,7 +5279,37 @@ exports.upsertCampaignSupport = onCall(async (request) => {
       backing: Math.max(0, currentBacking + Number(newFlags.backing) - Number(oldFlags.backing)),
     };
 
-    const nextStatus = computeCampaignStatusAfterSupport(currentStatus, nextCounts, thresholds);
+    let nextStatus = computeCampaignStatusAfterSupport(currentStatus, nextCounts, thresholds);
+
+    // Crowd-pledge accounting: track total pledged toward the licensing fee
+    // target and auto-confirm the campaign the moment it's covered. The
+    // reservation charge sweep then charges all saved cards.
+    let pledgeDeltaCents = 0;
+    let pledgeCountDelta = 0;
+    if (
+      level === "backing" &&
+      reservationPayment &&
+      existingPaymentStatus !== "card-saved" &&
+      existingPaymentStatus !== "charged"
+    ) {
+      pledgeDeltaCents = toNonNegativeInt(reservationPayment.amountCents, 0);
+      pledgeCountDelta = 1;
+    } else if (level !== "backing" && existingPaymentStatus === "card-saved") {
+      pledgeDeltaCents = -toNonNegativeInt(existingPaymentData.amountCents, 0);
+      pledgeCountDelta = -1;
+    }
+    const currentPledgedCents = toNonNegativeInt(campaignData?.pledges?.totalPledgedCents, 0);
+    const currentPledgeCount = toNonNegativeInt(campaignData?.pledges?.count, 0);
+    const nextPledgedCents = Math.max(0, currentPledgedCents + pledgeDeltaCents);
+    const nextPledgeCount = Math.max(0, currentPledgeCount + pledgeCountDelta);
+    const licensingFeeCents = resolveCampaignLicensingFeeCents(campaignData);
+    const pledgeTargetReached = Boolean(licensingFeeCents) && nextPledgedCents >= licensingFeeCents;
+    const confirmableStatuses = new Set(["active", "licensing-pending", "theater-check", "movie-available", "tipped"]);
+    const justReachedPledgeTarget = pledgeTargetReached && confirmableStatuses.has(nextStatus);
+    if (justReachedPledgeTarget) {
+      nextStatus = "confirmed";
+    }
+
     const justTriggeredTheaterCheck = nextStatus === "theater-check" && currentStatus !== "theater-check";
     const now = admin.firestore.FieldValue.serverTimestamp();
     let campaignMoviesOnTrigger = null;
@@ -4265,6 +5333,11 @@ exports.upsertCampaignSupport = onCall(async (request) => {
     tx.set(campaignRef, {
       counts: nextCounts,
       status: nextStatus,
+      pledges: {
+        totalPledgedCents: nextPledgedCents,
+        count: nextPledgeCount,
+        ...(licensingFeeCents ? {licensingFeeCents} : {}),
+      },
       updated_at: now,
       ...(campaignMoviesOnTrigger
         ? {
@@ -4272,7 +5345,11 @@ exports.upsertCampaignSupport = onCall(async (request) => {
           choices: campaignMoviesOnTrigger.map((movie) => toLegacyChoiceFromCampaignMovie(movie)),
         }
         : {}),
-      workflow: justTriggeredTheaterCheck ? {theaterCheckTriggeredAt: now} : campaignData.workflow || {},
+      workflow: {
+        ...(campaignData.workflow && typeof campaignData.workflow === "object" ? campaignData.workflow : {}),
+        ...(justTriggeredTheaterCheck ? {theaterCheckTriggeredAt: now} : {}),
+        ...(justReachedPledgeTarget ? {pledgeTargetReachedAt: now} : {}),
+      },
     }, {merge: true});
 
     if (campaignMoviesOnTrigger) {
@@ -4299,6 +5376,11 @@ exports.upsertCampaignSupport = onCall(async (request) => {
         level,
         interested: newFlags.interested,
         backing: newFlags.backing,
+        ...(level === "backing" && reservationPayment ? {payment: reservationPayment} : {}),
+        // Downgrading from backing releases the pledge: drop the saved card.
+        ...(level === "interested" && existingPaymentStatus === "card-saved"
+          ? {payment: admin.firestore.FieldValue.delete()}
+          : {}),
         created_at: supporterCreatedAt,
         updated_at: now,
       }, {merge: true});
@@ -4322,8 +5404,14 @@ exports.upsertCampaignSupport = onCall(async (request) => {
       campaignId,
       status: nextStatus,
       counts: nextCounts,
+      pledges: {
+        totalPledgedCents: nextPledgedCents,
+        count: nextPledgeCount,
+        licensingFeeCents: licensingFeeCents || null,
+      },
       viewerSupport: level === "none" ? null : level,
       justTriggeredTheaterCheck,
+      justReachedPledgeTarget,
     };
   });
 
@@ -4342,7 +5430,7 @@ exports.upsertCampaignSupport = onCall(async (request) => {
   };
 });
 
-exports.adminSetCampaignStatus = onCall(async (request) => {
+exports.adminSetCampaignStatus = onCall({secrets: [STRIPE_SECRET_KEY]}, async (request) => {
   const uid = request.auth?.uid || "";
   const authEmail = normalizeEmail(request.auth?.token?.email);
   if (!uid || !authEmail) {
@@ -4364,6 +5452,37 @@ exports.adminSetCampaignStatus = onCall(async (request) => {
     throw new HttpsError("invalid-argument", "Ticket URL must begin with http:// or https://.");
   }
   const ticketUrl = hasTicketUrlField ? (ticketUrlCandidate || null) : null;
+  const hasTicketPriceField = Object.prototype.hasOwnProperty.call(request.data || {}, "ticketPrice");
+  let ticketPriceCents;
+  if (hasTicketPriceField) {
+    const ticketPrice = sanitizeCurrencyField(request.data?.ticketPrice);
+    ticketPriceCents = ticketPrice ? Math.round(ticketPrice * 100) : null;
+    if (ticketPriceCents !== null && ticketPriceCents < MIN_CHARGEABLE_CENTS) {
+      throw new HttpsError("invalid-argument", "Ticket price must be at least $0.50.");
+    }
+  }
+  const hasLicensingFeeField = Object.prototype.hasOwnProperty.call(request.data || {}, "licensingFee");
+  let licensingFeeCents;
+  if (hasLicensingFeeField) {
+    const licensingFee = sanitizeCurrencyField(request.data?.licensingFee);
+    licensingFeeCents = licensingFee ? Math.round(licensingFee * 100) : null;
+  }
+  const hasDateStartField = Object.prototype.hasOwnProperty.call(request.data || {}, "dateRangeStart");
+  const hasDateEndField = Object.prototype.hasOwnProperty.call(request.data || {}, "dateRangeEnd");
+  let dateRangeStart = null;
+  let dateRangeEnd = null;
+  if (hasDateStartField || hasDateEndField) {
+    const startRaw = String(request.data?.dateRangeStart || request.data?.dateRangeEnd || "").trim();
+    const endRaw = String(request.data?.dateRangeEnd || request.data?.dateRangeStart || "").trim();
+    if (startRaw || endRaw) {
+      dateRangeStart = sanitizeCampaignDate(startRaw, "dateRangeStart");
+      dateRangeEnd = sanitizeCampaignDate(endRaw, "dateRangeEnd");
+      if (dateRangeEnd < dateRangeStart) {
+        throw new HttpsError("invalid-argument", "dateRangeEnd must be on or after dateRangeStart.");
+      }
+    }
+  }
+  const hasDateRangePatch = Boolean(dateRangeStart && dateRangeEnd);
   const licensingStatus = sanitizeCampaignLicensingStatus(request.data?.licensingStatus);
   const movieAvailabilityPatch = sanitizeMovieAvailabilityPatch(request.data?.movieAvailabilityByCampaignMovieId);
   const note = sanitizeTextField(request.data?.note, {required: false, maxLength: 800});
@@ -4417,12 +5536,66 @@ exports.adminSetCampaignStatus = onCall(async (request) => {
     nextStatus = "scheduled";
   }
 
+  // Scheduling/confirming triggers pledge charges, so a funding target
+  // (licensing fee) or legacy ticket price must exist first (only enforced
+  // while Stripe payments are configured).
+  if ((nextStatus === "scheduled" || nextStatus === "confirmed") && getStripeClient()) {
+    const effectiveCampaign = {
+      ...campaignData,
+      ...(hasTicketPriceField ? {ticketPriceCents} : {}),
+      ...(hasLicensingFeeField ? {licensingFeeCents} : {}),
+    };
+    if (!campaignRequiresPledge(effectiveCampaign)) {
+      throw new HttpsError(
+        "failed-precondition",
+        "Set a licensing fee (or ticket price) before confirming/scheduling this campaign so pledges can be charged.",
+      );
+    }
+  }
+
+  // Admin date change: update the campaign window, regenerate the label, and
+  // shift any concrete screening datetime to the new end date (keeping time).
+  let dateRangePatch = {};
+  if (hasDateRangePatch) {
+    const shiftDateTime = (value) => {
+      const raw = String(value || "").trim();
+      if (!raw) return null;
+      const timePart = raw.includes("T") ? raw.split("T")[1] : "19:00:00";
+      return `${dateRangeEnd}T${timePart}`;
+    };
+    const existingScreeningDateTime = String(campaignData.screeningDateTime || "").trim();
+    const slot = campaignData.deadTimeSlot && typeof campaignData.deadTimeSlot === "object"
+      ? campaignData.deadTimeSlot
+      : null;
+    dateRangePatch = {
+      campaignWindow: {startDate: dateRangeStart, endDate: dateRangeEnd},
+      dateWindowLabel: dateRangeStart === dateRangeEnd
+        ? dateRangeStart
+        : buildDateRangeWindowLabel(dateRangeStart, dateRangeEnd),
+      ...(existingScreeningDateTime ? {screeningDateTime: shiftDateTime(existingScreeningDateTime)} : {}),
+      ...(slot
+        ? {
+          deadTimeSlot: {
+            dateRangeStart,
+            dateRangeEnd,
+            ...(String(slot.screeningDateTime || "").trim()
+              ? {screeningDateTime: shiftDateTime(slot.screeningDateTime)}
+              : {}),
+          },
+        }
+        : {}),
+    };
+  }
+
   const patch = {
     status: nextStatus,
     updated_at: now,
     updated_by: authEmail,
+    ...dateRangePatch,
     ...(effectiveSelectedMovieTitle ? {selectedMovieTitle: effectiveSelectedMovieTitle} : {}),
     ...(hasTicketUrlField ? {ticketUrl} : {}),
+    ...(hasTicketPriceField ? {ticketPriceCents} : {}),
+    ...(hasLicensingFeeField ? {licensingFeeCents} : {}),
     ...(campaignMoviesPatch
       ? {
         campaignMovies: campaignMoviesPatch,
@@ -4475,6 +5648,12 @@ exports.adminSetCampaignStatus = onCall(async (request) => {
     selectedMovieTitle: effectiveSelectedMovieTitle || null,
     ticketUrl: hasTicketUrlField ? ticketUrl : null,
     licensingStatus: licensingStatus || null,
+    ...(hasDateRangePatch
+      ? {
+        dateWindowLabel: dateRangePatch.dateWindowLabel,
+        campaignWindow: {startDate: dateRangeStart, endDate: dateRangeEnd},
+      }
+      : {}),
     updatedBy: authEmail,
   };
 });
@@ -5638,6 +6817,15 @@ exports.reelSuccessListGrossStoragePdfs = onCall(REELSUCCESS_CALL_OPTIONS, async
     pdfs,
   };
 });
+
+Object.assign(exports, require("./reelsuccess-sales").createSalesApi({
+  db,
+  admin,
+  onCall: (handler) => onCall(REELSUCCESS_CALL_OPTIONS, handler),
+  HttpsError,
+  assertReelSuccessRequester,
+  assertTheaterScope,
+}));
 
 // Create and deploy your first functions
 // https://firebase.google.com/docs/functions/get-started

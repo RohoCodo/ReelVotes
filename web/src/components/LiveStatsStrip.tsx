@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { collection, getDocs } from "firebase/firestore/lite";
 import { dbLite as db } from "../lib/firebase-lite";
+import { publicListCampaigns } from "../lib/firebase-core";
 import { REELVOTES_EVENTS } from "../lib/events-config";
 
 interface Stat {
@@ -68,18 +69,34 @@ export default function LiveStatsStrip() {
 
     (async () => {
       const fallbackScreeningsHosted = REELVOTES_EVENTS.filter((event) => event.voteStatus === "ended").length;
+      const fallbackCampaignCount = REELVOTES_EVENTS.length;
       try {
         const timeoutMs = 8000;
-        const [eventsSnap] = await Promise.all([
+        const [eventsSnap, campaignRows] = await Promise.all([
           withTimeout(getDocs(collection(db, "events")), timeoutMs, null),
+          withTimeout(
+            publicListCampaigns({ limit: 200 }).then(
+              (response) => ((response as any)?.data?.campaigns ?? []) as Array<Record<string, unknown>>,
+            ),
+            timeoutMs,
+            [] as Array<Record<string, unknown>>,
+          ),
         ]);
 
-        const votesHeldCount =
+        const endedEventCount =
           eventsSnap
             ? eventsSnap.docs.filter((docSnap) => docSnap.data().voteStatus === "ended").length
             : fallbackScreeningsHosted;
-        const screeningsHosted = votesHeldCount;
-        const campaignCount = votesHeldCount;
+        // Campaign-flow screenings that already happened are "completed"
+        // campaigns, not docs in the legacy events collection.
+        const completedCampaignCount = campaignRows.filter(
+          (row) => String(row?.status || "") === "completed",
+        ).length;
+        const screeningsHosted = endedEventCount + completedCampaignCount;
+        // Every legacy event vote and every campaign-flow campaign counts as
+        // a campaign, regardless of its current status.
+        const campaignCount =
+          (eventsSnap ? eventsSnap.docs.length : fallbackCampaignCount) + campaignRows.length;
 
         if (cancelled) return;
         setStats([
@@ -90,7 +107,7 @@ export default function LiveStatsStrip() {
         console.error("[LiveStatsStrip] Could not load stats:", error);
         if (!cancelled) {
           setStats([
-            { label: "Campaigns", value: fallbackScreeningsHosted },
+            { label: "Campaigns", value: fallbackCampaignCount },
             { label: "Screenings hosted", value: fallbackScreeningsHosted },
           ]);
         }

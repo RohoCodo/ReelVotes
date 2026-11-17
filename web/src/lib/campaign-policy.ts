@@ -1,6 +1,7 @@
 export const CAMPAIGN_MOVIE_CHOICES_REQUIRED = 3;
 export const LICENSING_TRIGGER_PERCENTAGE = 70;
-export const INTEREST_MULTIPLIER = 2;
+export const DEFAULT_BACKING_THRESHOLD = 20;
+export const INTEREST_MULTIPLIER = 3;
 
 export const BACKING_REMEDY_POLICY = {
   autoCarryInterestOnReplacement: true,
@@ -20,7 +21,8 @@ export type CampaignStatus =
   | "completed"
   | "suspended"
   | "expired"
-  | "cancelled";
+  | "cancelled"
+  | "archived";
 
 export function calculateInterestThreshold(backingThreshold: number): number {
   return Math.max(0, Math.ceil(Number(backingThreshold || 0) * INTEREST_MULTIPLIER));

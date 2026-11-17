@@ -8,16 +8,19 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
+    "test:sales": "node --experimental-strip-types --test tests/reelsuccess-export.test.mjs",
     "preview": "astro preview",
     "astro": "astro"
   },
   "dependencies": {
     "@astrojs/react": "^6.0.4",
+    "@stripe/stripe-js": "^10.2.1",
     "@tailwindcss/vite": "^4.3.3",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.5",
     "astro": "^7.2.7",
     "firebase": "^12.18.0",
+    "lucide-react": "^1.68.0",
     "react": "^19.2.8",
     "react-day-picker": "^9.11.1",
     "react-dom": "^19.2.8",

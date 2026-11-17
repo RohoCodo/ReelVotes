@@ -5,7 +5,7 @@ import { getFunctions, httpsCallable } from "firebase/functions";
 // security rules, matching the pattern the previous vanilla-JS site used.
 const firebaseConfig = {
   apiKey: "AIzaSyDMa_twNQAZVrnLHUNNNsxk6aTa-9FrnSc",
-  authDomain: "www.reelvotes.com",
+  authDomain: "reelconvo.firebaseapp.com",
   projectId: "reelconvo",
   storageBucket: "reelconvo.firebasestorage.app",
   messagingSenderId: "913820455359",
@@ -30,9 +30,15 @@ export const getVoteStatus = httpsCallable(functions, "getVoteStatus");
 export const submitTheaterPetition = httpsCallable(functions, "submitTheaterPetition");
 export const submitTheaterRegistration = httpsCallable(functions, "submitTheaterRegistration");
 export const createCampaign = httpsCallable(functions, "createCampaign");
+export const archiveOwnCampaign = httpsCallable(functions, "archiveOwnCampaign");
+export const extendOwnCampaign = httpsCallable(functions, "extendOwnCampaign");
 export const publicListCampaigns = httpsCallable(functions, "publicListCampaigns");
 export const publicListDeadTimeSlots = httpsCallable(functions, "publicListDeadTimeSlots");
 export const upsertCampaignSupport = httpsCallable(functions, "upsertCampaignSupport");
+export const createReservationSetup = httpsCallable(functions, "createReservationSetup");
+export const submitScreeningAvailability = httpsCallable(functions, "submitScreeningAvailability");
+export const adminGetCampaignAvailability = httpsCallable(functions, "adminGetCampaignAvailability");
+export const updateCampaignMovies = httpsCallable(functions, "updateCampaignMovies");
 export const upsertCampaignMovieVote = httpsCallable(functions, "upsertCampaignMovieVote");
 export const adminSetCampaignStatus = httpsCallable(functions, "adminSetCampaignStatus");
 export const publicListTheaters = httpsCallable(functions, "publicListTheaters");

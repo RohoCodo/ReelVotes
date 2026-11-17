@@ -4,7 +4,11 @@ import { httpsCallable } from "firebase/functions";
 import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { getCampaignSummaries, type CampaignSummary } from "../lib/campaigns";
-import { functions as firebaseFunctions } from "../lib/firebase-core";
+import {
+  archiveOwnCampaign,
+  extendOwnCampaign,
+  functions as firebaseFunctions,
+} from "../lib/firebase-core";
 import { auth, onAuthStateChanged, signInWithGoogle, signOut } from "../lib/firebase-auth";
 import { rememberPostAuthDestination } from "../lib/post-auth-redirect";
 
@@ -30,6 +34,8 @@ type CampaignListItem = {
   status: string;
   href: string;
   subtitle: string;
+  canArchive?: boolean;
+  canExtend?: boolean;
 };
 
 const TRANSITION_BUTTON_EMAIL = "rohan@reelvotes.com";
@@ -91,6 +97,9 @@ export default function AccountPanel() {
   const [transitionPending, setTransitionPending] = useState(false);
   const [transitionMessage, setTransitionMessage] = useState("");
   const [transitionDetails, setTransitionDetails] = useState<string[]>([]);
+  const [campaignActionPendingId, setCampaignActionPendingId] = useState("");
+  const [campaignActionMessage, setCampaignActionMessage] = useState("");
+  const [campaignActionError, setCampaignActionError] = useState("");
 
   async function refreshCampaigns() {
     if (!authUser) {
@@ -188,6 +197,43 @@ export default function AccountPanel() {
     }
   }
 
+  async function handleArchiveCampaign(campaignId: string, title: string) {
+    if (!window.confirm(`Remove "${title}" from public campaigns? Its votes and supporter records will be kept.`)) {
+      return;
+    }
+
+    setCampaignActionPendingId(campaignId);
+    setCampaignActionMessage("");
+    setCampaignActionError("");
+    try {
+      await archiveOwnCampaign({ campaignId });
+      setCampaignActionMessage(`"${title}" was removed from public campaigns.`);
+      await refreshCampaigns();
+    } catch (error) {
+      setCampaignActionError(String((error as any)?.message || "Could not remove this campaign."));
+    } finally {
+      setCampaignActionPendingId("");
+    }
+  }
+
+  async function handleExtendCampaign(campaignId: string, title: string) {
+    setCampaignActionPendingId(campaignId);
+    setCampaignActionMessage("");
+    setCampaignActionError("");
+    try {
+      const response: any = await extendOwnCampaign({ campaignId });
+      const endDate = String(response?.data?.endDate || "");
+      setCampaignActionMessage(
+        endDate ? `"${title}" was extended through ${endDate}.` : `"${title}" was extended by 14 days.`,
+      );
+      await refreshCampaigns();
+    } catch (error) {
+      setCampaignActionError(String((error as any)?.message || "Could not extend this campaign."));
+    } finally {
+      setCampaignActionPendingId("");
+    }
+  }
+
   async function handleTransitionToScreenings() {
     if (!authUser?.email) return;
 
@@ -245,7 +291,20 @@ export default function AccountPanel() {
   const yourCampaigns = useMemo(() => {
     return campaigns
       .filter((campaign) => String(campaign.createdByEmail || "").toLowerCase() === userEmail)
-      .map((campaign) => toListItem(campaign, "Created by you"));
+      .map((campaign) => ({
+        ...toListItem(campaign, "Created by you"),
+        canArchive: [
+          "active",
+          "licensing-pending",
+          "theater-check",
+          "movie-available",
+          "tipped",
+          "suspended",
+          "expired",
+          "cancelled",
+        ].includes(campaign.status),
+        canExtend: canExtendCampaign(campaign),
+      }));
   }, [campaigns, userEmail]);
 
   const movieVotes = useMemo(() => {
@@ -319,6 +378,29 @@ export default function AccountPanel() {
     };
   }
 
+  function canExtendCampaign(campaign: CampaignSummary): boolean {
+    if (
+      !["active", "licensing-pending"].includes(campaign.status) ||
+      campaign.deadTimeSlot?.slotId ||
+      !campaign.campaignWindow?.startDate ||
+      !campaign.campaignWindow.endDate ||
+      (campaign.campaignWindow.extensionCount || 0) >= 1
+    ) {
+      return false;
+    }
+
+    const startMs = Date.parse(`${campaign.campaignWindow.startDate}T00:00:00Z`);
+    const endMs = Date.parse(`${campaign.campaignWindow.endDate}T00:00:00Z`);
+    if (!Number.isFinite(startMs) || !Number.isFinite(endMs) || endMs - startMs < 13 * 86400000) {
+      return false;
+    }
+
+    const now = new Date();
+    const todayUtcMs = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+    const daysRemaining = Math.floor((endMs - todayUtcMs) / 86400000);
+    return daysRemaining >= 0 && daysRemaining <= 7;
+  }
+
   if (authUser === undefined) {
     return (
       <div className="rounded-2xl border border-line bg-paper p-6">
@@ -373,23 +455,54 @@ export default function AccountPanel() {
                 </h3>
                 <span className="text-xs text-ink-faint">{tabItems.length} saved</span>
               </div>
+              {activeTab === "campaigns" && (
+                <p className="mt-2 text-xs text-ink-faint">
+                  Remove campaigns to hide them from public listings. Date-range campaigns can be extended once by 14 days during their final week.
+                </p>
+              )}
 
               {tabItems.length > 0 ? (
                 <div className="mt-4 grid gap-3">
                   {tabItems.map((item) => (
-                    <a key={item.campaignId} href={item.href} className="group rounded-2xl border border-line bg-paper p-4 transition-colors hover:border-marquee hover:shadow-sm">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <p className="truncate font-semibold text-ink group-hover:text-marquee">{item.title}</p>
-                          <p className="mt-1 text-xs text-ink-soft">{item.market}</p>
-                          <p className="mt-1 text-xs text-ink-faint">Date: {item.dateWindowLabel}</p>
-                          <p className="mt-1 text-[11px] font-medium text-ink-soft">{item.subtitle}</p>
+                    <div key={item.campaignId} className="rounded-2xl border border-line bg-paper p-4">
+                      <a href={item.href} className="group block transition-colors">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="truncate font-semibold text-ink group-hover:text-marquee">{item.title}</p>
+                            <p className="mt-1 text-xs text-ink-soft">{item.market}</p>
+                            <p className="mt-1 text-xs text-ink-faint">Date: {item.dateWindowLabel}</p>
+                            <p className="mt-1 text-[11px] font-medium text-ink-soft">{item.subtitle}</p>
+                          </div>
+                          <span className="shrink-0 rounded-full border border-line px-2.5 py-1 text-[10px] font-semibold text-ink-soft">
+                            {item.status}
+                          </span>
                         </div>
-                        <span className="shrink-0 rounded-full border border-line px-2.5 py-1 text-[10px] font-semibold text-ink-soft">
-                          {item.status}
-                        </span>
-                      </div>
-                    </a>
+                      </a>
+                      {activeTab === "campaigns" && (item.canArchive || item.canExtend) && (
+                        <div className="mt-3 flex flex-wrap gap-2 border-t border-line pt-3">
+                          {item.canExtend && (
+                            <button
+                              type="button"
+                              disabled={campaignActionPendingId === item.campaignId}
+                              onClick={() => handleExtendCampaign(item.campaignId, item.title)}
+                              className="rounded-full bg-marquee px-3.5 py-2 text-xs font-semibold text-white transition-colors hover:bg-marquee-dark disabled:opacity-60"
+                            >
+                              {campaignActionPendingId === item.campaignId ? "Updating..." : "Extend 14 days"}
+                            </button>
+                          )}
+                          {item.canArchive && (
+                            <button
+                              type="button"
+                              disabled={campaignActionPendingId === item.campaignId}
+                              onClick={() => handleArchiveCampaign(item.campaignId, item.title)}
+                              className="rounded-full border border-line px-3.5 py-2 text-xs font-semibold text-ink-soft transition-colors hover:border-red-400 hover:text-red-600 disabled:opacity-60"
+                            >
+                              Remove campaign
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   ))}
                 </div>
               ) : (
@@ -399,6 +512,12 @@ export default function AccountPanel() {
                   {activeTab === "votes" && "Movie votes you cast will appear here."}
                   {activeTab === "reservations" && "Reservations you place will appear here."}
                 </p>
+              )}
+              {activeTab === "campaigns" && campaignActionMessage && (
+                <p className="mt-3 text-sm text-emerald">{campaignActionMessage}</p>
+              )}
+              {activeTab === "campaigns" && campaignActionError && (
+                <p className="mt-3 text-sm text-red-600">{campaignActionError}</p>
               )}
             </div>
           </div>

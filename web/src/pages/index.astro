@@ -121,7 +121,12 @@ const flow = [
         </p>
       </div>
       <div class="mt-12" data-reveal>
-        <CampaignExplorer compact sortBy="votes-desc" client:load />
+        <CampaignExplorer
+          compact
+          sortBy="votes-desc"
+          statusFilter={["active", "licensing-pending", "theater-check", "movie-available", "tipped"]}
+          client:load
+        />
       </div>
       <div class="mt-8 text-center" data-reveal>
         <a href="/campaigns" class="text-sm font-semibold text-marquee hover:underline">View all campaigns &rarr;</a>
